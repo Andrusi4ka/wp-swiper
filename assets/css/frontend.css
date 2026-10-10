@@ -276,8 +276,13 @@
 	overflow: visible;
 }
 
-.wp-swiper--effect-cube,
-.wp-swiper--effect-flip,
+/* Room under the slides for what an effect draws below them: the cube's
+   shadow (render.php sizes it from Shadow offset; none without the shadow),
+   and the tilted cards of the stack. */
+.wp-swiper--effect-cube {
+	padding-bottom: var(--wp-swiper-cube-shadow-room, 0px);
+}
+
 .wp-swiper--effect-cards {
 	padding-bottom: 40px;
 }
@@ -312,8 +317,8 @@
 	overflow: visible;
 }
 
-/* Pagination position (horizontal sliders). It sits in .wp-swiper, next to
-   .swiper: over the slides (inside) or above/below them (outside). */
+/* Pagination position (horizontal sliders): over the slides (inside .swiper,
+   so measured from them) or above/below them (in .wp-swiper, outside). */
 .wp-swiper .swiper-pagination.swiper-pagination-horizontal {
 	right: 0;
 	left: 0;
@@ -340,13 +345,6 @@
 .wp-swiper--pag-inside.wp-swiper--pag-top .swiper-pagination {
 	top: var(--wp-swiper-pagination-offset, 16px);
 	bottom: auto;
-}
-
-/* Cube/flip/cards reserve 40px below the slides for shadows. */
-.wp-swiper--pag-inside.wp-swiper--pag-bottom.wp-swiper--effect-cube .swiper-pagination,
-.wp-swiper--pag-inside.wp-swiper--pag-bottom.wp-swiper--effect-flip .swiper-pagination,
-.wp-swiper--pag-inside.wp-swiper--pag-bottom.wp-swiper--effect-cards .swiper-pagination {
-	bottom: calc(var(--wp-swiper-pagination-offset, 16px) + 40px);
 }
 
 /* Outside: in the flow above or below the slides, in the text color. */

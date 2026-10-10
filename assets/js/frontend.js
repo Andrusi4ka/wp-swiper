@@ -769,11 +769,11 @@
 	 * The slide a click inside the slider was meant for. Usually the one under
 	 * the pointer; but once a cube has turned, browsers stop hit-testing its
 	 * active face and the click lands on the slider itself, so there (the face
-	 * fills the slider at rest) it is the active slide. Not for its arrows.
+	 * fills the slider at rest) it is the active slide. Not for its arrows or pagination.
 	 */
 	function clickedSlide( e, swiper, config ) {
 		var slide = e.target.closest( '.swiper-slide' );
-		if ( ! slide && 'cube' === config.effect && ! e.target.closest( 'button' ) ) {
+		if ( ! slide && 'cube' === config.effect && ! e.target.closest( 'button, .swiper-pagination' ) ) {
 			slide = swiper.slides[ swiper.activeIndex ] || null;
 		}
 		return slide;
@@ -785,7 +785,7 @@
 	 */
 	function cubeLinks( swiper, el, config ) {
 		el.addEventListener( 'click', function ( e ) {
-			if ( ! swiper.allowClick || e.defaultPrevented || e.target.closest( '.swiper-slide, button' ) ) {
+			if ( ! swiper.allowClick || e.defaultPrevented || e.target.closest( '.swiper-slide, button, .swiper-pagination' ) ) {
 				return;
 			}
 			var slide = clickedSlide( e, swiper, config );

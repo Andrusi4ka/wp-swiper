@@ -335,9 +335,11 @@ class WP_Swiper_Render {
 		if ( $carousel ) {
 			$style[] = '--wp-swiper-carousel-width:' . $carousel['width'];
 		}
-		// Cube: how dark its (black) shadow is.
+		// Cube: how dark its (black) shadow is, and room under the slider for it
+		// (it falls `offset` below the cube and is blurred some 20px further).
 		if ( 'cube' === $settings['effect'] && $settings['cube_shadow'] ) {
 			$style[] = '--wp-swiper-cube-shadow-opacity:' . max( 0, min( 100, (int) $settings['cube_shadow_opacity'] ) ) / 100;
+			$style[] = '--wp-swiper-cube-shadow-room:' . ( (int) $settings['cube_shadow_offset'] + 20 ) . 'px';
 		}
 		$suffix = array(
 			'desktop' => '',
@@ -407,9 +409,10 @@ class WP_Swiper_Render {
 			}
 		}
 
-		$count  = count( $slides );
-		$copies = self::copies( $settings, $count );
-		$config = self::js_config( $settings, $count, $copies );
+		$count             = count( $slides );
+		$copies            = self::copies( $settings, $count );
+		$config            = self::js_config( $settings, $count, $copies );
+		$pagination_inside = 'inside' === $settings['pagination_placement'];
 
 		ob_start();
 		?>
@@ -431,11 +434,19 @@ class WP_Swiper_Render {
 					<button type="button" class="swiper-button-prev" aria-label="<?php esc_attr_e( 'Previous slide', 'wp-swiper' ); ?>"></button>
 					<button type="button" class="swiper-button-next" aria-label="<?php esc_attr_e( 'Next slide', 'wp-swiper' ); ?>"></button>
 				<?php endif; ?>
+				<?php
+				// Over the slides: inside .swiper, so its position and offset are
+				// measured from the slides themselves (whatever room an effect
+				// keeps around them, e.g. under a cube or beside a card).
+				if ( $config['pagination'] && $pagination_inside ) :
+					?>
+					<div class="swiper-pagination swiper-no-swiping"></div>
+				<?php endif; ?>
 			</div>
 
-			<?php // Outside .swiper (which clips) so it can also sit above or below the slides. ?>
-			<?php if ( $config['pagination'] ) : ?>
-				<div class="swiper-pagination"></div>
+			<?php // Above, below or beside the slides: outside .swiper, which clips. ?>
+			<?php if ( $config['pagination'] && ! $pagination_inside ) : ?>
+				<div class="swiper-pagination swiper-no-swiping"></div>
 			<?php endif; ?>
 		</div>
 		<?php

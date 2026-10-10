@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,6 +45,11 @@ From this plugin's GitHub releases. The plugin header's "Update URI" stops WordP
 It does not apply with the current settings (for example Slides per view with Fade, which always shows one slide). Its value is kept and comes back when it applies again.
 
 == Changelog ==
+
+= 1.1.1 =
+* Fixed: pagination over the slider is now placed from the slides' edges in every effect and direction. Vertical Cube, Flip and Cards no longer put "bottom" pagination 40px below the slides or "center" 20px off, and Cards side pagination sits on the card.
+* The room under a Cube now follows its shadow (none without one); Flip no longer keeps 40px empty below the slides.
+* Fixed: a click on Cube pagination no longer opens the lightbox or the slide's link.
 
 = 1.1.0 =
 * Settings in four boxes (Advanced, Controls, Layout · effect, Caption); each effect keeps its own Layout values.
