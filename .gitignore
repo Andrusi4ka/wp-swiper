@@ -1,0 +1,9 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build output and local test pages
+*.zip
+assets/_*.html

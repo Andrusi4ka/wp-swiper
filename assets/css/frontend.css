@@ -1,0 +1,800 @@
+/* WP Swiper front end. Override the custom properties to restyle a slider. */
+
+.wp-swiper {
+	--swiper-theme-color: #fff;
+	--swiper-navigation-color: #fff;
+	--swiper-navigation-size: 32px;
+	--swiper-pagination-color: #fff;
+	--swiper-pagination-bullet-inactive-color: #fff;
+	--swiper-pagination-bullet-inactive-opacity: 0.5;
+	--wp-swiper-fit: cover;
+	--wp-swiper-caption-color: #fff;
+
+	position: relative;
+	width: 100%;
+}
+
+.wp-swiper--fit-contain {
+	--wp-swiper-fit: contain;
+}
+
+.wp-swiper .swiper-slide {
+	position: relative;
+	overflow: hidden;
+	/* Only takes effect while the slide height is auto (no fixed height):
+	   with a fixed height both sides are already set. */
+	aspect-ratio: var(--wp-swiper-ratio, auto);
+	border-radius: var(--wp-swiper-radius, 0px);
+}
+
+.wp-swiper .wp-swiper__link {
+	display: block;
+	height: 100%;
+}
+
+/* Height per device (unset with Height "Auto", see .wp-swiper--fill).
+   Breakpoints match Swiper's: tablet 768–1024px, mobile below 768px. */
+.wp-swiper .swiper {
+	height: var(--wp-swiper-height, auto);
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper .swiper {
+		height: var(--wp-swiper-height-tablet, var(--wp-swiper-height, auto));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper .swiper {
+		height: var(--wp-swiper-height-mobile, var(--wp-swiper-height-tablet, var(--wp-swiper-height, auto)));
+	}
+}
+
+/* The image fills its box, .wp-swiper__media (with auto height, 100%
+   resolves to the image's natural height). */
+.wp-swiper .wp-swiper__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	object-fit: var(--wp-swiper-fit);
+}
+
+/* Box of the visible image, holding the image, its link and caption. With
+   "Cover" it is the whole slide. */
+.wp-swiper .wp-swiper__media {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	border-radius: inherit;
+}
+
+/* With "Contain" the box is the largest one with the image's proportions
+   that fits the slide (cq* units: % of the slide), placed per Image
+   alignment; so the caption sits on the image and its corners are rounded,
+   not the empty band around it. */
+.wp-swiper--fit-contain .swiper-slide {
+	container-type: size;
+	display: flex;
+	align-items: var(--wp-swiper-align, center);
+	justify-content: var(--wp-swiper-justify, center);
+}
+
+.wp-swiper--fit-contain .wp-swiper__media {
+	flex: none;
+	width: min(100cqw, 100cqh * var(--wp-swiper-img-ratio, 1));
+	height: min(100cqh, 100cqw / var(--wp-swiper-img-ratio, 1));
+	overflow: hidden;
+}
+
+/* Height "Auto": the script sizes .wp-swiper to its parent
+   block's free height and the slides take all of it (minus an outside
+   pagination). Left at auto height, 100% resolves to the slides' own size. */
+.wp-swiper.wp-swiper--fill {
+	box-sizing: border-box;
+}
+
+.wp-swiper.wp-swiper--fill .swiper {
+	height: 100%;
+}
+
+.wp-swiper.wp-swiper--fill.wp-swiper--pag-outside.wp-swiper--horizontal .swiper {
+	flex: 1 1 auto;
+	height: auto;
+	min-height: 0;
+}
+
+/* Height in % of the parent block: the whole chain must stretch. */
+.wp-swiper--height-percent {
+	height: 100%;
+}
+
+/* "Width from image": every slide as long as its image's proportions make it
+   along the slider (width; height in a vertical slider), at the slider's
+   size across it. Swiper ("auto") measures the slides as they are. */
+.wp-swiper--auto-width.wp-swiper--horizontal .swiper-slide {
+	width: auto;
+	aspect-ratio: var(--wp-swiper-img-ratio, 1);
+}
+
+.wp-swiper--auto-width.wp-swiper--vertical .swiper-slide {
+	height: auto;
+	aspect-ratio: var(--wp-swiper-img-ratio, 1);
+}
+
+/* Continuous scroll: an even pace, not Swiper's ease. */
+.wp-swiper--marquee {
+	--swiper-wrapper-transition-timing-function: linear;
+}
+
+/* Wider (horizontal) / taller (vertical) active slide. Swiper sets an inline
+   size on every slide along its axis; the current one overrides it. */
+/* Animated once the slider is laid out (.wp-swiper--ready, set by frontend.js). */
+.wp-swiper--expand.wp-swiper--horizontal.wp-swiper--ready .swiper-slide {
+	transition: width var(--wp-swiper-speed, 600ms) ease;
+}
+
+.wp-swiper--expand.wp-swiper--vertical.wp-swiper--ready .swiper-slide {
+	transition: height var(--wp-swiper-speed, 600ms) ease;
+}
+
+.wp-swiper--expand.wp-swiper--horizontal .swiper-slide.wp-swiper-slide-current {
+	width: var(--wp-swiper-active-width) !important;
+}
+
+.wp-swiper--expand.wp-swiper--vertical .swiper-slide.wp-swiper-slide-current {
+	height: var(--wp-swiper-active-width) !important;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper--expand.wp-swiper--horizontal .swiper-slide.wp-swiper-slide-current {
+		width: var(--wp-swiper-active-width-tablet) !important;
+	}
+
+	.wp-swiper--expand.wp-swiper--vertical .swiper-slide.wp-swiper-slide-current {
+		height: var(--wp-swiper-active-width-tablet) !important;
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper--expand.wp-swiper--horizontal .swiper-slide.wp-swiper-slide-current {
+		width: var(--wp-swiper-active-width-mobile) !important;
+	}
+
+	.wp-swiper--expand.wp-swiper--vertical .swiper-slide.wp-swiper-slide-current {
+		height: var(--wp-swiper-active-width-mobile) !important;
+	}
+}
+
+.wp-swiper--expand .swiper-slide:not(.wp-swiper-slide-current) .wp-swiper__caption {
+	opacity: 0;
+}
+
+.wp-swiper--expand .wp-swiper__caption {
+	transition: opacity var(--wp-swiper-speed, 600ms) ease;
+}
+
+/* Caption */
+.wp-swiper__caption {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 2;
+	padding: 40px 24px 36px; /* bottom room for pagination bullets */
+	/* Caption background color at its opacity, fading to transparent. */
+	background: linear-gradient(to top, var(--wp-swiper-caption-bg-from, rgba(0, 0, 0, 0.65)), var(--wp-swiper-caption-bg-to, rgba(0, 0, 0, 0)));
+	color: var(--wp-swiper-caption-color);
+	font-size: var(--wp-swiper-caption-size, 16px);
+	line-height: 1.4;
+	pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper__caption {
+		font-size: var(--wp-swiper-caption-size-tablet, var(--wp-swiper-caption-size, 16px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper__caption {
+		font-size: var(--wp-swiper-caption-size-mobile, var(--wp-swiper-caption-size-tablet, var(--wp-swiper-caption-size, 16px)));
+	}
+}
+
+/* The caption tag (p, h1-h6...) takes the caption's size and color, not the
+   theme's heading styles; it keeps the theme's heading font and weight
+   unless a weight is set. */
+.wp-swiper .wp-swiper__caption .wp-swiper__caption-text {
+	margin: 0;
+	padding: 0;
+	color: inherit;
+	font-size: inherit;
+	line-height: inherit;
+}
+
+.wp-swiper--caption-weight .wp-swiper__caption .wp-swiper__caption-text {
+	font-weight: var(--wp-swiper-caption-weight);
+}
+
+/* Vertical caption: a band along the left edge of the image. */
+.wp-swiper.wp-swiper--caption-down .wp-swiper__caption,
+.wp-swiper.wp-swiper--caption-up .wp-swiper__caption {
+	top: 0;
+	right: auto;
+	display: flex;
+	align-items: flex-start;
+	padding: 20px 40px 20px 20px;
+	background: linear-gradient(to right, var(--wp-swiper-caption-bg-from, rgba(0, 0, 0, 0.65)), var(--wp-swiper-caption-bg-to, rgba(0, 0, 0, 0)));
+	border-top-left-radius: inherit;
+	border-bottom-right-radius: 0;
+}
+
+.wp-swiper--caption-down .wp-swiper__caption-text,
+.wp-swiper--caption-up .wp-swiper__caption-text {
+	writing-mode: vertical-rl;
+}
+
+/* Bottom to top: turned over, and starting from the bottom. */
+.wp-swiper.wp-swiper--caption-up .wp-swiper__caption {
+	align-items: flex-end;
+}
+
+.wp-swiper--caption-up .wp-swiper__caption-text {
+	transform: rotate(180deg);
+}
+
+/* Caption background: solid band (no room needed for a fade), or none. */
+.wp-swiper.wp-swiper--caption-solid .wp-swiper__caption {
+	padding-top: 14px;
+	padding-bottom: 14px;
+	background: var(--wp-swiper-caption-bg-from, rgba(0, 0, 0, 0.65));
+}
+
+/* Room under the text only when bullets sit over the bottom of the slides. */
+.wp-swiper.wp-swiper--caption-solid.wp-swiper--pag-inside.wp-swiper--pag-bottom .wp-swiper__caption {
+	padding-bottom: 36px;
+}
+
+.wp-swiper.wp-swiper--caption-solid.wp-swiper--caption-down .wp-swiper__caption,
+.wp-swiper.wp-swiper--caption-solid.wp-swiper--caption-up .wp-swiper__caption {
+	padding: 20px;
+}
+
+.wp-swiper.wp-swiper--caption-nobg .wp-swiper__caption {
+	background: none;
+}
+
+.wp-swiper--caption-shadow .wp-swiper__caption .wp-swiper__caption-text {
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 14px rgba(0, 0, 0, 0.35);
+}
+
+/* Effects that render outside the slide box. */
+.wp-swiper--effect-cube .swiper,
+.wp-swiper--effect-flip .swiper,
+.wp-swiper--effect-cards .swiper {
+	overflow: visible;
+}
+
+.wp-swiper--effect-cube,
+.wp-swiper--effect-flip,
+.wp-swiper--effect-cards {
+	padding-bottom: 40px;
+}
+
+/* Border radius: set on the slide (see the base .swiper-slide rule), inherited
+   by everything drawn inside it (coverflow slides do not clip, so the image
+   needs its own radius). 0 means square corners for every effect. */
+@media (max-width: 1024px) {
+	.wp-swiper .swiper-slide {
+		border-radius: var(--wp-swiper-radius-tablet, var(--wp-swiper-radius, 0px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper .swiper-slide {
+		border-radius: var(--wp-swiper-radius-mobile, var(--wp-swiper-radius-tablet, var(--wp-swiper-radius, 0px)));
+	}
+}
+
+.wp-swiper .wp-swiper__link,
+.wp-swiper .wp-swiper__image,
+.wp-swiper [class*="swiper-slide-shadow"] {
+	border-radius: inherit;
+}
+
+.wp-swiper .wp-swiper__caption {
+	border-bottom-right-radius: inherit;
+	border-bottom-left-radius: inherit;
+}
+
+.wp-swiper--effect-coverflow .swiper-slide {
+	overflow: visible;
+}
+
+/* Pagination position (horizontal sliders). It sits in .wp-swiper, next to
+   .swiper: over the slides (inside) or above/below them (outside). */
+.wp-swiper .swiper-pagination.swiper-pagination-horizontal {
+	right: 0;
+	left: 0;
+	width: auto;
+	padding: 0 16px;
+	text-align: center;
+	--swiper-pagination-fraction-color: #fff;
+}
+
+.wp-swiper--pag-left .swiper-pagination.swiper-pagination-horizontal {
+	text-align: left;
+}
+
+.wp-swiper--pag-right .swiper-pagination.swiper-pagination-horizontal {
+	text-align: right;
+}
+
+/* Inside: over the slides, `offset` from the edge. */
+.wp-swiper--pag-inside.wp-swiper--pag-bottom .swiper-pagination {
+	top: auto;
+	bottom: var(--wp-swiper-pagination-offset, 16px);
+}
+
+.wp-swiper--pag-inside.wp-swiper--pag-top .swiper-pagination {
+	top: var(--wp-swiper-pagination-offset, 16px);
+	bottom: auto;
+}
+
+/* Cube/flip/cards reserve 40px below the slides for shadows. */
+.wp-swiper--pag-inside.wp-swiper--pag-bottom.wp-swiper--effect-cube .swiper-pagination,
+.wp-swiper--pag-inside.wp-swiper--pag-bottom.wp-swiper--effect-flip .swiper-pagination,
+.wp-swiper--pag-inside.wp-swiper--pag-bottom.wp-swiper--effect-cards .swiper-pagination {
+	bottom: calc(var(--wp-swiper-pagination-offset, 16px) + 40px);
+}
+
+/* Outside: in the flow above or below the slides, in the text color. */
+.wp-swiper--pag-outside {
+	display: flex;
+	flex-direction: column;
+	--swiper-pagination-color: currentColor;
+	--swiper-pagination-bullet-inactive-color: currentColor;
+	--swiper-pagination-bullet-inactive-opacity: 0.3;
+}
+
+/* A flex item defaults to min-width: auto, which would stretch .swiper to
+   the full width of its slide strip. */
+.wp-swiper--pag-outside > .swiper {
+	width: 100%;
+	min-width: 0;
+}
+
+.wp-swiper--pag-outside .swiper-pagination.swiper-pagination-horizontal {
+	position: static;
+	margin-top: var(--wp-swiper-pagination-offset, 16px);
+	transform: none;
+	--swiper-pagination-fraction-color: inherit;
+}
+
+.wp-swiper--pag-outside.wp-swiper--pag-top .swiper-pagination {
+	order: -1;
+	margin-top: 0;
+	margin-bottom: var(--wp-swiper-pagination-offset, 16px);
+}
+
+/* Bullets keep their own spacing; no room needed under the caption text. */
+.wp-swiper--pag-outside .swiper-pagination-bullets {
+	line-height: 0;
+}
+
+/* Pagination position (vertical sliders): a column at the left or right,
+   aligned to the top, center or bottom. */
+.wp-swiper .swiper-pagination.swiper-pagination-vertical {
+	width: auto;
+	white-space: nowrap;
+	--swiper-pagination-fraction-color: #fff;
+}
+
+.wp-swiper--pag-inside.wp-swiper--pagv-right .swiper-pagination {
+	right: var(--wp-swiper-pagination-offset, 16px);
+	left: auto;
+}
+
+.wp-swiper--pag-inside.wp-swiper--pagv-left .swiper-pagination {
+	right: auto;
+	left: var(--wp-swiper-pagination-offset, 16px);
+}
+
+.wp-swiper--pag-inside.wp-swiper--pagv-top .swiper-pagination {
+	top: var(--wp-swiper-pagination-offset, 16px);
+	bottom: auto;
+	transform: none;
+}
+
+.wp-swiper--pag-inside.wp-swiper--pagv-center .swiper-pagination {
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+}
+
+.wp-swiper--pag-inside.wp-swiper--pagv-bottom .swiper-pagination {
+	top: auto;
+	bottom: var(--wp-swiper-pagination-offset, 16px);
+	transform: none;
+}
+
+/* Outside: a column beside the slides. */
+.wp-swiper--pag-outside.wp-swiper--vertical {
+	flex-direction: row;
+}
+
+.wp-swiper--pag-outside.wp-swiper--vertical > .swiper {
+	flex: 1 1 auto;
+	width: auto;
+}
+
+.wp-swiper--pag-outside .swiper-pagination.swiper-pagination-vertical {
+	position: static;
+	flex: 0 0 auto;
+	margin-left: var(--wp-swiper-pagination-offset, 16px);
+	transform: none;
+	--swiper-pagination-fraction-color: inherit;
+}
+
+.wp-swiper--pag-outside.wp-swiper--pagv-left .swiper-pagination {
+	order: -1;
+	margin-right: var(--wp-swiper-pagination-offset, 16px);
+	margin-left: 0;
+}
+
+.wp-swiper--pag-outside.wp-swiper--pagv-top .swiper-pagination {
+	align-self: flex-start;
+}
+
+.wp-swiper--pag-outside.wp-swiper--pagv-center .swiper-pagination {
+	align-self: center;
+}
+
+.wp-swiper--pag-outside.wp-swiper--pagv-bottom .swiper-pagination {
+	align-self: flex-end;
+}
+
+/* Vertical arrows: previous at the top, next at the bottom, pointing up/down
+   (Swiper 11 only styles them for horizontal sliders). */
+.wp-swiper--vertical .swiper-button-prev,
+.wp-swiper--vertical .swiper-button-next {
+	right: auto;
+	left: 50%;
+	margin-top: 0;
+	transform: translateX(-50%) rotate(90deg);
+}
+
+.wp-swiper--vertical .swiper-button-prev {
+	top: 10px;
+}
+
+.wp-swiper--vertical .swiper-button-next {
+	top: auto;
+	bottom: 10px;
+}
+
+/* Reset theme button styles on the arrows (Woodmart styles every button as
+   strongly as Swiper does and loads later), restoring Swiper's own. */
+.wp-swiper .swiper-button-prev,
+.wp-swiper .swiper-button-next {
+	position: absolute;
+	display: flex;
+	color: var(--swiper-navigation-color, var(--swiper-theme-color));
+	min-height: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+	transition: opacity 0.2s;
+}
+
+/* Swiper hides them when there is nothing to scroll; keep that over the display above. */
+.wp-swiper .swiper-button-lock {
+	display: none;
+}
+
+.wp-swiper .swiper-button-prev:hover,
+.wp-swiper .swiper-button-next:hover {
+	color: var(--swiper-navigation-color, var(--swiper-theme-color));
+	background: none;
+	opacity: 0.75;
+}
+
+.wp-swiper .swiper-button-prev:focus-visible,
+.wp-swiper .swiper-button-next:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 4px;
+}
+
+.wp-swiper-notice {
+	padding: 12px 16px;
+	border-left: 4px solid #d63638;
+	background: #fcf0f1;
+	color: #1d2327;
+}
+
+/* Lightbox */
+html.wp-swiper-lightbox-open {
+	overflow: hidden;
+}
+
+.wp-swiper-lightbox {
+	--wp-swiper-lightbox-bg: rgba(0, 0, 0, 0.92);
+	--wp-swiper-lightbox-color: #fff;
+
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	background: var(--wp-swiper-lightbox-bg);
+	color: var(--wp-swiper-lightbox-color);
+	opacity: 0;
+	transition: opacity 0.25s ease;
+}
+
+.wp-swiper-lightbox.is-open {
+	opacity: 1;
+}
+
+.wp-swiper-lightbox__swiper {
+	width: 100%;
+	height: 100%;
+}
+
+.wp-swiper-lightbox .swiper-slide {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.wp-swiper-lightbox .swiper-zoom-container img {
+	max-width: calc(100% - 140px);
+	max-height: calc(100% - 140px);
+	border-radius: var(--wp-swiper-lightbox-radius, 0px);
+	object-fit: contain;
+	cursor: zoom-in;
+}
+
+.wp-swiper-lightbox .swiper-slide-zoomed .swiper-zoom-container img {
+	cursor: grab;
+}
+
+.wp-swiper-lightbox__bar {
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 0;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 12px 12px 20px;
+	pointer-events: none;
+}
+
+.wp-swiper-lightbox__counter {
+	font-size: 14px;
+	letter-spacing: 1px;
+	opacity: 0.8;
+}
+
+.wp-swiper-lightbox__caption {
+	position: absolute;
+	right: 0;
+	bottom: 24px;
+	left: 0;
+	padding: 0 20px;
+	font-size: 15px;
+	line-height: 1.4;
+	text-align: center;
+}
+
+/* Buttons: reset theme styles, draw icons with borders. */
+.wp-swiper-lightbox button {
+	position: relative;
+	width: 48px;
+	height: 48px;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	color: inherit;
+	cursor: pointer;
+	opacity: 0.75;
+	pointer-events: auto;
+	transition: opacity 0.2s;
+}
+
+.wp-swiper-lightbox button:hover,
+.wp-swiper-lightbox button:focus-visible {
+	background: none;
+	opacity: 1;
+}
+
+.wp-swiper-lightbox button:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: -4px;
+}
+
+.wp-swiper-lightbox__close::before,
+.wp-swiper-lightbox__close::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 26px;
+	height: 2px;
+	background: currentColor;
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.wp-swiper-lightbox__close::after {
+	transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.wp-swiper-lightbox__prev,
+.wp-swiper-lightbox__next {
+	position: absolute !important;
+	top: 50%;
+	z-index: 2;
+	transform: translateY(-50%);
+}
+
+.wp-swiper-lightbox__prev {
+	left: 16px;
+}
+
+.wp-swiper-lightbox__next {
+	right: 16px;
+}
+
+.wp-swiper-lightbox__prev::before,
+.wp-swiper-lightbox__next::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 16px;
+	height: 16px;
+	border-top: 2px solid currentColor;
+	border-left: 2px solid currentColor;
+	transform: translate(-30%, -50%) rotate(-45deg);
+}
+
+.wp-swiper-lightbox__next::before {
+	transform: translate(-70%, -50%) rotate(135deg);
+}
+
+.wp-swiper-lightbox .swiper-button-disabled {
+	opacity: 0.25;
+	cursor: default;
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-lightbox .swiper-zoom-container img {
+		max-width: 100%;
+		max-height: calc(100% - 120px);
+	}
+
+	.wp-swiper-lightbox__prev,
+	.wp-swiper-lightbox__next {
+		display: none; /* swipe instead */
+	}
+}
+
+/* Cards: the slider takes 80% of its block, leaving room on the sides for the
+   stack behind the active card (else the stack would widen the page). Stronger
+   than the full width an outside pagination gives the slider. */
+.wp-swiper.wp-swiper--effect-cards .swiper {
+	width: 80%;
+	margin-right: auto;
+	margin-left: auto;
+}
+
+/* Cards: the cards move on their own (not the strip), each with its own
+   transition; easing in and out keeps the card leaving and the one coming
+   up in step instead of both lurching at the start. */
+.wp-swiper--effect-cards .swiper-slide {
+	transition-timing-function: ease-in-out;
+}
+
+/* Creative "Carousel": Swiper's creative slides span the slider; the image
+   takes the --wp-swiper-carousel-width share of it, in the middle, so the
+   neighbours beside it stay in view. Only the image takes clicks (the rest of
+   a slide on top would hide the neighbours from them), and the depth shading
+   covers just the image. */
+.wp-swiper--carousel .swiper-slide {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.wp-swiper--carousel .wp-swiper__media {
+	flex: none;
+	pointer-events: auto;
+}
+
+/* Centred creative slides: Swiper offsets the wrapper by translateX even in a
+   vertical slider (where the slides place themselves along Y), pushing the
+   whole strip sideways. */
+.wp-swiper--carousel.wp-swiper--vertical .swiper-wrapper {
+	transform: none !important;
+}
+
+/* Slides past the last neighbour (parked under it by Swiper): out of view.
+   Swiper's own opacity is inline, hence !important; the slide's transition
+   (opacity included) fades them. */
+.wp-swiper--carousel .swiper-slide.wp-swiper-slide-beyond {
+	opacity: 0 !important;
+}
+
+.wp-swiper--carousel .swiper-slide.wp-swiper-slide-beyond .wp-swiper__media {
+	pointer-events: none;
+}
+
+.wp-swiper--carousel.wp-swiper--horizontal .wp-swiper__media {
+	width: calc(var(--wp-swiper-carousel-width, 1) * 100%);
+}
+
+.wp-swiper--carousel.wp-swiper--vertical .wp-swiper__media {
+	height: calc(var(--wp-swiper-carousel-width, 1) * 100%);
+}
+
+/* "Contain": the whole image within that share, placed across the slider per
+   Image alignment (along it, always in the middle). */
+.wp-swiper--carousel.wp-swiper--fit-contain.wp-swiper--horizontal .swiper-slide {
+	align-items: var(--wp-swiper-align, center);
+}
+
+.wp-swiper--carousel.wp-swiper--fit-contain.wp-swiper--vertical .swiper-slide {
+	justify-content: var(--wp-swiper-justify, center);
+}
+
+.wp-swiper--carousel.wp-swiper--fit-contain.wp-swiper--horizontal .wp-swiper__media {
+	width: min(calc(var(--wp-swiper-carousel-width, 1) * 100cqw), 100cqh * var(--wp-swiper-img-ratio, 1));
+	height: min(100cqh, calc(var(--wp-swiper-carousel-width, 1) * 100cqw) / var(--wp-swiper-img-ratio, 1));
+}
+
+.wp-swiper--carousel.wp-swiper--fit-contain.wp-swiper--vertical .wp-swiper__media {
+	width: min(100cqw, calc(var(--wp-swiper-carousel-width, 1) * 100cqh) * var(--wp-swiper-img-ratio, 1));
+	height: min(calc(var(--wp-swiper-carousel-width, 1) * 100cqh), 100cqw / var(--wp-swiper-img-ratio, 1));
+}
+
+.wp-swiper--carousel.wp-swiper--horizontal .swiper-slide-shadow-creative {
+	left: calc((1 - var(--wp-swiper-carousel-width, 1)) * 50%);
+	width: calc(var(--wp-swiper-carousel-width, 1) * 100%);
+}
+
+.wp-swiper--carousel.wp-swiper--vertical .swiper-slide-shadow-creative {
+	top: calc((1 - var(--wp-swiper-carousel-width, 1)) * 50%);
+	height: calc(var(--wp-swiper-carousel-width, 1) * 100%);
+}
+
+/* Cube: Swiper's black shadow under the cube, at the set opacity. */
+.wp-swiper .swiper-cube .swiper-cube-shadow {
+	opacity: var(--wp-swiper-cube-shadow-opacity, 0.6);
+}
+
+/* Cube/flip keep the faces next to the active one visible and clickable all
+   the time; only backface-visibility hides them, which GPU rendering does not
+   always honour: they would show through a "Contain" image's empty band and
+   catch clicks meant for the image. Hide them at rest; frontend.js marks the
+   slider .wp-swiper--turning while it turns. Their content gets
+   backface-visibility too, for the turn itself. */
+.wp-swiper--effect-cube:not(.wp-swiper--turning) .swiper-slide:not(.swiper-slide-active),
+.wp-swiper--effect-flip:not(.wp-swiper--turning) .swiper-slide:not(.swiper-slide-active) {
+	visibility: hidden;
+}
+
+.wp-swiper--effect-cube .swiper-slide *,
+.wp-swiper--effect-flip .swiper-slide * {
+	backface-visibility: hidden;
+}
