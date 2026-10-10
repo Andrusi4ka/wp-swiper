@@ -29,6 +29,9 @@ class WP_Swiper_WPBakery {
 			'base'        => WP_Swiper_Render::SHORTCODE,
 			'icon'        => WP_SWIPER_URL . 'assets/images/wpbakery-icon.svg',
 			'category'    => __( 'Content', 'wp-swiper' ),
+			// Last in the "Add element" list: WPBakery sorts by weight (default 0),
+			// then by mapping order, where a plugin's element comes first.
+			'weight'      => -100,
 			'description' => __( 'Image slider created in WP Swiper', 'wp-swiper' ),
 			'params'      => array(
 				array(
