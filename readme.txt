@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,6 +45,13 @@ From this plugin's GitHub releases. The plugin header's "Update URI" stops WordP
 It does not apply with the current settings (for example Slides per view with Fade, which always shows one slide). Its value is kept and comes back when it applies again.
 
 == Changelog ==
+
+= 1.1.2 =
+* Cards: arrows, pagination, keyboard and autoplay move the cards frame by frame, so the next card comes on top halfway through the move (as when dragged) instead of at once.
+* Cards: at most three cards of the stack show on each side, and the stack never widens the page on a phone; Stack offset goes up to 15%.
+* Creative Carousel with Contain: all images share one height (vertical sliders: one width), so the middle image is always the biggest, and the slider is no taller than the images.
+* Creative Carousel: captions show on the middle slide only.
+* Fixed: on a phone, a slider with Contain could get the desktop height limit (the device was read before the page settled); devices are now read through the same media queries as the CSS.
 
 = 1.1.1 =
 * Fixed: pagination over the slider is now placed from the slides' edges in every effect and direction. Vertical Cube, Flip and Cards no longer put "bottom" pagination 40px below the slides or "center" 20px off, and Cards side pagination sits on the card.

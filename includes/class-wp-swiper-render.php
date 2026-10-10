@@ -145,8 +145,9 @@ class WP_Swiper_Render {
 				'carousel' => WP_Swiper_Settings::carousel( $settings ),
 			) : false,
 			'cards'         => 'cards' === $settings['effect'] ? array(
-				// Below 5 (allowed before) the far cards fly off the page.
-				'offset' => max( 5, (int) $settings['cards_offset'] ),
+				// 5..15 (wider ranges were allowed before): below, the far cards fly
+				// off the page; above, even three cards spread past the block.
+				'offset' => max( 5, min( 15, (int) $settings['cards_offset'] ) ),
 				'rotate' => $settings['cards_rotate'],
 				'tilt'   => $settings['cards_tilt'],
 			) : false,
@@ -334,6 +335,21 @@ class WP_Swiper_Render {
 		$carousel = WP_Swiper_Settings::carousel( $settings );
 		if ( $carousel ) {
 			$style[] = '--wp-swiper-carousel-width:' . $carousel['width'];
+			// "Contain": the proportions of the image that sets the shared size
+			// (CSS): the widest one, across a vertical slider the tallest.
+			if ( 'contain' === $settings['image_fit'] ) {
+				$ratios = array();
+				foreach ( $slides as $slide ) {
+					$src = wp_get_attachment_image_src( $slide['id'], 'full' );
+					if ( $src && $src[1] && $src[2] ) {
+						$ratios[] = $src[1] / $src[2];
+					}
+				}
+				if ( $ratios ) {
+					$ratio   = 'horizontal' === $settings['direction'] ? max( $ratios ) : min( $ratios );
+					$style[] = '--wp-swiper-carousel-ratio:' . round( $ratio, 4 );
+				}
+			}
 		}
 		// Cube: how dark its (black) shadow is, and room under the slider for it
 		// (it falls `offset` below the cube and is blurred some 20px further).

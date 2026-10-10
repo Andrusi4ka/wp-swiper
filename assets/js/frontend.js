@@ -98,22 +98,121 @@
 	}
 
 	/**
+	 * Hide the slides more than `limit` steps from the current one (CSS
+	 * .wp-swiper-slide-beyond: faded out with the slide's own transition).
+	 */
+	function hideBeyond( swiper, limit ) {
+		var update = function () {
+			swiper.slides.forEach( function ( slide ) {
+				slide.classList.toggle( 'wp-swiper-slide-beyond', Math.abs( slide.progress ) > limit + 0.5 );
+			} );
+		};
+		swiper.on( 'setTranslate', update );
+		update();
+	}
+
+	// Cards: how many cards of the stack show on each side. Further ones only
+	// spread it wider (past the block on a phone) without looking any fuller.
+	var CARDS_IN_STACK = 3;
+
+	/**
+	 * Cards: every move (arrows, pagination, keyboard, autoplay, the end of a
+	 * drag) drawn frame by frame, like a drag. Swiper otherwise sets the end
+	 * state at once and lets CSS move the cards there: the card coming up is
+	 * put on top (z-index, which does not animate) at the very start, before
+	 * it has moved. Drawn this way it takes the top halfway, as when dragged.
+	 * The slider's state (index, pagination, events) changes at the start as
+	 * usual; only the drawing follows over Transition speed.
+	 */
+	function cardsTween( swiper ) {
+		var slideTo = swiper.slideTo;
+		var emit = swiper.emit;
+		var frame = null;
+		// "...TransitionEnd" events of the instant move, held back until the
+		// drawing ends: the autoplay times its delay from them.
+		var ended = [];
+
+		function flush() {
+			var events = ended;
+			ended = [];
+			if ( ! events.length ) {
+				return;
+			}
+			// Swiper's autoplay pauses at each move until the strip's CSS
+			// transition ends ("transitionend" on the wrapper): there is none here.
+			if ( swiper.wrapperEl ) {
+				swiper.wrapperEl.dispatchEvent( new Event( 'transitionend' ) );
+			}
+			events.forEach( function ( args ) {
+				emit.apply( swiper, args );
+			} );
+		}
+
+		function stop() {
+			if ( frame ) {
+				cancelAnimationFrame( frame );
+				frame = null;
+			}
+			flush();
+		}
+
+		// A drag takes over from wherever the cards are.
+		swiper.on( 'touchStart destroy', stop );
+
+		swiper.slideTo = function ( index, speed, runCallbacks, internal, initial ) {
+			if ( undefined === speed ) {
+				speed = swiper.params.speed;
+			}
+			stop();
+			if ( ! speed || swiper.destroyed ) {
+				return slideTo.call( swiper, index, speed, runCallbacks, internal, initial );
+			}
+
+			var from = swiper.translate;
+			swiper.emit = function ( name ) {
+				if ( /TransitionEnd$|^transitionEnd$/.test( name ) ) {
+					ended.push( arguments );
+					return swiper;
+				}
+				return emit.apply( swiper, arguments );
+			};
+			var result = slideTo.call( swiper, index, 0, runCallbacks, internal, initial );
+			swiper.emit = emit;
+			var to = swiper.translate;
+			if ( from === to ) {
+				flush();
+				return result;
+			}
+
+			var start = null;
+			var step = function ( now ) {
+				if ( null === start ) {
+					start = now;
+				}
+				var t = Math.min( 1, ( now - start ) / speed );
+				// Ease in and out, as the cards' own transition did.
+				var eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow( -2 * t + 2, 3 ) / 2;
+				swiper.setTranslate( from + ( to - from ) * eased );
+				frame = t < 1 ? requestAnimationFrame( step ) : null;
+				if ( ! frame ) {
+					flush();
+				}
+			};
+			swiper.setTranslate( from );
+			frame = requestAnimationFrame( step );
+			return result;
+		};
+	}
+
+	/**
 	 * Creative "Carousel": slides past the last neighbour hidden, and a click
 	 * on a neighbour brings it to the middle instead of opening its link or
 	 * the lightbox (captured, so before them).
 	 */
 	function carouselSetup( swiper, el ) {
 		// Swiper parks every slide past the last neighbour on that neighbour's
-		// spot, underneath it: with "Contain" images of other proportions peek
-		// out. Hide them (CSS fades them in and out with the slide's transition).
-		var neighbours = swiper.params.creativeEffect.limitProgress;
-		var hideBeyond = function () {
-			swiper.slides.forEach( function ( slide ) {
-				slide.classList.toggle( 'wp-swiper-slide-beyond', Math.abs( slide.progress ) > neighbours + 0.5 );
-			} );
-		};
-		swiper.on( 'setTranslate', hideBeyond );
-		hideBeyond();
+		// spot, underneath it: with "Contain" images of other proportions peek out.
+		hideBeyond( swiper, swiper.params.creativeEffect.limitProgress );
 
 		el.addEventListener( 'click', function ( e ) {
 			var slide = e.target.closest( '.swiper-slide' );
@@ -129,12 +228,13 @@
 	var CURRENT_CLASS = 'wp-swiper-slide-current';
 
 	// Same breakpoints as the CSS and Swiper's own: mobile < 768 <= tablet < 1025 <= desktop.
+	// Asked through the CSS's own media queries, so both always agree (a
+	// width read too early, before the viewport settles, could not).
 	function device() {
-		var width = window.innerWidth;
-		if ( width < BREAKPOINT_TABLET ) {
+		if ( window.matchMedia( '(max-width: ' + ( BREAKPOINT_TABLET - 1 ) + 'px)' ).matches ) {
 			return 'mobile';
 		}
-		return width < BREAKPOINT_DESKTOP ? 'tablet' : 'desktop';
+		return window.matchMedia( '(max-width: ' + ( BREAKPOINT_DESKTOP - 1 ) + 'px)' ).matches ? 'tablet' : 'desktop';
 	}
 
 	function realIndexOf( slide ) {
@@ -1026,6 +1126,10 @@
 		if ( carouselOf( config ) ) {
 			carouselSetup( swiper, el );
 		}
+		if ( 'cards' === config.effect ) {
+			hideBeyond( swiper, CARDS_IN_STACK );
+			cardsTween( swiper );
+		}
 
 		if ( config.expand ) {
 			controller = expandController( swiper, el, config );
@@ -1153,14 +1257,24 @@
 
 		// The tallest image is the one with the smallest width / height.
 		var ratio = Infinity;
+		var widest = 0;
 		el.querySelectorAll( '.wp-swiper__image' ).forEach( function ( img ) {
 			var r = img.getAttribute( 'width' ) / img.getAttribute( 'height' );
 			if ( r > 0 ) {
 				ratio = Math.min( ratio, r );
+				widest = Math.max( widest, r );
 			}
 		} );
 		if ( ratio === Infinity ) {
 			return 0;
+		}
+
+		// Creative "Carousel": all images share the height at which the widest
+		// fits the middle share of the slider (CSS); a vertical slider's
+		// images share a width instead, nothing to cap.
+		var carousel = carouselOf( config );
+		if ( carousel ) {
+			return config.direction === 'vertical' ? 0 : Math.floor( carousel.width * el.clientWidth / widest );
 		}
 
 		if ( config.direction === 'vertical' ) {
@@ -1172,7 +1286,8 @@
 	/**
 	 * A set Height ("px", "vh", "%"), capped for "Contain" (see containCap).
 	 * Before Swiper starts (vertical sliders measure their height) and on
-	 * resize: Swiper notices the new size itself.
+	 * resize: Swiper notices the new size itself. Returns the update, for
+	 * Swiper's own resize too.
 	 */
 	function capHeight( el, config ) {
 		function apply() {
@@ -1181,6 +1296,7 @@
 		}
 		apply();
 		window.addEventListener( 'resize', apply );
+		return apply;
 	}
 
 	/**
@@ -1283,10 +1399,11 @@
 			// slides take their width from a set height.
 			var wrapper = el.parentNode;
 			var needsFixed = config.direction === 'vertical' || !! config.expand || !! config.autoWidth || !! carouselOf( config );
+			var recap = null;
 			if ( config.fill ) {
 				fillHeight( wrapper, needsFixed, containCap( el, config ) );
 			} else {
-				capHeight( el, config );
+				recap = capHeight( el, config );
 			}
 
 			var options = buildOptions( el, config );
@@ -1318,6 +1435,12 @@
 					swiper.on( 'resize update', function () {
 						imageSizes( swiper, config );
 					} );
+					// The cap again whenever Swiper resizes or changes device (a
+					// new cap only resizes it once more, to the same result).
+					if ( recap ) {
+						recap();
+						swiper.on( 'resize breakpoint', recap );
+					}
 				}
 			};
 

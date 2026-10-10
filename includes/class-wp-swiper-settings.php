@@ -535,9 +535,9 @@ class WP_Swiper_Settings {
 				'type'    => 'number',
 				'default' => 8,
 				'min'     => 5,
-				'max'     => 30,
+				'max'     => 15,
 				'step'    => 1,
-				'help'    => __( 'How far each card of the stack peeks out from under the one above it, in % of the card width. Up to about 8 the stack stays within the block.', 'wp-swiper' ),
+				'help'    => __( 'How far each card of the stack peeks out from under the one above it, in % of the card width. Three cards show on each side; what reaches past the block is cut off.', 'wp-swiper' ),
 			),
 			// Swiper's cardsEffect.rotate: all rotation of the cards (the stack's
 			// and the moving card's), so Stack rotation applies only with it.

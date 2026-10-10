@@ -696,13 +696,6 @@ html.wp-swiper-lightbox-open {
 	margin-left: auto;
 }
 
-/* Cards: the cards move on their own (not the strip), each with its own
-   transition; easing in and out keeps the card leaving and the one coming
-   up in step instead of both lurching at the start. */
-.wp-swiper--effect-cards .swiper-slide {
-	transition-timing-function: ease-in-out;
-}
-
 /* Creative "Carousel": Swiper's creative slides span the slider; the image
    takes the --wp-swiper-carousel-width share of it, in the middle, so the
    neighbours beside it stay in view. Only the image takes clicks (the rest of
@@ -727,15 +720,37 @@ html.wp-swiper-lightbox-open {
 	transform: none !important;
 }
 
-/* Slides past the last neighbour (parked under it by Swiper): out of view.
-   Swiper's own opacity is inline, hence !important; the slide's transition
-   (opacity included) fades them. */
+/* Slides too far from the current one (frontend.js hideBeyond()): the
+   carousel's past the last neighbour (parked under it by Swiper), the cards
+   past the third of the stack. The carousel's fade with the slide's own
+   transition (Swiper's opacity is inline, hence !important). The cards are
+   drawn frame by frame (frontend.js cardsTween(), no slide transition), so
+   their content fades on a transition of its own. */
 .wp-swiper--carousel .swiper-slide.wp-swiper-slide-beyond {
 	opacity: 0 !important;
 }
 
-.wp-swiper--carousel .swiper-slide.wp-swiper-slide-beyond .wp-swiper__media {
+.wp-swiper--effect-cards .wp-swiper__media {
+	transition: opacity var(--wp-swiper-speed, 600ms) ease;
+}
+
+/* The shading Swiper redraws every frame: hidden outright, a transition would
+   make it lag behind the card. */
+.wp-swiper--effect-cards .swiper-slide.wp-swiper-slide-beyond .wp-swiper__media,
+.wp-swiper--effect-cards .swiper-slide.wp-swiper-slide-beyond .swiper-slide-shadow {
+	opacity: 0 !important;
+}
+
+.wp-swiper--carousel .swiper-slide.wp-swiper-slide-beyond .wp-swiper__media,
+.wp-swiper--effect-cards .swiper-slide.wp-swiper-slide-beyond .wp-swiper__media {
 	pointer-events: none;
+}
+
+/* Cards: the stack (and a card swung while dragged) never widens the page:
+   cut at the block's sides on a narrow screen. Not at its bottom, where the
+   tilted cards of the stack dip below the slides. */
+.wp-swiper.wp-swiper--effect-cards {
+	overflow-x: clip;
 }
 
 .wp-swiper--carousel.wp-swiper--horizontal .wp-swiper__media {
@@ -756,14 +771,27 @@ html.wp-swiper-lightbox-open {
 	justify-content: var(--wp-swiper-justify, center);
 }
 
+/* All images one height (vertical sliders: one width), the one at which the
+   widest image (tallest, --wp-swiper-carousel-ratio from render.php) just
+   fits the middle share; each image as wide as its proportions make it. So
+   the middle image is always the biggest, whatever the images' shapes. */
 .wp-swiper--carousel.wp-swiper--fit-contain.wp-swiper--horizontal .wp-swiper__media {
-	width: min(calc(var(--wp-swiper-carousel-width, 1) * 100cqw), 100cqh * var(--wp-swiper-img-ratio, 1));
-	height: min(100cqh, calc(var(--wp-swiper-carousel-width, 1) * 100cqw) / var(--wp-swiper-img-ratio, 1));
+	height: min(100cqh, calc(var(--wp-swiper-carousel-width, 1) * 100cqw / var(--wp-swiper-carousel-ratio, 1)));
+	width: calc(min(100cqh, calc(var(--wp-swiper-carousel-width, 1) * 100cqw / var(--wp-swiper-carousel-ratio, 1))) * var(--wp-swiper-img-ratio, 1));
 }
 
 .wp-swiper--carousel.wp-swiper--fit-contain.wp-swiper--vertical .wp-swiper__media {
-	width: min(100cqw, calc(var(--wp-swiper-carousel-width, 1) * 100cqh) * var(--wp-swiper-img-ratio, 1));
-	height: min(calc(var(--wp-swiper-carousel-width, 1) * 100cqh), 100cqw / var(--wp-swiper-img-ratio, 1));
+	width: min(100cqw, calc(var(--wp-swiper-carousel-width, 1) * 100cqh * var(--wp-swiper-carousel-ratio, 1)));
+	height: calc(min(100cqw, calc(var(--wp-swiper-carousel-width, 1) * 100cqh * var(--wp-swiper-carousel-ratio, 1))) / var(--wp-swiper-img-ratio, 1));
+}
+
+/* Captions on the middle slide only: the neighbours are too small for them. */
+.wp-swiper--carousel .wp-swiper__caption {
+	transition: opacity var(--wp-swiper-speed, 600ms) ease;
+}
+
+.wp-swiper--carousel .swiper-slide:not(.swiper-slide-active) .wp-swiper__caption {
+	opacity: 0;
 }
 
 .wp-swiper--carousel.wp-swiper--horizontal .swiper-slide-shadow-creative {
