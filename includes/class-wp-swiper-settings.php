@@ -243,6 +243,32 @@ class WP_Swiper_Settings {
 				'max'        => 200,
 				'step'       => 1,
 			),
+			// A frame drawn over the image (follows its corners; with "Contain"
+			// the image, not the empty band). Width and color once it is on.
+			'image_border'          => array(
+				'section' => 'layout',
+				'label'   => __( 'Image border', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+			),
+			'image_border_width'    => array(
+				'section'    => 'layout',
+				'group'      => 'image_border',
+				'label'      => __( 'Width (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 2,
+				'min'        => 0,
+				'max'        => 50,
+				'step'       => 1,
+			),
+			'image_border_color'    => array(
+				'section' => 'layout',
+				'group'   => 'image_border',
+				'label'   => __( 'Color', 'wp-swiper' ),
+				'type'    => 'color',
+				'default' => '#ffffff',
+			),
 			'centered_slides'       => array(
 				'section' => 'layout',
 				// Coverflow always centres the active slide.

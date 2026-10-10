@@ -375,6 +375,10 @@
 			field( 'cube_shadow_opacity' ).toggle( effect === 'cube' && cubeShadow );
 			lockCubeFaces( effect === 'cube' && ! cover );
 			field( 'navigation_color' ).toggle( $( '#wp-swiper-navigation' ).is( ':checked' ) );
+			// Image border: its width and color once it is on.
+			var border = $( '#wp-swiper-image_border' ).is( ':checked' );
+			field( 'image_border_width' ).toggle( border );
+			field( 'image_border_color' ).toggle( border );
 			// Continuous scroll: the delay shown greyed (locked above), the pause
 			// applies (frontend.js stops the strip where it is).
 			field( 'autoplay_delay' ).toggle( autoplay || marquee );

@@ -302,6 +302,7 @@ class WP_Swiper_Render {
 			WP_Swiper_Settings::is_marquee( $settings ) ? 'wp-swiper--marquee' : '',
 			WP_Swiper_Settings::is_carousel( $settings ) ? 'wp-swiper--carousel' : '',
 			$settings['lightbox'] ? 'wp-swiper--lightbox' : '',
+			$settings['image_border'] ? 'wp-swiper--border' : '',
 			// Caption: a set weight overrides the tag's own; vertical text.
 			'' !== $settings['caption_weight'] ? 'wp-swiper--caption-weight' : '',
 			'horizontal' !== $settings['caption_orientation'] ? 'wp-swiper--caption-' . $settings['caption_orientation'] : '',
@@ -418,6 +419,13 @@ class WP_Swiper_Render {
 			if ( '' !== $settings[ 'border_radius_' . $device ] ) {
 				$style[] = '--wp-swiper-radius-' . $device . ':' . (int) $settings[ 'border_radius_' . $device ] . 'px';
 			}
+		}
+		// Image border: width per device (0 = none there), one color.
+		if ( $settings['image_border'] ) {
+			foreach ( WP_Swiper_Settings::responsive( $settings, 'image_border_width' ) as $device => $width ) {
+				$style[] = '--wp-swiper-border-width' . $suffix[ $device ] . ':' . (int) $width . 'px';
+			}
+			$style[] = '--wp-swiper-border-color:' . $settings['image_border_color'];
 		}
 		if ( $expand ) {
 			foreach ( WP_Swiper_Settings::responsive( $settings, 'active_width' ) as $device => $width ) {
