@@ -61,16 +61,6 @@ class WP_Swiper_Settings {
 				'max'     => 10000,
 				'step'    => 50,
 			),
-			// Autoplay's, next to the other timing (shown while Autoplay is on).
-			'autoplay_delay'        => array(
-				'section' => 'advanced',
-				'label'   => __( 'Delay between slides (ms)', 'wp-swiper' ),
-				'type'    => 'number',
-				'default' => 4000,
-				'min'     => 500,
-				'max'     => 60000,
-				'step'    => 100,
-			),
 			'loop'                  => array(
 				'section' => 'advanced',
 				'label'   => __( 'Infinite loop', 'wp-swiper' ),
@@ -83,6 +73,16 @@ class WP_Swiper_Settings {
 				'label'   => __( 'Autoplay', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => false,
+			),
+			// Right under Autoplay, shown while it (or Continuous scroll) is on.
+			'autoplay_delay'        => array(
+				'section' => 'advanced',
+				'label'   => __( 'Delay between slides (ms)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 4000,
+				'min'     => 500,
+				'max'     => 60000,
+				'step'    => 100,
 			),
 			'pause_on_hover'        => array(
 				'section' => 'advanced',

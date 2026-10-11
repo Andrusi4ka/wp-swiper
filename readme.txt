@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,9 @@ Deleting it under Plugins removes all sliders with their slides and settings. De
 It does not apply with the current settings (for example Slides per view with Fade, which always shows one slide). Its value is kept and comes back when it applies again.
 
 == Changelog ==
+
+= 1.1.5 =
+* "Delay between slides" now sits right under Autoplay in the slider settings.
 
 = 1.1.4 =
 * Deleting the plugin under Plugins now removes its sliders (with their slides and settings) and its update data. Deactivating or updating keeps them; images stay in the media library.
