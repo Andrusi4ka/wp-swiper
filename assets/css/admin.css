@@ -243,13 +243,16 @@
    One look for all of them, in explicit colors: no opacity, which WordPress
    already applies to disabled controls and would stack up. */
 .wp-swiper-field.is-disabled label,
-.wp-swiper-field.is-disabled .description {
+.wp-swiper-field.is-disabled .description,
+.wp-swiper-settings__section.is-locked .wp-swiper-field label,
+.wp-swiper-settings__section.is-locked .wp-swiper-field .description {
 	color: #a7aaad;
 	cursor: not-allowed;
 }
 
 /* A color swatch draws over its background: fade the swatch itself. */
-.wp-swiper-field.is-disabled input[type="color"] {
+.wp-swiper-field.is-disabled input[type="color"],
+.wp-swiper-settings__section.is-locked input[type="color"] {
 	opacity: 0.4;
 }
 
@@ -259,8 +262,11 @@
 	pointer-events: none;
 }
 
+/* .is-locked: a whole box that does not apply (Controls with Thumbnails). */
 .wp-swiper-field.is-disabled input,
-.wp-swiper-field.is-disabled select {
+.wp-swiper-field.is-disabled select,
+.wp-swiper-settings__section.is-locked .wp-swiper-field input,
+.wp-swiper-settings__section.is-locked .wp-swiper-field select {
 	border-color: #dcdcde;
 	background-color: #f6f7f7;
 	box-shadow: none;

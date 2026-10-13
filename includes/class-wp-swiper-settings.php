@@ -17,7 +17,7 @@ class WP_Swiper_Settings {
 	/**
 	 * Effects that always show exactly one slide.
 	 */
-	const SINGLE_SLIDE_EFFECTS = array( 'fade', 'cube', 'flip', 'cards', 'creative' );
+	const SINGLE_SLIDE_EFFECTS = array( 'fade', 'cube', 'flip', 'cards', 'creative', 'thumbs' );
 
 	/**
 	 * Field definitions grouped into sections. `effects`: the effects a field
@@ -40,6 +40,8 @@ class WP_Swiper_Settings {
 					'flip'      => __( 'Flip', 'wp-swiper' ),
 					'cards'     => __( 'Cards', 'wp-swiper' ),
 					'creative'  => __( 'Creative', 'wp-swiper' ),
+					// One slide at a time, picked from a strip of thumbnails.
+					'thumbs'    => __( 'Thumbnails', 'wp-swiper' ),
 				),
 			),
 			'direction'             => array(
@@ -587,6 +589,142 @@ class WP_Swiper_Settings {
 				'help'    => __( 'Tilt of each card of the stack. 0 = straight.', 'wp-swiper' ),
 			),
 
+			// Thumbnails effect: the strip of small images that picks the slide.
+			'thumbs_position'       => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'label'   => __( 'Thumbnails position', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'bottom',
+				'choices' => array(
+					'bottom' => __( 'Below the slider', 'wp-swiper' ),
+					'top'    => __( 'Above the slider', 'wp-swiper' ),
+					'left'   => __( 'Left of the slider', 'wp-swiper' ),
+					'right'  => __( 'Right of the slider', 'wp-swiper' ),
+				),
+				'help'    => __( 'Left or right: a column as tall as the slider; its width follows from the thumbnail size.', 'wp-swiper' ),
+			),
+			'thumbs_per_view'       => array(
+				'section'         => 'layout',
+				'effects'         => array( 'thumbs' ),
+				'label'           => __( 'Thumbnails per view', 'wp-swiper' ),
+				'type'            => 'number',
+				'responsive'      => true,
+				'default'         => 6,
+				'device_defaults' => array( 'mobile' => 4 ),
+				'min'             => 2,
+				'max'             => 20,
+				'step'            => 1,
+				'help'            => __( 'Sets the thumbnail size: this many fill the strip. With more slides the strip scrolls.', 'wp-swiper' ),
+			),
+			'thumbs_gap'            => array(
+				'section'    => 'layout',
+				'effects'    => array( 'thumbs' ),
+				'label'      => __( 'Space between thumbnails (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 10,
+				'min'        => 0,
+				'max'        => 100,
+				'step'       => 1,
+			),
+			'thumbs_spacing'        => array(
+				'section'    => 'layout',
+				'effects'    => array( 'thumbs' ),
+				'label'      => __( 'Gap to the slider (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 10,
+				'min'        => 0,
+				'max'        => 200,
+				'step'       => 1,
+			),
+			'thumbs_ratio'          => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'label'   => __( 'Thumbnail proportions', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => '4-3',
+				'choices' => array(
+					'1-1'  => __( 'Square (1:1)', 'wp-swiper' ),
+					'4-3'  => '4:3',
+					'3-2'  => '3:2',
+					'16-9' => '16:9',
+				),
+				'help'    => __( 'The images are cropped or shown whole per “Image fit”.', 'wp-swiper' ),
+			),
+			'thumbs_align'          => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'label'   => __( 'Thumbnails alignment', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'center',
+				'choices' => array(
+					'center' => __( 'Center', 'wp-swiper' ),
+					'start'  => __( 'Start (left; top in a column)', 'wp-swiper' ),
+				),
+				'help'    => __( 'Where the thumbnails sit while there are too few to fill the strip.', 'wp-swiper' ),
+			),
+			'thumbs_radius'         => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'label'   => __( 'Thumbnail border radius (px)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 0,
+				'min'     => 0,
+				'max'     => 200,
+				'step'    => 1,
+			),
+			'thumbs_padding'        => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'label'   => __( 'Thumbnail padding (px)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 0,
+				'min'     => 0,
+				'max'     => 50,
+				'step'    => 1,
+				'help'    => __( 'Room between the frame and the image.', 'wp-swiper' ),
+			),
+			// One row: the frame's width and its two colors.
+			'thumbs_border_width'   => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'group'   => 'thumbs_border',
+				'label'   => __( 'Frame width (px)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 1,
+				'min'     => 0,
+				'max'     => 20,
+				'step'    => 1,
+			),
+			'thumbs_border_color'   => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'group'   => 'thumbs_border',
+				'label'   => __( 'Frame color', 'wp-swiper' ),
+				'type'    => 'color',
+				'default' => '#dddddd',
+			),
+			'thumbs_active_color'   => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'group'   => 'thumbs_border',
+				'label'   => __( 'Active frame color', 'wp-swiper' ),
+				'type'    => 'color',
+				'default' => '#333333',
+			),
+			'thumbs_opacity'        => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'label'   => __( 'Inactive thumbnail opacity (%)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 60,
+				'min'     => 10,
+				'max'     => 100,
+				'step'    => 5,
+			),
+
 			// Caption text (all slides of the slider).
 			'caption_tag'           => array(
 				'section' => 'caption',
@@ -765,6 +903,27 @@ class WP_Swiper_Settings {
 			// The middle image plus the outermost neighbours' far halves.
 			'width'      => round( min( 1, 1 / ( 2 * $neighbours * $offset + $last ) ), 4 ),
 		);
+	}
+
+	/**
+	 * Thumbnails effect: one slide at a time and a strip of thumbnails that
+	 * picks it. The strip is its only control for now (Controls is not used).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function is_thumbs( $settings ) {
+		return 'thumbs' === $settings['effect'];
+	}
+
+	/**
+	 * Thumbnails effect with the strip as a column left or right of the slider.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function is_thumbs_side( $settings ) {
+		return self::is_thumbs( $settings ) && in_array( $settings['thumbs_position'], array( 'left', 'right' ), true );
 	}
 
 	/**

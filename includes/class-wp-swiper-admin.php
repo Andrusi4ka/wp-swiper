@@ -131,6 +131,10 @@ class WP_Swiper_Admin {
 				echo ' · <span class="wp-swiper-layout-effect">' . esc_html( $effects[ $values['effect'] ] ) . '</span>';
 			}
 			echo '</legend>';
+			if ( 'controls' === $section ) {
+				// admin.js shows it (and greys the box) for the Thumbnails effect.
+				echo '<p class="description wp-swiper-section-note" hidden>' . esc_html__( 'Not used by the Thumbnails effect: the thumbnails switch the slides.', 'wp-swiper' ) . '</p>';
+			}
 			if ( 'caption' === $section ) {
 				// admin.js shows it (and greys the box) while no slide has a caption.
 				echo '<p class="description wp-swiper-section-note" hidden>' . esc_html__( 'Add a caption to a slide to use these settings.', 'wp-swiper' ) . '</p>';

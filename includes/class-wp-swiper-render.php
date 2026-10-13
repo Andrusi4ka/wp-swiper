@@ -94,6 +94,13 @@ class WP_Swiper_Render {
 			$settings['direction'] = 'horizontal';
 		}
 
+		// Thumbnails: the strip switches the slides; Controls is not used (locked in the editor).
+		if ( WP_Swiper_Settings::is_thumbs( $settings ) ) {
+			$settings['navigation'] = false;
+			$settings['pagination'] = 'none';
+			$settings['keyboard']   = false;
+		}
+
 		// A click opens either links or the lightbox, never a mix: any link turns the lightbox off.
 		if ( array_filter( wp_list_pluck( $slides, 'link' ) ) ) {
 			$settings['lightbox'] = false;
@@ -151,6 +158,17 @@ class WP_Swiper_Render {
 				'rotate' => $settings['cards_rotate'],
 				'tilt'   => $settings['cards_tilt'],
 			) : false,
+			// The thumbnails strip, a Swiper of its own (frontend.js thumbs()).
+			'thumbs'        => WP_Swiper_Settings::is_thumbs( $settings ) ? array(
+				'perView' => WP_Swiper_Settings::responsive( $settings, 'thumbs_per_view' ),
+				'gap'     => WP_Swiper_Settings::responsive( $settings, 'thumbs_gap' ),
+				'center'  => 'center' === $settings['thumbs_align'],
+				// A column beside the slider: frontend.js works out its width from
+				// the thumbnails' proportions and frame (border + padding, one side).
+				'side'    => WP_Swiper_Settings::is_thumbs_side( $settings ),
+				'ratio'   => self::thumbs_ratio( $settings ),
+				'frame'   => (int) $settings['thumbs_border_width'] + (int) $settings['thumbs_padding'],
+			) : false,
 			'autoplay'      => $settings['autoplay'] ? array(
 				'delay'             => $settings['autoplay_delay'],
 				'pauseOnMouseEnter' => $settings['pause_on_hover'],
@@ -182,6 +200,17 @@ class WP_Swiper_Render {
 				'centered' => self::centered( $settings ),
 			) : false,
 		);
+	}
+
+	/**
+	 * Thumbnail proportions ("4-3") as width / height.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return float
+	 */
+	private static function thumbs_ratio( $settings ) {
+		list( $width, $height ) = array_map( 'intval', explode( '-', $settings['thumbs_ratio'] ) + array( 1, 1 ) );
+		return $height ? round( $width / $height, 4 ) : 1;
 	}
 
 	/**
@@ -301,6 +330,8 @@ class WP_Swiper_Render {
 			WP_Swiper_Settings::is_auto_width( $settings ) ? 'wp-swiper--auto-width' : '',
 			WP_Swiper_Settings::is_marquee( $settings ) ? 'wp-swiper--marquee' : '',
 			WP_Swiper_Settings::is_carousel( $settings ) ? 'wp-swiper--carousel' : '',
+			WP_Swiper_Settings::is_thumbs( $settings ) ? 'wp-swiper--thumbs-' . $settings['thumbs_position'] : '',
+			WP_Swiper_Settings::is_thumbs_side( $settings ) ? 'wp-swiper--thumbs-side' : '',
 			$settings['lightbox'] ? 'wp-swiper--lightbox' : '',
 			$settings['image_border'] ? 'wp-swiper--border' : '',
 			// Caption: a set weight overrides the tag's own; vertical text.
@@ -363,6 +394,21 @@ class WP_Swiper_Render {
 			'tablet'  => '-tablet',
 			'mobile'  => '-mobile',
 		);
+
+		// Thumbnails: the look of the strip (its sizes come from frontend.js).
+		$thumbs = WP_Swiper_Settings::is_thumbs( $settings );
+		if ( $thumbs ) {
+			foreach ( WP_Swiper_Settings::responsive( $settings, 'thumbs_spacing' ) as $device => $spacing ) {
+				$style[] = '--wp-swiper-thumbs-spacing' . $suffix[ $device ] . ':' . (int) $spacing . 'px';
+			}
+			$style[] = '--wp-swiper-thumb-ratio:' . str_replace( '-', ' / ', $settings['thumbs_ratio'] );
+			$style[] = '--wp-swiper-thumb-radius:' . (int) $settings['thumbs_radius'] . 'px';
+			$style[] = '--wp-swiper-thumb-padding:' . (int) $settings['thumbs_padding'] . 'px';
+			$style[] = '--wp-swiper-thumb-border-width:' . (int) $settings['thumbs_border_width'] . 'px';
+			$style[] = '--wp-swiper-thumb-border-color:' . $settings['thumbs_border_color'];
+			$style[] = '--wp-swiper-thumb-active-color:' . $settings['thumbs_active_color'];
+			$style[] = '--wp-swiper-thumb-opacity:' . max( 10, min( 100, (int) $settings['thumbs_opacity'] ) ) / 100;
+		}
 
 		// Height of the slides per device (0 = 500px), unless "Auto".
 		if ( ! $fill ) {
@@ -467,6 +513,35 @@ class WP_Swiper_Render {
 					<div class="swiper-pagination swiper-no-swiping"></div>
 				<?php endif; ?>
 			</div>
+
+			<?php
+			// Thumbnails: one per real slide (the slider's own markup may repeat
+			// them). After the slider in the markup wherever it shows (CSS order).
+			if ( $thumbs ) :
+				?>
+				<div class="swiper wp-swiper__thumbs">
+					<div class="swiper-wrapper">
+						<?php foreach ( $slides as $index => $slide ) : ?>
+							<?php /* translators: %d: slide number. */ ?>
+							<div class="swiper-slide" data-wp-swiper-index="<?php echo (int) $index; ?>" role="button" tabindex="0" aria-label="<?php echo esc_attr( sprintf( __( 'Go to slide %d', 'wp-swiper' ), $index + 1 ) ); ?>">
+								<?php
+								echo wp_get_attachment_image( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core image markup.
+									$slide['id'],
+									'medium',
+									false,
+									array(
+										'class'    => 'wp-swiper__thumb-image',
+										'loading'  => 'lazy',
+										'decoding' => 'async',
+										'alt'      => '',
+									)
+								);
+								?>
+							</div>
+						<?php endforeach; ?>
+					</div>
+				</div>
+			<?php endif; ?>
 
 			<?php // Above, below or beside the slides: outside .swiper, which clips. ?>
 			<?php if ( $config['pagination'] && ! $pagination_inside ) : ?>

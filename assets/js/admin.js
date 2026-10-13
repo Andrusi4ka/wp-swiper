@@ -313,9 +313,33 @@
 			$layouts.val( JSON.stringify( layouts ) );
 		} );
 
+		// Thumbnails: the strip is the slider's only control for now, so the whole
+		// Controls box is greyed (a disabled fieldset is not sent, so it is enabled
+		// again for the submit and saving keeps its values). The class sits on the
+		// box, not the fields: theirs belongs to the locks above.
+		var $controlsBox = $( 'fieldset[data-section="controls"]' );
+		var controlsLocked = false;
+
+		function syncControls( effect ) {
+			controlsLocked = effect === 'thumbs';
+			$controlsBox.prop( 'disabled', controlsLocked ).toggleClass( 'is-locked', controlsLocked );
+			$controlsBox.find( '.wp-swiper-section-note' ).prop( 'hidden', ! controlsLocked );
+		}
+
+		$( '#post' ).on( 'submit', function () {
+			if ( controlsLocked ) {
+				$controlsBox.prop( 'disabled', false );
+				setTimeout( function () {
+					$controlsBox.prop( 'disabled', controlsLocked );
+				} );
+			}
+		} );
+
 		function syncFields() {
 			var effect = $( '#wp-swiper-effect' ).val();
 			var single = SINGLE_SLIDE_EFFECTS.indexOf( effect ) !== -1;
+
+			syncControls( effect );
 
 			// Slide effect modes (Layout) that make other settings unused: locked
 			// first, so the values read below are the ones that apply.

@@ -633,6 +633,94 @@
 		}
 	}
 
+	var THUMB_ACTIVE_CLASS = 'wp-swiper-thumb-active';
+
+	/**
+	 * Thumbnails effect: the strip under (or above) the slider, one thumbnail
+	 * per real slide. Tied to the slider through its controller, not Swiper's
+	 * own thumbs module, which would count the slides loop mode repeats.
+	 */
+	function thumbs( strip, controller, config ) {
+		var settings = config.thumbs;
+		var items = strip.querySelectorAll( '.swiper-slide' );
+
+		var options = {
+			// Beside the slider: a column (sized by thumbsBeside()).
+			direction: settings.side ? 'vertical' : 'horizontal',
+			slidesPerView: settings.perView.mobile,
+			spaceBetween: settings.gap.mobile,
+			// Too few to fill the strip: in its middle, or at its start.
+			centerInsufficientSlides: !! settings.center,
+			breakpoints: {}
+		};
+		options.breakpoints[ BREAKPOINT_TABLET ] = { slidesPerView: settings.perView.tablet, spaceBetween: settings.gap.tablet };
+		options.breakpoints[ BREAKPOINT_DESKTOP ] = { slidesPerView: settings.perView.desktop, spaceBetween: settings.gap.desktop };
+
+		var swiper = new window.Swiper( strip, options );
+
+		var go = function ( e ) {
+			var item = e.target.closest( '.swiper-slide' );
+			// Not at the end of a drag of the strip.
+			if ( ! item || ( e.type === 'click' && ! swiper.allowClick ) || ( e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ' ) ) {
+				return;
+			}
+			e.preventDefault();
+			controller.goTo( realIndexOf( item ) );
+		};
+		strip.addEventListener( 'click', go );
+		strip.addEventListener( 'keydown', go );
+
+		var update = function ( index ) {
+			[].forEach.call( items, function ( item, i ) {
+				item.classList.toggle( THUMB_ACTIVE_CLASS, i === index );
+				if ( i === index ) {
+					item.setAttribute( 'aria-current', 'true' );
+				} else {
+					item.removeAttribute( 'aria-current' );
+				}
+			} );
+			// Keep the current one in view: in the middle where the strip can scroll that far.
+			var perView = Number( swiper.params.slidesPerView ) || 1;
+			swiper.slideTo( Math.max( 0, index - Math.floor( ( perView - 1 ) / 2 ) ) );
+		};
+
+		controller.onChange( update );
+		update( controller.current() );
+	}
+
+	/**
+	 * Thumbnails beside the slider: the column is as tall as the slider (CSS)
+	 * and "Thumbnails per view" of them fill it, which sets their height; the
+	 * column is then as wide as their proportions make them. Where the slider's
+	 * height follows from its width (no set Height), the two depend on each
+	 * other, so it is worked out in a few rounds. Before Swiper starts (it
+	 * measures the slider) and whenever the slider is resized. Returns the update.
+	 */
+	function thumbsBeside( root, el, config ) {
+		var settings = config.thumbs;
+		var strip = root.querySelector( '.wp-swiper__thumbs' );
+
+		function fit() {
+			for ( var round = 0; round < 5; round++ ) {
+				var current = device();
+				var perView = Number( settings.perView[ current ] ) || 1;
+				var gap = Number( settings.gap[ current ] ) || 0;
+				var frame = 2 * settings.frame;
+				var thumb = ( el.offsetHeight - gap * ( perView - 1 ) ) / perView;
+				var width = Math.max( 0, Math.round( ( thumb - frame ) * settings.ratio + frame ) );
+
+				if ( Math.abs( width - strip.offsetWidth ) <= 1 ) {
+					break;
+				}
+				strip.style.width = width + 'px';
+			}
+		}
+
+		fit();
+		window.addEventListener( 'resize', fit );
+		return fit;
+	}
+
 	function navigation( el, controller ) {
 		var prev = el.querySelector( '.swiper-button-prev' );
 		var next = el.querySelector( '.swiper-button-next' );
@@ -960,7 +1048,8 @@
 		var perView = config.autoWidth ? { mobile: 'auto', tablet: 'auto', desktop: 'auto' } : config.slidesPerView;
 
 		var options = {
-			effect: config.effect,
+			// Thumbnails: plain sliding; the strip is a Swiper of its own (thumbs()).
+			effect: config.thumbs ? 'slide' : config.effect,
 			direction: config.direction,
 			speed: config.speed,
 			loop: config.loop,
@@ -1151,6 +1240,9 @@
 
 			if ( config.pagination && config.copies > 1 ) {
 				pagination( el.parentNode.querySelector( '.swiper-pagination' ), controller, config, swiper );
+			}
+			if ( config.thumbs ) {
+				thumbs( el.parentNode.querySelector( '.wp-swiper__thumbs' ), controller, config );
 			}
 		}
 
@@ -1405,6 +1497,8 @@
 			} else {
 				recap = capHeight( el, config );
 			}
+			// Thumbnails beside the slider take their share of its width first.
+			var refitThumbs = config.thumbs && config.thumbs.side ? thumbsBeside( wrapper, el, config ) : null;
 
 			var options = buildOptions( el, config );
 			options.on = {
@@ -1440,6 +1534,12 @@
 					if ( recap ) {
 						recap();
 						swiper.on( 'resize breakpoint', recap );
+					}
+					// The column again whenever the slider's height may have changed
+					// (the same height gives the same width: it settles at once).
+					if ( refitThumbs ) {
+						refitThumbs();
+						swiper.on( 'resize breakpoint update', refitThumbs );
 					}
 				}
 			};
