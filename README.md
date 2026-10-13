@@ -2,7 +2,7 @@
 
 Image sliders for WordPress powered by [Swiper](https://swiperjs.com/): build a slider from the media library, pick an effect and insert it with a shortcode or the WPBakery element.
 
-- **Effects:** Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door, Carousel).
+- **Effects:** Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door, Carousel), Thumbnails (a strip of thumbnails below, above, left or right of the slider).
 - **Per effect Layout:** each effect keeps its own layout values.
 - **Per device:** slides per view, spacing, radius and height for desktop, tablet and mobile.
 - **Controls:** arrows, bullets or fraction pagination, keyboard, autoplay, loop, lightbox, links, captions.

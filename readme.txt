@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,7 +14,7 @@ Image sliders powered by Swiper: build a slider from the media library, pick an 
 
 WP Swiper adds a "WP Swiper" menu where you build image sliders from the media library and show them anywhere with `[wp_swiper id="123"]` or the "WP Swiper" WPBakery element.
 
-* Seven effects: Slide, Fade, Cube, Coverflow, Flip, Cards and Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles).
+* Eight effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles) and Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it).
 * Each effect keeps its own Layout settings, so switching effects never loses what you set.
 * Slides per view, space between slides, border radius and height per device (desktop, tablet, mobile).
 * Slide effect extras: wider active slide, slides as wide as their images, slides per group, continuous scroll (marquee).
@@ -49,6 +49,10 @@ Deleting it under Plugins removes all sliders with their slides and settings. De
 It does not apply with the current settings (for example Slides per view with Fade, which always shows one slide). Its value is kept and comes back when it applies again.
 
 == Changelog ==
+
+= 1.1.6 =
+* New effect, Thumbnails: one slide at a time and a strip of thumbnails that picks it, below, above, left or right of the slider. Its Layout settings: thumbnails per view, gaps, proportions, alignment, border radius, padding, frame and inactive opacity.
+* With Thumbnails the Controls settings are greyed out for now: the thumbnails switch the slides.
 
 = 1.1.5 =
 * "Delay between slides" now sits right under Autoplay in the slider settings.
