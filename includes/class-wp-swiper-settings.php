@@ -108,6 +108,16 @@ class WP_Swiper_Settings {
 				'max'     => 200,
 				'step'    => 1,
 			),
+			// Thumbnails effect: its strip in the lightbox too, always under the
+			// image, as many in view as in the slider.
+			'lightbox_thumbs'       => array(
+				'section' => 'advanced',
+				'effects' => array( 'thumbs' ),
+				'label'   => __( 'Thumbnails in the lightbox', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'Under the image, as many in view as in the slider; the lightbox image radius applies to them too.', 'wp-swiper' ),
+			),
 
 			'navigation'            => array(
 				'section' => 'controls',
@@ -590,19 +600,21 @@ class WP_Swiper_Settings {
 			),
 
 			// Thumbnails effect: the strip of small images that picks the slide.
+			// Per device: tablet and mobile may stay empty (inherit), as the numbers do.
 			'thumbs_position'       => array(
-				'section' => 'layout',
-				'effects' => array( 'thumbs' ),
-				'label'   => __( 'Thumbnails position', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => 'bottom',
-				'choices' => array(
+				'section'    => 'layout',
+				'effects'    => array( 'thumbs' ),
+				'label'      => __( 'Thumbnails position', 'wp-swiper' ),
+				'type'       => 'select',
+				'responsive' => true,
+				'default'    => 'bottom',
+				'choices'    => array(
 					'bottom' => __( 'Below the slider', 'wp-swiper' ),
 					'top'    => __( 'Above the slider', 'wp-swiper' ),
 					'left'   => __( 'Left of the slider', 'wp-swiper' ),
 					'right'  => __( 'Right of the slider', 'wp-swiper' ),
 				),
-				'help'    => __( 'Left or right: a column as tall as the slider; its width follows from the thumbnail size.', 'wp-swiper' ),
+				'help'       => __( 'Left or right: a column as tall as the slider; its width follows from the thumbnail size.', 'wp-swiper' ),
 			),
 			'thumbs_per_view'       => array(
 				'section'         => 'layout',
@@ -650,8 +662,33 @@ class WP_Swiper_Settings {
 					'4-3'  => '4:3',
 					'3-2'  => '3:2',
 					'16-9' => '16:9',
+					// Its two numbers: the fields below.
+					'custom' => __( 'Custom', 'wp-swiper' ),
 				),
 				'help'    => __( 'The images are cropped or shown whole per “Image fit”.', 'wp-swiper' ),
+			),
+			// One row, shown with "Custom": width to height, e.g. 2.35 to 1.
+			'thumbs_ratio_width'    => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'group'   => 'thumbs_ratio',
+				'label'   => __( 'Proportions: width', 'wp-swiper' ),
+				'type'    => 'float',
+				'default' => 4,
+				'min'     => 0.1,
+				'max'     => 100,
+				'step'    => 0.01,
+			),
+			'thumbs_ratio_height'   => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'group'   => 'thumbs_ratio',
+				'label'   => __( 'Proportions: height', 'wp-swiper' ),
+				'type'    => 'float',
+				'default' => 3,
+				'min'     => 0.1,
+				'max'     => 100,
+				'step'    => 0.01,
 			),
 			'thumbs_align'          => array(
 				'section' => 'layout',
@@ -917,13 +954,35 @@ class WP_Swiper_Settings {
 	}
 
 	/**
-	 * Thumbnails effect with the strip as a column left or right of the slider.
+	 * Thumbnails effect: on which devices the strip is a column left or right
+	 * of the slider (Thumbnails position is set per device).
 	 *
 	 * @param array $settings Slider settings.
-	 * @return bool
+	 * @return array [ 'desktop' => bool, 'tablet' => bool, 'mobile' => bool ]
 	 */
-	public static function is_thumbs_side( $settings ) {
-		return self::is_thumbs( $settings ) && in_array( $settings['thumbs_position'], array( 'left', 'right' ), true );
+	public static function thumbs_side( $settings ) {
+		return array_map(
+			function ( $position ) {
+				return in_array( $position, array( 'left', 'right' ), true );
+			},
+			self::responsive( $settings, 'thumbs_position' )
+		);
+	}
+
+	/**
+	 * Thumbnail proportions: a preset ("4-3") or, with "Custom", the two
+	 * numbers of its own fields.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return float[] [ width, height ], both above 0.
+	 */
+	public static function thumbs_ratio( $settings ) {
+		if ( 'custom' === $settings['thumbs_ratio'] ) {
+			$ratio = array( (float) $settings['thumbs_ratio_width'], (float) $settings['thumbs_ratio_height'] );
+		} else {
+			$ratio = array_map( 'floatval', explode( '-', $settings['thumbs_ratio'] ) ) + array( 1, 1 );
+		}
+		return $ratio[0] > 0 && $ratio[1] > 0 ? $ratio : array( 4.0, 3.0 );
 	}
 
 	/**
@@ -1239,7 +1298,9 @@ class WP_Swiper_Settings {
 			// Tablet/mobile values of responsive fields: empty inherits.
 			foreach ( array_slice( self::device_keys( $key, $field ), 1 ) as $storage_key ) {
 				$value = isset( $input[ $storage_key ] ) ? trim( (string) $input[ $storage_key ] ) : '';
-				if ( '' !== $value ) {
+				if ( 'select' === $field['type'] ) {
+					$value = array_key_exists( $value, $field['choices'] ) ? $value : '';
+				} elseif ( '' !== $value ) {
 					$value = 'float' === $field['type'] ? round( (float) $value, 2 ) : (int) $value;
 					$value = max( $field['min'], min( $field['max'], $value ) );
 				}

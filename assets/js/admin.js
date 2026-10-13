@@ -313,24 +313,33 @@
 			$layouts.val( JSON.stringify( layouts ) );
 		} );
 
-		// Thumbnails: the strip is the slider's only control for now, so the whole
-		// Controls box is greyed (a disabled fieldset is not sent, so it is enabled
-		// again for the submit and saving keeps its values). The class sits on the
-		// box, not the fields: theirs belongs to the locks above.
+		// Thumbnails: of Controls only the arrows are used (on the strip), so the
+		// other fields are greyed (disabled controls are not sent, so they are
+		// enabled again for the submit and saving keeps their values). Their own
+		// class, .is-unused: .is-disabled belongs to the locks above, which run
+		// first (syncFields) and may enable a control this then disables again.
 		var $controlsBox = $( 'fieldset[data-section="controls"]' );
+		var $controlsUnused = $controlsBox.find( '.wp-swiper-field' ).not( '[data-field="navigation"], [data-field="navigation_color"]' );
 		var controlsLocked = false;
 
 		function syncControls( effect ) {
 			controlsLocked = effect === 'thumbs';
-			$controlsBox.prop( 'disabled', controlsLocked ).toggleClass( 'is-locked', controlsLocked );
+			$controlsUnused.toggleClass( 'is-unused', controlsLocked );
+			if ( controlsLocked ) {
+				$controlsUnused.find( 'input, select' ).prop( 'disabled', true );
+			} else {
+				// Not those a lock keeps disabled.
+				$controlsUnused.not( '.is-disabled' ).find( 'input, select' ).prop( 'disabled', false );
+			}
 			$controlsBox.find( '.wp-swiper-section-note' ).prop( 'hidden', ! controlsLocked );
 		}
 
+		// Bound after the locks' own submit handlers, which put their values back.
 		$( '#post' ).on( 'submit', function () {
 			if ( controlsLocked ) {
-				$controlsBox.prop( 'disabled', false );
+				$controlsUnused.find( 'input, select' ).prop( 'disabled', false );
 				setTimeout( function () {
-					$controlsBox.prop( 'disabled', controlsLocked );
+					$controlsUnused.find( 'input, select' ).prop( 'disabled', controlsLocked );
 				} );
 			}
 		} );
@@ -338,8 +347,6 @@
 		function syncFields() {
 			var effect = $( '#wp-swiper-effect' ).val();
 			var single = SINGLE_SLIDE_EFFECTS.indexOf( effect ) !== -1;
-
-			syncControls( effect );
 
 			// Slide effect modes (Layout) that make other settings unused: locked
 			// first, so the values read below are the ones that apply.
@@ -350,6 +357,8 @@
 				lock( marquee );
 			} );
 			lockFit( autoWidth );
+			// After the locks on the Controls fields (see syncControls).
+			syncControls( effect );
 
 			var autoplay = $( '#wp-swiper-autoplay' ).is( ':checked' );
 
@@ -391,6 +400,10 @@
 			[ 'creative_neighbours', 'creative_offset', 'creative_scale', 'creative_opacity' ].forEach( function ( name ) {
 				field( name ).toggle( carousel );
 			} );
+			// Thumbnails: the two numbers of "Custom" proportions.
+			var customRatio = effect === 'thumbs' && $( '#wp-swiper-thumbs_ratio' ).val() === 'custom';
+			field( 'thumbs_ratio_width' ).toggle( customRatio );
+			field( 'thumbs_ratio_height' ).toggle( customRatio );
 			// Cube: the shadow's size and offset with the shadow; face shading
 			// not with "Contain" (it would shade the empty band too).
 			var cubeShadow = $( '#wp-swiper-cube_shadow' ).is( ':checked' );
@@ -421,7 +434,9 @@
 			[ 'caption_bg_style', 'caption_bg_color', 'caption_bg_opacity' ].forEach( function ( name ) {
 				field( name ).toggle( captionBg );
 			} );
-			field( 'lightbox_radius' ).toggle( $( '#wp-swiper-lightbox' ).is( ':checked' ) );
+			var lightbox = $( '#wp-swiper-lightbox' ).is( ':checked' );
+			field( 'lightbox_radius' ).toggle( lightbox );
+			field( 'lightbox_thumbs' ).toggle( lightbox && effect === 'thumbs' );
 
 			// Pagination layout: one position field per direction.
 			var paginated = $( '#wp-swiper-pagination' ).val() !== 'none';
@@ -490,12 +505,20 @@
 				var device = $input.data( 'device' );
 				var own = $input.val() !== '';
 
+				var select = $input.is( 'select' );
+
 				if ( device !== 'desktop' ) {
-					$input.attr( 'placeholder', inherited );
+					if ( select ) {
+						// The empty choice names the one it inherits.
+						var $none = $input.children( 'option[value=""]' );
+						$none.text( String( $none.data( 'label' ) ).replace( '%s', inherited ) );
+					} else {
+						$input.attr( 'placeholder', inherited );
+					}
 					$field.find( '.wp-swiper-devices__btn[data-device="' + device + '"]' ).toggleClass( 'has-value', own );
 				}
 				if ( own ) {
-					inherited = $input.val();
+					inherited = select ? $input.children( 'option:selected' ).text() : $input.val();
 				}
 			} );
 		}
@@ -515,7 +538,7 @@
 				$field.find( '.wp-swiper-devices__input' ).prop( 'hidden', true )
 					.filter( '[data-device="' + device + '"]' ).prop( 'hidden', false ).trigger( 'focus' );
 			} )
-			.on( 'input', '.wp-swiper-devices__input', function () {
+			.on( 'input change', '.wp-swiper-devices__input', function () {
 				syncResponsive( $( this ).closest( '.wp-swiper-field--responsive' ) );
 			} );
 

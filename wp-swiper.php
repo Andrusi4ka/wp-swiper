@@ -3,7 +3,7 @@
  * Plugin Name:       WP Swiper
  * Plugin URI:        https://github.com/Andrusi4ka/wp-swiper
  * Description:       Image sliders powered by Swiper. Build a slider from the media library, pick an effect and insert it with a shortcode or the WPBakery element.
- * Version:           1.1.6
+ * Version:           1.2.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Andrii Boiko
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WP_SWIPER_VERSION', '1.1.6' );
+define( 'WP_SWIPER_VERSION', '1.2.0' );
 define( 'WP_SWIPER_REPOSITORY', 'https://github.com/Andrusi4ka/wp-swiper/' );
 define( 'WP_SWIPER_SWIPER_VERSION', '11.2.10' );
 define( 'WP_SWIPER_FILE', __FILE__ );
@@ -48,6 +48,7 @@ require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-settings.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-admin.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-render.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-wpbakery.php';
+require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php';
 
 /**
  * Register the slider post type.
@@ -112,3 +113,4 @@ add_action( 'plugins_loaded', 'wp_swiper_updates' );
 WP_Swiper_Admin::init();
 WP_Swiper_Render::init();
 WP_Swiper_WPBakery::init();
+WP_Swiper_Preview::init();

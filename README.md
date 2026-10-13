@@ -2,7 +2,8 @@
 
 Image sliders for WordPress powered by [Swiper](https://swiperjs.com/): build a slider from the media library, pick an effect and insert it with a shortcode or the WPBakery element.
 
-- **Effects:** Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door, Carousel), Thumbnails (a strip of thumbnails below, above, left or right of the slider).
+- **Effects:** Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door, Carousel), Thumbnails (a strip of thumbnails below, above, left or right of the slider, set per device, with arrows; also in the lightbox).
+- **Preview:** the saved slider on a page of its own, as on a desktop, tablet or phone.
 - **Per effect Layout:** each effect keeps its own layout values.
 - **Per device:** slides per view, spacing, radius and height for desktop, tablet and mobile.
 - **Controls:** arrows, bullets or fraction pagination, keyboard, autoplay, loop, lightbox, links, captions.
@@ -37,6 +38,7 @@ The tag must match the `Version:` header, without the `v`.
 | `includes/class-wp-swiper-admin.php` | Slider edit screen |
 | `includes/class-wp-swiper-render.php` | Shortcode and markup |
 | `includes/class-wp-swiper-wpbakery.php` | WPBakery element |
+| `includes/class-wp-swiper-preview.php` | Preview page of a slider |
 | `assets/js/admin.js`, `assets/css/admin.css` | Edit screen behaviour and styles |
 | `assets/js/frontend.js`, `assets/css/frontend.css` | Slider behaviour and styles |
 | `assets/vendor/swiper` | Swiper 11 (MIT) |

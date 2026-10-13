@@ -644,17 +644,22 @@
 		var settings = config.thumbs;
 		var items = strip.querySelectorAll( '.swiper-slide' );
 
+		// Beside the slider on that device: a column (sized by thumbsBeside()).
+		// Swiper turns the strip itself when a breakpoint changes the direction.
+		var direction = function ( current ) {
+			return settings.side[ current ] ? 'vertical' : 'horizontal';
+		};
+
 		var options = {
-			// Beside the slider: a column (sized by thumbsBeside()).
-			direction: settings.side ? 'vertical' : 'horizontal',
+			direction: direction( 'mobile' ),
 			slidesPerView: settings.perView.mobile,
 			spaceBetween: settings.gap.mobile,
 			// Too few to fill the strip: in its middle, or at its start.
 			centerInsufficientSlides: !! settings.center,
 			breakpoints: {}
 		};
-		options.breakpoints[ BREAKPOINT_TABLET ] = { slidesPerView: settings.perView.tablet, spaceBetween: settings.gap.tablet };
-		options.breakpoints[ BREAKPOINT_DESKTOP ] = { slidesPerView: settings.perView.desktop, spaceBetween: settings.gap.desktop };
+		options.breakpoints[ BREAKPOINT_TABLET ] = { direction: direction( 'tablet' ), slidesPerView: settings.perView.tablet, spaceBetween: settings.gap.tablet };
+		options.breakpoints[ BREAKPOINT_DESKTOP ] = { direction: direction( 'desktop' ), slidesPerView: settings.perView.desktop, spaceBetween: settings.gap.desktop };
 
 		var swiper = new window.Swiper( strip, options );
 
@@ -670,7 +675,33 @@
 		strip.addEventListener( 'click', go );
 		strip.addEventListener( 'keydown', go );
 
+		// Arrows on the strip: to the previous / next slide (the strip follows);
+		// round the loop, or stopping at the first and last slides without one.
+		var prev = strip.querySelector( '.swiper-button-prev' );
+		var next = strip.querySelector( '.swiper-button-next' );
+		var step = function ( by ) {
+			var target = controller.current() + by;
+			if ( config.loop ) {
+				target = ( target + items.length ) % items.length;
+			} else if ( target < 0 || target >= items.length ) {
+				return;
+			}
+			controller.goTo( target );
+		};
+		if ( prev && next ) {
+			prev.addEventListener( 'click', function () {
+				step( -1 );
+			} );
+			next.addEventListener( 'click', function () {
+				step( 1 );
+			} );
+		}
+
 		var update = function ( index ) {
+			if ( prev && next ) {
+				prev.classList.toggle( 'swiper-button-disabled', ! config.loop && index <= 0 );
+				next.classList.toggle( 'swiper-button-disabled', ! config.loop && index >= items.length - 1 );
+			}
 			[].forEach.call( items, function ( item, i ) {
 				item.classList.toggle( THUMB_ACTIVE_CLASS, i === index );
 				if ( i === index ) {
@@ -694,15 +725,21 @@
 	 * column is then as wide as their proportions make them. Where the slider's
 	 * height follows from its width (no set Height), the two depend on each
 	 * other, so it is worked out in a few rounds. Before Swiper starts (it
-	 * measures the slider) and whenever the slider is resized. Returns the update.
+	 * measures the slider) and whenever the slider is resized. On a device
+	 * where the strip is above or below the slider it spans it (CSS): no width.
+	 * Returns the update.
 	 */
 	function thumbsBeside( root, el, config ) {
 		var settings = config.thumbs;
 		var strip = root.querySelector( '.wp-swiper__thumbs' );
 
 		function fit() {
+			var current = device();
+			if ( ! settings.side[ current ] ) {
+				strip.style.width = '';
+				return;
+			}
 			for ( var round = 0; round < 5; round++ ) {
-				var current = device();
 				var perView = Number( settings.perView[ current ] ) || 1;
 				var gap = Number( settings.gap[ current ] ) || 0;
 				var frame = 2 * settings.frame;
@@ -819,16 +856,19 @@
 	}
 
 	/**
-	 * @param {Array}    items   [ { src, alt, caption } ]
+	 * @param {Array}    items   [ { src, alt, caption, thumb } ]
 	 * @param {number}   index   Item to open.
 	 * @param {Function} onClose Called with the index shown last.
-	 * @param {Object}   options { radius } from the slider settings.
+	 * @param {Object}   options { radius, thumbs } from the slider settings;
+	 *                           thumbs: false or the slider's strip settings
+	 *                           { perView, gap, ratio } for a strip under the image.
 	 */
 	function openLightbox( items, index, onClose, options ) {
 		var opener = document.activeElement;
 		var root = document.createElement( 'div' );
+		var strip = options.thumbs && items.length > 1 ? options.thumbs : null;
 
-		root.className = 'wp-swiper-lightbox';
+		root.className = 'wp-swiper-lightbox' + ( strip ? ' wp-swiper-lightbox--thumbs' : '' );
 		if ( options.radius ) {
 			root.style.setProperty( '--wp-swiper-lightbox-radius', options.radius + 'px' );
 		}
@@ -848,6 +888,13 @@
 					'</div>';
 				} ).join( '' ) +
 			'</div></div>' +
+			( strip
+				? '<div class="swiper wp-swiper-lightbox__thumbs"><div class="swiper-wrapper">' +
+					items.map( function ( item ) {
+						return '<div class="swiper-slide"><img src="' + escapeHtml( item.thumb || item.src ) + '" alt=""></div>';
+					} ).join( '' ) +
+				  '</div></div>'
+				: '' ) +
 			( items.length > 1
 				? '<button type="button" class="wp-swiper-lightbox__prev" aria-label="' + escapeHtml( i18n.prev ) + '"></button>' +
 				  '<button type="button" class="wp-swiper-lightbox__next" aria-label="' + escapeHtml( i18n.next ) + '"></button>'
@@ -893,6 +940,7 @@
 			}
 		} );
 
+		var thumbs = strip ? lightboxThumbs( root, viewer, strip ) : null;
 		var closed = false;
 
 		function close() {
@@ -903,6 +951,9 @@
 			closed = true;
 
 			var last = viewer.realIndex;
+			if ( thumbs ) {
+				thumbs.destroy();
+			}
 			document.removeEventListener( 'keydown', onKey );
 			root.classList.remove( 'is-open' );
 			document.documentElement.classList.remove( 'wp-swiper-lightbox-open' );
@@ -942,7 +993,7 @@
 
 		// A click on the backdrop (not the image, caption or buttons) closes.
 		root.addEventListener( 'click', function ( e ) {
-			if ( viewer.allowClick && ! e.target.closest( 'img, button, .wp-swiper-lightbox__caption' ) ) {
+			if ( viewer.allowClick && ! e.target.closest( 'img, button, .wp-swiper-lightbox__caption, .wp-swiper-lightbox__thumbs' ) ) {
 				close();
 			}
 		} );
@@ -951,6 +1002,85 @@
 			root.classList.add( 'is-open' );
 			root.querySelector( '.wp-swiper-lightbox__close' ).focus( { preventScroll: true } );
 		} );
+	}
+
+	// Lightbox thumbnails are at most this tall: px, and share of the window's height.
+	var LIGHTBOX_THUMB_HEIGHT = 90;
+	var LIGHTBOX_THUMB_SHARE = 0.14;
+
+	/**
+	 * The strip of thumbnails under the lightbox image: as many in view, with
+	 * the same gaps and proportions, as the slider's own strip. That many
+	 * across the whole window would be far too tall, so the strip is only as
+	 * wide as thumbnails of the height above make it (CSS keeps it inside
+	 * the window). Returns { destroy }.
+	 *
+	 * @param {Element} root     The lightbox.
+	 * @param {Object}  viewer   The lightbox's Swiper.
+	 * @param {Object}  settings The slider's strip settings { perView, gap, ratio }.
+	 */
+	function lightboxThumbs( root, viewer, settings ) {
+		var el = root.querySelector( '.wp-swiper-lightbox__thumbs' );
+		var items = el.querySelectorAll( '.swiper-slide' );
+
+		root.style.setProperty( '--wp-swiper-lightbox-thumb-ratio', settings.ratio );
+
+		function size() {
+			var current = device();
+			var perView = Number( settings.perView[ current ] ) || 1;
+			var gap = Number( settings.gap[ current ] ) || 0;
+			var height = Math.min( LIGHTBOX_THUMB_HEIGHT, window.innerHeight * LIGHTBOX_THUMB_SHARE );
+			el.style.width = Math.round( perView * height * settings.ratio + gap * ( perView - 1 ) ) + 'px';
+		}
+		size();
+		window.addEventListener( 'resize', size );
+
+		var options = {
+			slidesPerView: settings.perView.mobile,
+			spaceBetween: settings.gap.mobile,
+			centerInsufficientSlides: true,
+			breakpoints: {}
+		};
+		options.breakpoints[ BREAKPOINT_TABLET ] = { slidesPerView: settings.perView.tablet, spaceBetween: settings.gap.tablet };
+		options.breakpoints[ BREAKPOINT_DESKTOP ] = { slidesPerView: settings.perView.desktop, spaceBetween: settings.gap.desktop };
+
+		var swiper = new window.Swiper( el, options );
+
+		el.addEventListener( 'click', function ( e ) {
+			var item = e.target.closest( '.swiper-slide' );
+			// Not at the end of a drag of the strip.
+			if ( ! item || ! swiper.allowClick ) {
+				return;
+			}
+			var index = [].indexOf.call( items, item );
+			if ( viewer.params.loop ) {
+				viewer.slideToLoop( index );
+			} else {
+				viewer.slideTo( index );
+			}
+		} );
+
+		var update = function () {
+			var index = viewer.realIndex;
+			[].forEach.call( items, function ( item, i ) {
+				item.classList.toggle( THUMB_ACTIVE_CLASS, i === index );
+			} );
+			// Keep the current one in view: in the middle where the strip can scroll that far.
+			var perView = Number( swiper.params.slidesPerView ) || 1;
+			swiper.slideTo( Math.max( 0, index - Math.floor( ( perView - 1 ) / 2 ) ) );
+		};
+		viewer.on( 'realIndexChange', update );
+		update();
+
+		return {
+			destroy: function () {
+				window.removeEventListener( 'resize', size );
+				// With the lightbox's own Swiper, once it has faded out.
+				viewer.on( 'beforeDestroy', function () {
+					swiper.destroy( true, false );
+				} );
+			}
+		};
 	}
 
 	/**
@@ -1000,6 +1130,10 @@
 				return;
 			}
 
+			// Thumbnails in the lightbox: the small files of the slider's own strip.
+			var withThumbs = config.lightbox.thumbs && config.thumbs;
+			var small = withThumbs ? el.parentNode.querySelectorAll( '.wp-swiper__thumbs .wp-swiper__thumb-image' ) : [];
+
 			// One item per real slide, whatever copies the markup holds.
 			var items = [];
 			el.querySelectorAll( '.swiper-slide' ).forEach( function ( node ) {
@@ -1010,7 +1144,8 @@
 					items[ real ] = {
 						src: node.getAttribute( 'data-wp-swiper-full' ),
 						alt: img ? img.alt : '',
-						caption: caption ? caption.textContent.trim() : ''
+						caption: caption ? caption.textContent.trim() : '',
+						thumb: small[ real ] ? small[ real ].currentSrc || small[ real ].src : ''
 					};
 				}
 			} );
@@ -1035,7 +1170,7 @@
 				if ( player ) {
 					player.start();
 				}
-			}, config.lightbox );
+			}, { radius: config.lightbox.radius, thumbs: withThumbs ? config.thumbs : false } );
 		} );
 	}
 
@@ -1497,8 +1632,9 @@
 			} else {
 				recap = capHeight( el, config );
 			}
-			// Thumbnails beside the slider take their share of its width first.
-			var refitThumbs = config.thumbs && config.thumbs.side ? thumbsBeside( wrapper, el, config ) : null;
+			// Thumbnails beside the slider (on any device) take their share of its width first.
+			var side = config.thumbs && config.thumbs.side;
+			var refitThumbs = side && ( side.desktop || side.tablet || side.mobile ) ? thumbsBeside( wrapper, el, config ) : null;
 
 			var options = buildOptions( el, config );
 			options.on = {

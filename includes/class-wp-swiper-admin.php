@@ -132,8 +132,8 @@ class WP_Swiper_Admin {
 			}
 			echo '</legend>';
 			if ( 'controls' === $section ) {
-				// admin.js shows it (and greys the box) for the Thumbnails effect.
-				echo '<p class="description wp-swiper-section-note" hidden>' . esc_html__( 'Not used by the Thumbnails effect: the thumbnails switch the slides.', 'wp-swiper' ) . '</p>';
+				// admin.js shows it (and greys all but the arrows) for the Thumbnails effect.
+				echo '<p class="description wp-swiper-section-note" hidden>' . esc_html__( 'With the Thumbnails effect only the arrows are used: they sit on the strip of thumbnails.', 'wp-swiper' ) . '</p>';
 			}
 			if ( 'caption' === $section ) {
 				// admin.js shows it (and greys the box) while no slide has a caption.
@@ -234,8 +234,9 @@ class WP_Swiper_Admin {
 	}
 
 	/**
-	 * Number field with a desktop / tablet / mobile switcher. Tablet and
-	 * mobile inputs may stay empty: the placeholder shows the inherited value.
+	 * Number (or select) field with a desktop / tablet / mobile switcher. Tablet
+	 * and mobile inputs may stay empty: the placeholder (a select's empty choice)
+	 * shows the inherited value.
 	 *
 	 * @param string $key    Field name.
 	 * @param array  $field  Field definition.
@@ -267,6 +268,25 @@ class WP_Swiper_Admin {
 
 			<div class="wp-swiper-field__row">
 			<?php foreach ( $keys as $device => $storage_key ) : ?>
+				<?php if ( 'select' === $field['type'] ) : ?>
+					<?php // Tablet and mobile start with an empty choice: admin.js names what it inherits. ?>
+					<select
+						id="wp-swiper-<?php echo esc_attr( $storage_key ); ?>"
+						class="wp-swiper-devices__input"
+						data-device="<?php echo esc_attr( $device ); ?>"
+						name="wp_swiper_settings[<?php echo esc_attr( $storage_key ); ?>]"
+						aria-label="<?php echo esc_attr( $field['label'] . ' — ' . $devices[ $device ][0] ); ?>"
+						<?php echo 'desktop' === $device ? '' : 'hidden'; ?>>
+						<?php if ( 'desktop' !== $device ) : ?>
+							<?php /* translators: %s: the inherited choice, e.g. "Below the slider". */ ?>
+							<option value="" data-label="<?php esc_attr_e( 'Inherit: %s', 'wp-swiper' ); ?>" <?php selected( $values[ $storage_key ], '' ); ?>></option>
+						<?php endif; ?>
+						<?php foreach ( $field['choices'] as $choice => $choice_label ) : ?>
+							<option value="<?php echo esc_attr( $choice ); ?>" <?php selected( $values[ $storage_key ], $choice ); ?>><?php echo esc_html( $choice_label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<?php continue; ?>
+				<?php endif; ?>
 				<input type="number"
 					id="wp-swiper-<?php echo esc_attr( $storage_key ); ?>"
 					class="wp-swiper-devices__input"
@@ -311,6 +331,13 @@ class WP_Swiper_Admin {
 		}
 		self::render_shortcode_input( $post->ID );
 		echo '<p class="description">' . esc_html__( 'Paste it into any page, or use the “WP Swiper” element in WPBakery.', 'wp-swiper' ) . '</p>';
+		// A page with this slider alone (WP_Swiper_Preview): the saved one, drafts too.
+		printf(
+			'<p><a class="button" href="%s" target="_blank" rel="noopener">%s</a></p><p class="description">%s</p>',
+			esc_url( WP_Swiper_Preview::url( $post->ID ) ),
+			esc_html__( 'Preview', 'wp-swiper' ),
+			esc_html__( 'Opens the saved slider on a page of its own: save your changes first.', 'wp-swiper' )
+		);
 	}
 
 	private static function render_shortcode_input( $post_id ) {

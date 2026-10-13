@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.6
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,13 +14,14 @@ Image sliders powered by Swiper: build a slider from the media library, pick an 
 
 WP Swiper adds a "WP Swiper" menu where you build image sliders from the media library and show them anywhere with `[wp_swiper id="123"]` or the "WP Swiper" WPBakery element.
 
-* Eight effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles) and Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it).
+* Eight effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles) and Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions).
 * Each effect keeps its own Layout settings, so switching effects never loses what you set.
 * Slides per view, space between slides, border radius and height per device (desktop, tablet, mobile).
 * Slide effect extras: wider active slide, slides as wide as their images, slides per group, continuous scroll (marquee).
 * Image fit Cover or Contain, height in px / vh / % or Auto (fills the parent column).
 * Arrows (with their own colour), bullets or fraction pagination in six positions over or outside the slider, keyboard control, autoplay, infinite loop.
-* Lightbox with zoom, per-slide links (optionally in a new tab), captions with their own typography and background.
+* Lightbox with zoom (and, with Thumbnails, the strip of thumbnails in it), per-slide links (optionally in a new tab), captions with their own typography and background.
+* Preview: the saved slider on a page of its own, as on a desktop, tablet or phone.
 * Settings that do not apply in the current setup are greyed out, and keep their values.
 
 Bundles [Swiper](https://swiperjs.com/) 11 (MIT) and [Plugin Update Checker](https://github.com/YahnisElsts/plugin-update-checker) 5 (MIT).
@@ -49,6 +50,13 @@ Deleting it under Plugins removes all sliders with their slides and settings. De
 It does not apply with the current settings (for example Slides per view with Fade, which always shows one slide). Its value is kept and comes back when it applies again.
 
 == Changelog ==
+
+= 1.2.0 =
+* Thumbnails: the position of the strip is set per device (desktop, tablet, mobile); an empty tablet or mobile choice takes the one of the larger screen.
+* Thumbnails: "Custom" thumbnail proportions, with a width and a height of your own.
+* Thumbnails: arrows on the strip (Controls > Arrows, with their colour) go to the previous and next slide. Arrows is on by default, so existing Thumbnails sliders get them; untick it to hide them. The rest of Controls stays greyed out for this effect.
+* Thumbnails: "Thumbnails in the lightbox" shows the strip under the lightbox image, as many in view as in the slider; the lightbox image radius applies to them.
+* New: a Preview button in the Shortcode box opens the saved slider (drafts too) on a page of its own, with a desktop / tablet / mobile switcher.
 
 = 1.1.6 =
 * New effect, Thumbnails: one slide at a time and a strip of thumbnails that picks it, below, above, left or right of the slider. Its Layout settings: thumbnails per view, gaps, proportions, alignment, border radius, padding, frame and inactive opacity.

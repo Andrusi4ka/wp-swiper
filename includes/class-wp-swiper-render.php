@@ -62,10 +62,21 @@ class WP_Swiper_Render {
 			self::SHORTCODE
 		);
 
-		$post_id = absint( $atts['id'] );
-		$post    = $post_id ? get_post( $post_id ) : null;
+		return self::render( absint( $atts['id'] ), $atts['class'] );
+	}
 
-		if ( ! $post || WP_Swiper_Settings::POST_TYPE !== $post->post_type || 'publish' !== $post->post_status ) {
+	/**
+	 * A slider's markup (and its assets enqueued).
+	 *
+	 * @param int    $post_id    Slider ID.
+	 * @param string $class      Extra CSS classes.
+	 * @param bool   $any_status Also one that is not published (the preview).
+	 * @return string
+	 */
+	public static function render( $post_id, $class = '', $any_status = false ) {
+		$post = $post_id ? get_post( $post_id ) : null;
+
+		if ( ! $post || WP_Swiper_Settings::POST_TYPE !== $post->post_type || ( ! $any_status && 'publish' !== $post->post_status ) ) {
 			return current_user_can( 'edit_posts' )
 				? '<p class="wp-swiper-notice">' . esc_html__( 'WP Swiper: slider not found or not published.', 'wp-swiper' ) . '</p>'
 				: '';
@@ -94,9 +105,9 @@ class WP_Swiper_Render {
 			$settings['direction'] = 'horizontal';
 		}
 
-		// Thumbnails: the strip switches the slides; Controls is not used (locked in the editor).
+		// Thumbnails: the strip switches the slides. Of Controls only the arrows
+		// are used, on the strip (js_config()); the rest is locked in the editor.
 		if ( WP_Swiper_Settings::is_thumbs( $settings ) ) {
-			$settings['navigation'] = false;
 			$settings['pagination'] = 'none';
 			$settings['keyboard']   = false;
 		}
@@ -106,7 +117,7 @@ class WP_Swiper_Render {
 			$settings['lightbox'] = false;
 		}
 
-		return self::markup( $post_id, array_values( $slides ), $settings, $atts['class'] );
+		return self::markup( $post_id, array_values( $slides ), $settings, $class );
 	}
 
 	/**
@@ -163,25 +174,32 @@ class WP_Swiper_Render {
 				'perView' => WP_Swiper_Settings::responsive( $settings, 'thumbs_per_view' ),
 				'gap'     => WP_Swiper_Settings::responsive( $settings, 'thumbs_gap' ),
 				'center'  => 'center' === $settings['thumbs_align'],
-				// A column beside the slider: frontend.js works out its width from
-				// the thumbnails' proportions and frame (border + padding, one side).
-				'side'    => WP_Swiper_Settings::is_thumbs_side( $settings ),
+				// Per device, a column beside the slider: frontend.js works out its width
+				// from the thumbnails' proportions and frame (border + padding, one side).
+				'side'    => WP_Swiper_Settings::thumbs_side( $settings ),
 				'ratio'   => self::thumbs_ratio( $settings ),
 				'frame'   => (int) $settings['thumbs_border_width'] + (int) $settings['thumbs_padding'],
+				// "Arrows" (Controls): on the strip, to the previous / next slide.
+				'arrows'  => (bool) $settings['navigation'],
 			) : false,
 			'autoplay'      => $settings['autoplay'] ? array(
 				'delay'             => $settings['autoplay_delay'],
 				'pauseOnMouseEnter' => $settings['pause_on_hover'],
 			) : false,
 			// The marquee runs on its own: no controls (its own autoplay, frontend.js).
-			'navigation'    => $settings['navigation'] && ! $marquee,
+			// Thumbnails: the arrows are the strip's (`thumbs` above), not the slider's.
+			'navigation'    => $settings['navigation'] && ! $marquee && ! WP_Swiper_Settings::is_thumbs( $settings ),
 			'pagination'    => 'none' === $settings['pagination'] || $marquee ? false : $settings['pagination'],
 			'keyboard'      => $settings['keyboard'] && ! $marquee,
 			'marquee'       => $marquee ? array(
 				'speed' => $settings['marquee_speed'],
 				'pause' => $settings['pause_on_hover'],
 			) : false,
-			'lightbox'      => $settings['lightbox'] ? array( 'radius' => $settings['lightbox_radius'] ) : false,
+			'lightbox'      => $settings['lightbox'] ? array(
+				'radius' => $settings['lightbox_radius'],
+				// The strip again under the lightbox image (sized like `thumbs` above).
+				'thumbs' => WP_Swiper_Settings::is_thumbs( $settings ) && ! empty( $settings['lightbox_thumbs'] ),
+			) : false,
 			// Slides as wide as their images ("Width from image"): Swiper's "auto".
 			'autoWidth'     => WP_Swiper_Settings::is_auto_width( $settings ),
 			'slidesPerView' => WP_Swiper_Settings::responsive( $settings, 'slides_per_view' ),
@@ -203,14 +221,14 @@ class WP_Swiper_Render {
 	}
 
 	/**
-	 * Thumbnail proportions ("4-3") as width / height.
+	 * Thumbnail proportions as width / height.
 	 *
 	 * @param array $settings Slider settings.
 	 * @return float
 	 */
 	private static function thumbs_ratio( $settings ) {
-		list( $width, $height ) = array_map( 'intval', explode( '-', $settings['thumbs_ratio'] ) + array( 1, 1 ) );
-		return $height ? round( $width / $height, 4 ) : 1;
+		list( $width, $height ) = WP_Swiper_Settings::thumbs_ratio( $settings );
+		return round( $width / $height, 4 );
 	}
 
 	/**
@@ -330,8 +348,6 @@ class WP_Swiper_Render {
 			WP_Swiper_Settings::is_auto_width( $settings ) ? 'wp-swiper--auto-width' : '',
 			WP_Swiper_Settings::is_marquee( $settings ) ? 'wp-swiper--marquee' : '',
 			WP_Swiper_Settings::is_carousel( $settings ) ? 'wp-swiper--carousel' : '',
-			WP_Swiper_Settings::is_thumbs( $settings ) ? 'wp-swiper--thumbs-' . $settings['thumbs_position'] : '',
-			WP_Swiper_Settings::is_thumbs_side( $settings ) ? 'wp-swiper--thumbs-side' : '',
 			$settings['lightbox'] ? 'wp-swiper--lightbox' : '',
 			$settings['image_border'] ? 'wp-swiper--border' : '',
 			// Caption: a set weight overrides the tag's own; vertical text.
@@ -341,6 +357,13 @@ class WP_Swiper_Render {
 			! $settings['caption_bg'] ? 'wp-swiper--caption-nobg' : ( 'solid' === $settings['caption_bg_style'] ? 'wp-swiper--caption-solid' : '' ),
 			$settings['caption_shadow'] ? 'wp-swiper--caption-shadow' : '',
 		);
+		// Thumbnails: where the strip sits on each device ("--thumbs-left",
+		// "--thumbs-tablet-top", "--thumbs-mobile-bottom"; one set of CSS rules per device).
+		if ( WP_Swiper_Settings::is_thumbs( $settings ) ) {
+			foreach ( WP_Swiper_Settings::responsive( $settings, 'thumbs_position' ) as $device => $position ) {
+				$classes[] = 'wp-swiper--thumbs-' . ( 'desktop' === $device ? '' : $device . '-' ) . $position;
+			}
+		}
 		if ( 'none' !== $settings['pagination'] ) {
 			if ( 'horizontal' === $settings['direction'] ) {
 				list( $edge, $align ) = explode( '-', $settings['pagination_position'] );
@@ -401,7 +424,7 @@ class WP_Swiper_Render {
 			foreach ( WP_Swiper_Settings::responsive( $settings, 'thumbs_spacing' ) as $device => $spacing ) {
 				$style[] = '--wp-swiper-thumbs-spacing' . $suffix[ $device ] . ':' . (int) $spacing . 'px';
 			}
-			$style[] = '--wp-swiper-thumb-ratio:' . str_replace( '-', ' / ', $settings['thumbs_ratio'] );
+			$style[] = '--wp-swiper-thumb-ratio:' . implode( ' / ', WP_Swiper_Settings::thumbs_ratio( $settings ) );
 			$style[] = '--wp-swiper-thumb-radius:' . (int) $settings['thumbs_radius'] . 'px';
 			$style[] = '--wp-swiper-thumb-padding:' . (int) $settings['thumbs_padding'] . 'px';
 			$style[] = '--wp-swiper-thumb-border-width:' . (int) $settings['thumbs_border_width'] . 'px';
@@ -540,6 +563,10 @@ class WP_Swiper_Render {
 							</div>
 						<?php endforeach; ?>
 					</div>
+					<?php if ( $config['thumbs']['arrows'] ) : ?>
+						<button type="button" class="swiper-button-prev" aria-label="<?php esc_attr_e( 'Previous slide', 'wp-swiper' ); ?>"></button>
+						<button type="button" class="swiper-button-next" aria-label="<?php esc_attr_e( 'Next slide', 'wp-swiper' ); ?>"></button>
+					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 
