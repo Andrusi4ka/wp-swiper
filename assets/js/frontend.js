@@ -636,6 +636,38 @@
 	var THUMB_ACTIVE_CLASS = 'wp-swiper-thumb-active';
 
 	/**
+	 * Swiper options shared by the strips of thumbnails (the slider's and the
+	 * lightbox's): as many in view, with the gaps, as set per device.
+	 */
+	function stripOptions( settings ) {
+		var options = {
+			slidesPerView: settings.perView.mobile,
+			spaceBetween: settings.gap.mobile,
+			breakpoints: {}
+		};
+		options.breakpoints[ BREAKPOINT_TABLET ] = { slidesPerView: settings.perView.tablet, spaceBetween: settings.gap.tablet };
+		options.breakpoints[ BREAKPOINT_DESKTOP ] = { slidesPerView: settings.perView.desktop, spaceBetween: settings.gap.desktop };
+		return options;
+	}
+
+	/**
+	 * Mark thumbnail `index` of a strip as the current one and keep it in view:
+	 * in the middle where the strip can scroll that far.
+	 */
+	function stripShow( swiper, items, index ) {
+		[].forEach.call( items, function ( item, i ) {
+			item.classList.toggle( THUMB_ACTIVE_CLASS, i === index );
+			if ( i === index ) {
+				item.setAttribute( 'aria-current', 'true' );
+			} else {
+				item.removeAttribute( 'aria-current' );
+			}
+		} );
+		var perView = Number( swiper.params.slidesPerView ) || 1;
+		swiper.slideTo( Math.max( 0, index - Math.floor( ( perView - 1 ) / 2 ) ) );
+	}
+
+	/**
 	 * Thumbnails effect: the strip under (or above) the slider, one thumbnail
 	 * per real slide. Tied to the slider through its controller, not Swiper's
 	 * own thumbs module, which would count the slides loop mode repeats.
@@ -650,16 +682,12 @@
 			return settings.side[ current ] ? 'vertical' : 'horizontal';
 		};
 
-		var options = {
-			direction: direction( 'mobile' ),
-			slidesPerView: settings.perView.mobile,
-			spaceBetween: settings.gap.mobile,
-			// Too few to fill the strip: in its middle, or at its start.
-			centerInsufficientSlides: !! settings.center,
-			breakpoints: {}
-		};
-		options.breakpoints[ BREAKPOINT_TABLET ] = { direction: direction( 'tablet' ), slidesPerView: settings.perView.tablet, spaceBetween: settings.gap.tablet };
-		options.breakpoints[ BREAKPOINT_DESKTOP ] = { direction: direction( 'desktop' ), slidesPerView: settings.perView.desktop, spaceBetween: settings.gap.desktop };
+		var options = stripOptions( settings );
+		options.direction = direction( 'mobile' );
+		options.breakpoints[ BREAKPOINT_TABLET ].direction = direction( 'tablet' );
+		options.breakpoints[ BREAKPOINT_DESKTOP ].direction = direction( 'desktop' );
+		// Too few to fill the strip: in its middle, or at its start.
+		options.centerInsufficientSlides = !! settings.center;
 
 		var swiper = new window.Swiper( strip, options );
 
@@ -702,17 +730,7 @@
 				prev.classList.toggle( 'swiper-button-disabled', ! config.loop && index <= 0 );
 				next.classList.toggle( 'swiper-button-disabled', ! config.loop && index >= items.length - 1 );
 			}
-			[].forEach.call( items, function ( item, i ) {
-				item.classList.toggle( THUMB_ACTIVE_CLASS, i === index );
-				if ( i === index ) {
-					item.setAttribute( 'aria-current', 'true' );
-				} else {
-					item.removeAttribute( 'aria-current' );
-				}
-			} );
-			// Keep the current one in view: in the middle where the strip can scroll that far.
-			var perView = Number( swiper.params.slidesPerView ) || 1;
-			swiper.slideTo( Math.max( 0, index - Math.floor( ( perView - 1 ) / 2 ) ) );
+			stripShow( swiper, items, index );
 		};
 
 		controller.onChange( update );
@@ -744,7 +762,7 @@
 				var gap = Number( settings.gap[ current ] ) || 0;
 				var frame = 2 * settings.frame;
 				var thumb = ( el.offsetHeight - gap * ( perView - 1 ) ) / perView;
-				var width = Math.max( 0, Math.round( ( thumb - frame ) * settings.ratio + frame ) );
+				var width = Math.max( 0, Math.round( ( thumb - frame ) * settings.ratio[ current ] + frame ) );
 
 				if ( Math.abs( width - strip.offsetWidth ) <= 1 ) {
 					break;
@@ -859,7 +877,9 @@
 	 * @param {Array}    items   [ { src, alt, caption, thumb } ]
 	 * @param {number}   index   Item to open.
 	 * @param {Function} onClose Called with the index shown last.
-	 * @param {Object}   options { radius, thumbs } from the slider settings;
+	 * @param {Object}   options { radius, thumbs, thumbRadius } from the slider
+	 *                           settings. radius, thumbRadius: the image's and
+	 *                           the thumbnails' corners per device, or false;
 	 *                           thumbs: false or the slider's strip settings
 	 *                           { perView, gap, ratio } for a strip under the image.
 	 */
@@ -869,9 +889,12 @@
 		var strip = options.thumbs && items.length > 1 ? options.thumbs : null;
 
 		root.className = 'wp-swiper-lightbox' + ( strip ? ' wp-swiper-lightbox--thumbs' : '' );
-		if ( options.radius ) {
-			root.style.setProperty( '--wp-swiper-lightbox-radius', options.radius + 'px' );
+		// The image's corners: the Slide border radius of this device, if any.
+		function setRadius() {
+			root.style.setProperty( '--wp-swiper-lightbox-radius', ( options.radius ? Number( options.radius[ device() ] ) || 0 : 0 ) + 'px' );
 		}
+		setRadius();
+		window.addEventListener( 'resize', setRadius );
 		root.setAttribute( 'role', 'dialog' );
 		root.setAttribute( 'aria-modal', 'true' );
 		root.setAttribute( 'aria-label', i18n.dialog );
@@ -940,7 +963,7 @@
 			}
 		} );
 
-		var thumbs = strip ? lightboxThumbs( root, viewer, strip ) : null;
+		var thumbs = strip ? lightboxThumbs( root, viewer, strip, options.thumbRadius ) : null;
 		var closed = false;
 
 		function close() {
@@ -955,6 +978,7 @@
 				thumbs.destroy();
 			}
 			document.removeEventListener( 'keydown', onKey );
+			window.removeEventListener( 'resize', setRadius );
 			root.classList.remove( 'is-open' );
 			document.documentElement.classList.remove( 'wp-swiper-lightbox-open' );
 
@@ -1018,31 +1042,27 @@
 	 * @param {Element} root     The lightbox.
 	 * @param {Object}  viewer   The lightbox's Swiper.
 	 * @param {Object}  settings The slider's strip settings { perView, gap, ratio }.
+	 * @param {Object}  radius   The thumbnails' corners per device, or false.
 	 */
-	function lightboxThumbs( root, viewer, settings ) {
+	function lightboxThumbs( root, viewer, settings, radius ) {
 		var el = root.querySelector( '.wp-swiper-lightbox__thumbs' );
 		var items = el.querySelectorAll( '.swiper-slide' );
 
-		root.style.setProperty( '--wp-swiper-lightbox-thumb-ratio', settings.ratio );
-
 		function size() {
 			var current = device();
+			// The proportions and the corners follow the device too.
+			root.style.setProperty( '--wp-swiper-lightbox-thumb-ratio', settings.ratio[ current ] );
+			root.style.setProperty( '--wp-swiper-lightbox-thumb-radius', ( radius ? Number( radius[ current ] ) || 0 : 0 ) + 'px' );
 			var perView = Number( settings.perView[ current ] ) || 1;
 			var gap = Number( settings.gap[ current ] ) || 0;
 			var height = Math.min( LIGHTBOX_THUMB_HEIGHT, window.innerHeight * LIGHTBOX_THUMB_SHARE );
-			el.style.width = Math.round( perView * height * settings.ratio + gap * ( perView - 1 ) ) + 'px';
+			el.style.width = Math.round( perView * height * settings.ratio[ current ] + gap * ( perView - 1 ) ) + 'px';
 		}
 		size();
 		window.addEventListener( 'resize', size );
 
-		var options = {
-			slidesPerView: settings.perView.mobile,
-			spaceBetween: settings.gap.mobile,
-			centerInsufficientSlides: true,
-			breakpoints: {}
-		};
-		options.breakpoints[ BREAKPOINT_TABLET ] = { slidesPerView: settings.perView.tablet, spaceBetween: settings.gap.tablet };
-		options.breakpoints[ BREAKPOINT_DESKTOP ] = { slidesPerView: settings.perView.desktop, spaceBetween: settings.gap.desktop };
+		var options = stripOptions( settings );
+		options.centerInsufficientSlides = true;
 
 		var swiper = new window.Swiper( el, options );
 
@@ -1061,13 +1081,7 @@
 		} );
 
 		var update = function () {
-			var index = viewer.realIndex;
-			[].forEach.call( items, function ( item, i ) {
-				item.classList.toggle( THUMB_ACTIVE_CLASS, i === index );
-			} );
-			// Keep the current one in view: in the middle where the strip can scroll that far.
-			var perView = Number( swiper.params.slidesPerView ) || 1;
-			swiper.slideTo( Math.max( 0, index - Math.floor( ( perView - 1 ) / 2 ) ) );
+			stripShow( swiper, items, viewer.realIndex );
 		};
 		viewer.on( 'realIndexChange', update );
 		update();
@@ -1170,7 +1184,7 @@
 				if ( player ) {
 					player.start();
 				}
-			}, { radius: config.lightbox.radius, thumbs: withThumbs ? config.thumbs : false } );
+			}, { radius: config.lightbox.radius, thumbRadius: config.lightbox.thumbRadius, thumbs: withThumbs ? config.thumbs : false } );
 		} );
 	}
 
@@ -1183,8 +1197,8 @@
 		var perView = config.autoWidth ? { mobile: 'auto', tablet: 'auto', desktop: 'auto' } : config.slidesPerView;
 
 		var options = {
-			// Thumbnails: plain sliding; the strip is a Swiper of its own (thumbs()).
-			effect: config.thumbs ? 'slide' : config.effect,
+			// Thumbnails: sliding or fading ("Transition"); the strip is a Swiper of its own (thumbs()).
+			effect: config.thumbs ? ( config.thumbs.fade ? 'fade' : 'slide' ) : config.effect,
 			direction: config.direction,
 			speed: config.speed,
 			loop: config.loop,
@@ -1209,6 +1223,9 @@
 		}
 
 		Object.assign( options, effectOptions( config ) );
+		if ( config.thumbs && config.thumbs.fade ) {
+			options.fadeEffect = { crossFade: true };
+		}
 
 		// Creative "Carousel": loop mode keeps the neighbours in view on both
 		// sides; centred, so it does from the start too (else Swiper only adds

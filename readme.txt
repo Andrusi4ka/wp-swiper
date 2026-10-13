@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -50,6 +50,14 @@ Deleting it under Plugins removes all sliders with their slides and settings. De
 It does not apply with the current settings (for example Slides per view with Fade, which always shows one slide). Its value is kept and comes back when it applies again.
 
 == Changelog ==
+
+= 1.2.1 =
+* Thumbnails: "Transition" (first in Layout) — the slides slide or fade into one another. With Fade the direction is always horizontal.
+* Thumbnails: thumbnail proportions and thumbnail border radius are set per device.
+* Thumbnails: custom proportions are typed in one field, as "4x3" (also "16:9", "2.35x1"); those set in 1.2.0 are kept.
+* Lists set per device say just "Inherit" for tablet and mobile.
+* Lightbox: "Rounded corners in the lightbox" replaces "Lightbox image radius". The image takes the slide border radius and the thumbnails in the lightbox the thumbnail border radius, per device. It is off by default: tick it on sliders whose lightbox had a radius.
+* Removed: "Thumbnail padding".
 
 = 1.2.0 =
 * Thumbnails: the position of the strip is set per device (desktop, tablet, mobile); an empty tablet or mobile choice takes the one of the larger screen.

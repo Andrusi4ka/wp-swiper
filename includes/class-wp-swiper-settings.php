@@ -99,14 +99,13 @@ class WP_Swiper_Settings {
 				'default' => false,
 				'help'    => __( 'Available only when the images have no links.', 'wp-swiper' ),
 			),
-			'lightbox_radius'       => array(
+			// The radii come from Layout, per device: no numbers of its own.
+			'lightbox_rounded'      => array(
 				'section' => 'advanced',
-				'label'   => __( 'Lightbox image radius (px)', 'wp-swiper' ),
-				'type'    => 'number',
-				'default' => 0,
-				'min'     => 0,
-				'max'     => 200,
-				'step'    => 1,
+				'label'   => __( 'Rounded corners in the lightbox', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'The image takes the slide border radius; thumbnails in the lightbox take the thumbnail border radius.', 'wp-swiper' ),
 			),
 			// Thumbnails effect: its strip in the lightbox too, always under the
 			// image, as many in view as in the slider.
@@ -116,7 +115,7 @@ class WP_Swiper_Settings {
 				'label'   => __( 'Thumbnails in the lightbox', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => false,
-				'help'    => __( 'Under the image, as many in view as in the slider; the lightbox image radius applies to them too.', 'wp-swiper' ),
+				'help'    => __( 'Under the image, as many in view as in the slider.', 'wp-swiper' ),
 			),
 
 			'navigation'            => array(
@@ -202,6 +201,19 @@ class WP_Swiper_Settings {
 				'default' => true,
 			),
 
+			// Thumbnails effect: how one slide gives way to the next. First in its
+			// Layout; a select, so that other transitions can join.
+			'thumbs_transition'     => array(
+				'section' => 'layout',
+				'effects' => array( 'thumbs' ),
+				'label'   => __( 'Transition', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'slide',
+				'choices' => array(
+					'slide' => __( 'Slide', 'wp-swiper' ),
+					'fade'  => __( 'Fade', 'wp-swiper' ),
+				),
+			),
 			'slides_per_view'       => array(
 				'section'    => 'layout',
 				'label'      => __( 'Slides per view', 'wp-swiper' ),
@@ -651,13 +663,15 @@ class WP_Swiper_Settings {
 				'max'        => 200,
 				'step'       => 1,
 			),
+			// Per device, like the position.
 			'thumbs_ratio'          => array(
-				'section' => 'layout',
-				'effects' => array( 'thumbs' ),
-				'label'   => __( 'Thumbnail proportions', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => '4-3',
-				'choices' => array(
+				'section'    => 'layout',
+				'effects'    => array( 'thumbs' ),
+				'label'      => __( 'Thumbnail proportions', 'wp-swiper' ),
+				'type'       => 'select',
+				'responsive' => true,
+				'default'    => '4-3',
+				'choices'    => array(
 					'1-1'  => __( 'Square (1:1)', 'wp-swiper' ),
 					'4-3'  => '4:3',
 					'3-2'  => '3:2',
@@ -665,30 +679,19 @@ class WP_Swiper_Settings {
 					// Its two numbers: the fields below.
 					'custom' => __( 'Custom', 'wp-swiper' ),
 				),
-				'help'    => __( 'The images are cropped or shown whole per “Image fit”.', 'wp-swiper' ),
+				'help'       => __( 'The images are cropped or shown whole per “Image fit”.', 'wp-swiper' ),
 			),
-			// One row, shown with "Custom": width to height, e.g. 2.35 to 1.
-			'thumbs_ratio_width'    => array(
-				'section' => 'layout',
-				'effects' => array( 'thumbs' ),
-				'group'   => 'thumbs_ratio',
-				'label'   => __( 'Proportions: width', 'wp-swiper' ),
-				'type'    => 'float',
-				'default' => 4,
-				'min'     => 0.1,
-				'max'     => 100,
-				'step'    => 0.01,
-			),
-			'thumbs_ratio_height'   => array(
-				'section' => 'layout',
-				'effects' => array( 'thumbs' ),
-				'group'   => 'thumbs_ratio',
-				'label'   => __( 'Proportions: height', 'wp-swiper' ),
-				'type'    => 'float',
-				'default' => 3,
-				'min'     => 0.1,
-				'max'     => 100,
-				'step'    => 0.01,
+			// Shown while a device has "Custom": width x height in one field ("4x3",
+			// see normalize_ratio()); per device too (those with "Custom" use theirs).
+			'thumbs_ratio_custom'   => array(
+				'section'     => 'layout',
+				'effects'     => array( 'thumbs' ),
+				'label'       => __( 'Custom proportions', 'wp-swiper' ),
+				'type'        => 'ratio',
+				'responsive'  => true,
+				'default'     => '4x3',
+				'placeholder' => '4x3',
+				'help'        => __( 'Width x height, for example 4x3 or 2.35x1.', 'wp-swiper' ),
 			),
 			'thumbs_align'          => array(
 				'section' => 'layout',
@@ -702,26 +705,17 @@ class WP_Swiper_Settings {
 				),
 				'help'    => __( 'Where the thumbnails sit while there are too few to fill the strip.', 'wp-swiper' ),
 			),
+			// Also that of the thumbnails in the lightbox, with "Rounded corners in the lightbox".
 			'thumbs_radius'         => array(
-				'section' => 'layout',
-				'effects' => array( 'thumbs' ),
-				'label'   => __( 'Thumbnail border radius (px)', 'wp-swiper' ),
-				'type'    => 'number',
-				'default' => 0,
-				'min'     => 0,
-				'max'     => 200,
-				'step'    => 1,
-			),
-			'thumbs_padding'        => array(
-				'section' => 'layout',
-				'effects' => array( 'thumbs' ),
-				'label'   => __( 'Thumbnail padding (px)', 'wp-swiper' ),
-				'type'    => 'number',
-				'default' => 0,
-				'min'     => 0,
-				'max'     => 50,
-				'step'    => 1,
-				'help'    => __( 'Room between the frame and the image.', 'wp-swiper' ),
+				'section'    => 'layout',
+				'effects'    => array( 'thumbs' ),
+				'label'      => __( 'Thumbnail border radius (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 0,
+				'min'        => 0,
+				'max'        => 200,
+				'step'       => 1,
 			),
 			// One row: the frame's width and its two colors.
 			'thumbs_border_width'   => array(
@@ -954,6 +948,17 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * Slides that fade into one another: the Fade effect, or Thumbnails with
+	 * the Fade transition. Neither has a direction (always horizontal).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function is_fade( $settings ) {
+		return 'fade' === $settings['effect'] || ( self::is_thumbs( $settings ) && 'fade' === $settings['thumbs_transition'] );
+	}
+
+	/**
 	 * Thumbnails effect: on which devices the strip is a column left or right
 	 * of the slider (Thumbnails position is set per device).
 	 *
@@ -970,19 +975,60 @@ class WP_Swiper_Settings {
 	}
 
 	/**
-	 * Thumbnail proportions: a preset ("4-3") or, with "Custom", the two
-	 * numbers of its own fields.
+	 * Thumbnail proportions on each device: a preset ("4-3") or, with
+	 * "Custom", the two numbers of its own fields (per device as well).
 	 *
 	 * @param array $settings Slider settings.
-	 * @return float[] [ width, height ], both above 0.
+	 * @return array device => [ width, height ], both above 0.
 	 */
 	public static function thumbs_ratio( $settings ) {
-		if ( 'custom' === $settings['thumbs_ratio'] ) {
-			$ratio = array( (float) $settings['thumbs_ratio_width'], (float) $settings['thumbs_ratio_height'] );
-		} else {
-			$ratio = array_map( 'floatval', explode( '-', $settings['thumbs_ratio'] ) ) + array( 1, 1 );
+		$custom = self::responsive( $settings, 'thumbs_ratio_custom' );
+		$ratios = array();
+
+		foreach ( self::responsive( $settings, 'thumbs_ratio' ) as $device => $choice ) {
+			// Both are "4x3" / "4-3": two numbers and a separator.
+			$ratio             = array_map( 'floatval', preg_split( '/[x-]/', 'custom' === $choice ? $custom[ $device ] : $choice ) ) + array( 1, 1 );
+			$ratios[ $device ] = $ratio[0] > 0 && $ratio[1] > 0 ? array( $ratio[0], $ratio[1] ) : array( 4.0, 3.0 );
 		}
-		return $ratio[0] > 0 && $ratio[1] > 0 ? $ratio : array( 4.0, 3.0 );
+		return $ratios;
+	}
+
+	/**
+	 * Proportions as typed ("4x3", "16 : 9", "2,35×1") in the stored form
+	 * "4x3": two numbers from 0.1 to 100, at most two decimals.
+	 *
+	 * @param string $value Raw input.
+	 * @return string '' if it is not two numbers.
+	 */
+	public static function normalize_ratio( $value ) {
+		if ( ! preg_match( '/^\s*(\d+(?:[.,]\d+)?)\s*[x×х:\/*]\s*(\d+(?:[.,]\d+)?)\s*$/iu', (string) $value, $parts ) ) {
+			return '';
+		}
+		$sides = array();
+		foreach ( array( $parts[1], $parts[2] ) as $number ) {
+			$side = max( 0.1, min( 100, (float) str_replace( ',', '.', $number ) ) );
+			// With a point whatever the locale, and no trailing zeros: "2.35", "4".
+			$sides[] = rtrim( rtrim( number_format( $side, 2, '.', '' ), '0' ), '.' );
+		}
+		return implode( 'x', $sides );
+	}
+
+	/**
+	 * Custom thumbnail proportions were two fields (1.2.0), now one ("4x3"):
+	 * values saved the old way are put together.
+	 *
+	 * @param array $values Saved settings, or one effect's saved Layout values.
+	 * @return array
+	 */
+	private static function merge_ratio_fields( $values ) {
+		if ( isset( $values['thumbs_ratio_custom'] ) || ! isset( $values['thumbs_ratio_width'], $values['thumbs_ratio_height'] ) ) {
+			return $values;
+		}
+		$ratio = self::normalize_ratio( number_format( (float) $values['thumbs_ratio_width'], 2, '.', '' ) . 'x' . number_format( (float) $values['thumbs_ratio_height'], 2, '.', '' ) );
+		if ( '' !== $ratio ) {
+			$values['thumbs_ratio_custom'] = $ratio;
+		}
+		return $values;
 	}
 
 	/**
@@ -1131,6 +1177,12 @@ class WP_Swiper_Settings {
 		if ( $saved && ! isset( $saved['cube_shadow'] ) && ! empty( $saved['effect_shadows'] ) ) {
 			$saved['cube_shadow']        = true;
 			$saved['cube_slide_shadows'] = true;
+		}
+
+		// Custom thumbnail proportions: one field instead of two.
+		$saved = self::merge_ratio_fields( $saved );
+		if ( ! empty( $saved['layouts'] ) && is_array( $saved['layouts'] ) ) {
+			$saved['layouts'] = array_map( array( __CLASS__, 'merge_ratio_fields' ), array_filter( $saved['layouts'], 'is_array' ) );
 		}
 
 		$settings = wp_parse_args( $saved, self::defaults() );
@@ -1300,6 +1352,8 @@ class WP_Swiper_Settings {
 				$value = isset( $input[ $storage_key ] ) ? trim( (string) $input[ $storage_key ] ) : '';
 				if ( 'select' === $field['type'] ) {
 					$value = array_key_exists( $value, $field['choices'] ) ? $value : '';
+				} elseif ( 'ratio' === $field['type'] ) {
+					$value = self::normalize_ratio( $value );
 				} elseif ( '' !== $value ) {
 					$value = 'float' === $field['type'] ? round( (float) $value, 2 ) : (int) $value;
 					$value = max( $field['min'], min( $field['max'], $value ) );
@@ -1332,6 +1386,11 @@ class WP_Swiper_Settings {
 				case 'color':
 					$color         = sanitize_hex_color( (string) $value );
 					$clean[ $key ] = $color ? $color : $field['default'];
+					break;
+
+				case 'ratio': // Proportions, "4x3".
+					$ratio         = self::normalize_ratio( (string) $value );
+					$clean[ $key ] = '' !== $ratio ? $ratio : $field['default'];
 					break;
 
 				case 'text': // CSS class names: anything else is dropped.

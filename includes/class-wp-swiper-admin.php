@@ -235,8 +235,8 @@ class WP_Swiper_Admin {
 
 	/**
 	 * Number (or select) field with a desktop / tablet / mobile switcher. Tablet
-	 * and mobile inputs may stay empty: the placeholder (a select's empty choice)
-	 * shows the inherited value.
+	 * and mobile inputs may stay empty: the placeholder shows the inherited
+	 * value (a select has an "Inherit" choice instead).
 	 *
 	 * @param string $key    Field name.
 	 * @param array  $field  Field definition.
@@ -269,7 +269,7 @@ class WP_Swiper_Admin {
 			<div class="wp-swiper-field__row">
 			<?php foreach ( $keys as $device => $storage_key ) : ?>
 				<?php if ( 'select' === $field['type'] ) : ?>
-					<?php // Tablet and mobile start with an empty choice: admin.js names what it inherits. ?>
+					<?php // Tablet and mobile start with an empty choice: inherit. ?>
 					<select
 						id="wp-swiper-<?php echo esc_attr( $storage_key ); ?>"
 						class="wp-swiper-devices__input"
@@ -278,13 +278,26 @@ class WP_Swiper_Admin {
 						aria-label="<?php echo esc_attr( $field['label'] . ' — ' . $devices[ $device ][0] ); ?>"
 						<?php echo 'desktop' === $device ? '' : 'hidden'; ?>>
 						<?php if ( 'desktop' !== $device ) : ?>
-							<?php /* translators: %s: the inherited choice, e.g. "Below the slider". */ ?>
-							<option value="" data-label="<?php esc_attr_e( 'Inherit: %s', 'wp-swiper' ); ?>" <?php selected( $values[ $storage_key ], '' ); ?>></option>
+							<option value="" <?php selected( $values[ $storage_key ], '' ); ?>><?php esc_html_e( 'Inherit', 'wp-swiper' ); ?></option>
 						<?php endif; ?>
 						<?php foreach ( $field['choices'] as $choice => $choice_label ) : ?>
 							<option value="<?php echo esc_attr( $choice ); ?>" <?php selected( $values[ $storage_key ], $choice ); ?>><?php echo esc_html( $choice_label ); ?></option>
 						<?php endforeach; ?>
 					</select>
+					<?php continue; ?>
+				<?php endif; ?>
+				<?php if ( 'ratio' === $field['type'] ) : ?>
+					<?php // Proportions typed as "4x3"; admin.js shows the inherited one as the placeholder. ?>
+					<input type="text"
+						id="wp-swiper-<?php echo esc_attr( $storage_key ); ?>"
+						class="wp-swiper-devices__input"
+						data-device="<?php echo esc_attr( $device ); ?>"
+						name="wp_swiper_settings[<?php echo esc_attr( $storage_key ); ?>]"
+						value="<?php echo esc_attr( $values[ $storage_key ] ); ?>"
+						placeholder="<?php echo esc_attr( $field['placeholder'] ); ?>"
+						inputmode="text" autocomplete="off" spellcheck="false"
+						aria-label="<?php echo esc_attr( $field['label'] . ' — ' . $devices[ $device ][0] ); ?>"
+						<?php echo 'desktop' === $device ? '' : 'hidden'; ?>>
 					<?php continue; ?>
 				<?php endif; ?>
 				<input type="number"

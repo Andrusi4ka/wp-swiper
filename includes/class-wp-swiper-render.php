@@ -100,8 +100,9 @@ class WP_Swiper_Render {
 
 		$settings = WP_Swiper_Settings::get( $post_id );
 
-		// Fade has no direction of its own: always horizontal (Direction is locked in the editor).
-		if ( 'fade' === $settings['effect'] ) {
+		// Fading slides (the Fade effect, Thumbnails with the Fade transition) have no
+		// direction of their own: always horizontal (Direction is locked in the editor).
+		if ( WP_Swiper_Settings::is_fade( $settings ) ) {
 			$settings['direction'] = 'horizontal';
 		}
 
@@ -175,12 +176,14 @@ class WP_Swiper_Render {
 				'gap'     => WP_Swiper_Settings::responsive( $settings, 'thumbs_gap' ),
 				'center'  => 'center' === $settings['thumbs_align'],
 				// Per device, a column beside the slider: frontend.js works out its width
-				// from the thumbnails' proportions and frame (border + padding, one side).
+				// from the thumbnails' proportions and frame (its width, one side).
 				'side'    => WP_Swiper_Settings::thumbs_side( $settings ),
 				'ratio'   => self::thumbs_ratio( $settings ),
-				'frame'   => (int) $settings['thumbs_border_width'] + (int) $settings['thumbs_padding'],
+				'frame'   => (int) $settings['thumbs_border_width'],
 				// "Arrows" (Controls): on the strip, to the previous / next slide.
 				'arrows'  => (bool) $settings['navigation'],
+				// "Transition": the slides fade instead of sliding.
+				'fade'    => 'fade' === $settings['thumbs_transition'],
 			) : false,
 			'autoplay'      => $settings['autoplay'] ? array(
 				'delay'             => $settings['autoplay_delay'],
@@ -196,7 +199,10 @@ class WP_Swiper_Render {
 				'pause' => $settings['pause_on_hover'],
 			) : false,
 			'lightbox'      => $settings['lightbox'] ? array(
-				'radius' => $settings['lightbox_radius'],
+				// "Rounded corners in the lightbox", per device: the image takes the
+				// Slide border radius, the strip's thumbnails the Thumbnail border radius.
+				'radius'      => $settings['lightbox_rounded'] ? array_map( 'intval', WP_Swiper_Settings::responsive( $settings, 'border_radius' ) ) : false,
+				'thumbRadius' => $settings['lightbox_rounded'] ? array_map( 'intval', WP_Swiper_Settings::responsive( $settings, 'thumbs_radius' ) ) : false,
 				// The strip again under the lightbox image (sized like `thumbs` above).
 				'thumbs' => WP_Swiper_Settings::is_thumbs( $settings ) && ! empty( $settings['lightbox_thumbs'] ),
 			) : false,
@@ -221,14 +227,18 @@ class WP_Swiper_Render {
 	}
 
 	/**
-	 * Thumbnail proportions as width / height.
+	 * Thumbnail proportions on each device as width / height.
 	 *
 	 * @param array $settings Slider settings.
-	 * @return float
+	 * @return array [ 'desktop' => float, 'tablet' => float, 'mobile' => float ]
 	 */
 	private static function thumbs_ratio( $settings ) {
-		list( $width, $height ) = WP_Swiper_Settings::thumbs_ratio( $settings );
-		return round( $width / $height, 4 );
+		return array_map(
+			function ( $ratio ) {
+				return round( $ratio[0] / $ratio[1], 4 );
+			},
+			WP_Swiper_Settings::thumbs_ratio( $settings )
+		);
 	}
 
 	/**
@@ -424,9 +434,12 @@ class WP_Swiper_Render {
 			foreach ( WP_Swiper_Settings::responsive( $settings, 'thumbs_spacing' ) as $device => $spacing ) {
 				$style[] = '--wp-swiper-thumbs-spacing' . $suffix[ $device ] . ':' . (int) $spacing . 'px';
 			}
-			$style[] = '--wp-swiper-thumb-ratio:' . implode( ' / ', WP_Swiper_Settings::thumbs_ratio( $settings ) );
-			$style[] = '--wp-swiper-thumb-radius:' . (int) $settings['thumbs_radius'] . 'px';
-			$style[] = '--wp-swiper-thumb-padding:' . (int) $settings['thumbs_padding'] . 'px';
+			foreach ( WP_Swiper_Settings::thumbs_ratio( $settings ) as $device => $ratio ) {
+				$style[] = '--wp-swiper-thumb-ratio' . $suffix[ $device ] . ':' . implode( ' / ', $ratio );
+			}
+			foreach ( WP_Swiper_Settings::responsive( $settings, 'thumbs_radius' ) as $device => $radius ) {
+				$style[] = '--wp-swiper-thumb-radius' . $suffix[ $device ] . ':' . (int) $radius . 'px';
+			}
 			$style[] = '--wp-swiper-thumb-border-width:' . (int) $settings['thumbs_border_width'] . 'px';
 			$style[] = '--wp-swiper-thumb-border-color:' . $settings['thumbs_border_color'];
 			$style[] = '--wp-swiper-thumb-active-color:' . $settings['thumbs_active_color'];

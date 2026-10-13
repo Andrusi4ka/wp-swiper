@@ -81,6 +81,8 @@ class WP_Swiper_Preview {
 	 */
 	private static function render_page( $post ) {
 		$title   = $post->post_title ? $post->post_title : __( '(no title)', 'wp-swiper' );
+		/* translators: %s: slider title. */
+		$heading = sprintf( __( 'Preview: %s', 'wp-swiper' ), $title );
 		$devices = array(
 			'desktop' => __( 'Desktop', 'wp-swiper' ),
 			'tablet'  => __( 'Tablet (768–1024px)', 'wp-swiper' ),
@@ -93,8 +95,7 @@ class WP_Swiper_Preview {
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="noindex, nofollow">
-	<?php /* translators: %s: slider title. */ ?>
-	<title><?php echo esc_html( sprintf( __( 'Preview: %s', 'wp-swiper' ), $title ) ); ?></title>
+	<title><?php echo esc_html( $heading ); ?></title>
 	<style>
 		html, body { height: 100%; margin: 0; }
 		body { display: flex; flex-direction: column; background: #f0f0f1; color: #1d2327; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -110,8 +111,7 @@ class WP_Swiper_Preview {
 </head>
 <body>
 	<div class="bar">
-		<?php /* translators: %s: slider title. */ ?>
-		<h1 class="bar__title"><?php echo esc_html( sprintf( __( 'Preview: %s', 'wp-swiper' ), $title ) ); ?></h1>
+		<h1 class="bar__title"><?php echo esc_html( $heading ); ?></h1>
 		<span class="bar__note"><?php esc_html_e( 'Shows the saved slider: save your changes, then reload.', 'wp-swiper' ); ?></span>
 		<span role="group" aria-label="<?php esc_attr_e( 'Device', 'wp-swiper' ); ?>">
 			<?php foreach ( $devices as $device => $label ) : ?>

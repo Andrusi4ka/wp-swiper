@@ -211,7 +211,8 @@
 	outline-offset: 0;
 }
 
-.wp-swiper-field--responsive input[type="number"] {
+.wp-swiper-field--responsive input[type="number"],
+.wp-swiper-field--responsive input[type="text"] {
 	width: 100%;
 }
 
@@ -281,7 +282,8 @@
 	gap: 6px;
 }
 
-.wp-swiper-field__row input[type="number"] {
+.wp-swiper-field__row input[type="number"],
+.wp-swiper-field__row input[type="text"] {
 	flex: 1 1 auto;
 	min-width: 0;
 }
@@ -299,7 +301,7 @@
 	max-width: none;
 }
 
-.wp-swiper-field__row select.wp-swiper-devices__input[hidden] {
+.wp-swiper-field__row .wp-swiper-devices__input[hidden] {
 	display: none;
 }
 

@@ -643,7 +643,7 @@ html.wp-swiper-lightbox-open {
 	height: auto;
 	aspect-ratio: var(--wp-swiper-lightbox-thumb-ratio, 4 / 3);
 	border: 2px solid transparent;
-	border-radius: var(--wp-swiper-lightbox-radius, 0px);
+	border-radius: var(--wp-swiper-lightbox-thumb-radius, 0px);
 	opacity: 0.5;
 	cursor: pointer;
 	transition: opacity 0.2s, border-color 0.2s;
@@ -982,7 +982,7 @@ html.wp-swiper-lightbox-open {
 	height: auto;
 	aspect-ratio: auto;
 	container-type: normal;
-	padding: var(--wp-swiper-thumb-padding, 0px);
+	padding: 0;
 	border: var(--wp-swiper-thumb-border-width, 1px) solid var(--wp-swiper-thumb-border-color, #ddd);
 	border-radius: var(--wp-swiper-thumb-radius, 0px);
 	opacity: var(--wp-swiper-thumb-opacity, 0.6);
@@ -1013,6 +1013,27 @@ html.wp-swiper-lightbox-open {
 	max-width: none;
 	aspect-ratio: var(--wp-swiper-thumb-ratio, 4 / 3);
 	object-fit: var(--wp-swiper-fit);
+}
+
+/* Thumbnail proportions and border radius on this device. */
+@media (max-width: 1024px) {
+	.wp-swiper .wp-swiper__thumbs .swiper-slide {
+		border-radius: var(--wp-swiper-thumb-radius-tablet, var(--wp-swiper-thumb-radius, 0px));
+	}
+
+	.wp-swiper .wp-swiper__thumb-image {
+		aspect-ratio: var(--wp-swiper-thumb-ratio-tablet, var(--wp-swiper-thumb-ratio, 4 / 3));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper .wp-swiper__thumbs .swiper-slide {
+		border-radius: var(--wp-swiper-thumb-radius-mobile, var(--wp-swiper-thumb-radius-tablet, var(--wp-swiper-thumb-radius, 0px)));
+	}
+
+	.wp-swiper .wp-swiper__thumb-image {
+		aspect-ratio: var(--wp-swiper-thumb-ratio-mobile, var(--wp-swiper-thumb-ratio-tablet, var(--wp-swiper-thumb-ratio, 4 / 3)));
+	}
 }
 
 /* Where the strip sits, per device: .wp-swiper--thumbs-{position} on desktop,

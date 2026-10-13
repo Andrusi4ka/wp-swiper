@@ -363,7 +363,8 @@
 			var autoplay = $( '#wp-swiper-autoplay' ).is( ':checked' );
 
 			// Before reading Direction: locked, it shows the fixed value.
-			lockDirection( effect === 'fade' );
+			// Fading slides: the Fade effect, or Thumbnails with the Fade transition.
+			lockDirection( effect === 'fade' || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' ) );
 			var vertical = $( '#wp-swiper-direction' ).val() === 'vertical';
 			var cover = $( '#wp-swiper-image_fit' ).val() === 'cover';
 
@@ -400,10 +401,11 @@
 			[ 'creative_neighbours', 'creative_offset', 'creative_scale', 'creative_opacity' ].forEach( function ( name ) {
 				field( name ).toggle( carousel );
 			} );
-			// Thumbnails: the two numbers of "Custom" proportions.
-			var customRatio = effect === 'thumbs' && $( '#wp-swiper-thumbs_ratio' ).val() === 'custom';
-			field( 'thumbs_ratio_width' ).toggle( customRatio );
-			field( 'thumbs_ratio_height' ).toggle( customRatio );
+			// Thumbnails: the numbers of "Custom" proportions, while any device has it.
+			var customRatio = effect === 'thumbs' && field( 'thumbs_ratio' ).find( 'select' ).filter( function () {
+				return $( this ).val() === 'custom';
+			} ).length > 0;
+			field( 'thumbs_ratio_custom' ).toggle( customRatio );
 			// Cube: the shadow's size and offset with the shadow; face shading
 			// not with "Contain" (it would shade the empty band too).
 			var cubeShadow = $( '#wp-swiper-cube_shadow' ).is( ':checked' );
@@ -435,7 +437,7 @@
 				field( name ).toggle( captionBg );
 			} );
 			var lightbox = $( '#wp-swiper-lightbox' ).is( ':checked' );
-			field( 'lightbox_radius' ).toggle( lightbox );
+			field( 'lightbox_rounded' ).toggle( lightbox );
 			field( 'lightbox_thumbs' ).toggle( lightbox && effect === 'thumbs' );
 
 			// Pagination layout: one position field per direction.
@@ -505,20 +507,15 @@
 				var device = $input.data( 'device' );
 				var own = $input.val() !== '';
 
-				var select = $input.is( 'select' );
-
 				if ( device !== 'desktop' ) {
-					if ( select ) {
-						// The empty choice names the one it inherits.
-						var $none = $input.children( 'option[value=""]' );
-						$none.text( String( $none.data( 'label' ) ).replace( '%s', inherited ) );
-					} else {
+					// Numbers only: a select's empty choice just says "Inherit".
+					if ( ! $input.is( 'select' ) ) {
 						$input.attr( 'placeholder', inherited );
 					}
 					$field.find( '.wp-swiper-devices__btn[data-device="' + device + '"]' ).toggleClass( 'has-value', own );
 				}
 				if ( own ) {
-					inherited = select ? $input.children( 'option:selected' ).text() : $input.val();
+					inherited = $input.val();
 				}
 			} );
 		}
