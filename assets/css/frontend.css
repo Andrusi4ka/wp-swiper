@@ -85,6 +85,139 @@
 	pointer-events: none;
 }
 
+/* A YouTube / Vimeo video: its poster and play button (the "facade") until
+   frontend.js puts the player in. The player covers the box like the
+   image fit ("Cover": cropped to fill, over the box's own proportions;
+   "Contain": the box already has the video's). cq units: % of the box. */
+.wp-swiper__embed {
+	position: relative;
+	overflow: hidden;
+	container-type: size;
+	background: #000;
+}
+
+.wp-swiper__embed-poster {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	object-fit: var(--wp-swiper-fit, cover);
+	transition: opacity 0.3s;
+}
+
+.wp-swiper__embed-frame {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: max(100cqw, 100cqh * var(--wp-swiper-img-ratio, 1.7778));
+	height: max(100cqh, 100cqw / var(--wp-swiper-img-ratio, 1.7778));
+	border: 0;
+	transform: translate(-50%, -50%);
+}
+
+/* Without controls the player takes no clicks: swiping and the slider's own
+   clicks (lightbox, neighbours) work over it. */
+.wp-swiper:not(.wp-swiper--video-controls) .wp-swiper__embed-frame {
+	pointer-events: none;
+}
+
+.wp-swiper__embed.is-playing .wp-swiper__embed-poster,
+.wp-swiper__embed.is-playing .wp-swiper__play {
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* The play button: only where the visitor starts the video, and in the
+   lightbox should the service refuse to start it by itself. */
+.wp-swiper__play {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	z-index: 1;
+	display: none;
+	width: 68px;
+	height: 48px;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 12px;
+	background: rgba(0, 0, 0, 0.7);
+	box-shadow: none;
+	cursor: pointer;
+	transform: translate(-50%, -50%);
+	transition: background-color 0.2s, opacity 0.3s;
+}
+
+.wp-swiper__play::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	border-style: solid;
+	border-width: 10px 0 10px 17px;
+	border-color: transparent transparent transparent #fff;
+	transform: translate(-40%, -50%);
+}
+
+.wp-swiper__play:hover,
+.wp-swiper__play:focus-visible {
+	background: #e00;
+}
+
+.wp-swiper--video-manual .wp-swiper__play,
+.wp-swiper--lightbox-videos .wp-swiper__play,
+.wp-swiper-lightbox .wp-swiper__play {
+	display: block;
+}
+
+/* Lightbox videos: a box of the video's proportions, as large as the window
+   leaves room for (as an image would be). */
+.wp-swiper-lightbox__media {
+	position: relative;
+	width: min(calc(100% - 140px), calc((100vh - 140px) * var(--wp-swiper-lightbox-ratio, 1.7778)));
+	aspect-ratio: var(--wp-swiper-lightbox-ratio, 1.7778);
+	overflow: hidden;
+	border-radius: var(--wp-swiper-lightbox-radius, 0px);
+	background: #000;
+}
+
+.wp-swiper-lightbox--thumbs .wp-swiper-lightbox__media {
+	width: min(calc(100% - 140px), calc((100vh - 260px) * var(--wp-swiper-lightbox-ratio, 1.7778)));
+}
+
+.wp-swiper-lightbox__video,
+.wp-swiper-lightbox__embed {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.wp-swiper-lightbox .wp-swiper-lightbox__embed {
+	--wp-swiper-img-ratio: var(--wp-swiper-lightbox-ratio, 1.7778);
+	--wp-swiper-fit: contain;
+}
+
+/* The play button over the lightbox's own button styles. */
+.wp-swiper-lightbox .wp-swiper__play {
+	position: absolute;
+	width: 68px;
+	height: 48px;
+	background: rgba(0, 0, 0, 0.7);
+	opacity: 1;
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-lightbox__media,
+	.wp-swiper-lightbox--thumbs .wp-swiper-lightbox__media {
+		width: min(100%, calc((100vh - 160px) * var(--wp-swiper-lightbox-ratio, 1.7778)));
+	}
+}
+
 /* Box of the visible image, holding the image, its link and caption. With
    "Cover" it is the whole slide. */
 .wp-swiper .wp-swiper__media {
@@ -909,8 +1042,11 @@ html.wp-swiper-lightbox-open {
 
 /* Thumbnails effect: the slider and, under or above it, a strip of small
    images (.wp-swiper__thumbs, a Swiper of its own: frontend.js thumbs()).
-   The strip follows the slider in the markup; "above" only reorders it. */
+   The strip follows the slider in the markup; "above" only reorders it.
+   The gap between the two: per device (the rules below). */
 .wp-swiper--effect-thumbs {
+	--wp-swiper-thumbs-space: var(--wp-swiper-thumbs-spacing, 10px);
+
 	display: flex;
 	flex-direction: column;
 }
@@ -929,10 +1065,6 @@ html.wp-swiper-lightbox-open {
 }
 
 /* Gap between the slider and the strip on this device. */
-.wp-swiper--effect-thumbs {
-	--wp-swiper-thumbs-space: var(--wp-swiper-thumbs-spacing, 10px);
-}
-
 @media (max-width: 1024px) {
 	.wp-swiper--effect-thumbs {
 		--wp-swiper-thumbs-space: var(--wp-swiper-thumbs-spacing-tablet, var(--wp-swiper-thumbs-spacing, 10px));

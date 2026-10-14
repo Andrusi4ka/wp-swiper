@@ -46,6 +46,7 @@ class WP_Swiper_Admin {
 					// A video slide's poster (the image shown before it plays).
 					'posterTitle'  => __( 'Choose the poster image', 'wp-swiper' ),
 					'posterButton' => __( 'Use as poster', 'wp-swiper' ),
+					'videoBadge'   => __( 'Video', 'wp-swiper' ),
 					'posterChoose' => __( 'Choose', 'wp-swiper' ),
 					'posterChange' => __( 'Change', 'wp-swiper' ),
 					'posterRemove' => __( 'Remove', 'wp-swiper' ),
@@ -68,12 +69,7 @@ class WP_Swiper_Admin {
 	public static function render_slides_box( $post ) {
 		wp_nonce_field( self::NONCE, self::NONCE . '_nonce' );
 		// Images and videos deleted from the media library are skipped (and dropped on save).
-		$slides = array_filter(
-			WP_Swiper_Settings::get_slides( $post->ID ),
-			function ( $slide ) {
-				return WP_Swiper_Settings::is_slide_media( $slide['id'] );
-			}
-		);
+		$slides = array_filter( WP_Swiper_Settings::get_slides( $post->ID ), array( 'WP_Swiper_Settings', 'is_slide' ) );
 		$shown  = count( $slides );
 		?>
 		<?php // Only useful once there are slides; admin.js toggles it with the list. ?>
@@ -89,15 +85,21 @@ class WP_Swiper_Admin {
 
 		<p class="wp-swiper-empty"<?php echo $shown ? ' hidden' : ''; ?>><?php esc_html_e( 'No slides yet.', 'wp-swiper' ); ?></p>
 
-		<p>
+		<div class="wp-swiper-add-row">
 			<button type="button" class="button button-primary" id="wp-swiper-add">
 				<span class="dashicons dashicons-plus-alt2"></span>
 				<?php esc_html_e( 'Add images or videos', 'wp-swiper' ); ?>
 			</button>
-		</p>
+			<?php // A YouTube / Vimeo video: its link (admin.js checks it and adds the slide). ?>
+			<span class="wp-swiper-embed-add">
+				<input type="url" id="wp-swiper-embed-url" placeholder="<?php esc_attr_e( 'YouTube or Vimeo link', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'YouTube or Vimeo link', 'wp-swiper' ); ?>">
+				<button type="button" class="button" id="wp-swiper-embed-add"><?php esc_html_e( 'Add video link', 'wp-swiper' ); ?></button>
+			</span>
+			<span class="wp-swiper-embed-error" role="alert" hidden><?php esc_html_e( 'That is not a YouTube or Vimeo video link.', 'wp-swiper' ); ?></span>
+		</div>
 
 		<script type="text/html" id="tmpl-wp-swiper-slide">
-			<?php self::render_slide_item( array( 'id' => '{{id}}', 'caption' => '', 'link' => '' ), '{{thumb}}' ); ?>
+			<?php self::render_slide_item( array(), true ); ?>
 		</script>
 		<?php
 	}
@@ -108,34 +110,71 @@ class WP_Swiper_Admin {
 	 * video icon without one), no link (CSS); its poster is chosen on the Video
 	 * page of the settings (admin.js), kept in the row's hidden input.
 	 *
-	 * @param array       $slide Slide data.
-	 * @param string|null $thumb Thumbnail URL override (used by the JS template).
+	 * The JS template ($template) has {{id}}, {{thumb}}, {{title}}, {{embed}}
+	 * and {{badge}} placeholders; admin.js marks a video row itself.
+	 *
+	 * @param array $slide    Slide data.
+	 * @param bool  $template The row admin.js copies for new slides.
 	 */
-	private static function render_slide_item( $slide, $thumb = null ) {
-		$video  = is_numeric( $slide['id'] ) && WP_Swiper_Settings::is_video( $slide['id'] );
-		$poster = $video ? WP_Swiper_Settings::poster( $slide ) : 0;
-		if ( null === $thumb ) {
-			$thumb = wp_get_attachment_image_url( $video ? $poster : $slide['id'], 'medium' );
+	private static function render_slide_item( $slide, $template = false ) {
+		if ( $template ) {
+			$slide = array(
+				'id'      => '{{id}}',
+				'caption' => '',
+				'link'    => '',
+				'embed'   => '{{embed}}',
+			);
 		}
-		// Only the poster chosen for the slide (not the video's featured image) is its own.
+		$embed      = ! $template && ! empty( $slide['embed'] ) ? WP_Swiper_Settings::parse_embed( $slide['embed'] ) : false;
+		$video      = ! $template && ( $embed || WP_Swiper_Settings::is_video( $slide['id'] ) );
+		$poster     = $video ? WP_Swiper_Settings::poster( $slide ) : 0;
 		$own_poster = $video && ! empty( $slide['poster'] ) && $poster === (int) $slide['poster'] ? $poster : 0;
-		// The video's name in the Video page's list of posters.
-		$title = '{{title}}';
-		if ( $video ) {
-			$title = get_the_title( $slide['id'] );
-			$title = '' !== $title ? $title : wp_basename( (string) get_attached_file( $slide['id'] ) );
+		$thumb      = '{{thumb}}';
+		$title      = '{{title}}';
+		$badge      = '{{badge}}';
+		// A video's thumbnail without a poster of its own (admin.js shows it again
+		// when the poster is removed): a YouTube / Vimeo thumbnail, the video's
+		// featured image, or none.
+		$default = '{{thumb}}';
+
+		if ( ! $template ) {
+			$badge   = __( 'Video', 'wp-swiper' );
+			$default = '';
+			if ( $embed ) {
+				$meta    = WP_Swiper_Settings::embed_meta( $slide['embed'] );
+				$own     = WP_Swiper_Settings::embed_thumb( $slide['embed'] );
+				$default = $own['small'];
+				$title   = empty( $meta['title'] ) ? $slide['embed'] : $meta['title'];
+				$badge   = 'youtube' === $embed['provider'] ? 'YouTube' : 'Vimeo';
+			} elseif ( $video ) {
+				$featured = (int) get_post_thumbnail_id( $slide['id'] );
+				$default  = $featured ? (string) wp_get_attachment_image_url( $featured, 'medium' ) : '';
+				// The video's name in the Video page's list of posters.
+				$title = get_the_title( $slide['id'] );
+				$title = '' !== $title ? $title : wp_basename( (string) get_attached_file( $slide['id'] ) );
+			} else {
+				$title = '';
+			}
+			// An image: itself; a video: its own poster, else its default thumbnail.
+			if ( ! $video ) {
+				$thumb = wp_get_attachment_image_url( $slide['id'], 'medium' );
+			} else {
+				$thumb = $own_poster ? wp_get_attachment_image_url( $own_poster, 'medium' ) : $default;
+			}
 		}
 		?>
-		<li class="wp-swiper-slide<?php echo $video ? ' wp-swiper-slide--video' : ''; ?>" data-title="<?php echo esc_attr( $title ); ?>">
+		<li class="wp-swiper-slide<?php echo $video ? ' wp-swiper-slide--video' : ''; ?><?php echo $embed ? ' wp-swiper-slide--embed' : ''; ?>" data-title="<?php echo esc_attr( $title ); ?>" data-default-thumb="<?php echo esc_attr( $default ); ?>">
 			<div class="wp-swiper-slide__thumb">
 				<img src="<?php echo esc_attr( $thumb ); ?>" alt=""<?php echo $thumb ? '' : ' hidden'; ?>>
 				<span class="dashicons dashicons-video-alt3 wp-swiper-slide__video-icon" aria-hidden="true"></span>
-				<span class="wp-swiper-slide__badge"><?php esc_html_e( 'Video', 'wp-swiper' ); ?></span>
+				<span class="wp-swiper-slide__badge"><?php echo esc_html( $badge ); ?></span>
 				<button type="button" class="wp-swiper-slide__remove" title="<?php esc_attr_e( 'Remove slide', 'wp-swiper' ); ?>">
 					<span class="dashicons dashicons-no-alt"></span>
 				</button>
 			</div>
 			<input type="hidden" name="wp_swiper_slides[id][]" value="<?php echo esc_attr( $slide['id'] ); ?>">
+			<?php // A YouTube / Vimeo slide: its link (id 0); empty for the others. ?>
+			<input type="hidden" name="wp_swiper_slides[embed][]" value="<?php echo esc_attr( isset( $slide['embed'] ) ? $slide['embed'] : '' ); ?>">
 			<input type="text" name="wp_swiper_slides[caption][]" value="<?php echo esc_attr( $slide['caption'] ); ?>" placeholder="<?php esc_attr_e( 'Caption', 'wp-swiper' ); ?>">
 			<input type="url" name="wp_swiper_slides[link][]" value="<?php echo esc_attr( $slide['link'] ); ?>" placeholder="<?php esc_attr_e( 'Link (https://…)', 'wp-swiper' ); ?>">
 			<?php // The checkbox has no name: an unchecked box is not submitted and would shift the parallel arrays. JS mirrors it into the hidden input. ?>
@@ -571,14 +610,35 @@ class WP_Swiper_Admin {
 
 		foreach ( $ids as $i => $attachment_id ) {
 			$attachment_id = absint( $attachment_id );
+			$poster        = isset( $raw['poster'][ $i ] ) ? absint( $raw['poster'][ $i ] ) : 0;
+			$caption       = isset( $raw['caption'][ $i ] ) ? sanitize_text_field( $raw['caption'][ $i ] ) : '';
+
+			// A YouTube / Vimeo slide: its link, once it reads as one (anything else
+			// there is ignored: the slide is then its media library item, if any).
+			$embed = isset( $raw['embed'][ $i ] ) ? esc_url_raw( trim( $raw['embed'][ $i ] ) ) : '';
+			if ( '' !== $embed && WP_Swiper_Settings::parse_embed( $embed ) ) {
+				// Its size, thumbnail and title from the service, cached now
+				// rather than when a visitor first sees it.
+				WP_Swiper_Settings::embed_meta( $embed );
+				$slides[] = array(
+					'id'      => 0,
+					'embed'   => $embed,
+					'caption' => $caption,
+					'link'    => '',
+					'new_tab' => false,
+					'poster'  => $poster && wp_attachment_is_image( $poster ) ? $poster : 0,
+				);
+				continue;
+			}
+
 			if ( ! $attachment_id || ! WP_Swiper_Settings::is_slide_media( $attachment_id ) ) {
 				continue;
 			}
-			$video  = WP_Swiper_Settings::is_video( $attachment_id );
-			$poster = $video && isset( $raw['poster'][ $i ] ) ? absint( $raw['poster'][ $i ] ) : 0;
+			$video    = WP_Swiper_Settings::is_video( $attachment_id );
+			$poster   = $video ? $poster : 0;
 			$slides[] = array(
 				'id'      => $attachment_id,
-				'caption' => isset( $raw['caption'][ $i ] ) ? sanitize_text_field( $raw['caption'][ $i ] ) : '',
+				'caption' => $caption,
 				// A video slide has no link (a click on it is the player's).
 				'link'    => ! $video && isset( $raw['link'][ $i ] ) ? esc_url_raw( $raw['link'][ $i ] ) : '',
 				'new_tab' => ! $video && isset( $raw['new_tab'][ $i ] ) && '1' === $raw['new_tab'][ $i ],
@@ -606,12 +666,7 @@ class WP_Swiper_Admin {
 			case 'wp_swiper_slides':
 				// As the slider shows them: images and videos deleted from the library are skipped.
 				echo (int) count(
-					array_filter(
-						WP_Swiper_Settings::get_slides( $post_id ),
-						function ( $slide ) {
-							return WP_Swiper_Settings::is_slide_media( $slide['id'] );
-						}
-					)
+					array_filter( WP_Swiper_Settings::get_slides( $post_id ), array( 'WP_Swiper_Settings', 'is_slide' ) )
 				);
 				break;
 

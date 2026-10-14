@@ -7,7 +7,7 @@ Image sliders for WordPress powered by [Swiper](https://swiperjs.com/): build a 
 - **Per effect Layout:** each effect keeps its own layout values.
 - **Per device:** slides per view, spacing, radius and height for desktop, tablet and mobile.
 - **Controls:** arrows, bullets or fraction pagination, keyboard, autoplay, loop, lightbox, links, captions.
-- **Video slides:** videos from the media library with a poster image; only the slide in view plays, its file loads when the slide comes up, and the slider can wait for a video to end.
+- **Video slides:** videos from the media library or YouTube / Vimeo links, with a poster image; only the slide in view plays, its file or player loads when the slide comes up, the slider can wait for a video to end, and videos open in the lightbox too.
 
 Requires WordPress 6.0+ and PHP 7.4+.
 

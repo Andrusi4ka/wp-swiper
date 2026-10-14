@@ -923,7 +923,24 @@
 	}
 
 	/**
-	 * @param {Array}    items   [ { src, alt, caption, thumb } ]
+	 * A lightbox slide's media: an image to zoom, or a video ("Videos in the
+	 * lightbox": a file, or a YouTube / Vimeo facade) in a box of its proportions.
+	 */
+	function lightboxMedia( item ) {
+		if ( item.type === 'image' ) {
+			return '<div class="swiper-zoom-container"><img data-src="' + escapeHtml( item.src ) + '" alt="' + escapeHtml( item.alt ) + '"></div>';
+		}
+		var inner = item.type === 'video'
+			? '<video class="wp-swiper-lightbox__video" data-src="' + escapeHtml( item.src ) + '"' + ( item.poster ? ' poster="' + escapeHtml( item.poster ) + '"' : '' ) + ' controls playsinline preload="none"></video>'
+			: '<div class="wp-swiper__embed wp-swiper-lightbox__embed">' +
+				( item.poster ? '<img class="wp-swiper__embed-poster" src="' + escapeHtml( item.poster ) + '" alt="">' : '' ) +
+				'<button type="button" class="wp-swiper__play" aria-label="' + escapeHtml( item.embed.title || '' ) + '"></button>' +
+			  '</div>';
+		return '<div class="wp-swiper-lightbox__media" style="--wp-swiper-lightbox-ratio:' + ( Number( item.ratio ) || 16 / 9 ) + '">' + inner + '</div>';
+	}
+
+	/**
+	 * @param {Array}    items   [ { type: 'image'|'video'|'embed', src, embed, poster, ratio, alt, caption, thumb } ]
 	 * @param {number}   index   Item to open.
 	 * @param {Function} onClose Called with the index shown last.
 	 * @param {Object}   options { radius, thumbs, thumbRadius } from the slider
@@ -955,7 +972,7 @@
 			'<div class="swiper wp-swiper-lightbox__swiper"><div class="swiper-wrapper">' +
 				items.map( function ( item ) {
 					return '<div class="swiper-slide">' +
-						'<div class="swiper-zoom-container"><img data-src="' + escapeHtml( item.src ) + '" alt="' + escapeHtml( item.alt ) + '"></div>' +
+						lightboxMedia( item ) +
 						( item.caption ? '<div class="wp-swiper-lightbox__caption">' + escapeHtml( item.caption ) + '</div>' : '' ) +
 					'</div>';
 				} ).join( '' ) +
@@ -974,15 +991,37 @@
 
 		document.body.appendChild( root );
 		document.documentElement.classList.add( 'wp-swiper-lightbox-open' );
+		// The slider's own videos stop meanwhile (videos()).
+		document.dispatchEvent( new CustomEvent( 'wpswiperlightbox', { detail: { open: true } } ) );
 
 		var counter = root.querySelector( '.wp-swiper-lightbox__counter' );
-		var slides = root.querySelectorAll( '.swiper-slide' );
+		var slides = root.querySelectorAll( '.wp-swiper-lightbox__swiper .swiper-slide' );
+
+		// Its videos: with sound and controls, played while their slide is shown.
+		var lightboxSettings = { muted: false, loop: false, controls: true };
+		var players = items.map( function ( item, i ) {
+			if ( item.type === 'video' ) {
+				return filePlayer( slides[ i ].querySelector( 'video' ), lightboxSettings );
+			}
+			return item.type === 'embed' ? embedPlayer( slides[ i ].querySelector( '.wp-swiper__embed' ), item.embed, lightboxSettings ) : null;
+		} );
+
+		function playIn( i ) {
+			players.forEach( function ( video, n ) {
+				if ( video && n !== i && video.playing() ) {
+					video.pause();
+				}
+			} );
+			if ( players[ i ] && ! players[ i ].playing() ) {
+				players[ i ].play();
+			}
+		}
 
 		// Load the shown image and its neighbours only.
 		function load( i ) {
 			[ i - 1, i, i + 1 ].forEach( function ( n ) {
-				var img = slides[ ( n + items.length ) % items.length ].querySelector( 'img' );
-				if ( img.hasAttribute( 'data-src' ) ) {
+				var img = slides[ ( n + items.length ) % items.length ].querySelector( 'img[data-src]' );
+				if ( img ) {
 					img.src = img.getAttribute( 'data-src' );
 					img.removeAttribute( 'data-src' );
 				}
@@ -1004,16 +1043,19 @@
 				init: function ( s ) {
 					load( s.realIndex );
 					counter.textContent = ( s.realIndex + 1 ) + ' / ' + items.length;
+					playIn( s.realIndex );
 				},
 				realIndexChange: function ( s ) {
 					load( s.realIndex );
 					counter.textContent = ( s.realIndex + 1 ) + ' / ' + items.length;
+					playIn( s.realIndex );
 				}
 			}
 		} );
 
 		var thumbs = strip ? lightboxThumbs( root, viewer, strip, options.thumbRadius ) : null;
 		var closed = false;
+		posterFallbacks( root );
 
 		function close() {
 			// A second click during the fade-out must not close (and destroy) twice.
@@ -1023,6 +1065,12 @@
 			closed = true;
 
 			var last = viewer.realIndex;
+			players.forEach( function ( video ) {
+				if ( video ) {
+					video.pause();
+				}
+			} );
+			document.dispatchEvent( new CustomEvent( 'wpswiperlightbox', { detail: { open: false } } ) );
 			if ( thumbs ) {
 				thumbs.destroy();
 			}
@@ -1064,9 +1112,18 @@
 		root.querySelector( '.wp-swiper-lightbox__close' ).addEventListener( 'click', close );
 		document.addEventListener( 'keydown', onKey );
 
-		// A click on the backdrop (not the image, caption or buttons) closes.
+		// A YouTube / Vimeo video's play button (should its autoplay be refused).
 		root.addEventListener( 'click', function ( e ) {
-			if ( viewer.allowClick && ! e.target.closest( 'img, button, .wp-swiper-lightbox__caption, .wp-swiper-lightbox__thumbs' ) ) {
+			var box = e.target.closest( '.wp-swiper-lightbox__embed' );
+			var i = box ? [].indexOf.call( slides, box.closest( '.swiper-slide' ) ) : -1;
+			if ( i >= 0 && players[ i ] ) {
+				players[ i ].play();
+			}
+		} );
+
+		// A click on the backdrop (not the image, video, caption or buttons) closes.
+		root.addEventListener( 'click', function ( e ) {
+			if ( viewer.allowClick && ! e.target.closest( 'img, button, .wp-swiper-lightbox__media, .wp-swiper-lightbox__caption, .wp-swiper-lightbox__thumbs' ) ) {
 				close();
 			}
 		} );
@@ -1188,33 +1245,50 @@
 				return;
 			}
 
-			var slide = clickedSlide( e, swiper, config );
-			if ( ! slide || ! slide.hasAttribute( 'data-wp-swiper-full' ) ) {
+			// A click on a video's own controls is the player's.
+			if ( e.target.tagName === 'VIDEO' && e.target.controls ) {
 				return;
 			}
+
+			// Slides in the lightbox: images, and with "Videos in the lightbox" the
+			// video slides (render.php gives them what the lightbox shows).
+			var SHOWN = '[data-wp-swiper-full], [data-wp-swiper-video], [data-wp-swiper-embed]';
+			var slide = clickedSlide( e, swiper, config );
+			if ( ! slide || ! slide.matches( SHOWN ) ) {
+				return;
+			}
+			e.preventDefault();
 
 			// Thumbnails in the lightbox: the small files of the slider's own strip.
 			var withThumbs = config.lightbox.thumbs && config.thumbs;
 			var small = withThumbs ? el.parentNode.querySelectorAll( '.wp-swiper__thumbs .wp-swiper__thumb-image' ) : [];
 
-			// One item per real slide with an image (not the video slides), whatever
-			// copies the markup holds, in slide order; `real`: its slide's index.
+			// One item per real slide it shows, whatever copies the markup holds, in
+			// slide order; `real`: its slide's index.
 			var items = [];
 			var seen = {};
-			el.querySelectorAll( '.swiper-slide[data-wp-swiper-full]' ).forEach( function ( node ) {
+			el.querySelectorAll( '.swiper-slide' ).forEach( function ( node ) {
 				var real = realIndexOf( node );
-				if ( ! seen[ real ] ) {
-					seen[ real ] = true;
-					var img = node.querySelector( 'img' );
-					var caption = node.querySelector( '.wp-swiper__caption' );
-					items.push( {
-						real: real,
-						src: node.getAttribute( 'data-wp-swiper-full' ),
-						alt: img ? img.alt : '',
-						caption: caption ? caption.textContent.trim() : '',
-						thumb: small[ real ] && small[ real ].tagName === 'IMG' ? small[ real ].currentSrc || small[ real ].src : ''
-					} );
+				if ( seen[ real ] || ! node.matches( SHOWN ) ) {
+					return;
 				}
+				seen[ real ] = true;
+				var img = node.querySelector( 'img.wp-swiper__image' );
+				var caption = node.querySelector( '.wp-swiper__caption' );
+				var type = node.hasAttribute( 'data-wp-swiper-full' ) ? 'image' : ( node.hasAttribute( 'data-wp-swiper-video' ) ? 'video' : 'embed' );
+				var poster = node.getAttribute( 'data-wp-swiper-poster' ) || '';
+				var thumb = small[ real ] && small[ real ].tagName === 'IMG' ? small[ real ].currentSrc || small[ real ].src : '';
+				items.push( {
+					real: real,
+					type: type,
+					src: type === 'image' ? node.getAttribute( 'data-wp-swiper-full' ) : ( node.getAttribute( 'data-wp-swiper-video' ) || '' ),
+					embed: type === 'embed' ? JSON.parse( node.getAttribute( 'data-wp-swiper-embed' ) ) : null,
+					poster: poster,
+					ratio: Number( node.getAttribute( 'data-wp-swiper-ratio' ) ) || 16 / 9,
+					alt: img ? img.alt : '',
+					caption: caption ? caption.textContent.trim() : '',
+					thumb: thumb || poster
+				} );
 			} );
 			items.sort( function ( a, b ) {
 				return a.real - b.real;
@@ -1240,7 +1314,7 @@
 				if ( keys ) {
 					swiper.keyboard.enable();
 				}
-				// Leave the slider on the image the visitor looked at last.
+				// Leave the slider on the slide the visitor looked at last.
 				if ( last !== controller.current() ) {
 					controller.goTo( last );
 				}
@@ -1252,13 +1326,261 @@
 	}
 
 	/* ------------------------------------------------------------------ *
+	 * Video players
+	 *
+	 * A file's <video>, or a YouTube / Vimeo video put into its "facade"
+	 * (render.php: the poster and a play button) the first time it plays.
+	 * Both have one interface for the slider and the lightbox: load( preload ),
+	 * play(), pause(), playing(), once() (no loop), onEnded( fn ), onError( fn ).
+	 * YouTube and Vimeo are driven by messages to their player: no API script
+	 * of theirs loads.
+	 * ------------------------------------------------------------------ */
+
+	var EMBED_ORIGINS = {
+		youtube: 'https://www.youtube-nocookie.com',
+		vimeo: 'https://player.vimeo.com'
+	};
+
+	/**
+	 * @param {Element} video    The <video> (its file waits in data-src).
+	 * @param {Object}  settings { muted, loop, controls }.
+	 */
+	function filePlayer( video, settings ) {
+		// As properties too: the attributes alone do not mute every browser.
+		video.muted = settings.muted;
+		video.loop = settings.loop;
+		video.controls = settings.controls;
+
+		function load( preload ) {
+			if ( ! video.getAttribute( 'src' ) && video.getAttribute( 'data-src' ) ) {
+				video.preload = preload;
+				video.setAttribute( 'src', video.getAttribute( 'data-src' ) );
+			}
+		}
+
+		return {
+			el: video,
+			load: load,
+			play: function () {
+				load( 'auto' );
+				if ( video.ended ) {
+					video.currentTime = 0;
+				}
+				var started = video.play();
+				if ( started && started.catch ) {
+					started.catch( function () {
+						// Browsers start a video by itself only without sound: then muted
+						// (with the controls the visitor can turn it on).
+						if ( ! video.muted ) {
+							video.muted = true;
+							video.play().catch( function () {} );
+						}
+					} );
+				}
+			},
+			pause: function () {
+				if ( ! video.paused ) {
+					video.pause();
+				}
+			},
+			playing: function () {
+				return ! video.paused;
+			},
+			once: function () {
+				video.loop = false;
+			},
+			onEnded: function ( fn ) {
+				video.addEventListener( 'ended', fn );
+			},
+			onError: function ( fn ) {
+				video.addEventListener( 'error', fn );
+			}
+		};
+	}
+
+	/**
+	 * @param {Element} box      The facade (its poster, its play button).
+	 * @param {Object}  data     { provider: 'youtube'|'vimeo', id, hash, title }.
+	 * @param {Object}  settings { muted, loop, controls }: fixed once the player
+	 *                           is there (they are its address).
+	 */
+	function embedPlayer( box, data, settings ) {
+		var youtube = data.provider === 'youtube';
+		var origin = EMBED_ORIGINS[ data.provider ];
+		var iframe = null;
+		// Whether it should play: the player may start (autoplay) after it was left.
+		var wanted = false;
+		var ended = [];
+
+		function address() {
+			var params;
+			if ( youtube ) {
+				params = [ 'autoplay=1', 'mute=' + ( settings.muted ? 1 : 0 ), 'controls=' + ( settings.controls ? 1 : 0 ), 'playsinline=1', 'rel=0', 'modestbranding=1', 'iv_load_policy=3', 'enablejsapi=1' ];
+				if ( settings.loop ) {
+					params.push( 'loop=1', 'playlist=' + data.id );
+				}
+				if ( ! settings.controls ) {
+					params.push( 'disablekb=1' );
+				}
+				if ( /^https?:/.test( window.location.origin ) ) {
+					params.push( 'origin=' + encodeURIComponent( window.location.origin ) );
+				}
+				return origin + '/embed/' + encodeURIComponent( data.id ) + '?' + params.join( '&' );
+			}
+			params = [ 'autoplay=1', 'muted=' + ( settings.muted ? 1 : 0 ), 'loop=' + ( settings.loop ? 1 : 0 ), 'controls=' + ( settings.controls ? 1 : 0 ), 'playsinline=1', 'dnt=1', 'autopause=0', 'title=0', 'byline=0', 'portrait=0' ];
+			if ( data.hash ) {
+				params.unshift( 'h=' + encodeURIComponent( data.hash ) );
+			}
+			return origin + '/video/' + encodeURIComponent( data.id ) + '?' + params.join( '&' );
+		}
+
+		function send( message ) {
+			if ( iframe && iframe.contentWindow ) {
+				iframe.contentWindow.postMessage( JSON.stringify( message ), origin );
+			}
+		}
+
+		function command( play ) {
+			if ( youtube ) {
+				send( { event: 'command', func: play ? 'playVideo' : 'pauseVideo', args: [] } );
+			} else {
+				send( { method: play ? 'play' : 'pause' } );
+			}
+		}
+
+		// Ask the player to tell its state (YouTube: its "listening"; Vimeo: events).
+		function listen() {
+			if ( youtube ) {
+				send( { event: 'listening', id: data.id, channel: 'widget' } );
+			} else {
+				[ 'play', 'pause', 'ended' ].forEach( function ( name ) {
+					send( { method: 'addEventListener', value: name } );
+				} );
+			}
+		}
+
+		function started() {
+			box.classList.add( 'is-playing' );
+			// Started (autoplay) after it was left: stop it again.
+			if ( ! wanted ) {
+				command( false );
+			}
+		}
+
+		function finished() {
+			ended.forEach( function ( fn ) {
+				fn();
+			} );
+		}
+
+		window.addEventListener( 'message', function ( e ) {
+			if ( ! iframe || e.source !== iframe.contentWindow ) {
+				return;
+			}
+			var message;
+			try {
+				message = typeof e.data === 'string' ? JSON.parse( e.data ) : e.data;
+			} catch ( error ) {
+				return;
+			}
+			if ( ! message ) {
+				return;
+			}
+			if ( youtube ) {
+				// 1 playing, 0 ended (infoDelivery, or onStateChange).
+				var info = message.info;
+				var state = info && typeof info === 'object' ? info.playerState : ( message.event === 'onStateChange' ? info : undefined );
+				if ( state === 1 ) {
+					started();
+				} else if ( state === 0 ) {
+					finished();
+				}
+			} else if ( message.event === 'ready' ) {
+				listen();
+			} else if ( message.event === 'play' || message.event === 'playing' ) {
+				started();
+			} else if ( message.event === 'ended' || message.event === 'finish' ) {
+				finished();
+			}
+		} );
+
+		function create() {
+			iframe = document.createElement( 'iframe' );
+			iframe.className = 'wp-swiper__embed-frame';
+			iframe.src = address();
+			iframe.title = data.title || '';
+			iframe.setAttribute( 'allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen' );
+			iframe.setAttribute( 'allowfullscreen', '' );
+			iframe.addEventListener( 'load', function () {
+				// YouTube may not listen yet right at load: asked again shortly after.
+				listen();
+				setTimeout( listen, 500 );
+				setTimeout( listen, 1500 );
+			} );
+			box.appendChild( iframe );
+			box.classList.add( 'has-player' );
+		}
+
+		return {
+			el: box,
+			load: function () {},
+			play: function () {
+				wanted = true;
+				if ( iframe ) {
+					command( true );
+				} else {
+					create();
+				}
+			},
+			pause: function () {
+				wanted = false;
+				command( false );
+			},
+			playing: function () {
+				return wanted;
+			},
+			once: function () {},
+			onEnded: function ( fn ) {
+				ended.push( fn );
+			},
+			onError: function () {}
+		};
+	}
+
+	/**
+	 * YouTube posters: its largest thumbnail, which not every video has (YouTube
+	 * then serves a small grey one): the smaller one, always there, instead.
+	 */
+	function posterFallbacks( root ) {
+		[].forEach.call( root.querySelectorAll( '.wp-swiper__embed-poster[data-fallback]' ), function ( img ) {
+			var check = function () {
+				if ( img.naturalWidth && img.naturalWidth <= 120 ) {
+					img.src = img.getAttribute( 'data-fallback' );
+					img.removeAttribute( 'data-fallback' );
+				}
+			};
+			img.addEventListener( 'error', function () {
+				if ( img.hasAttribute( 'data-fallback' ) ) {
+					img.src = img.getAttribute( 'data-fallback' );
+					img.removeAttribute( 'data-fallback' );
+				}
+			} );
+			img.addEventListener( 'load', check );
+			if ( img.complete ) {
+				check();
+			}
+		} );
+	}
+
+	/* ------------------------------------------------------------------ *
 	 * Video slides
 	 *
 	 * Only the video of the slide in view plays (the current one of the
-	 * wider active slide layout), and only while the slider is on screen.
-	 * A file loads when its slide comes up (render.php leaves its address in
-	 * data-src), the next slide's ahead as "Preload" says; the copies loop
-	 * mode repeats load nothing until they come up themselves.
+	 * wider active slide layout), and only while the slider is on screen and
+	 * no lightbox is open. A file loads when its slide comes up (render.php
+	 * leaves its address in data-src), the next slide's ahead as "Preload"
+	 * says; a YouTube / Vimeo player is put in when its slide first plays.
+	 * The copies loop mode repeats load nothing until they come up themselves.
 	 * ------------------------------------------------------------------ */
 
 	/**
@@ -1270,43 +1592,27 @@
 	 */
 	function videos( swiper, el, config, player, next ) {
 		var settings = config.video;
-		var all = [].slice.call( el.querySelectorAll( 'video.wp-swiper__video' ) );
+		// A video the slider waits for plays once: a YouTube / Vimeo player is
+		// made so from the start (its loop is part of its address).
+		var embedSettings = { muted: settings.muted, loop: settings.loop && ! settings.wait, controls: settings.controls };
+		var players = [].map.call( el.querySelectorAll( 'video.wp-swiper__video, .wp-swiper__embed' ), function ( node ) {
+			return node.tagName === 'VIDEO'
+				? filePlayer( node, settings )
+				: embedPlayer( node, JSON.parse( node.getAttribute( 'data-wp-swiper-embed-player' ) || '{}' ), embedSettings );
+		} );
 		var inView = true;
+		var lightboxOpen = false;
 		var current = null;
 		// The video the slider's autoplay is held for ("Next slide when the video ends").
 		var waiting = null;
 
-		// As properties too: the attributes alone do not mute every browser.
-		all.forEach( function ( video ) {
-			video.muted = settings.muted;
-			video.loop = settings.loop;
-			video.controls = settings.controls;
-		} );
-
-		function load( video, preload ) {
-			if ( ! video.getAttribute( 'src' ) && video.getAttribute( 'data-src' ) ) {
-				video.preload = preload;
-				video.setAttribute( 'src', video.getAttribute( 'data-src' ) );
+		function playerOf( slide ) {
+			for ( var i = 0; slide && i < players.length; i++ ) {
+				if ( slide.contains( players[ i ].el ) ) {
+					return players[ i ];
+				}
 			}
-		}
-
-		function play( video ) {
-			load( video, 'auto' );
-			var started = video.play();
-			if ( started && started.catch ) {
-				started.catch( function () {
-					// Browsers start a video by itself only without sound: then muted
-					// (with the controls the visitor can turn it on).
-					if ( ! video.muted ) {
-						video.muted = true;
-						video.play().catch( function () {} );
-					}
-				} );
-			}
-		}
-
-		function videoOf( slide ) {
-			return slide ? slide.querySelector( 'video.wp-swiper__video' ) : null;
+			return null;
 		}
 
 		function activeSlide() {
@@ -1325,10 +1631,10 @@
 
 		function sync() {
 			var slide = activeSlide();
-			var video = videoOf( slide );
+			var video = playerOf( slide );
 
-			all.forEach( function ( other ) {
-				if ( other !== video && ! other.paused && ( settings.pause || ! inView ) ) {
+			players.forEach( function ( other ) {
+				if ( other !== video && other.playing() && ( settings.pause || ! inView || lightboxOpen ) ) {
 					other.pause();
 				}
 			} );
@@ -1338,11 +1644,11 @@
 			}
 			current = video;
 
-			// The next slide's video, ahead of time.
+			// The next slide's video, ahead of time (a file only).
 			if ( settings.preload !== 'none' && slide ) {
-				var following = videoOf( slide.nextElementSibling );
+				var following = playerOf( slide.nextElementSibling );
 				if ( following ) {
-					load( following, settings.preload );
+					following.load( settings.preload );
 				}
 			}
 
@@ -1350,29 +1656,26 @@
 				return;
 			}
 			if ( ! settings.autoplay ) {
-				// The visitor starts it (its controls show): its first frame meanwhile.
-				load( video, 'metadata' );
+				// The visitor starts it (controls, or the play button): its first frame meanwhile.
+				video.load( 'metadata' );
 				return;
 			}
-			if ( ! inView ) {
+			if ( ! inView || lightboxOpen ) {
 				return;
 			}
 			if ( settings.wait && player && waiting !== video ) {
 				// Hold the slider until the video ends; it plays once, from the start.
 				waiting = video;
 				player.stop();
-				video.loop = false;
-				if ( video.ended ) {
-					video.currentTime = 0;
-				}
+				video.once();
 			}
-			if ( video.paused ) {
-				play( video );
+			if ( ! video.playing() ) {
+				video.play();
 			}
 		}
 
-		all.forEach( function ( video ) {
-			video.addEventListener( 'ended', function () {
+		players.forEach( function ( video ) {
+			video.onEnded( function () {
 				if ( video === waiting ) {
 					waiting = null;
 					if ( player ) {
@@ -1382,11 +1685,34 @@
 				}
 			} );
 			// A file that cannot play must not hold the slider.
-			video.addEventListener( 'error', function () {
+			video.onError( function () {
 				if ( video === waiting ) {
 					release();
 				}
 			} );
+		} );
+
+		// A YouTube / Vimeo video's play button: it plays there (unless a click
+		// opens the lightbox instead, "Videos in the lightbox").
+		if ( ! ( config.lightbox && config.lightbox.videos ) ) {
+			el.addEventListener( 'click', function ( e ) {
+				var box = e.target.closest( '.wp-swiper__embed' );
+				var video = box && swiper.allowClick ? playerOf( box ) : null;
+				if ( video && ! video.playing() ) {
+					e.preventDefault();
+					video.play();
+				}
+			} );
+		}
+
+		// Nothing plays behind an open lightbox.
+		document.addEventListener( 'wpswiperlightbox', function ( e ) {
+			lightboxOpen = !! ( e.detail && e.detail.open );
+			if ( lightboxOpen && current && current.playing() ) {
+				current.pause();
+			} else if ( ! lightboxOpen ) {
+				sync();
+			}
 		} );
 
 		// Off screen: nothing plays.
@@ -1395,12 +1721,13 @@
 				inView = entries[ 0 ].isIntersecting;
 				if ( inView ) {
 					sync();
-				} else if ( current && ! current.paused ) {
+				} else if ( current && current.playing() ) {
 					current.pause();
 				}
 			}, { threshold: 0.25 } ).observe( el );
 		}
 
+		posterFallbacks( el );
 		swiper.on( 'activeIndexChange transitionEnd', sync );
 		// The wider active slide layout moves its current slide without Swiper.
 		if ( config.expand ) {

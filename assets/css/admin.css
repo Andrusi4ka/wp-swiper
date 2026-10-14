@@ -181,6 +181,29 @@
 	gap: 2px;
 }
 
+/* Below the slides: the media library button and a YouTube / Vimeo link. */
+.wp-swiper-add-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+	margin: 12px 0;
+}
+
+.wp-swiper-embed-add {
+	display: inline-flex;
+	gap: 6px;
+}
+
+.wp-swiper-embed-add input {
+	width: 280px;
+	max-width: 100%;
+}
+
+.wp-swiper-embed-error {
+	color: #d63638;
+}
+
 /* Icon and label centred on one axis. */
 #wp-swiper-add {
 	display: inline-flex;

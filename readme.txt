@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,7 @@ WP Swiper adds a "WP Swiper" menu where you build image sliders from the media l
 * Image fit Cover or Contain, height in px / vh / % or Auto (fills the parent column).
 * Arrows (with their own colour), bullets or fraction pagination in six positions over or outside the slider, keyboard control, autoplay, infinite loop.
 * Lightbox with zoom (and, with Thumbnails, the strip of thumbnails in it), per-slide links (optionally in a new tab), captions with their own typography and background.
-* Video slides from the media library, with a poster image: the video of the slide in view plays (muted, looped, with or without controls), the slider can wait for its end, and a file loads only when its slide comes up.
+* Video slides from the media library or from a YouTube / Vimeo link, with a poster image: the video of the slide in view plays (muted, looped, with or without controls), the slider can wait for its end, and a file or player loads only when its slide comes up (YouTube in its privacy-enhanced mode). Videos open in the lightbox too, with sound.
 * Preview beside the settings: the slider as the current settings draw it, saved or not, as on a desktop, tablet or phone (refreshed with its Update button).
 * Settings that do not apply in the current setup are greyed out, and keep their values.
 
@@ -48,9 +48,25 @@ Deleting it under Plugins removes all sliders with their slides and settings. De
 
 = Why is a setting greyed out? =
 
-It does not apply with the current settings (for example Slides per view with Fade, which always shows one slide). Its value is kept and comes back when it applies again.
+It does not apply with the current settings (for example "Next slide when the video ends" without Autoplay). Its value is kept and comes back when it applies again.
+
+= Can a slide be a video? =
+
+Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 1.3.0 =
+* New: video slides. A video from the media library, or a YouTube / Vimeo link (pasted under the slides). Only the video of the slide in view plays, and only while the slider is on screen; a file or player loads only when its slide comes up, so the page stays as light as before. YouTube plays in its privacy-enhanced mode.
+* New Video page: play automatically, muted, loop, show controls, pause when the slide is left, next slide when the video ends (with Autoplay), preload the next video, and the poster image of every video slide.
+* New: "Videos in the lightbox" — a click on a video slide opens it in the lightbox, with sound and controls.
+* New settings screen: Advanced (effect, direction) with a menu of pages beside it — Lightbox, Controls, Layout, Thumbnails, Caption, Video, Custom — and a preview of the slider in the other half, drawn from the current settings, saved or not, refreshed with its Update button. The separate Preview page is gone.
+* Switches instead of checkboxes, Direction as buttons, sliders for transition speed and delay, help texts behind an "i" icon. Slides per view is hidden for the effects that show one slide.
+* Controls now holds speed, loop and autoplay (with delay and pause on hover) above the arrows, pagination and keyboard; with Thumbnails only the pagination and keyboard are greyed.
+* Thumbnails: a page of its own (Placement, Size, Look) and a new "Thumbnail height" per device (instead of Thumbnails per view).
+* New: arrow height per device; the slider's own ID (Custom page, with the CSS class); Coverflow Rotate down to -90° (the side slides turn outwards).
+* Lightbox: the image and the thumbnails in it take a border radius of their own, per device (empty: the slider's). Sliders that had "Rounded corners in the lightbox" keep their look.
+* Height says what it measures: Image height, Main image height (Thumbnails) or Slider height (vertical).
 
 = 1.2.1 =
 * Thumbnails: "Transition" (first in Layout) — the slides slide or fade into one another. With Fade the direction is always horizontal.

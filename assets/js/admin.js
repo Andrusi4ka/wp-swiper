@@ -52,6 +52,65 @@
 			return String( value ).replace( /&/g, '&amp;' ).replace( /"/g, '&quot;' ).replace( /</g, '&lt;' );
 		}
 
+		// A new slide's row from the template.
+		function slideRow( id, thumb, title, embed, badge ) {
+			return template
+				.replace( /\{\{id\}\}/g, escapeAttr( id ) )
+				.replace( /\{\{thumb\}\}/g, escapeAttr( thumb ) )
+				.replace( /\{\{title\}\}/g, escapeAttr( title ) )
+				.replace( /\{\{embed\}\}/g, escapeAttr( embed ) )
+				.replace( /\{\{badge\}\}/g, escapeAttr( badge ) );
+		}
+
+		/**
+		 * A YouTube or Vimeo link as its provider and id (as
+		 * WP_Swiper_Settings::parse_embed() reads it), or null.
+		 */
+		function parseEmbed( url ) {
+			var match = /^https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtube-nocookie\.com\/embed\/|youtu\.be\/)([\w-]{11})/i.exec( url );
+			if ( match ) {
+				return { provider: 'youtube', id: match[ 1 ] };
+			}
+			match = /^https?:\/\/(?:www\.)?(?:player\.)?vimeo\.com\/(?:.*?\/)?(\d{6,})/i.exec( url );
+			return match ? { provider: 'vimeo', id: match[ 1 ] } : null;
+		}
+
+		// Slides: a YouTube / Vimeo video from its link. Its thumbnail: YouTube's
+		// at once; Vimeo's once the slider is saved (it comes from Vimeo).
+		var $embedUrl = $( '#wp-swiper-embed-url' );
+		var $embedError = $( '.wp-swiper-embed-error' );
+
+		function addEmbed() {
+			var url = $.trim( $embedUrl.val() );
+			var embed = parseEmbed( url );
+
+			$embedError.prop( 'hidden', !! embed || url === '' );
+			if ( ! embed ) {
+				return;
+			}
+			// YouTube's 16:9 thumbnail (its larger ones have black bands in the picture).
+			var thumb = embed.provider === 'youtube' ? 'https://i.ytimg.com/vi/' + embed.id + '/mqdefault.jpg' : '';
+			var $item = $( slideRow( 0, thumb, url, url, embed.provider === 'youtube' ? 'YouTube' : 'Vimeo' ) ).appendTo( $list );
+
+			$item.addClass( 'wp-swiper-slide--video wp-swiper-slide--embed' ).attr( 'data-default-thumb', thumb );
+			if ( ! thumb ) {
+				$item.find( '.wp-swiper-slide__thumb img' ).prop( 'hidden', true );
+			}
+			$embedUrl.val( '' );
+			toggleEmpty();
+		}
+
+		$( '#wp-swiper-embed-add' ).on( 'click', addEmbed );
+		$embedUrl.on( 'keydown', function ( e ) {
+			// Enter adds it (not the form's submit).
+			if ( e.key === 'Enter' ) {
+				e.preventDefault();
+				addEmbed();
+			}
+		} ).on( 'input', function () {
+			$embedError.prop( 'hidden', true );
+		} );
+
 		// Slides: add from media library.
 		$( '#wp-swiper-add' ).on( 'click', function ( e ) {
 			e.preventDefault();
@@ -72,12 +131,9 @@
 						// A video has no picture of its own until a poster is chosen.
 						var thumb = video ? '' : ( sizes.medium || sizes.thumbnail || data ).url;
 
-						var $item = $(
-							template
-								.replace( /\{\{id\}\}/g, escapeAttr( data.id ) )
-								.replace( /\{\{thumb\}\}/g, escapeAttr( thumb ) )
-								.replace( /\{\{title\}\}/g, escapeAttr( data.title || data.filename || '' ) )
-						).appendTo( $list );
+						var $item = $( slideRow( data.id, thumb, data.title || data.filename || '', '', i18n.videoBadge ) ).appendTo( $list );
+						// Without a poster a video has no thumbnail to go back to.
+						$item.attr( 'data-default-thumb', '' );
 						if ( video ) {
 							$item.addClass( 'wp-swiper-slide--video' ).find( '.wp-swiper-slide__thumb img' ).prop( 'hidden', true );
 						}
@@ -148,6 +204,8 @@
 		}
 
 		function setPoster( $slide, id, url ) {
+			// Without a poster: the video's own thumbnail again, if it has one.
+			url = url || $slide.attr( 'data-default-thumb' ) || '';
 			$slide.find( 'input[name="wp_swiper_slides[poster][]"]' ).val( id );
 			$slide.find( '.wp-swiper-slide__thumb img' ).attr( 'src', url ).prop( 'hidden', ! url );
 			$( '.wp-swiper-preview__update' ).addClass( 'is-stale' );
@@ -563,6 +621,8 @@
 			VIDEO_FIELDS.forEach( function ( name ) {
 				field( name ).toggle( hasVideo );
 			} );
+			// Lightbox: video slides in it, while there are some.
+			field( 'lightbox_videos' ).toggle( hasVideo && $( '#wp-swiper-lightbox' ).is( ':checked' ) );
 			var videoAutoplay = $( '#wp-swiper-video_autoplay' ).is( ':checked' );
 			lockVideoControls( ! videoAutoplay );
 			lockVideoWait( ! autoplay || marquee || ! videoAutoplay );
