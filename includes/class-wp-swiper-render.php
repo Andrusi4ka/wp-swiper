@@ -66,24 +66,37 @@ class WP_Swiper_Render {
 	}
 
 	/**
-	 * A slider's markup (and its assets enqueued).
+	 * A published slider's markup (and its assets enqueued).
 	 *
-	 * @param int    $post_id    Slider ID.
-	 * @param string $class      Extra CSS classes.
-	 * @param bool   $any_status Also one that is not published (the preview).
+	 * @param int    $post_id Slider ID.
+	 * @param string $class   Extra CSS classes.
 	 * @return string
 	 */
-	public static function render( $post_id, $class = '', $any_status = false ) {
+	public static function render( $post_id, $class = '' ) {
 		$post = $post_id ? get_post( $post_id ) : null;
 
-		if ( ! $post || WP_Swiper_Settings::POST_TYPE !== $post->post_type || ( ! $any_status && 'publish' !== $post->post_status ) ) {
+		if ( ! $post || WP_Swiper_Settings::POST_TYPE !== $post->post_type || 'publish' !== $post->post_status ) {
 			return current_user_can( 'edit_posts' )
 				? '<p class="wp-swiper-notice">' . esc_html__( 'WP Swiper: slider not found or not published.', 'wp-swiper' ) . '</p>'
 				: '';
 		}
 
+		return self::render_slider( $post_id, WP_Swiper_Settings::get_slides( $post_id ), WP_Swiper_Settings::get( $post_id ), $class );
+	}
+
+	/**
+	 * Markup of a slider from given slides and settings (the saved ones, or
+	 * those of the edit screen for its preview).
+	 *
+	 * @param int    $post_id  Slider ID.
+	 * @param array  $slides   Slides (see WP_Swiper_Settings::get_slides()).
+	 * @param array  $settings Settings over the defaults (see WP_Swiper_Settings::get()).
+	 * @param string $class    Extra CSS classes.
+	 * @return string
+	 */
+	public static function render_slider( $post_id, $slides, $settings, $class = '' ) {
 		$slides = array_filter(
-			WP_Swiper_Settings::get_slides( $post_id ),
+			$slides,
 			function ( $slide ) {
 				return wp_attachment_is_image( $slide['id'] );
 			}
@@ -97,8 +110,6 @@ class WP_Swiper_Render {
 
 		wp_enqueue_style( 'wp-swiper' );
 		wp_enqueue_script( 'wp-swiper' );
-
-		$settings = WP_Swiper_Settings::get( $post_id );
 
 		// Fading slides (the Fade effect, Thumbnails with the Fade transition) have no
 		// direction of their own: always horizontal (Direction is locked in the editor).
@@ -173,6 +184,8 @@ class WP_Swiper_Render {
 			// The thumbnails strip, a Swiper of its own (frontend.js thumbs()).
 			'thumbs'        => WP_Swiper_Settings::is_thumbs( $settings ) ? array(
 				'perView' => WP_Swiper_Settings::responsive( $settings, 'thumbs_per_view' ),
+				// "Thumbnail height" per device, px; 0 = from perView (frontend.js).
+				'height'  => array_map( 'intval', WP_Swiper_Settings::responsive( $settings, 'thumbs_height' ) ),
 				'gap'     => WP_Swiper_Settings::responsive( $settings, 'thumbs_gap' ),
 				'center'  => 'center' === $settings['thumbs_align'],
 				// Per device, a column beside the slider: frontend.js works out its width
@@ -199,10 +212,9 @@ class WP_Swiper_Render {
 				'pause' => $settings['pause_on_hover'],
 			) : false,
 			'lightbox'      => $settings['lightbox'] ? array(
-				// "Rounded corners in the lightbox", per device: the image takes the
-				// Slide border radius, the strip's thumbnails the Thumbnail border radius.
-				'radius'      => $settings['lightbox_rounded'] ? array_map( 'intval', WP_Swiper_Settings::responsive( $settings, 'border_radius' ) ) : false,
-				'thumbRadius' => $settings['lightbox_rounded'] ? array_map( 'intval', WP_Swiper_Settings::responsive( $settings, 'thumbs_radius' ) ) : false,
+				// Corners of the image and of the strip's thumbnails, per device.
+				'radius'      => self::lightbox_radius( $settings, 'lightbox_radius', 'border_radius' ),
+				'thumbRadius' => self::lightbox_radius( $settings, 'lightbox_thumbs_radius', 'thumbs_radius' ),
 				// The strip again under the lightbox image (sized like `thumbs` above).
 				'thumbs' => WP_Swiper_Settings::is_thumbs( $settings ) && ! empty( $settings['lightbox_thumbs'] ),
 			) : false,
@@ -224,6 +236,25 @@ class WP_Swiper_Render {
 				'centered' => self::centered( $settings ),
 			) : false,
 		);
+	}
+
+	/**
+	 * A lightbox radius per device: its own where set, else (empty, after
+	 * the inheritance from the larger screens) the slider's on that device.
+	 *
+	 * @param array  $settings Slider settings.
+	 * @param string $key      The lightbox's field.
+	 * @param string $fallback The slider's field (Layout).
+	 * @return array [ 'desktop' => int, 'tablet' => int, 'mobile' => int ]
+	 */
+	private static function lightbox_radius( $settings, $key, $fallback ) {
+		$own    = WP_Swiper_Settings::responsive( $settings, $key );
+		$slider = WP_Swiper_Settings::responsive( $settings, $fallback );
+
+		foreach ( $own as $device => $radius ) {
+			$own[ $device ] = (int) ( '' === $radius ? $slider[ $device ] : $radius );
+		}
+		return $own;
 	}
 
 	/**
@@ -446,6 +477,15 @@ class WP_Swiper_Render {
 			$style[] = '--wp-swiper-thumb-opacity:' . max( 10, min( 100, (int) $settings['thumbs_opacity'] ) ) / 100;
 		}
 
+		// Arrow height per device, where set (the CSS has the default sizes).
+		if ( $settings['navigation'] ) {
+			foreach ( WP_Swiper_Settings::responsive( $settings, 'navigation_size' ) as $device => $size ) {
+				if ( '' !== $size ) {
+					$style[] = '--wp-swiper-arrow-size' . $suffix[ $device ] . ':' . (int) $size . 'px';
+				}
+			}
+		}
+
 		// Height of the slides per device (0 = 500px), unless "Auto".
 		if ( ! $fill ) {
 			foreach ( WP_Swiper_Settings::css_heights( $settings ) as $device => $height ) {
@@ -522,7 +562,8 @@ class WP_Swiper_Render {
 
 		ob_start();
 		?>
-		<div class="<?php echo esc_attr( implode( ' ', array_filter( $classes ) ) ); ?>"<?php echo $style ? ' style="' . esc_attr( implode( ';', $style ) ) . '"' : ''; ?>>
+		<?php // The slider's own id (Custom), if any. ?>
+		<div<?php echo '' !== $settings['css_id'] ? ' id="' . esc_attr( $settings['css_id'] ) . '"' : ''; ?> class="<?php echo esc_attr( implode( ' ', array_filter( $classes ) ) ); ?>"<?php echo $style ? ' style="' . esc_attr( implode( ';', $style ) ) . '"' : ''; ?>>
 			<div class="swiper" data-wp-swiper="<?php echo esc_attr( wp_json_encode( $config ) ); ?>">
 				<div class="swiper-wrapper">
 					<?php

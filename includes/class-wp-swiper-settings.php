@@ -45,26 +45,34 @@ class WP_Swiper_Settings {
 				),
 			),
 			'direction'             => array(
-				'section' => 'advanced',
-				'label'   => __( 'Direction', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => 'horizontal',
+				'section'   => 'advanced',
+				'label'     => __( 'Direction', 'wp-swiper' ),
+				'type'      => 'select',
+				// Shown as a row of buttons (admin.js keeps the select behind them).
+				'segmented' => true,
+				'default'   => 'horizontal',
 				'choices' => array(
 					'horizontal' => __( 'Horizontal', 'wp-swiper' ),
 					'vertical'   => __( 'Vertical', 'wp-swiper' ),
 				),
 			),
+			// Controls, at the top: how the slider moves, then (below, after the
+			// Lightbox fields) the arrows, pagination and keyboard.
 			'speed'                 => array(
 				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Transition speed (ms)', 'wp-swiper' ),
 				'type'    => 'number',
 				'default' => 600,
 				'min'     => 100,
 				'max'     => 10000,
 				'step'    => 50,
+				// A slider next to the number over the usual values; the number takes any up to max.
+				'range'   => array( 100, 3000 ),
 			),
 			'loop'                  => array(
 				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Infinite loop', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => true,
@@ -72,54 +80,85 @@ class WP_Swiper_Settings {
 
 			'autoplay'              => array(
 				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Autoplay', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => false,
 			),
-			// Right under Autoplay, shown while it (or Continuous scroll) is on.
+			// Right under Autoplay, both shown while it (or Continuous scroll) is on.
 			'autoplay_delay'        => array(
 				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Delay between slides (ms)', 'wp-swiper' ),
 				'type'    => 'number',
 				'default' => 4000,
 				'min'     => 500,
 				'max'     => 60000,
 				'step'    => 100,
+				'range'   => array( 500, 15000 ),
 			),
 			'pause_on_hover'        => array(
 				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Pause on hover', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => true,
 			),
 			'lightbox'              => array(
 				'section' => 'advanced',
+				'panel'   => 'lightbox',
 				'label'   => __( 'Open images in a lightbox', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => false,
 				'help'    => __( 'Available only when the images have no links.', 'wp-swiper' ),
 			),
-			// The radii come from Layout, per device: no numbers of its own.
-			'lightbox_rounded'      => array(
-				'section' => 'advanced',
-				'label'   => __( 'Rounded corners in the lightbox', 'wp-swiper' ),
-				'type'    => 'checkbox',
-				'default' => false,
-				'help'    => __( 'The image takes the slide border radius; thumbnails in the lightbox take the thumbnail border radius.', 'wp-swiper' ),
+			// Per device; empty (desktop too, `empty`) takes the slider's own
+			// radius on that device (see WP_Swiper_Render::lightbox_radius()).
+			'lightbox_radius'       => array(
+				'section'     => 'advanced',
+				'panel'       => 'lightbox',
+				'label'       => __( 'Image border radius (px)', 'wp-swiper' ),
+				'type'        => 'number',
+				'responsive'  => true,
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 0,
+				'max'         => 200,
+				'step'        => 1,
+				'placeholder' => __( 'As the slides', 'wp-swiper' ),
+				'help'        => __( 'Empty: the slide border radius (Layout).', 'wp-swiper' ),
 			),
 			// Thumbnails effect: its strip in the lightbox too, always under the
 			// image, as many in view as in the slider.
 			'lightbox_thumbs'       => array(
 				'section' => 'advanced',
+				'panel'   => 'lightbox',
 				'effects' => array( 'thumbs' ),
 				'label'   => __( 'Thumbnails in the lightbox', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => false,
 				'help'    => __( 'Under the image, as many in view as in the slider.', 'wp-swiper' ),
 			),
+			// Like the image's: per device, empty takes the slider's thumbnail radius.
+			'lightbox_thumbs_radius' => array(
+				'section'     => 'advanced',
+				'panel'       => 'lightbox',
+				'effects'     => array( 'thumbs' ),
+				'label'       => __( 'Thumbnail border radius (px)', 'wp-swiper' ),
+				'type'        => 'number',
+				'responsive'  => true,
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 0,
+				'max'         => 200,
+				'step'        => 1,
+				'placeholder' => __( 'As the slider’s', 'wp-swiper' ),
+				'help'        => __( 'Empty: the thumbnail border radius (Layout).', 'wp-swiper' ),
+			),
 
 			'navigation'            => array(
-				'section' => 'controls',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'group'   => 'arrows',
 				'label'   => __( 'Arrows', 'wp-swiper' ),
 				'type'    => 'checkbox',
@@ -127,15 +166,33 @@ class WP_Swiper_Settings {
 			),
 			// Compact: a swatch right after the Arrows checkbox, its label as a tooltip.
 			'navigation_color'      => array(
-				'section' => 'controls',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'group'   => 'arrows',
 				'compact' => true,
 				'label'   => __( 'Arrow color', 'wp-swiper' ),
 				'type'    => 'color',
 				'default' => '#ffffff',
 			),
+			// Swiper's navigation size: the arrows' height (their width and offset
+			// follow). Per device; empty (desktop too) = the plugin's own sizes.
+			'navigation_size'       => array(
+				'section'     => 'advanced',
+				'panel'       => 'controls',
+				'label'       => __( 'Arrow height (px)', 'wp-swiper' ),
+				'type'        => 'number',
+				'responsive'  => true,
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 10,
+				'max'         => 120,
+				'step'        => 1,
+				'placeholder' => __( 'Auto', 'wp-swiper' ),
+				'help'        => __( 'Auto (empty): 32px on the slider, 20px on the strip of thumbnails (Thumbnails effect). Their width follows.', 'wp-swiper' ),
+			),
 			'pagination'            => array(
-				'section' => 'controls',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Pagination', 'wp-swiper' ),
 				'type'    => 'select',
 				'default' => 'bullets',
@@ -146,7 +203,8 @@ class WP_Swiper_Settings {
 				),
 			),
 			'pagination_position'   => array(
-				'section' => 'controls',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Pagination position', 'wp-swiper' ),
 				'type'    => 'select',
 				'default' => 'bottom-center',
@@ -161,7 +219,8 @@ class WP_Swiper_Settings {
 			),
 			// Shown instead of pagination_position for vertical sliders.
 			'pagination_position_vertical' => array(
-				'section' => 'controls',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Pagination position', 'wp-swiper' ),
 				'type'    => 'select',
 				'default' => 'right-center',
@@ -175,7 +234,8 @@ class WP_Swiper_Settings {
 				),
 			),
 			'pagination_placement'  => array(
-				'section' => 'controls',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Pagination placement', 'wp-swiper' ),
 				'type'    => 'select',
 				'default' => 'inside',
@@ -185,7 +245,8 @@ class WP_Swiper_Settings {
 				),
 			),
 			'pagination_offset'     => array(
-				'section' => 'controls',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Pagination offset (px)', 'wp-swiper' ),
 				'type'    => 'number',
 				'default' => 16,
@@ -195,7 +256,8 @@ class WP_Swiper_Settings {
 				'help'    => __( 'Distance from the slider edge (over the slider) or gap to the slider (outside).', 'wp-swiper' ),
 			),
 			'keyboard'              => array(
-				'section' => 'controls',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'label'   => __( 'Keyboard control', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => true,
@@ -486,10 +548,11 @@ class WP_Swiper_Settings {
 				'label'   => __( 'Rotate (°)', 'wp-swiper' ),
 				'type'    => 'number',
 				'default' => 50,
-				'min'     => 0,
+				// Below 0 Swiper turns them the other way (its angle is rotate x offset).
+				'min'     => -90,
 				'max'     => 90,
 				'step'    => 1,
-				'help'    => __( 'How far the side slides turn away.', 'wp-swiper' ),
+				'help'    => __( 'How far the side slides turn: above 0 towards the middle one, below 0 away from it (outwards).', 'wp-swiper' ),
 			),
 			'coverflow_depth'       => array(
 				'section' => 'layout',
@@ -611,10 +674,14 @@ class WP_Swiper_Settings {
 				'help'    => __( 'Tilt of each card of the stack. 0 = straight.', 'wp-swiper' ),
 			),
 
-			// Thumbnails effect: the strip of small images that picks the slide.
+			// Thumbnails effect: the strip of small images that picks the slide, on
+			// a page of its own ("panel"); still Layout values, kept per effect.
 			// Per device: tablet and mobile may stay empty (inherit), as the numbers do.
+			// "heading": a title over it and the fields after it on that page.
 			'thumbs_position'       => array(
 				'section'    => 'layout',
+				'panel'      => 'thumbs',
+				'heading'    => __( 'Placement', 'wp-swiper' ),
 				'effects'    => array( 'thumbs' ),
 				'label'      => __( 'Thumbnails position', 'wp-swiper' ),
 				'type'       => 'select',
@@ -628,8 +695,35 @@ class WP_Swiper_Settings {
 				),
 				'help'       => __( 'Left or right: a column as tall as the slider; its width follows from the thumbnail size.', 'wp-swiper' ),
 			),
+			'thumbs_align'          => array(
+				'section' => 'layout',
+				'panel'   => 'thumbs',
+				'effects' => array( 'thumbs' ),
+				'label'   => __( 'Thumbnails alignment', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'center',
+				'choices' => array(
+					'center' => __( 'Center', 'wp-swiper' ),
+					'start'  => __( 'Start (left; top in a column)', 'wp-swiper' ),
+				),
+				'help'    => __( 'Where the thumbnails sit while there are too few to fill the strip.', 'wp-swiper' ),
+			),
+			'thumbs_spacing'        => array(
+				'section'    => 'layout',
+				'panel'      => 'thumbs',
+				'effects'    => array( 'thumbs' ),
+				'label'      => __( 'Gap to the slider (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 10,
+				'min'        => 0,
+				'max'        => 200,
+				'step'       => 1,
+			),
 			'thumbs_per_view'       => array(
 				'section'         => 'layout',
+				'panel'           => 'thumbs',
+				'heading'         => __( 'Size', 'wp-swiper' ),
 				'effects'         => array( 'thumbs' ),
 				'label'           => __( 'Thumbnails per view', 'wp-swiper' ),
 				'type'            => 'number',
@@ -641,8 +735,26 @@ class WP_Swiper_Settings {
 				'step'            => 1,
 				'help'            => __( 'Sets the thumbnail size: this many fill the strip. With more slides the strip scrolls.', 'wp-swiper' ),
 			),
+			// Per device; empty (desktop too) or 0 = from Thumbnails per view and the
+			// proportions. Set, it replaces Thumbnails per view on that device.
+			'thumbs_height'         => array(
+				'section'     => 'layout',
+				'panel'       => 'thumbs',
+				'effects'     => array( 'thumbs' ),
+				'label'       => __( 'Thumbnail height (px)', 'wp-swiper' ),
+				'type'        => 'number',
+				'responsive'  => true,
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 0,
+				'max'         => 600,
+				'step'        => 1,
+				'placeholder' => __( 'Auto', 'wp-swiper' ),
+				'help'        => __( 'Auto (empty or 0): the size comes from Thumbnails per view and the proportions. Set: thumbnails this tall, frame included; their width follows from the proportions and as many show as fit, the rest scroll.', 'wp-swiper' ),
+			),
 			'thumbs_gap'            => array(
 				'section'    => 'layout',
+				'panel'      => 'thumbs',
 				'effects'    => array( 'thumbs' ),
 				'label'      => __( 'Space between thumbnails (px)', 'wp-swiper' ),
 				'type'       => 'number',
@@ -652,20 +764,10 @@ class WP_Swiper_Settings {
 				'max'        => 100,
 				'step'       => 1,
 			),
-			'thumbs_spacing'        => array(
-				'section'    => 'layout',
-				'effects'    => array( 'thumbs' ),
-				'label'      => __( 'Gap to the slider (px)', 'wp-swiper' ),
-				'type'       => 'number',
-				'responsive' => true,
-				'default'    => 10,
-				'min'        => 0,
-				'max'        => 200,
-				'step'       => 1,
-			),
 			// Per device, like the position.
 			'thumbs_ratio'          => array(
 				'section'    => 'layout',
+				'panel'      => 'thumbs',
 				'effects'    => array( 'thumbs' ),
 				'label'      => __( 'Thumbnail proportions', 'wp-swiper' ),
 				'type'       => 'select',
@@ -685,6 +787,7 @@ class WP_Swiper_Settings {
 			// see normalize_ratio()); per device too (those with "Custom" use theirs).
 			'thumbs_ratio_custom'   => array(
 				'section'     => 'layout',
+				'panel'       => 'thumbs',
 				'effects'     => array( 'thumbs' ),
 				'label'       => __( 'Custom proportions', 'wp-swiper' ),
 				'type'        => 'ratio',
@@ -693,21 +796,11 @@ class WP_Swiper_Settings {
 				'placeholder' => '4x3',
 				'help'        => __( 'Width x height, for example 4x3 or 2.35x1.', 'wp-swiper' ),
 			),
-			'thumbs_align'          => array(
-				'section' => 'layout',
-				'effects' => array( 'thumbs' ),
-				'label'   => __( 'Thumbnails alignment', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => 'center',
-				'choices' => array(
-					'center' => __( 'Center', 'wp-swiper' ),
-					'start'  => __( 'Start (left; top in a column)', 'wp-swiper' ),
-				),
-				'help'    => __( 'Where the thumbnails sit while there are too few to fill the strip.', 'wp-swiper' ),
-			),
-			// Also that of the thumbnails in the lightbox, with "Rounded corners in the lightbox".
+			// Also that of the thumbnails in the lightbox, unless it has its own.
 			'thumbs_radius'         => array(
 				'section'    => 'layout',
+				'panel'      => 'thumbs',
+				'heading'    => __( 'Look', 'wp-swiper' ),
 				'effects'    => array( 'thumbs' ),
 				'label'      => __( 'Thumbnail border radius (px)', 'wp-swiper' ),
 				'type'       => 'number',
@@ -720,6 +813,7 @@ class WP_Swiper_Settings {
 			// One row: the frame's width and its two colors.
 			'thumbs_border_width'   => array(
 				'section' => 'layout',
+				'panel'   => 'thumbs',
 				'effects' => array( 'thumbs' ),
 				'group'   => 'thumbs_border',
 				'label'   => __( 'Frame width (px)', 'wp-swiper' ),
@@ -731,6 +825,7 @@ class WP_Swiper_Settings {
 			),
 			'thumbs_border_color'   => array(
 				'section' => 'layout',
+				'panel'   => 'thumbs',
 				'effects' => array( 'thumbs' ),
 				'group'   => 'thumbs_border',
 				'label'   => __( 'Frame color', 'wp-swiper' ),
@@ -739,6 +834,7 @@ class WP_Swiper_Settings {
 			),
 			'thumbs_active_color'   => array(
 				'section' => 'layout',
+				'panel'   => 'thumbs',
 				'effects' => array( 'thumbs' ),
 				'group'   => 'thumbs_border',
 				'label'   => __( 'Active frame color', 'wp-swiper' ),
@@ -747,6 +843,7 @@ class WP_Swiper_Settings {
 			),
 			'thumbs_opacity'        => array(
 				'section' => 'layout',
+				'panel'   => 'thumbs',
 				'effects' => array( 'thumbs' ),
 				'label'   => __( 'Inactive thumbnail opacity (%)', 'wp-swiper' ),
 				'type'    => 'number',
@@ -864,12 +961,24 @@ class WP_Swiper_Settings {
 				'help'    => __( 'Keeps the text readable on light images, e.g. without a background.', 'wp-swiper' ),
 			),
 
+			// The slider's outer block (.wp-swiper): classes and an id of its own.
 			'css_class'             => array(
 				'section'     => 'advanced',
+				'panel'       => 'attributes',
 				'label'       => __( 'CSS class', 'wp-swiper' ),
 				'type'        => 'text',
 				'default'     => '',
 				'placeholder' => 'my-slider',
+				'help'        => __( 'One or more, separated by spaces. Added to the slider’s outer block, with those given where it is placed.', 'wp-swiper' ),
+			),
+			'css_id'                => array(
+				'section'     => 'advanced',
+				'panel'       => 'attributes',
+				'label'       => __( 'ID', 'wp-swiper' ),
+				'type'        => 'id',
+				'default'     => '',
+				'placeholder' => 'my-slider',
+				'help'        => __( 'The id of the slider’s outer block: letters, digits, - and _. An id must be unique on a page, so do not place this slider twice on one page.', 'wp-swiper' ),
 			),
 		);
 	}
@@ -1072,17 +1181,22 @@ class WP_Swiper_Settings {
 	}
 
 	/**
-	 * Section titles, in display order.
+	 * Pages of the settings menu, in its order. Advanced's own fields are
+	 * always in view beside the menu; a page shows the fields of its section
+	 * (Layout, Caption) or those of Advanced given its name as `panel`.
 	 *
-	 * @return array
+	 * @return array page => [ title, dashicon ].
 	 */
-	public static function sections() {
+	public static function pages() {
 		return array(
-			'advanced' => __( 'Advanced', 'wp-swiper' ),
-			'controls' => __( 'Controls', 'wp-swiper' ),
-			// The editor adds the chosen effect to the title ("Layout · Slide").
-			'layout'   => __( 'Layout', 'wp-swiper' ),
-			'caption'  => __( 'Caption', 'wp-swiper' ),
+			'lightbox'   => array( __( 'Lightbox', 'wp-swiper' ), 'dashicons-format-gallery' ),
+			'controls'   => array( __( 'Controls', 'wp-swiper' ), 'dashicons-leftright' ),
+			'layout'     => array( __( 'Layout', 'wp-swiper' ), 'dashicons-layout' ),
+			// The Thumbnails effect's strip (its menu item shows for that effect only).
+			'thumbs'     => array( __( 'Thumbnails', 'wp-swiper' ), 'dashicons-images-alt2' ),
+			'caption'    => array( __( 'Caption', 'wp-swiper' ), 'dashicons-editor-textcolor' ),
+			// The outer block's class and id.
+			'attributes' => array( __( 'Custom', 'wp-swiper' ), 'dashicons-editor-code' ),
 		);
 	}
 
@@ -1185,6 +1299,20 @@ class WP_Swiper_Settings {
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_ratio_fields' ), array_filter( $saved['layouts'], 'is_array' ) );
 		}
 
+		// Version 6: the lightbox radii are numbers of their own, empty = the
+		// slider's. "Rounded corners in the lightbox" took the slider's; without
+		// it the corners were square: 0 then (tablet and mobile inherit it).
+		// Set in full: 1.2.0 had a "lightbox_radius" of its own, which may still
+		// be saved, and would otherwise override the slider's.
+		if ( $saved && ( empty( $saved['_version'] ) || $saved['_version'] < 6 ) ) {
+			$radius = empty( $saved['lightbox_rounded'] ) ? 0 : '';
+			foreach ( array( 'lightbox_radius', 'lightbox_thumbs_radius' ) as $key ) {
+				$saved[ $key ]             = $radius;
+				$saved[ $key . '_tablet' ] = '';
+				$saved[ $key . '_mobile' ] = '';
+			}
+		}
+
 		$settings = wp_parse_args( $saved, self::defaults() );
 
 		// Version 4: a Height of 0 means 500px and "Auto" fills the parent block.
@@ -1266,13 +1394,24 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * An HTML id: letters, digits, "-" and "_" only, so it also works as a CSS
+	 * selector and a link target (#id). Spaces become "-" ("hero slider").
+	 *
+	 * @param string $id Raw input.
+	 * @return string
+	 */
+	public static function sanitize_id( $id ) {
+		return preg_replace( '/[^A-Za-z0-9_-]/', '', preg_replace( '/\s+/', '-', trim( $id ) ) );
+	}
+
+	/**
 	 * Sanitize raw form input against the schema.
 	 *
 	 * @param array $input Raw $_POST values.
 	 * @return array
 	 */
 	public static function sanitize( $input ) {
-		$clean = array( '_version' => 5 ) + self::sanitize_fields( $input );
+		$clean = array( '_version' => 6 ) + self::sanitize_fields( $input );
 
 		// Layout values of every effect (see layouts()), sent by the editor as
 		// JSON; the chosen effect's are the ones posted as fields.
@@ -1369,6 +1508,11 @@ class WP_Swiper_Settings {
 					break;
 
 				case 'number':
+					// A field that may stay empty on desktop too (`empty`): '' is kept.
+					if ( ! empty( $field['empty'] ) && ( null === $value || '' === trim( (string) $value ) ) ) {
+						$clean[ $key ] = '';
+						break;
+					}
 					$value         = null === $value ? $field['default'] : (int) $value;
 					$clean[ $key ] = max( $field['min'], min( $field['max'], $value ) );
 					break;
@@ -1395,6 +1539,10 @@ class WP_Swiper_Settings {
 
 				case 'text': // CSS class names: anything else is dropped.
 					$clean[ $key ] = self::sanitize_classes( (string) $value );
+					break;
+
+				case 'id': // An HTML id.
+					$clean[ $key ] = self::sanitize_id( (string) $value );
 					break;
 			}
 		}

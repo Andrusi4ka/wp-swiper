@@ -3,7 +3,9 @@
 .wp-swiper {
 	--swiper-theme-color: #fff;
 	--swiper-navigation-color: #fff;
-	--swiper-navigation-size: 32px;
+	/* "Arrow height" per device (render.php sets those given, inheritance
+	   resolved): 32px without one. */
+	--swiper-navigation-size: var(--wp-swiper-arrow-size, 32px);
 	--swiper-pagination-color: #fff;
 	--swiper-pagination-bullet-inactive-color: #fff;
 	--swiper-pagination-bullet-inactive-opacity: 0.5;
@@ -12,6 +14,18 @@
 
 	position: relative;
 	width: 100%;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper {
+		--swiper-navigation-size: var(--wp-swiper-arrow-size-tablet, 32px);
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper {
+		--swiper-navigation-size: var(--wp-swiper-arrow-size-mobile, 32px);
+	}
 }
 
 .wp-swiper--fit-contain {
@@ -933,12 +947,27 @@ html.wp-swiper-lightbox-open {
    slider gives its own arrows. */
 .wp-swiper .wp-swiper__thumbs .swiper-button-prev,
 .wp-swiper .wp-swiper__thumbs .swiper-button-next {
-	--swiper-navigation-size: 20px;
+	/* "Arrow height", or 20px (the rules below: tablet and mobile). */
+	--swiper-navigation-size: var(--wp-swiper-arrow-size, 20px);
 
 	top: 50%;
 	bottom: auto;
 	margin-top: -10px;
 	transform: none;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper .wp-swiper__thumbs .swiper-button-prev,
+	.wp-swiper .wp-swiper__thumbs .swiper-button-next {
+		--swiper-navigation-size: var(--wp-swiper-arrow-size-tablet, 20px);
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper .wp-swiper__thumbs .swiper-button-prev,
+	.wp-swiper .wp-swiper__thumbs .swiper-button-next {
+		--swiper-navigation-size: var(--wp-swiper-arrow-size-mobile, 20px);
+	}
 }
 
 .wp-swiper .wp-swiper__thumbs .swiper-button-prev {
@@ -998,6 +1027,14 @@ html.wp-swiper-lightbox-open {
 
 .wp-swiper .wp-swiper__thumbs .swiper-slide.wp-swiper-thumb-active {
 	border-color: var(--wp-swiper-thumb-active-color, #333);
+}
+
+/* "Thumbnail height" on this device (frontend.js thumbs()): the size of each
+   thumbnail, as many as fit. Below or above the slider: its width (the image
+   gives the height); beside it: its height (the image fills it). */
+.wp-swiper .wp-swiper__thumbs.wp-swiper__thumbs--sized .swiper-slide {
+	width: var(--wp-swiper-thumb-w, 100%);
+	height: var(--wp-swiper-thumb-h, auto);
 }
 
 /* Inside the frame: the strip clips anything drawn outside a thumbnail. */

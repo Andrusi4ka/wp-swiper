@@ -45,6 +45,13 @@ class WP_Swiper_Admin {
 					'frameButton' => __( 'Add to slider', 'wp-swiper' ),
 					'copied'      => __( 'Copied!', 'wp-swiper' ),
 					'singleSlide' => WP_Swiper_Settings::SINGLE_SLIDE_EFFECTS,
+					// What Height measures (admin.js): each slide across a horizontal
+					// slider; the whole slider, which its slides share, when vertical.
+					'heightLabels' => array(
+						'horizontal' => __( 'Image height', 'wp-swiper' ),
+						'thumbs'     => __( 'Main image height', 'wp-swiper' ),
+						'vertical'   => __( 'Slider height', 'wp-swiper' ),
+					),
 				)
 			);
 		}
@@ -121,48 +128,66 @@ class WP_Swiper_Admin {
 	public static function render_settings_box( $post ) {
 		$values = WP_Swiper_Settings::get( $post->ID );
 		$fields = WP_Swiper_Settings::fields();
+		$pages  = WP_Swiper_Settings::pages();
 
-		echo '<div class="wp-swiper-settings">';
-		foreach ( WP_Swiper_Settings::sections() as $section => $title ) {
-			echo '<fieldset class="wp-swiper-settings__section" data-section="' . esc_attr( $section ) . '"><legend>' . esc_html( $title );
-			if ( 'layout' === $section ) {
-				// Its fields depend on the effect: "Layout · Slide" (admin.js keeps it current).
-				$effects = $fields['effect']['choices'];
-				echo ' · <span class="wp-swiper-layout-effect">' . esc_html( $effects[ $values['effect'] ] ) . '</span>';
+		// Fields per place: Advanced's own, then each menu page's.
+		$keys = array_fill_keys( array_merge( array( 'advanced' ), array_keys( $pages ) ), array() );
+		foreach ( $fields as $key => $field ) {
+			// Fields drawn inside another one (a unit select) are skipped here.
+			if ( empty( $field['inline_in'] ) ) {
+				$keys[ isset( $field['panel'] ) ? $field['panel'] : $field['section'] ][] = $key;
 			}
-			echo '</legend>';
-			if ( 'controls' === $section ) {
-				// admin.js shows it (and greys all but the arrows) for the Thumbnails effect.
-				echo '<p class="description wp-swiper-section-note" hidden>' . esc_html__( 'With the Thumbnails effect only the arrows are used: they sit on the strip of thumbnails.', 'wp-swiper' ) . '</p>';
+		}
+
+		// Left: Advanced and the menu; next to it the chosen page (admin.js).
+		// The fieldsets with a data-section are the ones admin.js looks for.
+		echo '<div class="wp-swiper-settings wp-swiper-switches">';
+		echo '<div class="wp-swiper-settings__main">';
+		echo '<fieldset class="wp-swiper-settings__section" data-section="advanced"><legend>' . esc_html__( 'Advanced', 'wp-swiper' ) . '</legend>';
+		self::render_fields( $keys['advanced'], $fields, $values );
+		echo '</fieldset>';
+
+		echo '<nav class="wp-swiper-menu" aria-label="' . esc_attr__( 'Slider settings', 'wp-swiper' ) . '">';
+		foreach ( $pages as $page => $meta ) {
+			printf(
+				'<button type="button" class="wp-swiper-menu__item" data-page="%1$s" aria-controls="wp-swiper-page-%1$s" aria-current="%2$s"><span class="dashicons %3$s" aria-hidden="true"></span><span class="wp-swiper-menu__title">%4$s</span></button>',
+				esc_attr( $page ),
+				'lightbox' === $page ? 'true' : 'false',
+				esc_attr( $meta[1] ),
+				esc_html( $meta[0] )
+			);
+		}
+		echo '</nav>';
+		echo '</div>';
+
+		echo '<div class="wp-swiper-settings__pane">';
+		foreach ( $pages as $page => $meta ) {
+			// The section of its fields: Layout's per-effect values are found by it
+			// (the Thumbnails page holds Layout fields too); none for Advanced's.
+			$section = $fields[ $keys[ $page ][0] ]['section'];
+			printf(
+				'<fieldset class="wp-swiper-settings__section wp-swiper-page" id="wp-swiper-page-%1$s" data-page="%1$s"%2$s%3$s><legend>%4$s</legend>',
+				esc_attr( $page ),
+				'advanced' === $section ? '' : ' data-section="' . esc_attr( $section ) . '"',
+				// The first page until admin.js shows the one chosen last.
+				'lightbox' === $page ? '' : ' hidden',
+				esc_html( $meta[0] )
+			);
+			if ( 'controls' === $page ) {
+				// admin.js shows it (and greys the pagination and keyboard) for the Thumbnails effect.
+				echo '<p class="description wp-swiper-section-note" hidden>' . esc_html__( 'With the Thumbnails effect the thumbnails switch the slides: pagination and keyboard control are not used, and the arrows sit on the strip of thumbnails.', 'wp-swiper' ) . '</p>';
 			}
-			if ( 'caption' === $section ) {
+			if ( 'caption' === $page ) {
 				// admin.js shows it (and greys the box) while no slide has a caption.
 				echo '<p class="description wp-swiper-section-note" hidden>' . esc_html__( 'Add a caption to a slide to use these settings.', 'wp-swiper' ) . '</p>';
 			}
-
-			// Consecutive fields sharing a "group" sit side by side in one row.
-			$group = null;
-			foreach ( $fields as $key => $field ) {
-				// Fields drawn inside another one (a unit select) are skipped here.
-				if ( $field['section'] !== $section || ! empty( $field['inline_in'] ) ) {
-					continue;
-				}
-				$field_group = isset( $field['group'] ) ? $field['group'] : null;
-				if ( $field_group !== $group ) {
-					echo $group ? '</div>' : '';
-					echo $field_group ? '<div class="wp-swiper-field-group">' : '';
-					$group = $field_group;
-				}
-				if ( ! empty( $field['responsive'] ) ) {
-					self::render_responsive_field( $key, $field, $values, $fields );
-				} else {
-					self::render_field( $key, $field, $values[ $key ] );
-				}
-			}
-			echo $group ? '</div>' : '';
-
+			self::render_fields( $keys[ $page ], $fields, $values );
 			echo '</fieldset>';
 		}
+		echo '</div>';
+
+		// The free half: the slider as these settings draw it.
+		WP_Swiper_Preview::render_panel( $post );
 		echo '</div>';
 
 		// Each effect keeps its own Layout values: admin.js swaps them into the
@@ -172,6 +197,87 @@ class WP_Swiper_Admin {
 			'<input type="hidden" id="wp-swiper-layouts" name="wp_swiper_settings[layouts]" value="%s">',
 			esc_attr( wp_json_encode( $layouts ) )
 		);
+	}
+
+	/**
+	 * The devices of the per-device values: label, title and icon.
+	 *
+	 * @return array device => [ label, title, dashicon ].
+	 */
+	public static function devices() {
+		return array(
+			'desktop' => array( __( 'Desktop', 'wp-swiper' ), __( 'Desktop (1025px and wider)', 'wp-swiper' ), 'dashicons-desktop' ),
+			'tablet'  => array( __( 'Tablet', 'wp-swiper' ), __( 'Tablet (768–1024px)', 'wp-swiper' ), 'dashicons-tablet' ),
+			'mobile'  => array( __( 'Mobile', 'wp-swiper' ), __( 'Mobile (below 768px)', 'wp-swiper' ), 'dashicons-smartphone' ),
+		);
+	}
+
+	/**
+	 * Desktop / tablet / mobile buttons with names (the preview's).
+	 *
+	 * @param string $class Extra class.
+	 */
+	public static function render_device_switch( $class ) {
+		echo '<div class="wp-swiper-segmented wp-swiper-device-switch ' . esc_attr( $class ) . '" role="group" aria-label="' . esc_attr__( 'Device', 'wp-swiper' ) . '">';
+		foreach ( self::devices() as $device => $meta ) {
+			printf(
+				'<button type="button" class="wp-swiper-segmented__btn" data-device="%1$s" title="%2$s" aria-pressed="%3$s"><span class="dashicons %4$s" aria-hidden="true"></span>%5$s</button>',
+				esc_attr( $device ),
+				esc_attr( $meta[1] ),
+				'desktop' === $device ? 'true' : 'false',
+				esc_attr( $meta[2] ),
+				esc_html( $meta[0] )
+			);
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * A field's help text as an "i" icon that shows it on hover and focus.
+	 *
+	 * @param string $text  Help text.
+	 * @param string $class Extra class (the "Contain" variant, admin.js).
+	 * @param bool   $hide  Hidden at first.
+	 */
+	private static function help_tip( $text, $class = '', $hide = false ) {
+		printf(
+			'<span class="wp-swiper-tip%1$s" tabindex="0" role="img" aria-label="%2$s" data-tip="%2$s"%3$s><span class="dashicons dashicons-info-outline" aria-hidden="true"></span></span>',
+			$class ? ' ' . esc_attr( $class ) : '',
+			esc_attr( $text ),
+			$hide ? ' hidden' : ''
+		);
+	}
+
+	/**
+	 * Fields one after another; consecutive ones sharing a "group" sit side
+	 * by side in one row, and a field's "heading" goes over it.
+	 *
+	 * @param string[] $keys   Field names, in order.
+	 * @param array    $fields All field definitions.
+	 * @param array    $values Saved settings.
+	 */
+	private static function render_fields( $keys, $fields, $values ) {
+		$group = null;
+		foreach ( $keys as $key ) {
+			$field       = $fields[ $key ];
+			$field_group = isset( $field['group'] ) ? $field['group'] : null;
+			if ( ! empty( $field['heading'] ) ) {
+				echo $group ? '</div>' : '';
+				$group = null;
+				echo '<h4 class="wp-swiper-subheading">' . esc_html( $field['heading'] ) . '</h4>';
+			}
+			if ( $field_group !== $group ) {
+				echo $group ? '</div>' : '';
+				echo $field_group ? '<div class="wp-swiper-field-group">' : '';
+				$group = $field_group;
+			}
+			if ( ! empty( $field['responsive'] ) ) {
+				self::render_responsive_field( $key, $field, $values, $fields );
+			} else {
+				self::render_field( $key, $field, $values[ $key ] );
+			}
+		}
+		echo $group ? '</div>' : '';
 	}
 
 	/**
@@ -190,8 +296,24 @@ class WP_Swiper_Admin {
 		$id   = 'wp-swiper-' . $key;
 		$name = 'wp_swiper_settings[' . $key . ']';
 		?>
-		<div class="wp-swiper-field wp-swiper-field--<?php echo esc_attr( $field['type'] ); ?><?php echo empty( $field['compact'] ) ? '' : ' wp-swiper-field--compact'; ?>" data-field="<?php echo esc_attr( $key ); ?>"<?php self::effects_attr( $field ); ?>>
-			<?php if ( ! empty( $field['compact'] ) && 'color' === $field['type'] ) : ?>
+		<div class="wp-swiper-field wp-swiper-field--<?php echo esc_attr( $field['type'] ); ?><?php echo empty( $field['compact'] ) ? '' : ' wp-swiper-field--compact'; ?><?php echo empty( $field['segmented'] ) ? '' : ' wp-swiper-field--segmented'; ?>" data-field="<?php echo esc_attr( $key ); ?>"<?php self::effects_attr( $field ); ?>>
+			<?php if ( ! empty( $field['segmented'] ) && 'select' === $field['type'] ) : ?>
+				<?php // The select stays the field (locks, saving); the buttons only set it (admin.js). ?>
+				<div class="wp-swiper-field__head">
+					<span class="wp-swiper-field__label" id="<?php echo esc_attr( $id ); ?>-label"><?php echo esc_html( $field['label'] ); ?></span>
+					<?php self::field_tips( $field ); ?>
+				</div>
+				<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" hidden>
+					<?php foreach ( $field['choices'] as $choice => $choice_label ) : ?>
+						<option value="<?php echo esc_attr( $choice ); ?>" <?php selected( $value, $choice ); ?>><?php echo esc_html( $choice_label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<div class="wp-swiper-segmented" role="group" aria-labelledby="<?php echo esc_attr( $id ); ?>-label">
+					<?php foreach ( $field['choices'] as $choice => $choice_label ) : ?>
+						<button type="button" class="wp-swiper-segmented__btn" data-value="<?php echo esc_attr( $choice ); ?>" aria-pressed="<?php echo $value === $choice ? 'true' : 'false'; ?>"><?php echo esc_html( $choice_label ); ?></button>
+					<?php endforeach; ?>
+				</div>
+			<?php elseif ( ! empty( $field['compact'] ) && 'color' === $field['type'] ) : ?>
 				<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
 					value="<?php echo esc_attr( $value ); ?>"
 					title="<?php echo esc_attr( $field['label'] ); ?>" aria-label="<?php echo esc_attr( $field['label'] ); ?>">
@@ -200,10 +322,16 @@ class WP_Swiper_Admin {
 					<input type="checkbox" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( $value ); ?>>
 					<?php echo esc_html( $field['label'] ); ?>
 				</label>
+				<?php // Beside the label, not in it: a click on the icon must not toggle the box. ?>
+				<?php self::field_tips( $field ); ?>
 			<?php else : ?>
-				<label for="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $field['label'] ); ?></label>
+				<div class="wp-swiper-field__head">
+					<label for="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $field['label'] ); ?></label>
+					<?php self::field_tips( $field ); ?>
+				</div>
 
-				<?php if ( 'text' === $field['type'] ) : ?>
+				<?php // Class names or an id: a plain text input. ?>
+				<?php if ( in_array( $field['type'], array( 'text', 'id' ), true ) ) : ?>
 					<input type="text" class="regular-text" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
 						value="<?php echo esc_attr( $value ); ?>"
 						placeholder="<?php echo esc_attr( isset( $field['placeholder'] ) ? $field['placeholder'] : '' ); ?>"
@@ -217,6 +345,21 @@ class WP_Swiper_Admin {
 							<option value="<?php echo esc_attr( $choice ); ?>" <?php selected( $value, $choice ); ?>><?php echo esc_html( $choice_label ); ?></option>
 						<?php endforeach; ?>
 					</select>
+				<?php elseif ( ! empty( $field['range'] ) ) : ?>
+					<?php // The slider has no name: the number is the value sent; admin.js keeps the two in step. ?>
+					<div class="wp-swiper-field__row wp-swiper-field__row--range">
+						<input type="range" class="wp-swiper-range"
+							value="<?php echo esc_attr( $value ); ?>"
+							min="<?php echo esc_attr( $field['range'][0] ); ?>"
+							max="<?php echo esc_attr( $field['range'][1] ); ?>"
+							step="<?php echo esc_attr( $field['step'] ); ?>"
+							aria-label="<?php echo esc_attr( $field['label'] ); ?>">
+						<input type="number" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
+							value="<?php echo esc_attr( $value ); ?>"
+							min="<?php echo esc_attr( $field['min'] ); ?>"
+							max="<?php echo esc_attr( $field['max'] ); ?>"
+							step="<?php echo esc_attr( $field['step'] ); ?>">
+					</div>
 				<?php else : ?>
 					<input type="number" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
 						value="<?php echo esc_attr( $value ); ?>"
@@ -225,18 +368,30 @@ class WP_Swiper_Admin {
 						step="<?php echo esc_attr( $field['step'] ); ?>">
 				<?php endif; ?>
 			<?php endif; ?>
-
-			<?php if ( ! empty( $field['help'] ) ) : ?>
-				<p class="description"><?php echo esc_html( $field['help'] ); ?></p>
-			<?php endif; ?>
 		</div>
 		<?php
 	}
 
 	/**
-	 * Number (or select) field with a desktop / tablet / mobile switcher. Tablet
-	 * and mobile inputs may stay empty: the placeholder shows the inherited
-	 * value (a select has an "Inherit" choice instead).
+	 * A field's help icon, and its "Contain" variant (admin.js shows one of
+	 * the two by Image fit).
+	 *
+	 * @param array $field Field definition.
+	 */
+	private static function field_tips( $field ) {
+		if ( ! empty( $field['help'] ) ) {
+			self::help_tip( $field['help'], 'wp-swiper-help' );
+		}
+		if ( ! empty( $field['help_contain'] ) ) {
+			self::help_tip( $field['help_contain'], 'wp-swiper-help-contain', true );
+		}
+	}
+
+	/**
+	 * Number (or select) field with a desktop / tablet / mobile switcher of its
+	 * own (small icons by the label: the fields set per device are the ones with
+	 * them). Tablet and mobile inputs may stay empty: the placeholder shows the
+	 * inherited value (a select has an "Inherit" choice instead).
 	 *
 	 * @param string $key    Field name.
 	 * @param array  $field  Field definition.
@@ -244,16 +399,18 @@ class WP_Swiper_Admin {
 	 * @param array  $fields All field definitions (for the unit select).
 	 */
 	private static function render_responsive_field( $key, $field, $values, $fields ) {
-		$devices = array(
-			'desktop' => array( __( 'Desktop', 'wp-swiper' ), 'dashicons-desktop' ),
-			'tablet'  => array( __( 'Tablet (768–1024px)', 'wp-swiper' ), 'dashicons-tablet' ),
-			'mobile'  => array( __( 'Mobile (below 768px)', 'wp-swiper' ), 'dashicons-smartphone' ),
+		$devices = array_map(
+			function ( $meta ) {
+				return array( $meta[1], $meta[2] );
+			},
+			self::devices()
 		);
-		$keys = WP_Swiper_Settings::device_keys( $key, $field );
+		$keys    = WP_Swiper_Settings::device_keys( $key, $field );
 		?>
 		<div class="wp-swiper-field wp-swiper-field--responsive" data-field="<?php echo esc_attr( $key ); ?>"<?php self::effects_attr( $field ); ?>>
 			<div class="wp-swiper-field__head">
 				<label for="wp-swiper-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $field['label'] ); ?></label>
+				<?php self::field_tips( $field ); ?>
 				<span class="wp-swiper-devices" role="group" aria-label="<?php esc_attr_e( 'Device', 'wp-swiper' ); ?>">
 					<?php foreach ( $devices as $device => $meta ) : ?>
 						<button type="button" class="wp-swiper-devices__btn<?php echo 'desktop' === $device ? ' is-active' : ''; ?>"
@@ -309,8 +466,12 @@ class WP_Swiper_Admin {
 					min="<?php echo esc_attr( $field['min'] ); ?>"
 					max="<?php echo esc_attr( $field['max'] ); ?>"
 					step="<?php echo esc_attr( $field['step'] ); ?>"
+					<?php // What an empty desktop value means (`empty` fields); tablet and mobile get theirs from admin.js. ?>
+					<?php if ( 'desktop' === $device && ! empty( $field['placeholder'] ) ) : ?>
+						placeholder="<?php echo esc_attr( $field['placeholder'] ); ?>"
+					<?php endif; ?>
 					aria-label="<?php echo esc_attr( $field['label'] . ' — ' . $devices[ $device ][0] ); ?>"
-					<?php echo 'desktop' === $device ? '' : 'hidden'; ?>>
+						<?php echo 'desktop' === $device ? '' : 'hidden'; ?>>
 			<?php endforeach; ?>
 
 			<?php
@@ -326,13 +487,7 @@ class WP_Swiper_Admin {
 			<?php endif; ?>
 			</div>
 
-			<?php if ( ! empty( $field['help'] ) ) : ?>
-				<p class="description wp-swiper-help"><?php echo esc_html( $field['help'] ); ?></p>
-			<?php endif; ?>
-			<?php if ( ! empty( $field['help_contain'] ) ) : ?>
-				<?php // admin.js shows it instead of the help above while Image fit is "Contain". ?>
-				<p class="description wp-swiper-help-contain" hidden><?php echo esc_html( $field['help_contain'] ); ?></p>
-			<?php endif; ?>
+
 		</div>
 		<?php
 	}
@@ -344,13 +499,6 @@ class WP_Swiper_Admin {
 		}
 		self::render_shortcode_input( $post->ID );
 		echo '<p class="description">' . esc_html__( 'Paste it into any page, or use the “WP Swiper” element in WPBakery.', 'wp-swiper' ) . '</p>';
-		// A page with this slider alone (WP_Swiper_Preview): the saved one, drafts too.
-		printf(
-			'<p><a class="button" href="%s" target="_blank" rel="noopener">%s</a></p><p class="description">%s</p>',
-			esc_url( WP_Swiper_Preview::url( $post->ID ) ),
-			esc_html__( 'Preview', 'wp-swiper' ),
-			esc_html__( 'Opens the saved slider on a page of its own: save your changes first.', 'wp-swiper' )
-		);
 	}
 
 	private static function render_shortcode_input( $post_id ) {
@@ -372,8 +520,20 @@ class WP_Swiper_Admin {
 			return;
 		}
 
-		// Slides.
-		$raw    = isset( $_POST['wp_swiper_slides'] ) ? wp_unslash( $_POST['wp_swiper_slides'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per field below.
+		update_post_meta( $post_id, WP_Swiper_Settings::META_SLIDES, self::posted_slides() );
+
+		// Settings.
+		$settings = isset( $_POST['wp_swiper_settings'] ) ? (array) wp_unslash( $_POST['wp_swiper_settings'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized against the schema.
+		update_post_meta( $post_id, WP_Swiper_Settings::META_SETTINGS, WP_Swiper_Settings::sanitize( $settings ) );
+	}
+
+	/**
+	 * The slides sent by the edit screen, sanitized (callers check the nonce).
+	 *
+	 * @return array See WP_Swiper_Settings::get_slides().
+	 */
+	public static function posted_slides() {
+		$raw    = isset( $_POST['wp_swiper_slides'] ) ? wp_unslash( $_POST['wp_swiper_slides'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing -- sanitized per field below; nonce checked by the callers.
 		$ids    = isset( $raw['id'] ) ? (array) $raw['id'] : array();
 		$slides = array();
 
@@ -389,11 +549,7 @@ class WP_Swiper_Admin {
 				'new_tab' => isset( $raw['new_tab'][ $i ] ) && '1' === $raw['new_tab'][ $i ],
 			);
 		}
-		update_post_meta( $post_id, WP_Swiper_Settings::META_SLIDES, $slides );
-
-		// Settings.
-		$settings = isset( $_POST['wp_swiper_settings'] ) ? (array) wp_unslash( $_POST['wp_swiper_settings'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized against the schema.
-		update_post_meta( $post_id, WP_Swiper_Settings::META_SETTINGS, WP_Swiper_Settings::sanitize( $settings ) );
+		return $slides;
 	}
 
 	public static function columns( $columns ) {

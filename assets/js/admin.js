@@ -15,6 +15,26 @@
 		var template = $( '#tmpl-wp-swiper-slide' ).html() || '';
 		var frame;
 
+		/*
+		 * What must happen before the form's values are read: locked fields put
+		 * their own values back and are enabled, the Layout values of every
+		 * effect are written out. Run on submit, and before the preview reads
+		 * the form (each step locks again on its own right after).
+		 */
+		var preparers = [];
+
+		function beforeSend( fn ) {
+			preparers.push( fn );
+		}
+
+		function prepareForm() {
+			preparers.forEach( function ( fn ) {
+				fn();
+			} );
+		}
+
+		$( '#post' ).on( 'submit', prepareForm );
+
 		// After slides are added or removed.
 		function toggleEmpty() {
 			var hasSlides = $list.children().length > 0;
@@ -22,6 +42,8 @@
 			syncCaptions();
 			$hint.prop( 'hidden', ! hasSlides );
 			syncLightbox();
+			// The preview no longer shows these slides.
+			$( '.wp-swiper-preview__update' ).addClass( 'is-stale' );
 		}
 
 		function escapeAttr( value ) {
@@ -113,7 +135,7 @@
 				}
 			} );
 
-			$( '#post' ).on( 'submit', function () {
+			beforeSend( function () {
 				if ( locked ) {
 					$box.prop( { disabled: false, checked: wanted } );
 					// Locked again should the submit be cancelled.
@@ -167,7 +189,7 @@
 				$inputs.filter( 'select' ).prop( 'disabled', ! editable );
 			}
 
-			$( '#post' ).on( 'submit', function () {
+			beforeSend( function () {
 				if ( locked ) {
 					restore();
 					setEditable( true );
@@ -202,8 +224,7 @@
 			};
 		}
 
-		// Single-slide effects show one slide; Fade also only horizontally (render.php does the same).
-		var lockPerView = lockableValue( 'slides_per_view', 1 );
+		// Fade only slides horizontally (render.php does the same).
 		var lockDirection = lockableValue( 'direction', 'horizontal' );
 		// "Width from image": the slide has the image's proportions, nothing to crop or fit.
 		var lockFit = lockableValue( 'image_fit', 'cover' );
@@ -212,6 +233,20 @@
 		var lockShadows = lockable( 'effect_shadows' );
 		// Cards: no rotation at all without "Rotate cards".
 		var lockStackRotation = lockableValue( 'cards_rotate' );
+		// Thumbnails: per view sizes nothing where "Thumbnail height" is set on every device.
+		var lockThumbsPerView = lockableValue( 'thumbs_per_view' );
+
+		// "Thumbnail height" on every device (empty tablet/mobile inherit; 0 = none).
+		function thumbsHeightEverywhere() {
+			var all = true;
+			var inherited = '';
+			field( 'thumbs_height' ).find( '.wp-swiper-devices__input' ).each( function () {
+				var value = $( this ).val() === '' ? inherited : $( this ).val();
+				inherited = value;
+				all = all && Number( value ) > 0;
+			} );
+			return all;
+		}
 
 		// Largest Slides per view across devices (empty tablet/mobile inherit).
 		function maxPerView() {
@@ -293,12 +328,12 @@
 				return;
 			}
 			// The own values, not the fixed ones locked Layout fields show.
-			lockPerView( false );
 			lockFit( false );
 			lockCentered( false );
 			lockCubeFaces( false );
 			lockShadows( false );
 			lockStackRotation( false );
+			lockThumbsPerView( false );
 			layouts[ layoutEffect ] = readLayout();
 			if ( layouts[ effect ] ) {
 				writeLayout( layouts[ effect ] );
@@ -308,18 +343,21 @@
 
 		// After the locked fields have put their own values back (their submit
 		// handlers were bound first).
-		$( '#post' ).on( 'submit', function () {
+		beforeSend( function () {
 			layouts[ layoutEffect ] = readLayout();
 			$layouts.val( JSON.stringify( layouts ) );
 		} );
 
-		// Thumbnails: of Controls only the arrows are used (on the strip), so the
-		// other fields are greyed (disabled controls are not sent, so they are
-		// enabled again for the submit and saving keeps their values). Their own
-		// class, .is-unused: .is-disabled belongs to the locks above, which run
-		// first (syncFields) and may enable a control this then disables again.
-		var $controlsBox = $( 'fieldset[data-section="controls"]' );
-		var $controlsUnused = $controlsBox.find( '.wp-swiper-field' ).not( '[data-field="navigation"], [data-field="navigation_color"]' );
+		// Thumbnails: the strip switches the slides, so of Controls the pagination
+		// and the keyboard are not used (the arrows sit on the strip; speed, loop
+		// and autoplay apply). Those are greyed (disabled controls are not sent,
+		// so they are enabled again for the submit and saving keeps their values).
+		// Their own class, .is-unused: .is-disabled belongs to the locks above,
+		// which run first (syncFields) and may enable a control this then disables again.
+		var $controlsBox = $( '#wp-swiper-page-controls' );
+		var $controlsUnused = $controlsBox.find( [ 'pagination', 'pagination_position', 'pagination_position_vertical', 'pagination_placement', 'pagination_offset', 'keyboard' ].map( function ( name ) {
+			return '.wp-swiper-field[data-field="' + name + '"]';
+		} ).join( ', ' ) );
 		var controlsLocked = false;
 
 		function syncControls( effect ) {
@@ -335,7 +373,7 @@
 		}
 
 		// Bound after the locks' own submit handlers, which put their values back.
-		$( '#post' ).on( 'submit', function () {
+		beforeSend( function () {
 			if ( controlsLocked ) {
 				$controlsUnused.find( 'input, select' ).prop( 'disabled', false );
 				setTimeout( function () {
@@ -368,8 +406,15 @@
 			var vertical = $( '#wp-swiper-direction' ).val() === 'vertical';
 			var cover = $( '#wp-swiper-image_fit' ).val() === 'cover';
 
-			// Layout shows the chosen effect's fields only, and says which effect.
-			$( '.wp-swiper-layout-effect' ).text( $( '#wp-swiper-effect option:selected' ).text() );
+			// Height says what it measures: the slides, or the whole vertical slider.
+			if ( i18n.heightLabels ) {
+				field( 'height' ).find( '.wp-swiper-field__head label' ).text(
+					vertical ? i18n.heightLabels.vertical : ( effect === 'thumbs' ? i18n.heightLabels.thumbs : i18n.heightLabels.horizontal )
+				);
+			}
+			lockThumbsPerView( effect === 'thumbs' && thumbsHeightEverywhere() );
+
+			// Layout shows the chosen effect's fields only.
 			$( '.wp-swiper-field[data-effects]' ).each( function () {
 				$( this ).toggle( $( this ).data( 'effects' ).split( ' ' ).indexOf( effect ) !== -1 );
 			} );
@@ -384,14 +429,13 @@
 			// Centring one slide that fills the slider changes nothing (the wider
 			// active slide and slides sized by their images do use it).
 			lockCentered( slide && ! autoWidth && ! expand && maxPerView() <= 1 );
-			// "Width from image" replaces the count; groups only where steps are slides.
-			field( 'slides_per_view' ).toggle( ! autoWidth );
+			// "Width from image" replaces the count, and effects that always show one
+			// slide have none (render.php ignores it there); it is also the visible
+			// slides count of the wider active slide layout. Groups only where steps are slides.
+			field( 'slides_per_view' ).toggle( ! autoWidth && ! single );
 			field( 'slides_per_group' ).toggle( slide && ! marquee && ! expand );
 			field( 'marquee_speed' ).toggle( marquee );
 
-			// Also the visible slides count of the wider active slide layout.
-			// Effects that show one slide: shown as information only, fixed at 1.
-			lockPerView( single );
 			// Effect shadows (Layout, data-effects): not with "Contain", where they
 			// would shade the empty band around the image too.
 			lockShadows( ! cover );
@@ -413,7 +457,9 @@
 			field( 'cube_shadow_scale' ).toggle( effect === 'cube' && cubeShadow );
 			field( 'cube_shadow_opacity' ).toggle( effect === 'cube' && cubeShadow );
 			lockCubeFaces( effect === 'cube' && ! cover );
+			// The arrows' color and height, once they are on.
 			field( 'navigation_color' ).toggle( $( '#wp-swiper-navigation' ).is( ':checked' ) );
+			field( 'navigation_size' ).toggle( $( '#wp-swiper-navigation' ).is( ':checked' ) );
 			// Image border: its width and color once it is on.
 			var border = $( '#wp-swiper-image_border' ).is( ':checked' );
 			field( 'image_border_width' ).toggle( border );
@@ -437,8 +483,9 @@
 				field( name ).toggle( captionBg );
 			} );
 			var lightbox = $( '#wp-swiper-lightbox' ).is( ':checked' );
-			field( 'lightbox_rounded' ).toggle( lightbox );
+			field( 'lightbox_radius' ).toggle( lightbox );
 			field( 'lightbox_thumbs' ).toggle( lightbox && effect === 'thumbs' );
+			field( 'lightbox_thumbs_radius' ).toggle( lightbox && effect === 'thumbs' && $( '#wp-swiper-lightbox_thumbs' ).is( ':checked' ) );
 
 			// Pagination layout: one position field per direction.
 			var paginated = $( '#wp-swiper-pagination' ).val() !== 'none';
@@ -453,7 +500,92 @@
 					return this.style.display !== 'none';
 				} ).length > 0 );
 			} );
+			// So does the menu item of a page with nothing left in it.
+			$( '.wp-swiper-page' ).each( function () {
+				var empty = $( this ).find( '.wp-swiper-field' ).filter( function () {
+					return this.style.display !== 'none';
+				} ).length === 0;
+				$( '.wp-swiper-menu__item[data-page="' + $( this ).data( 'page' ) + '"]' ).toggle( ! empty );
+			} );
+			// The page in view lost its item (Thumbnails, another effect chosen):
+			// Layout, the nearest one, instead.
+			if ( $menu ) {
+				var $shown = $menu.filter( function () {
+					return this.style.display !== 'none';
+				} );
+				if ( ! $shown.filter( '[aria-current="true"]' ).length ) {
+					showPage( ( $shown.filter( '[data-page="layout"]' ).length ? $shown.filter( '[data-page="layout"]' ) : $shown.first() ).data( 'page' ) );
+				}
+			}
+
+			// Last: the locks above may have changed the values and states shown.
+			syncWidgets();
 		}
+
+		/*
+		 * Buttons over a select (Direction) and sliders beside a number (speed,
+		 * delay). The select and the number stay the fields: the locks set them
+		 * (without events), so these follow them after every sync.
+		 */
+		function syncWidgets() {
+			$( '.wp-swiper-field--segmented .wp-swiper-segmented' ).each( function () {
+				var $select = $( this ).siblings( 'select' );
+				$( this ).find( '.wp-swiper-segmented__btn' ).each( function () {
+					$( this )
+						.attr( 'aria-pressed', $( this ).data( 'value' ) === $select.val() ? 'true' : 'false' )
+						.prop( 'disabled', $select.prop( 'disabled' ) );
+				} );
+			} );
+			$( '.wp-swiper-range' ).each( function () {
+				var $number = $( this ).siblings( 'input[type="number"]' );
+				$( this )
+					.val( $number.val() )
+					.prop( 'disabled', $number.prop( 'readOnly' ) || $number.prop( 'disabled' ) );
+			} );
+		}
+
+		$( '#wp-swiper-settings' )
+			.on( 'click', '.wp-swiper-field--segmented .wp-swiper-segmented__btn', function () {
+				var $select = $( this ).closest( '.wp-swiper-field' ).find( 'select' );
+				if ( ! $select.prop( 'disabled' ) && $select.val() !== $( this ).data( 'value' ) ) {
+					// syncFields (bound to "change") updates the buttons.
+					$select.val( $( this ).data( 'value' ) ).trigger( 'change' );
+				}
+			} )
+			.on( 'input', '.wp-swiper-range', function () {
+				$( this ).siblings( 'input[type="number"]' ).val( this.value );
+			} );
+
+		// The settings menu: one page in view beside it, the one chosen last kept
+		// for the next visit (this browser only).
+		var PAGE_KEY = 'wpSwiperPage';
+		var $menu = $( '.wp-swiper-menu__item' );
+
+		function showPage( page ) {
+			if ( ! page ) {
+				return;
+			}
+			$menu.each( function () {
+				$( this ).attr( 'aria-current', $( this ).data( 'page' ) === page ? 'true' : 'false' );
+			} );
+			$( '.wp-swiper-page' ).each( function () {
+				this.hidden = $( this ).data( 'page' ) !== page;
+			} );
+		}
+
+		$menu.on( 'click', function () {
+			var page = $( this ).data( 'page' );
+			showPage( page );
+			try {
+				window.localStorage.setItem( PAGE_KEY, page );
+			} catch ( e ) {}
+		} );
+
+		try {
+			if ( $menu.filter( '[data-page="' + window.localStorage.getItem( PAGE_KEY ) + '"]' ).length ) {
+				showPage( window.localStorage.getItem( PAGE_KEY ) );
+			}
+		} catch ( e ) {}
 
 		$( '#wp-swiper-settings' ).on( 'change input', 'select, input', syncFields );
 		syncFields();
@@ -486,7 +618,7 @@
 		}
 
 		$list.on( 'input change', 'input[name="wp_swiper_slides[caption][]"]', syncCaptions );
-		$( '#post' ).on( 'submit', function () {
+		beforeSend( function () {
 			if ( captionsLocked ) {
 				$captionBox.prop( 'disabled', false );
 				setTimeout( function () {
@@ -512,10 +644,14 @@
 					if ( ! $input.is( 'select' ) ) {
 						$input.attr( 'placeholder', inherited );
 					}
+					// A dot on the icon: this device has a value of its own.
 					$field.find( '.wp-swiper-devices__btn[data-device="' + device + '"]' ).toggleClass( 'has-value', own );
 				}
 				if ( own ) {
 					inherited = $input.val();
+				} else if ( device === 'desktop' ) {
+					// An empty desktop value says what it means ("As the slides").
+					inherited = $input.attr( 'placeholder' ) || '';
 				}
 			} );
 		}
@@ -525,6 +661,7 @@
 		} );
 
 		$( '#wp-swiper-settings' )
+			// A field's own device icons: which device's value it shows.
 			.on( 'click', '.wp-swiper-devices__btn', function () {
 				var $btn = $( this );
 				var $field = $btn.closest( '.wp-swiper-field--responsive' );
@@ -538,6 +675,111 @@
 			.on( 'input change', '.wp-swiper-devices__input', function () {
 				syncResponsive( $( this ).closest( '.wp-swiper-field--responsive' ) );
 			} );
+
+		/*
+		 * The preview's device: the frame takes its size. Kept for the next visit
+		 * (this browser only).
+		 */
+		var DEVICE_KEY = 'wpSwiperDevice';
+		var DEVICES = [ 'desktop', 'tablet', 'mobile' ];
+		var currentDevice = 'desktop';
+		var deviceListeners = [];
+		try {
+			if ( DEVICES.indexOf( window.localStorage.getItem( DEVICE_KEY ) ) !== -1 ) {
+				currentDevice = window.localStorage.getItem( DEVICE_KEY );
+			}
+		} catch ( e ) {}
+
+		function setDevice( device ) {
+			currentDevice = device;
+			$( '.wp-swiper-device-switch .wp-swiper-segmented__btn' ).each( function () {
+				$( this ).attr( 'aria-pressed', $( this ).data( 'device' ) === device ? 'true' : 'false' );
+			} );
+			deviceListeners.forEach( function ( fn ) {
+				fn( device );
+			} );
+		}
+
+		$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-device-switch .wp-swiper-segmented__btn', function () {
+			setDevice( $( this ).data( 'device' ) );
+			try {
+				window.localStorage.setItem( DEVICE_KEY, currentDevice );
+			} catch ( e ) {}
+		} );
+		setDevice( currentDevice );
+
+		/*
+		 * Preview (WP_Swiper_Preview): the form's slides and settings, saved or
+		 * not, posted into the frame when the screen opens and on "Update" only
+		 * (not on every change). The frame is drawn at the device's size and
+		 * scaled down to the column, so the slider shows that device's settings.
+		 */
+		var $preview = $( '.wp-swiper-preview' );
+		if ( $preview.length ) {
+			var $stage = $preview.find( '.wp-swiper-preview__stage' );
+			var $update = $preview.find( '.wp-swiper-preview__update' );
+			var previewFrame = $preview.find( '.wp-swiper-preview__frame' )[ 0 ];
+			var sizes = $preview.data( 'sizes' );
+
+			// At the size of the device being edited (setDevice()).
+			var fitPreview = function () {
+				var size = sizes[ currentDevice ];
+				var width = $stage.width();
+				// The whole frame in view: no taller than the window leaves room for.
+				var height = Math.max( 300, window.innerHeight - 180 );
+				var scale = Math.min( 1, width / size[ 0 ], height / size[ 1 ] );
+
+				previewFrame.style.width = size[ 0 ] + 'px';
+				previewFrame.style.height = size[ 1 ] + 'px';
+				previewFrame.style.transform = 'scale(' + scale + ')';
+				previewFrame.style.left = Math.max( 0, ( width - size[ 0 ] * scale ) / 2 ) + 'px';
+				$stage.css( 'height', Math.ceil( size[ 1 ] * scale ) + 'px' );
+			};
+
+			var updatePreview = function () {
+				prepareForm();
+				var $form = $( '<form method="post" hidden></form>' ).attr( {
+					action: $preview.data( 'url' ),
+					target: previewFrame.name
+				} );
+				var add = function ( name, value ) {
+					$( '<input type="hidden">' ).attr( 'name', name ).val( value ).appendTo( $form );
+				};
+				add( 'action', $preview.data( 'action' ) );
+				add( 'post_id', $preview.data( 'post' ) );
+				add( '_wpnonce', $preview.data( 'nonce' ) );
+				// Read now: the locked fields lock again right after (prepareForm).
+				$( '#post' ).serializeArray().forEach( function ( item ) {
+					if ( /^wp_swiper_(settings|slides)\[/.test( item.name ) ) {
+						add( item.name, item.value );
+					}
+				} );
+				$form.appendTo( document.body );
+				$form[ 0 ].submit();
+				$form.remove();
+				$update.removeClass( 'is-stale' );
+			};
+
+			$update.on( 'click', updatePreview );
+
+			// Changes since the last update: the button says so.
+			$( '#wp-swiper-slides, #wp-swiper-settings' ).on( 'input change', 'input, select', function () {
+				$update.addClass( 'is-stale' );
+			} );
+			$list.on( 'sortupdate', function () {
+				$update.addClass( 'is-stale' );
+			} );
+
+			// Another device: the frame takes its size; the slider follows by itself.
+			deviceListeners.push( fitPreview );
+
+			$( window ).on( 'resize', fitPreview );
+			if ( 'ResizeObserver' in window ) {
+				new ResizeObserver( fitPreview ).observe( $stage[ 0 ] );
+			}
+			fitPreview();
+			updatePreview();
+		}
 
 		// Shortcode: click to copy.
 		$( document ).on( 'click', '.wp-swiper-shortcode', function () {

@@ -663,8 +663,17 @@
 				item.removeAttribute( 'aria-current' );
 			}
 		} );
-		var perView = Number( swiper.params.slidesPerView ) || 1;
+		// Thumbnails of a set height ('auto'): as many as are in view now.
+		var perView = swiper.params.slidesPerView === 'auto' ? swiper.slidesPerViewDynamic() : Number( swiper.params.slidesPerView ) || 1;
 		swiper.slideTo( Math.max( 0, index - Math.floor( ( perView - 1 ) / 2 ) ) );
+	}
+
+	/**
+	 * "Thumbnail height" on this device, px (frame included), or 0: sized by
+	 * Thumbnails per view instead.
+	 */
+	function thumbHeight( settings, current ) {
+		return settings.height ? Number( settings.height[ current ] ) || 0 : 0;
 	}
 
 	/**
@@ -689,7 +698,45 @@
 		// Too few to fill the strip: in its middle, or at its start.
 		options.centerInsufficientSlides = !! settings.center;
 
+		// A set "Thumbnail height" on a device: thumbnails that tall, as many as
+		// fit (Swiper's 'auto': each as wide as sizeItems() makes it).
+		if ( thumbHeight( settings, 'mobile' ) ) {
+			options.slidesPerView = 'auto';
+		}
+		if ( thumbHeight( settings, 'tablet' ) ) {
+			options.breakpoints[ BREAKPOINT_TABLET ].slidesPerView = 'auto';
+		}
+		if ( thumbHeight( settings, 'desktop' ) ) {
+			options.breakpoints[ BREAKPOINT_DESKTOP ].slidesPerView = 'auto';
+		}
+
+		// Below or above the slider: as wide as the proportions make a thumbnail
+		// of that height. Beside it: that tall (the image fills the thumbnail
+		// there, see the CSS) and as wide as the column (thumbsBeside()). Set as
+		// the strip's CSS variables (.wp-swiper__thumbs--sized): in 'auto' mode
+		// Swiper clears the slides' own inline sizes before it measures them.
+		var sizeItems = function () {
+			var current = device();
+			var height = thumbHeight( settings, current );
+			var side = settings.side[ current ];
+			var frame = 2 * settings.frame;
+
+			strip.classList.toggle( 'wp-swiper__thumbs--sized', height > 0 );
+			strip.style.setProperty( '--wp-swiper-thumb-w', height && ! side ? Math.round( ( height - frame ) * settings.ratio[ current ] + frame ) + 'px' : '100%' );
+			strip.style.setProperty( '--wp-swiper-thumb-h', height && side ? height + 'px' : 'auto' );
+		};
+		sizeItems();
+
 		var swiper = new window.Swiper( strip, options );
+
+		// Another device may have another height, or none (Swiper sizes them).
+		// Also now: Swiper took this device's settings while it started.
+		var resize = function () {
+			sizeItems();
+			swiper.update();
+		};
+		swiper.on( 'breakpoint resize', resize );
+		resize();
 
 		var go = function ( e ) {
 			var item = e.target.closest( '.swiper-slide' );
@@ -739,7 +786,8 @@
 
 	/**
 	 * Thumbnails beside the slider: the column is as tall as the slider (CSS)
-	 * and "Thumbnails per view" of them fill it, which sets their height; the
+	 * and "Thumbnails per view" of them fill it, which sets their height (unless
+	 * "Thumbnail height" sets it: then the rest scroll); the
 	 * column is then as wide as their proportions make them. Where the slider's
 	 * height follows from its width (no set Height), the two depend on each
 	 * other, so it is worked out in a few rounds. Before Swiper starts (it
@@ -761,7 +809,8 @@
 				var perView = Number( settings.perView[ current ] ) || 1;
 				var gap = Number( settings.gap[ current ] ) || 0;
 				var frame = 2 * settings.frame;
-				var thumb = ( el.offsetHeight - gap * ( perView - 1 ) ) / perView;
+				// A set "Thumbnail height", or that many filling the slider's height.
+				var thumb = thumbHeight( settings, current ) || ( el.offsetHeight - gap * ( perView - 1 ) ) / perView;
 				var width = Math.max( 0, Math.round( ( thumb - frame ) * settings.ratio[ current ] + frame ) );
 
 				if ( Math.abs( width - strip.offsetWidth ) <= 1 ) {

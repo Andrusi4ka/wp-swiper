@@ -82,11 +82,198 @@
 	line-height: 1;
 }
 
-/* Settings */
+/* Settings: Advanced with the menu (a quarter of the box), the chosen page
+   beside it (another quarter), the preview in the other half. Sized by the
+   box, not the window (the side column of the screen takes its share). */
+#wp-swiper-settings .inside {
+	container-type: inline-size;
+}
+
 .wp-swiper-settings {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
 	gap: 16px;
+	align-items: start;
+}
+
+.wp-swiper-settings__main {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	min-width: 0;
+}
+
+.wp-swiper-settings__pane {
+	min-width: 0;
+}
+
+/* In view while the settings scroll (below the admin bar). */
+.wp-swiper-settings__preview {
+	position: sticky;
+	top: 46px;
+	min-width: 0;
+}
+
+/* Narrower: the two settings columns, the preview under them. */
+@container (max-width: 1000px) {
+	.wp-swiper-settings {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.wp-swiper-settings__preview {
+		position: static;
+		grid-column: 1 / -1;
+	}
+}
+
+/* Phones: one column. */
+@container (max-width: 560px) {
+	.wp-swiper-settings {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+/* Preview: bar, note and the scaled frame. */
+.wp-swiper-preview {
+	padding: 12px 16px 16px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #f6f7f7;
+}
+
+.wp-swiper-preview__bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+}
+
+.wp-swiper-preview__title {
+	margin-right: auto;
+	font-weight: 600;
+}
+
+.wp-swiper-preview__devices {
+	background: #fff;
+}
+
+.wp-swiper-preview__devices .wp-swiper-segmented__btn {
+	flex: 0 0 auto;
+	padding: 4px 10px;
+}
+
+/* Icon and label centred on one line, as tall as the device buttons. */
+#wp-swiper-settings .wp-swiper-preview__update {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 32px;
+	padding: 0 12px;
+	line-height: 1;
+}
+
+/* WordPress sets button icons to line-height 1.9, which drops them below the label. */
+#wp-swiper-settings .wp-swiper-preview__update .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+	line-height: 1;
+	vertical-align: middle;
+	color: inherit;
+}
+
+/* Settings changed since the preview was drawn. */
+/* In the admin color scheme, like WordPress's own buttons. */
+#wp-swiper-settings .wp-swiper-preview__update.is-stale {
+	border-color: var(--wp-admin-theme-color, #2271b1);
+	background: var(--wp-admin-theme-color, #2271b1);
+	color: #fff;
+}
+
+#wp-swiper-settings .wp-swiper-preview__note {
+	margin: 8px 0 12px;
+}
+
+.wp-swiper-preview__stage {
+	position: relative;
+	overflow: hidden;
+}
+
+/* Drawn at the device's size, scaled down to the column (admin.js). */
+.wp-swiper-preview__frame {
+	position: absolute;
+	top: 0;
+	left: 0;
+	border: 0;
+	background: #fff;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+	transform-origin: 0 0;
+}
+
+.wp-swiper-page[hidden] {
+	display: none;
+}
+
+/* Settings menu: one item per page. */
+.wp-swiper-menu {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.wp-swiper-menu__item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 10px 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	background: #fff;
+	color: #1d2327;
+	font: inherit;
+	font-weight: 600;
+	text-align: left;
+	cursor: pointer;
+}
+
+.wp-swiper-menu__item .dashicons {
+	color: #646970;
+}
+
+/* Chevron at the end: the page opens to the right. */
+.wp-swiper-menu__item::after {
+	content: "\f345";
+	margin-left: auto;
+	font: normal 16px/1 dashicons;
+	color: #a7aaad;
+}
+
+.wp-swiper-menu__item:hover {
+	border-color: #2271b1;
+	color: #2271b1;
+}
+
+.wp-swiper-menu__item[aria-current="true"] {
+	border-color: #2271b1;
+	background: #f0f6fc;
+	color: #2271b1;
+	box-shadow: inset 3px 0 0 #2271b1;
+}
+
+.wp-swiper-menu__item[aria-current="true"] .dashicons,
+.wp-swiper-menu__item[aria-current="true"]::after {
+	color: #2271b1;
+}
+
+.wp-swiper-menu__item:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 1px;
+}
+
+/* A note at the top of a page (Controls with Thumbnails, Caption without captions). */
+.wp-swiper-page > .wp-swiper-section-note {
+	margin: 0 0 12px;
 }
 
 .wp-swiper-settings__section {
@@ -147,22 +334,26 @@
 	max-width: 220px;
 }
 
-/* Responsive fields: label + desktop / tablet / mobile switcher */
+/* A field's label row: the label, its help icon and (per-device fields)
+   the desktop / tablet / mobile icons, at the end. */
 .wp-swiper-field__head {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
+	gap: 6px;
 	margin-bottom: 4px;
 }
 
-.wp-swiper-field__head label {
+.wp-swiper-field__head label,
+.wp-swiper-field__head .wp-swiper-field__label {
+	margin: 0;
 	font-weight: 500;
 }
 
+/* A field's own desktop / tablet / mobile switcher. */
 .wp-swiper-devices {
 	display: inline-flex;
 	gap: 2px;
+	margin-left: auto;
 }
 
 .wp-swiper-devices__btn {
@@ -211,15 +402,120 @@
 	outline-offset: 0;
 }
 
+/* Nothing to switch between: every device shows the fixed value. */
+.wp-swiper-field.is-disabled .wp-swiper-devices__btn {
+	color: #a7aaad;
+	pointer-events: none;
+}
+
 .wp-swiper-field--responsive input[type="number"],
 .wp-swiper-field--responsive input[type="text"] {
 	width: 100%;
+}
+
+.wp-swiper-field__row .wp-swiper-devices__input[hidden] {
+	display: none;
 }
 
 /* Height "Auto": only the unit select is left. */
 .wp-swiper-field.is-auto .wp-swiper-devices,
 .wp-swiper-field.is-auto .wp-swiper-devices__input {
 	display: none;
+}
+
+/* Help text behind an "i" icon: shown on hover and keyboard focus. */
+.wp-swiper-tip {
+	position: relative;
+	display: inline-flex;
+	flex: 0 0 auto;
+	color: #a7aaad;
+	cursor: help;
+}
+
+.wp-swiper-tip[hidden] {
+	display: none;
+}
+
+.wp-swiper-tip .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+}
+
+.wp-swiper-tip:hover,
+.wp-swiper-tip:focus-visible {
+	color: var(--wp-admin-theme-color, #2271b1);
+	outline: none;
+}
+
+.wp-swiper-tip::after {
+	content: attr(data-tip);
+	position: absolute;
+	/* From the icon rightwards: icons sit near the column's left edge. */
+	top: calc(100% + 6px);
+	left: -8px;
+	z-index: 20;
+	width: max-content;
+	max-width: 240px;
+	padding: 8px 10px;
+	border-radius: 4px;
+	background: #1d2327;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.45;
+	white-space: normal;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.1s;
+	pointer-events: none;
+}
+
+.wp-swiper-tip:hover::after,
+.wp-swiper-tip:focus-visible::after {
+	opacity: 1;
+	visibility: visible;
+}
+
+/* A switch and its help icon on one line. */
+.wp-swiper-field--checkbox {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* A title over a group of fields on a page (Thumbnails: Placement, Size, Look). */
+.wp-swiper-subheading {
+	margin: 20px 0 10px;
+	padding-top: 14px;
+	border-top: 1px solid #f0f0f1;
+	color: #646970;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.wp-swiper-page > legend + .wp-swiper-subheading {
+	margin-top: 4px;
+	padding-top: 0;
+	border-top: 0;
+}
+
+/* The preview's device buttons: icon and name. */
+.wp-swiper-device-switch .wp-swiper-segmented__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	padding: 4px 8px;
+}
+
+.wp-swiper-device-switch .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
 }
 
 /* "Open in a new tab": only meaningful once a link is entered. */
@@ -255,12 +551,6 @@
 .wp-swiper-field.is-disabled input[type="color"],
 .wp-swiper-field.is-unused input[type="color"] {
 	opacity: 0.4;
-}
-
-/* Nothing to switch between: every device shows the fixed value. */
-.wp-swiper-field.is-disabled .wp-swiper-devices__btn {
-	color: #a7aaad;
-	pointer-events: none;
 }
 
 /* .is-unused: the Controls fields the Thumbnails effect does not use (all but the arrows). */
@@ -299,10 +589,6 @@
 	flex: 1 1 auto;
 	width: 100%;
 	max-width: none;
-}
-
-.wp-swiper-field__row .wp-swiper-devices__input[hidden] {
-	display: none;
 }
 
 /* Color field (native picker). */
@@ -352,4 +638,149 @@
 	width: 36px;
 	height: 24px;
 	padding: 1px;
+}
+
+/* Label of a field whose control is not a single input (button rows). */
+.wp-swiper-field__label {
+	display: block;
+	margin-bottom: 4px;
+	font-weight: 500;
+}
+
+/* Buttons over a select (Direction): the select itself stays hidden. */
+.wp-swiper-field--segmented select {
+	display: none;
+}
+
+.wp-swiper-segmented {
+	display: flex;
+	gap: 4px;
+	padding: 3px;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	background: #f6f7f7;
+}
+
+.wp-swiper-segmented__btn {
+	flex: 1 1 0;
+	min-width: 0;
+	padding: 6px 8px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	background: none;
+	color: #50575e;
+	font: inherit;
+	cursor: pointer;
+}
+
+.wp-swiper-segmented__btn:hover {
+	color: #1d2327;
+}
+
+.wp-swiper-segmented__btn[aria-pressed="true"] {
+	border-color: #2271b1;
+	background: #fff;
+	color: #2271b1;
+	font-weight: 600;
+}
+
+.wp-swiper-segmented__btn:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 1px;
+}
+
+.wp-swiper-segmented__btn:disabled {
+	color: #a7aaad;
+	cursor: not-allowed;
+}
+
+.wp-swiper-segmented__btn[aria-pressed="true"]:disabled {
+	border-color: #c3c4c7;
+	background: #fff;
+	color: #a7aaad;
+}
+
+/* A slider beside its number (Transition speed, Delay). */
+.wp-swiper-field__row--range {
+	align-items: center;
+	gap: 12px;
+}
+
+.wp-swiper-field .wp-swiper-field__row--range input[type="range"] {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	accent-color: #2271b1;
+	cursor: pointer;
+}
+
+.wp-swiper-field .wp-swiper-field__row--range input[type="number"] {
+	flex: 0 0 90px;
+	width: 90px;
+}
+
+.wp-swiper-field .wp-swiper-field__row--range input[type="range"]:disabled {
+	accent-color: #a7aaad;
+	cursor: not-allowed;
+}
+
+/* Switches instead of checkboxes (Advanced). */
+.wp-swiper-switches .wp-swiper-field--checkbox > label {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+}
+
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"] {
+	position: relative;
+	flex: 0 0 auto;
+	width: 36px;
+	height: 20px;
+	margin: 0;
+	border: 0;
+	border-radius: 10px;
+	background: #c3c4c7;
+	box-shadow: none;
+	appearance: none;
+	transition: background-color 0.15s;
+	cursor: pointer;
+}
+
+/* The knob; also overrides WordPress's tick on checked boxes. */
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]::before,
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:checked::before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	float: none;
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	transition: transform 0.15s;
+}
+
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:checked {
+	background: #2271b1;
+}
+
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:checked::before {
+	transform: translateX(16px);
+}
+
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"] {
+	background: #dcdcde;
+}
+
+.wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"]:checked {
+	background: #a7aaad;
 }

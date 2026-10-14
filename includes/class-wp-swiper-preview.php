@@ -1,12 +1,11 @@
 <?php
 /**
- * Preview: a page with nothing but one slider, opened from its edit screen
- * (the "Preview" button of the Shortcode box). It shows the saved slider,
- * drafts included, to those who may edit it.
- *
- * Two pages under one address: the outer one holds a desktop / tablet /
- * mobile switcher and a frame; the slider is in the frame, so that its CSS
- * and frontend.js see the frame's width as the device's.
+ * Preview on the slider edit screen: a frame beside the settings with the
+ * slider as the form's values draw it, saved or not. Nothing is saved: the
+ * editor posts the form into the frame (admin.js) when it opens and on the
+ * "Update" button, and the frame is a page with the slider and the
+ * plugin's own assets alone, so its CSS and frontend.js take the frame's
+ * width for the device's.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,143 +14,80 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class WP_Swiper_Preview {
 
-	const QUERY = 'wp_swiper_preview';
+	const ACTION = 'wp_swiper_preview';
 
 	/**
-	 * Frame widths (px) inside the plugin's breakpoints; desktop takes the window.
+	 * Frame sizes (px) per device, inside the plugin's breakpoints; the frame
+	 * is drawn this size and scaled down to fit (admin.js).
 	 */
-	const WIDTHS = array(
-		'desktop' => 0,
-		'tablet'  => 820,
-		'mobile'  => 390,
+	const SIZES = array(
+		'desktop' => array( 1280, 800 ),
+		'tablet'  => array( 820, 1180 ),
+		'mobile'  => array( 390, 844 ),
 	);
 
 	public static function init() {
-		// Once the main query has run: the assets are registered as on any page.
-		add_action( 'template_redirect', array( __CLASS__, 'maybe_render' ) );
+		add_action( 'wp_ajax_' . self::ACTION, array( __CLASS__, 'render_frame' ) );
 	}
 
 	/**
-	 * Address of a slider's preview.
-	 *
-	 * @param int  $post_id Slider ID.
-	 * @param bool $frame   The inner page (the slider itself).
-	 * @return string
-	 */
-	public static function url( $post_id, $frame = false ) {
-		$args = array(
-			self::QUERY => (int) $post_id,
-			'_wpnonce'  => wp_create_nonce( self::QUERY . '_' . (int) $post_id ),
-		);
-		if ( $frame ) {
-			$args['frame'] = 1;
-		}
-		return add_query_arg( $args, home_url( '/' ) );
-	}
-
-	public static function maybe_render() {
-		if ( ! isset( $_GET[ self::QUERY ] ) ) {
-			return;
-		}
-		$post_id = absint( wp_unslash( $_GET[ self::QUERY ] ) );
-		$nonce   = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
-		$post    = $post_id ? get_post( $post_id ) : null;
-
-		if ( ! $post || WP_Swiper_Settings::POST_TYPE !== $post->post_type
-			|| ! wp_verify_nonce( $nonce, self::QUERY . '_' . $post_id )
-			|| ! current_user_can( 'edit_post', $post_id ) ) {
-			wp_die( esc_html__( 'This preview link is not valid any more. Open the preview from the slider’s edit screen.', 'wp-swiper' ), '', array( 'response' => 403 ) );
-		}
-
-		nocache_headers();
-		header( 'X-Robots-Tag: noindex, nofollow' );
-
-		if ( isset( $_GET['frame'] ) ) {
-			self::render_frame( $post );
-		} else {
-			self::render_page( $post );
-		}
-		exit;
-	}
-
-	/**
-	 * The outer page: device switcher and the frame.
+	 * The preview column: device switcher, "Update" and the frame.
 	 *
 	 * @param WP_Post $post Slider.
 	 */
-	private static function render_page( $post ) {
-		$title   = $post->post_title ? $post->post_title : __( '(no title)', 'wp-swiper' );
-		/* translators: %s: slider title. */
-		$heading = sprintf( __( 'Preview: %s', 'wp-swiper' ), $title );
-		$devices = array(
-			'desktop' => __( 'Desktop', 'wp-swiper' ),
-			'tablet'  => __( 'Tablet (768–1024px)', 'wp-swiper' ),
-			'mobile'  => __( 'Mobile (below 768px)', 'wp-swiper' ),
-		);
+	public static function render_panel( $post ) {
 		?>
-<!DOCTYPE html>
-<html <?php language_attributes(); ?>>
-<head>
-	<meta charset="<?php bloginfo( 'charset' ); ?>">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="robots" content="noindex, nofollow">
-	<title><?php echo esc_html( $heading ); ?></title>
-	<style>
-		html, body { height: 100%; margin: 0; }
-		body { display: flex; flex-direction: column; background: #f0f0f1; color: #1d2327; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-		.bar { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 16px; border-bottom: 1px solid #c3c4c7; background: #fff; }
-		.bar__title { margin: 0 auto 0 0; font-size: 14px; font-weight: 600; }
-		.bar__note { color: #646970; }
-		.bar button { padding: 5px 12px; border: 1px solid #2271b1; border-radius: 3px; background: #f6f7f7; color: #2271b1; font: inherit; cursor: pointer; }
-		.bar button[aria-pressed="true"] { background: #2271b1; color: #fff; }
-		.bar button:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
-		.stage { flex: 1 1 auto; min-height: 0; padding: 16px; overflow: auto; }
-		.stage iframe { display: block; width: 100%; max-width: 100%; height: 100%; margin: 0 auto; border: 0; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); }
-	</style>
-</head>
-<body>
-	<div class="bar">
-		<h1 class="bar__title"><?php echo esc_html( $heading ); ?></h1>
-		<span class="bar__note"><?php esc_html_e( 'Shows the saved slider: save your changes, then reload.', 'wp-swiper' ); ?></span>
-		<span role="group" aria-label="<?php esc_attr_e( 'Device', 'wp-swiper' ); ?>">
-			<?php foreach ( $devices as $device => $label ) : ?>
-				<button type="button" data-width="<?php echo (int) self::WIDTHS[ $device ]; ?>" aria-pressed="<?php echo 'desktop' === $device ? 'true' : 'false'; ?>"><?php echo esc_html( $label ); ?></button>
-			<?php endforeach; ?>
-		</span>
-	</div>
-	<div class="stage">
-		<iframe src="<?php echo esc_url( self::url( $post->ID, true ) ); ?>" title="<?php echo esc_attr( $title ); ?>"></iframe>
-	</div>
-	<script>
-		( function () {
-			var frame = document.querySelector( 'iframe' );
-			var buttons = document.querySelectorAll( '.bar button' );
-
-			[].forEach.call( buttons, function ( button ) {
-				button.addEventListener( 'click', function () {
-					var width = Number( button.getAttribute( 'data-width' ) );
-					frame.style.width = width ? width + 'px' : '';
-					[].forEach.call( buttons, function ( other ) {
-						other.setAttribute( 'aria-pressed', other === button ? 'true' : 'false' );
-					} );
-				} );
-			} );
-		}() );
-	</script>
-</body>
-</html>
+		<div class="wp-swiper-settings__preview">
+			<div class="wp-swiper-preview"
+				data-url="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+				data-action="<?php echo esc_attr( self::ACTION ); ?>"
+				data-post="<?php echo (int) $post->ID; ?>"
+				data-nonce="<?php echo esc_attr( wp_create_nonce( self::ACTION . '_' . $post->ID ) ); ?>"
+				data-sizes="<?php echo esc_attr( wp_json_encode( self::SIZES ) ); ?>">
+				<div class="wp-swiper-preview__bar">
+					<span class="wp-swiper-preview__title"><?php esc_html_e( 'Preview', 'wp-swiper' ); ?></span>
+					<?php // The same device as the settings' values (admin.js). ?>
+					<?php WP_Swiper_Admin::render_device_switch( 'wp-swiper-preview__devices' ); ?>
+					<button type="button" class="button wp-swiper-preview__update">
+						<span class="dashicons dashicons-update" aria-hidden="true"></span>
+						<?php esc_html_e( 'Update', 'wp-swiper' ); ?>
+					</button>
+				</div>
+				<p class="description wp-swiper-preview__note"><?php esc_html_e( 'The settings as they are now, saved or not. Press Update after changes.', 'wp-swiper' ); ?></p>
+				<div class="wp-swiper-preview__stage">
+					<iframe class="wp-swiper-preview__frame" name="wp-swiper-preview-<?php echo (int) $post->ID; ?>" title="<?php esc_attr_e( 'Slider preview', 'wp-swiper' ); ?>" src="about:blank"></iframe>
+				</div>
+			</div>
+		</div>
 		<?php
 	}
 
 	/**
-	 * The inner page: the slider and the plugin's own assets, no theme. The
-	 * block around it is as tall as the frame, for Height "Auto" to fill.
-	 *
-	 * @param WP_Post $post Slider.
+	 * The frame: the slider drawn from the posted form, with the plugin's
+	 * assets and no theme. The block around it is as tall as the frame, for
+	 * Height "Auto" to fill.
 	 */
-	private static function render_frame( $post ) {
+	public static function render_frame() {
+		$post_id = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
+		$nonce   = isset( $_POST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ) : '';
+		$post    = $post_id ? get_post( $post_id ) : null;
+
+		if ( ! $post || WP_Swiper_Settings::POST_TYPE !== $post->post_type
+			|| ! wp_verify_nonce( $nonce, self::ACTION . '_' . $post_id )
+			|| ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_die( esc_html__( 'The preview is not available any more: reload the page.', 'wp-swiper' ), '', array( 'response' => 403 ) );
+		}
+
+		// As saving would store them, over the defaults (see WP_Swiper_Settings::get()).
+		$input    = isset( $_POST['wp_swiper_settings'] ) ? (array) wp_unslash( $_POST['wp_swiper_settings'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized against the schema.
+		$settings = wp_parse_args( WP_Swiper_Settings::sanitize( $input ), WP_Swiper_Settings::defaults() );
+
 		WP_Swiper_Render::register_assets();
-		$slider = WP_Swiper_Render::render( $post->ID, '', true );
+		$slider = WP_Swiper_Render::render_slider( $post_id, WP_Swiper_Admin::posted_slides(), $settings );
+
+		nocache_headers();
+		header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
+		header( 'X-Robots-Tag: noindex, nofollow' );
 		?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -164,17 +100,18 @@ class WP_Swiper_Preview {
 	<style>
 		html, body { margin: 0; background: #fff; }
 		body { font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-		.wp-swiper-preview { box-sizing: border-box; min-height: 100vh; padding: 24px; }
-		@media (max-width: 767px) { .wp-swiper-preview { padding: 12px; } }
+		.wp-swiper-preview-page { box-sizing: border-box; min-height: 100vh; padding: 24px; }
+		@media (max-width: 767px) { .wp-swiper-preview-page { padding: 12px; } }
 	</style>
 </head>
 <body>
-	<div class="wp-swiper-preview">
+	<div class="wp-swiper-preview-page">
 		<?php echo $slider; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the slider's markup, escaped where it is built. ?>
 	</div>
 	<?php wp_print_scripts( array( 'wp-swiper' ) ); ?>
 </body>
 </html>
 		<?php
+		exit;
 	}
 }
