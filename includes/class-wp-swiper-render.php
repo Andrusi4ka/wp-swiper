@@ -95,11 +95,22 @@ class WP_Swiper_Render {
 	 * @return string
 	 */
 	public static function render_slider( $post_id, $slides, $settings, $class = '' ) {
-		$slides = array_filter(
-			$slides,
+		// Images and videos from the media library (ones deleted since are skipped).
+		// A video slide has no link: a click on it is the player's.
+		$slides = array_map(
 			function ( $slide ) {
-				return wp_attachment_is_image( $slide['id'] );
-			}
+				$slide['video'] = WP_Swiper_Settings::is_video( $slide['id'] );
+				if ( $slide['video'] ) {
+					$slide['link'] = '';
+				}
+				return $slide;
+			},
+			array_filter(
+				$slides,
+				function ( $slide ) {
+					return WP_Swiper_Settings::is_slide_media( $slide['id'] );
+				}
+			)
 		);
 
 		if ( ! $slides ) {
@@ -138,13 +149,27 @@ class WP_Swiper_Render {
 	 * @param array $settings Slider settings.
 	 * @param int   $count    Number of real slides.
 	 * @param int   $copies   How many times the markup repeats them (loop mode).
+	 * @param bool  $videos   Some slides are videos.
 	 * @return array
 	 */
-	private static function js_config( $settings, $count, $copies ) {
+	private static function js_config( $settings, $count, $copies, $videos ) {
 		$expand  = WP_Swiper_Settings::is_expand( $settings );
 		$marquee = WP_Swiper_Settings::is_marquee( $settings );
 
 		return array(
+			// Video slides: how they play (frontend.js videos()).
+			'video'         => $videos ? array(
+				'autoplay' => (bool) $settings['video_autoplay'],
+				'muted'    => (bool) $settings['video_muted'],
+				'loop'     => (bool) $settings['video_loop'],
+				// Without autoplay the visitor starts it: the controls then always show.
+				'controls' => $settings['video_controls'] || ! $settings['video_autoplay'],
+				'pause'    => (bool) $settings['video_pause'],
+				// Waits for the end of a video: the slider's autoplay (not the marquee)
+				// and the video's own; it then plays once.
+				'wait'     => $settings['video_wait'] && $settings['video_autoplay'] && $settings['autoplay'] && ! $marquee,
+				'preload'  => $settings['video_preload'],
+			) : false,
 			'effect'        => $settings['effect'],
 			// The effect shows exactly one slide (fade, cube...): no slides per view.
 			'single'        => in_array( $settings['effect'], WP_Swiper_Settings::SINGLE_SLIDE_EFFECTS, true ),
@@ -255,6 +280,32 @@ class WP_Swiper_Render {
 			$own[ $device ] = (int) ( '' === $radius ? $slider[ $device ] : $radius );
 		}
 		return $own;
+	}
+
+	/**
+	 * A video slide's player. Its file is not loaded with the page: the
+	 * address waits in data-src until frontend.js plays the slide (or loads
+	 * the next one ahead), so the copies loop mode repeats load nothing.
+	 * Muted in the markup when set: browsers only autoplay muted videos.
+	 *
+	 * @param array       $slide    Slide data.
+	 * @param array|false $size     The video's width and height.
+	 * @param array       $settings Slider settings.
+	 * @return string
+	 */
+	private static function video( $slide, $size, $settings ) {
+		$poster = WP_Swiper_Settings::poster( $slide );
+		$poster = $poster ? wp_get_attachment_image_url( $poster, 'full' ) : '';
+
+		return sprintf(
+			'<video class="wp-swiper__image wp-swiper__video" data-src="%1$s"%2$s%3$s preload="none" playsinline%4$s%5$s%6$s></video>',
+			esc_url( wp_get_attachment_url( $slide['id'] ) ),
+			$size ? sprintf( ' width="%d" height="%d"', $size[0], $size[1] ) : '',
+			$poster ? ' poster="' . esc_url( $poster ) . '"' : '',
+			$settings['video_muted'] ? ' muted' : '',
+			$settings['video_loop'] ? ' loop' : '',
+			$settings['video_controls'] || ! $settings['video_autoplay'] ? ' controls' : ''
+		);
 	}
 
 	/**
@@ -436,9 +487,9 @@ class WP_Swiper_Render {
 			if ( 'contain' === $settings['image_fit'] ) {
 				$ratios = array();
 				foreach ( $slides as $slide ) {
-					$src = wp_get_attachment_image_src( $slide['id'], 'full' );
-					if ( $src && $src[1] && $src[2] ) {
-						$ratios[] = $src[1] / $src[2];
+					$size = WP_Swiper_Settings::media_size( $slide['id'] );
+					if ( $size ) {
+						$ratios[] = $size[0] / $size[1];
 					}
 				}
 				if ( $ratios ) {
@@ -497,9 +548,9 @@ class WP_Swiper_Render {
 		// slide takes the first image's proportions (the others are cropped or
 		// fitted per "Image fit"); otherwise the tallest image would set the
 		// height and leave gaps under the rest.
-		$first = wp_get_attachment_image_src( $slides[0]['id'], 'full' );
-		if ( $first && $first[1] && $first[2] ) {
-			$style[] = '--wp-swiper-ratio:' . (int) $first[1] . ' / ' . (int) $first[2];
+		$first = WP_Swiper_Settings::media_size( $slides[0]['id'] );
+		if ( $first ) {
+			$style[] = '--wp-swiper-ratio:' . (int) $first[0] . ' / ' . (int) $first[1];
 		}
 		// "Contain": where the image sits in its slide (slides are flex rows).
 		if ( 'contain' === $settings['image_fit'] ) {
@@ -557,7 +608,7 @@ class WP_Swiper_Render {
 
 		$count             = count( $slides );
 		$copies            = self::copies( $settings, $count );
-		$config            = self::js_config( $settings, $count, $copies );
+		$config            = self::js_config( $settings, $count, $copies, in_array( true, wp_list_pluck( $slides, 'video' ), true ) );
 		$pagination_inside = 'inside' === $settings['pagination_placement'];
 
 		ob_start();
@@ -600,19 +651,25 @@ class WP_Swiper_Render {
 					<div class="swiper-wrapper">
 						<?php foreach ( $slides as $index => $slide ) : ?>
 							<?php /* translators: %d: slide number. */ ?>
-							<div class="swiper-slide" data-wp-swiper-index="<?php echo (int) $index; ?>" role="button" tabindex="0" aria-label="<?php echo esc_attr( sprintf( __( 'Go to slide %d', 'wp-swiper' ), $index + 1 ) ); ?>">
+							<div class="swiper-slide<?php echo $slide['video'] ? ' wp-swiper__thumb--video' : ''; ?>" data-wp-swiper-index="<?php echo (int) $index; ?>" role="button" tabindex="0" aria-label="<?php echo esc_attr( sprintf( __( 'Go to slide %d', 'wp-swiper' ), $index + 1 ) ); ?>">
 								<?php
-								echo wp_get_attachment_image( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core image markup.
-									$slide['id'],
-									'medium',
-									false,
-									array(
-										'class'    => 'wp-swiper__thumb-image',
-										'loading'  => 'lazy',
-										'decoding' => 'async',
-										'alt'      => '',
-									)
-								);
+								// A video: its poster (CSS adds a play mark), or a dark box without one.
+								$thumb_id = $slide['video'] ? WP_Swiper_Settings::poster( $slide ) : $slide['id'];
+								if ( $thumb_id ) {
+									echo wp_get_attachment_image( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core image markup.
+										$thumb_id,
+										'medium',
+										false,
+										array(
+											'class'    => 'wp-swiper__thumb-image',
+											'loading'  => 'lazy',
+											'decoding' => 'async',
+											'alt'      => '',
+										)
+									);
+								} else {
+									echo '<span class="wp-swiper__thumb-image wp-swiper__thumb-blank"></span>';
+								}
 								?>
 							</div>
 						<?php endforeach; ?>
@@ -640,24 +697,30 @@ class WP_Swiper_Render {
 	 * @param bool  $eager    Load the image right away (first slide).
 	 */
 	private static function render_slide( $slide, $index, $settings, $eager ) {
-		// Full size with its srcset: the browser picks the file that fits the slide.
-		$image = wp_get_attachment_image(
-			$slide['id'],
-			'full',
-			false,
-			array(
-				'class'    => 'wp-swiper__image',
-				'loading'  => $eager ? 'eager' : 'lazy',
-				'decoding' => 'async',
-			)
-		);
-		// The image's proportions size its box (.wp-swiper__media) with "Contain",
+		// The media's proportions size its box (.wp-swiper__media) with "Contain",
 		// and the slide itself with "Width from image".
-		$full  = wp_get_attachment_image_src( $slide['id'], 'full' );
-		$ratio = $full && $full[2] ? round( $full[1] / $full[2], 4 ) : 1;
+		$size  = WP_Swiper_Settings::media_size( $slide['id'] );
+		$ratio = $size ? round( $size[0] / $size[1], 4 ) : 1;
+
+		if ( $slide['video'] ) {
+			$image = self::video( $slide, $size, $settings );
+		} else {
+			// Full size with its srcset: the browser picks the file that fits the slide.
+			$image = wp_get_attachment_image(
+				$slide['id'],
+				'full',
+				false,
+				array(
+					'class'    => 'wp-swiper__image',
+					'loading'  => $eager ? 'eager' : 'lazy',
+					'decoding' => 'async',
+				)
+			);
+		}
 		?>
-		<div class="swiper-slide" data-wp-swiper-index="<?php echo (int) $index; ?>" style="--wp-swiper-img-ratio:<?php echo esc_attr( $ratio ); ?>"
-			<?php if ( $settings['lightbox'] ) : ?>
+		<div class="swiper-slide<?php echo $slide['video'] ? ' wp-swiper-slide--video' : ''; ?>" data-wp-swiper-index="<?php echo (int) $index; ?>" style="--wp-swiper-img-ratio:<?php echo esc_attr( $ratio ); ?>"
+			<?php // The lightbox shows the images (a video slide is not in it). ?>
+			<?php if ( $settings['lightbox'] && ! $slide['video'] ) : ?>
 				data-wp-swiper-full="<?php echo esc_url( wp_get_attachment_image_url( $slide['id'], 'full' ) ); ?>"
 			<?php endif; ?>
 		>

@@ -961,6 +961,71 @@ class WP_Swiper_Settings {
 				'help'    => __( 'Keeps the text readable on light images, e.g. without a background.', 'wp-swiper' ),
 			),
 
+			// Video slides (a video from the media library): how they play. The
+			// page shows while the slider has one (admin.js). Only the video of
+			// the slide in view plays, and only while the slider is on screen.
+			'video_autoplay'        => array(
+				'section' => 'advanced',
+				'panel'   => 'video',
+				'label'   => __( 'Play automatically', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => true,
+				'help'    => __( 'When its slide is shown. Browsers only start a video by themselves without sound, so a video with sound starts muted.', 'wp-swiper' ),
+			),
+			'video_muted'           => array(
+				'section' => 'advanced',
+				'panel'   => 'video',
+				'label'   => __( 'Muted', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => true,
+				'help'    => __( 'Without sound at first; with Show controls the visitor can turn it on.', 'wp-swiper' ),
+			),
+			'video_loop'            => array(
+				'section' => 'advanced',
+				'panel'   => 'video',
+				'label'   => __( 'Loop', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => true,
+				'help'    => __( 'Starts over at the end while its slide is shown.', 'wp-swiper' ),
+			),
+			'video_controls'        => array(
+				'section' => 'advanced',
+				'panel'   => 'video',
+				'label'   => __( 'Show controls', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'Play, sound and progress. Always on without Play automatically: the visitor starts the video.', 'wp-swiper' ),
+			),
+			'video_pause'           => array(
+				'section' => 'advanced',
+				'panel'   => 'video',
+				'label'   => __( 'Pause when the slide is left', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => true,
+				'help'    => __( 'Off: it plays on unseen (sound too) and carries on from there when its slide is back.', 'wp-swiper' ),
+			),
+			'video_wait'            => array(
+				'section' => 'advanced',
+				'panel'   => 'video',
+				'label'   => __( 'Next slide when the video ends', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'With Autoplay (Controls) and Play automatically: on a video slide the slider waits for the end of the video instead of the delay. The video then plays once.', 'wp-swiper' ),
+			),
+			'video_preload'         => array(
+				'section' => 'advanced',
+				'panel'   => 'video',
+				'label'   => __( 'Preload the next video', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'metadata',
+				'choices' => array(
+					'none'     => __( 'No: only when it plays', 'wp-swiper' ),
+					'metadata' => __( 'Its first frame (light)', 'wp-swiper' ),
+					'auto'     => __( 'The video itself (heavy)', 'wp-swiper' ),
+				),
+				'help'    => __( 'For the video of the next slide only; the others load when their slide comes up.', 'wp-swiper' ),
+			),
+
 			// The slider's outer block (.wp-swiper): classes and an id of its own.
 			'css_class'             => array(
 				'section'     => 'advanced',
@@ -1195,6 +1260,8 @@ class WP_Swiper_Settings {
 			// The Thumbnails effect's strip (its menu item shows for that effect only).
 			'thumbs'     => array( __( 'Thumbnails', 'wp-swiper' ), 'dashicons-images-alt2' ),
 			'caption'    => array( __( 'Caption', 'wp-swiper' ), 'dashicons-editor-textcolor' ),
+			// Video slides (its menu item shows while the slider has one).
+			'video'      => array( __( 'Video', 'wp-swiper' ), 'dashicons-video-alt3' ),
 			// The outer block's class and id.
 			'attributes' => array( __( 'Custom', 'wp-swiper' ), 'dashicons-editor-code' ),
 		);
@@ -1372,8 +1439,10 @@ class WP_Swiper_Settings {
 	}
 
 	/**
-	 * Saved slides: list of [ 'id' => int, 'caption' => string, 'link' => string, 'new_tab' => bool ]
-	 * (slides saved before "new tab" existed have no new_tab key).
+	 * Saved slides: list of [ 'id' => int, 'caption' => string, 'link' => string,
+	 * 'new_tab' => bool, 'poster' => int ] (slides saved before "new tab" or
+	 * video slides existed have no new_tab / poster key). "id": an image, or a
+	 * video (its "poster": the image shown before it plays; 0 = none).
 	 *
 	 * @param int $post_id Slider ID.
 	 * @return array
@@ -1381,6 +1450,59 @@ class WP_Swiper_Settings {
 	public static function get_slides( $post_id ) {
 		$slides = get_post_meta( $post_id, self::META_SLIDES, true );
 		return is_array( $slides ) ? $slides : array();
+	}
+
+	/**
+	 * Whether a media library item can be a slide: an image or a video.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return bool
+	 */
+	public static function is_slide_media( $attachment_id ) {
+		return wp_attachment_is_image( $attachment_id ) || self::is_video( $attachment_id );
+	}
+
+	/**
+	 * Whether a slide's media is a video.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return bool
+	 */
+	public static function is_video( $attachment_id ) {
+		return (bool) wp_attachment_is( 'video', $attachment_id );
+	}
+
+	/**
+	 * Width and height of a slide's media: an image's full size, a video's
+	 * frame (from its metadata).
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return array|false [ width, height ], both above 0.
+	 */
+	public static function media_size( $attachment_id ) {
+		if ( self::is_video( $attachment_id ) ) {
+			$meta = wp_get_attachment_metadata( $attachment_id );
+			$size = array( isset( $meta['width'] ) ? (int) $meta['width'] : 0, isset( $meta['height'] ) ? (int) $meta['height'] : 0 );
+		} else {
+			$src  = wp_get_attachment_image_src( $attachment_id, 'full' );
+			$size = $src ? array( (int) $src[1], (int) $src[2] ) : array( 0, 0 );
+		}
+		return $size[0] > 0 && $size[1] > 0 ? $size : false;
+	}
+
+	/**
+	 * The image that stands for a video slide (before it plays, in the strip
+	 * of thumbnails): its poster, else the video's own featured image.
+	 *
+	 * @param array $slide Slide data.
+	 * @return int Attachment ID, 0 if none.
+	 */
+	public static function poster( $slide ) {
+		if ( ! empty( $slide['poster'] ) && wp_attachment_is_image( $slide['poster'] ) ) {
+			return (int) $slide['poster'];
+		}
+		$featured = (int) get_post_thumbnail_id( $slide['id'] );
+		return $featured && wp_attachment_is_image( $featured ) ? $featured : 0;
 	}
 
 	/**

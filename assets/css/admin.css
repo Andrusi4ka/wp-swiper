@@ -67,6 +67,120 @@
 	cursor: text;
 }
 
+/* Video slides: a badge, the poster as the thumbnail (a video icon without
+   one) and no link; the poster is chosen on the Video page. */
+.wp-swiper-slide__video-icon,
+.wp-swiper-slide__badge {
+	display: none;
+}
+
+.wp-swiper-slide--video .wp-swiper-slide__thumb {
+	background: #1d2327;
+}
+
+.wp-swiper-slide--video .wp-swiper-slide__video-icon {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	display: block;
+	width: 40px;
+	height: 40px;
+	font-size: 40px;
+	color: #fff;
+	opacity: 0.8;
+	transform: translate(-50%, -50%);
+}
+
+.wp-swiper-slide--video .wp-swiper-slide__thumb img:not([hidden]) ~ .wp-swiper-slide__video-icon {
+	display: none;
+}
+
+.wp-swiper-slide--video .wp-swiper-slide__badge {
+	position: absolute;
+	bottom: 4px;
+	left: 4px;
+	display: block;
+	padding: 1px 6px;
+	border-radius: 3px;
+	background: rgba(0, 0, 0, 0.7);
+	color: #fff;
+	font-size: 11px;
+	line-height: 18px;
+}
+
+.wp-swiper-slide--video input[type="url"],
+.wp-swiper-slide--video .wp-swiper-slide__new-tab {
+	display: none;
+}
+
+.wp-swiper-slide__thumb img[hidden] {
+	display: none;
+}
+
+/* Video page: one row per video slide with its poster (or a video icon). */
+.wp-swiper-posters__list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 4px 0 0;
+}
+
+.wp-swiper-posters__item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+	padding: 6px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.wp-swiper-posters__thumb {
+	position: relative;
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 80px;
+	height: 45px;
+	overflow: hidden;
+	border-radius: 3px;
+	background: #1d2327;
+	color: #fff;
+}
+
+.wp-swiper-posters__thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.wp-swiper-posters__name {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-width: 0;
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+.wp-swiper-posters__name span {
+	overflow: hidden;
+	color: #646970;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.wp-swiper-posters__actions {
+	display: flex;
+	flex: 0 0 auto;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 2px;
+}
+
 /* Icon and label centred on one axis. */
 #wp-swiper-add {
 	display: inline-flex;

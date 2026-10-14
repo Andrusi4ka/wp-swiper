@@ -21,6 +21,7 @@ WP Swiper adds a "WP Swiper" menu where you build image sliders from the media l
 * Image fit Cover or Contain, height in px / vh / % or Auto (fills the parent column).
 * Arrows (with their own colour), bullets or fraction pagination in six positions over or outside the slider, keyboard control, autoplay, infinite loop.
 * Lightbox with zoom (and, with Thumbnails, the strip of thumbnails in it), per-slide links (optionally in a new tab), captions with their own typography and background.
+* Video slides from the media library, with a poster image: the video of the slide in view plays (muted, looped, with or without controls), the slider can wait for its end, and a file loads only when its slide comes up.
 * Preview beside the settings: the slider as the current settings draw it, saved or not, as on a desktop, tablet or phone (refreshed with its Update button).
 * Settings that do not apply in the current setup are greyed out, and keep their values.
 

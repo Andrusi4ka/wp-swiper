@@ -41,8 +41,16 @@ class WP_Swiper_Admin {
 				'wp-swiper-admin',
 				'wpSwiperAdmin',
 				array(
-					'frameTitle'  => __( 'Select slide images', 'wp-swiper' ),
+					'frameTitle'  => __( 'Select slide images or videos', 'wp-swiper' ),
 					'frameButton' => __( 'Add to slider', 'wp-swiper' ),
+					// A video slide's poster (the image shown before it plays).
+					'posterTitle'  => __( 'Choose the poster image', 'wp-swiper' ),
+					'posterButton' => __( 'Use as poster', 'wp-swiper' ),
+					'posterChoose' => __( 'Choose', 'wp-swiper' ),
+					'posterChange' => __( 'Change', 'wp-swiper' ),
+					'posterRemove' => __( 'Remove', 'wp-swiper' ),
+					/* translators: %d: slide number. */
+					'slideNumber'  => __( 'Slide %d', 'wp-swiper' ),
 					'copied'      => __( 'Copied!', 'wp-swiper' ),
 					'singleSlide' => WP_Swiper_Settings::SINGLE_SLIDE_EFFECTS,
 					// What Height measures (admin.js): each slide across a horizontal
@@ -59,17 +67,17 @@ class WP_Swiper_Admin {
 
 	public static function render_slides_box( $post ) {
 		wp_nonce_field( self::NONCE, self::NONCE . '_nonce' );
-		// Images deleted from the media library are skipped (and dropped on save).
+		// Images and videos deleted from the media library are skipped (and dropped on save).
 		$slides = array_filter(
 			WP_Swiper_Settings::get_slides( $post->ID ),
 			function ( $slide ) {
-				return wp_attachment_is_image( $slide['id'] );
+				return WP_Swiper_Settings::is_slide_media( $slide['id'] );
 			}
 		);
 		$shown  = count( $slides );
 		?>
 		<?php // Only useful once there are slides; admin.js toggles it with the list. ?>
-		<p class="description wp-swiper-hint"<?php echo $shown ? '' : ' hidden'; ?>><?php esc_html_e( 'Drag slides to reorder. Caption and link are optional.', 'wp-swiper' ); ?></p>
+		<p class="description wp-swiper-hint"<?php echo $shown ? '' : ' hidden'; ?>><?php esc_html_e( 'Drag slides to reorder. Caption and link are optional; a video slide has no link, its poster image is set on the Video page of the settings.', 'wp-swiper' ); ?></p>
 
 		<ul class="wp-swiper-slides" id="wp-swiper-slide-list">
 			<?php
@@ -84,7 +92,7 @@ class WP_Swiper_Admin {
 		<p>
 			<button type="button" class="button button-primary" id="wp-swiper-add">
 				<span class="dashicons dashicons-plus-alt2"></span>
-				<?php esc_html_e( 'Add images', 'wp-swiper' ); ?>
+				<?php esc_html_e( 'Add images or videos', 'wp-swiper' ); ?>
 			</button>
 		</p>
 
@@ -96,18 +104,33 @@ class WP_Swiper_Admin {
 
 	/**
 	 * One slide row. Inputs use parallel arrays so DOM order = saved order.
+	 * A video slide (.wp-swiper-slide--video): its poster as the thumbnail (a
+	 * video icon without one), no link (CSS); its poster is chosen on the Video
+	 * page of the settings (admin.js), kept in the row's hidden input.
 	 *
 	 * @param array       $slide Slide data.
 	 * @param string|null $thumb Thumbnail URL override (used by the JS template).
 	 */
 	private static function render_slide_item( $slide, $thumb = null ) {
+		$video  = is_numeric( $slide['id'] ) && WP_Swiper_Settings::is_video( $slide['id'] );
+		$poster = $video ? WP_Swiper_Settings::poster( $slide ) : 0;
 		if ( null === $thumb ) {
-			$thumb = wp_get_attachment_image_url( $slide['id'], 'medium' );
+			$thumb = wp_get_attachment_image_url( $video ? $poster : $slide['id'], 'medium' );
+		}
+		// Only the poster chosen for the slide (not the video's featured image) is its own.
+		$own_poster = $video && ! empty( $slide['poster'] ) && $poster === (int) $slide['poster'] ? $poster : 0;
+		// The video's name in the Video page's list of posters.
+		$title = '{{title}}';
+		if ( $video ) {
+			$title = get_the_title( $slide['id'] );
+			$title = '' !== $title ? $title : wp_basename( (string) get_attached_file( $slide['id'] ) );
 		}
 		?>
-		<li class="wp-swiper-slide">
+		<li class="wp-swiper-slide<?php echo $video ? ' wp-swiper-slide--video' : ''; ?>" data-title="<?php echo esc_attr( $title ); ?>">
 			<div class="wp-swiper-slide__thumb">
-				<img src="<?php echo esc_attr( $thumb ); ?>" alt="">
+				<img src="<?php echo esc_attr( $thumb ); ?>" alt=""<?php echo $thumb ? '' : ' hidden'; ?>>
+				<span class="dashicons dashicons-video-alt3 wp-swiper-slide__video-icon" aria-hidden="true"></span>
+				<span class="wp-swiper-slide__badge"><?php esc_html_e( 'Video', 'wp-swiper' ); ?></span>
 				<button type="button" class="wp-swiper-slide__remove" title="<?php esc_attr_e( 'Remove slide', 'wp-swiper' ); ?>">
 					<span class="dashicons dashicons-no-alt"></span>
 				</button>
@@ -121,6 +144,8 @@ class WP_Swiper_Admin {
 				<?php esc_html_e( 'Open in a new tab', 'wp-swiper' ); ?>
 			</label>
 			<input type="hidden" name="wp_swiper_slides[new_tab][]" value="<?php echo empty( $slide['new_tab'] ) ? '0' : '1'; ?>">
+			<?php // Video slides: the poster, an image from the media library (set on the Video page). ?>
+			<input type="hidden" name="wp_swiper_slides[poster][]" value="<?php echo $own_poster ? (int) $own_poster : ''; ?>">
 		</li>
 		<?php
 	}
@@ -180,6 +205,13 @@ class WP_Swiper_Admin {
 			if ( 'caption' === $page ) {
 				// admin.js shows it (and greys the box) while no slide has a caption.
 				echo '<p class="description wp-swiper-section-note" hidden>' . esc_html__( 'Add a caption to a slide to use these settings.', 'wp-swiper' ) . '</p>';
+			}
+			if ( 'video' === $page ) {
+				// The poster of each video slide: admin.js lists the video slides of
+				// the Slides box here; the poster itself stays in its slide's row.
+				echo '<div class="wp-swiper-field wp-swiper-posters" data-field="video_posters"><div class="wp-swiper-field__head"><span class="wp-swiper-field__label">' . esc_html__( 'Poster images', 'wp-swiper' ) . '</span>';
+				self::help_tip( __( 'Shown before a video plays and as its thumbnail. Without one: the video’s featured image in the media library, else its first frame.', 'wp-swiper' ) );
+				echo '</div><ul class="wp-swiper-posters__list"></ul></div>';
 			}
 			self::render_fields( $keys[ $page ], $fields, $values );
 			echo '</fieldset>';
@@ -539,14 +571,19 @@ class WP_Swiper_Admin {
 
 		foreach ( $ids as $i => $attachment_id ) {
 			$attachment_id = absint( $attachment_id );
-			if ( ! $attachment_id || ! wp_attachment_is_image( $attachment_id ) ) {
+			if ( ! $attachment_id || ! WP_Swiper_Settings::is_slide_media( $attachment_id ) ) {
 				continue;
 			}
+			$video  = WP_Swiper_Settings::is_video( $attachment_id );
+			$poster = $video && isset( $raw['poster'][ $i ] ) ? absint( $raw['poster'][ $i ] ) : 0;
 			$slides[] = array(
 				'id'      => $attachment_id,
 				'caption' => isset( $raw['caption'][ $i ] ) ? sanitize_text_field( $raw['caption'][ $i ] ) : '',
-				'link'    => isset( $raw['link'][ $i ] ) ? esc_url_raw( $raw['link'][ $i ] ) : '',
-				'new_tab' => isset( $raw['new_tab'][ $i ] ) && '1' === $raw['new_tab'][ $i ],
+				// A video slide has no link (a click on it is the player's).
+				'link'    => ! $video && isset( $raw['link'][ $i ] ) ? esc_url_raw( $raw['link'][ $i ] ) : '',
+				'new_tab' => ! $video && isset( $raw['new_tab'][ $i ] ) && '1' === $raw['new_tab'][ $i ],
+				// A video's poster: an image from the media library, or none.
+				'poster'  => $poster && wp_attachment_is_image( $poster ) ? $poster : 0,
 			);
 		}
 		return $slides;
@@ -567,12 +604,12 @@ class WP_Swiper_Admin {
 	public static function column_content( $column, $post_id ) {
 		switch ( $column ) {
 			case 'wp_swiper_slides':
-				// As the slider shows them: images deleted from the library are skipped.
+				// As the slider shows them: images and videos deleted from the library are skipped.
 				echo (int) count(
 					array_filter(
 						WP_Swiper_Settings::get_slides( $post_id ),
 						function ( $slide ) {
-							return wp_attachment_is_image( $slide['id'] );
+							return WP_Swiper_Settings::is_slide_media( $slide['id'] );
 						}
 					)
 				);

@@ -44,6 +44,8 @@
 			syncLightbox();
 			// The preview no longer shows these slides.
 			$( '.wp-swiper-preview__update' ).addClass( 'is-stale' );
+			// Nor the Video page its list of posters.
+			syncPosters();
 		}
 
 		function escapeAttr( value ) {
@@ -58,21 +60,27 @@
 				frame = wp.media( {
 					title: i18n.frameTitle,
 					button: { text: i18n.frameButton },
-					library: { type: 'image' },
+					library: { type: [ 'image', 'video' ] },
 					multiple: 'add'
 				} );
 
 				frame.on( 'select', function () {
 					frame.state().get( 'selection' ).each( function ( attachment ) {
 						var data = attachment.toJSON();
+						var video = data.type === 'video';
 						var sizes = data.sizes || {};
-						var thumb = ( sizes.medium || sizes.thumbnail || data ).url;
+						// A video has no picture of its own until a poster is chosen.
+						var thumb = video ? '' : ( sizes.medium || sizes.thumbnail || data ).url;
 
-						$list.append(
+						var $item = $(
 							template
 								.replace( /\{\{id\}\}/g, escapeAttr( data.id ) )
 								.replace( /\{\{thumb\}\}/g, escapeAttr( thumb ) )
-						);
+								.replace( /\{\{title\}\}/g, escapeAttr( data.title || data.filename || '' ) )
+						).appendTo( $list );
+						if ( video ) {
+							$item.addClass( 'wp-swiper-slide--video' ).find( '.wp-swiper-slide__thumb img' ).prop( 'hidden', true );
+						}
 					} );
 
 					// Start with an empty selection next time.
@@ -97,6 +105,80 @@
 			tolerance: 'pointer',
 			forcePlaceholderSize: true
 		} );
+
+		/*
+		 * Video slides' posters, chosen on the Video page: one row per video slide
+		 * of the Slides box, in its order. A poster is kept in its slide's hidden
+		 * input and shown at once as the thumbnail both here and in the slide.
+		 */
+		var $posters = $( '.wp-swiper-posters__list' );
+		var posterFrame;
+		var $posterSlide;
+
+		function syncPosters() {
+			$posters.empty();
+			$list.children( '.wp-swiper-slide' ).each( function ( index ) {
+				var $slide = $( this );
+				if ( ! $slide.hasClass( 'wp-swiper-slide--video' ) ) {
+					return;
+				}
+				var $img = $slide.find( '.wp-swiper-slide__thumb img' );
+				var own = $slide.find( 'input[name="wp_swiper_slides[poster][]"]' ).val() !== '';
+				var $row = $( '<li class="wp-swiper-posters__item"></li>' ).data( 'slide', $slide );
+				var $thumb = $( '<span class="wp-swiper-posters__thumb"></span>' ).appendTo( $row );
+
+				if ( ! $img.prop( 'hidden' ) && $img.attr( 'src' ) ) {
+					$( '<img alt="">' ).attr( 'src', $img.attr( 'src' ) ).appendTo( $thumb );
+				} else {
+					$thumb.append( '<span class="dashicons dashicons-video-alt3" aria-hidden="true"></span>' );
+				}
+				$( '<span class="wp-swiper-posters__name"></span>' )
+					.append( $( '<strong></strong>' ).text( ( i18n.slideNumber || '%d' ).replace( '%d', index + 1 ) ) )
+					.append( $( '<span></span>' ).text( $slide.data( 'title' ) || '' ) )
+					.appendTo( $row );
+				var $actions = $( '<span class="wp-swiper-posters__actions"></span>' ).appendTo( $row );
+				$( '<button type="button" class="button button-small wp-swiper-posters__set"></button>' )
+					.text( own ? i18n.posterChange : i18n.posterChoose )
+					.appendTo( $actions );
+				if ( own ) {
+					$( '<button type="button" class="button-link wp-swiper-posters__remove"></button>' ).text( i18n.posterRemove ).appendTo( $actions );
+				}
+				$posters.append( $row );
+			} );
+		}
+
+		function setPoster( $slide, id, url ) {
+			$slide.find( 'input[name="wp_swiper_slides[poster][]"]' ).val( id );
+			$slide.find( '.wp-swiper-slide__thumb img' ).attr( 'src', url ).prop( 'hidden', ! url );
+			$( '.wp-swiper-preview__update' ).addClass( 'is-stale' );
+			syncPosters();
+		}
+
+		$posters.on( 'click', '.wp-swiper-posters__set', function () {
+			$posterSlide = $( this ).closest( '.wp-swiper-posters__item' ).data( 'slide' );
+			if ( ! posterFrame ) {
+				posterFrame = wp.media( {
+					title: i18n.posterTitle,
+					button: { text: i18n.posterButton },
+					library: { type: 'image' },
+					multiple: false
+				} );
+				posterFrame.on( 'select', function () {
+					var data = posterFrame.state().get( 'selection' ).first().toJSON();
+					var sizes = data.sizes || {};
+					setPoster( $posterSlide, data.id, ( sizes.medium || sizes.thumbnail || data ).url );
+				} );
+			}
+			posterFrame.open();
+		} );
+
+		$posters.on( 'click', '.wp-swiper-posters__remove', function () {
+			setPoster( $( this ).closest( '.wp-swiper-posters__item' ).data( 'slide' ), '', '' );
+		} );
+
+		// The slides' order changes the numbers.
+		$list.on( 'sortupdate', syncPosters );
+		syncPosters();
 
 		// "Open in a new tab": mirror the (unnamed) checkbox into its hidden input.
 		$list.on( 'change', '.wp-swiper-slide__new-tab input', function () {
@@ -235,6 +317,13 @@
 		var lockStackRotation = lockableValue( 'cards_rotate' );
 		// Thumbnails: per view sizes nothing where "Thumbnail height" is set on every device.
 		var lockThumbsPerView = lockableValue( 'thumbs_per_view' );
+		// Video: the controls show (on) without autoplay, or nobody could start it;
+		// waiting for the end needs the slider's autoplay and the video's own;
+		// a video that is waited for plays once (no loop).
+		var lockVideoControls = lockable( 'video_controls', true );
+		var lockVideoWait = lockable( 'video_wait' );
+		var lockVideoLoop = lockable( 'video_loop' );
+		var VIDEO_FIELDS = [ 'video_posters', 'video_autoplay', 'video_muted', 'video_loop', 'video_controls', 'video_pause', 'video_wait', 'video_preload' ];
 
 		// "Thumbnail height" on every device (empty tablet/mobile inherit; 0 = none).
 		function thumbsHeightEverywhere() {
@@ -468,6 +557,16 @@
 			// applies (frontend.js stops the strip where it is).
 			field( 'autoplay_delay' ).toggle( autoplay || marquee );
 			field( 'pause_on_hover' ).toggle( autoplay || marquee );
+
+			// Video: its page (menu item) only while some slide is a video.
+			var hasVideo = $list.find( '.wp-swiper-slide--video' ).length > 0;
+			VIDEO_FIELDS.forEach( function ( name ) {
+				field( name ).toggle( hasVideo );
+			} );
+			var videoAutoplay = $( '#wp-swiper-video_autoplay' ).is( ':checked' );
+			lockVideoControls( ! videoAutoplay );
+			lockVideoWait( ! autoplay || marquee || ! videoAutoplay );
+			lockVideoLoop( ! $( '#wp-swiper-video_wait' ).prop( 'disabled' ) && $( '#wp-swiper-video_wait' ).is( ':checked' ) );
 			// Height "Auto" (the parent block's) needs no numbers.
 			field( 'height' ).toggleClass( 'is-auto', $( '#wp-swiper-height_unit' ).val() === 'auto' );
 			// Fields with their own help text for "Contain".
@@ -594,7 +693,8 @@
 		var lockLightbox = lockable( 'lightbox' );
 
 		function syncLightbox() {
-			lockLightbox( $list.find( 'input[type="url"]' ).filter( function () {
+			// Video slides have no link (their field is hidden).
+			lockLightbox( $list.find( '.wp-swiper-slide:not(.wp-swiper-slide--video) input[type="url"]' ).filter( function () {
 				return $.trim( this.value ) !== '';
 			} ).length > 0 );
 			syncFields();

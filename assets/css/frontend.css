@@ -74,6 +74,17 @@
 	object-fit: var(--wp-swiper-fit);
 }
 
+/* A video slide's player (sized as an image, see above): dark until its
+   poster or first frame is there. Its caption lets clicks through to the
+   player's controls under it. */
+.wp-swiper .wp-swiper__video {
+	background: #000;
+}
+
+.wp-swiper .wp-swiper-slide--video .wp-swiper__caption {
+	pointer-events: none;
+}
+
 /* Box of the visible image, holding the image, its link and caption. With
    "Cover" it is the whole slide. */
 .wp-swiper .wp-swiper__media {
@@ -1050,6 +1061,25 @@ html.wp-swiper-lightbox-open {
 	max-width: none;
 	aspect-ratio: var(--wp-swiper-thumb-ratio, 4 / 3);
 	object-fit: var(--wp-swiper-fit);
+}
+
+/* A video slide's thumbnail: its poster, or a dark box without one, with a
+   play mark over it. */
+.wp-swiper .wp-swiper__thumb-blank {
+	background: #1d2327;
+}
+
+.wp-swiper .wp-swiper__thumbs .wp-swiper__thumb--video::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	border-style: solid;
+	border-width: 7px 0 7px 12px;
+	border-color: transparent transparent transparent #fff;
+	filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
+	transform: translate(-40%, -50%);
+	pointer-events: none;
 }
 
 /* Thumbnail proportions and border radius on this device. */

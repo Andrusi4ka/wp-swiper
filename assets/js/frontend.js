@@ -1197,19 +1197,32 @@
 			var withThumbs = config.lightbox.thumbs && config.thumbs;
 			var small = withThumbs ? el.parentNode.querySelectorAll( '.wp-swiper__thumbs .wp-swiper__thumb-image' ) : [];
 
-			// One item per real slide, whatever copies the markup holds.
+			// One item per real slide with an image (not the video slides), whatever
+			// copies the markup holds, in slide order; `real`: its slide's index.
 			var items = [];
-			el.querySelectorAll( '.swiper-slide' ).forEach( function ( node ) {
+			var seen = {};
+			el.querySelectorAll( '.swiper-slide[data-wp-swiper-full]' ).forEach( function ( node ) {
 				var real = realIndexOf( node );
-				if ( ! items[ real ] ) {
+				if ( ! seen[ real ] ) {
+					seen[ real ] = true;
 					var img = node.querySelector( 'img' );
 					var caption = node.querySelector( '.wp-swiper__caption' );
-					items[ real ] = {
+					items.push( {
+						real: real,
 						src: node.getAttribute( 'data-wp-swiper-full' ),
 						alt: img ? img.alt : '',
 						caption: caption ? caption.textContent.trim() : '',
-						thumb: small[ real ] ? small[ real ].currentSrc || small[ real ].src : ''
-					};
+						thumb: small[ real ] && small[ real ].tagName === 'IMG' ? small[ real ].currentSrc || small[ real ].src : ''
+					} );
+				}
+			} );
+			items.sort( function ( a, b ) {
+				return a.real - b.real;
+			} );
+			var start = 0;
+			items.forEach( function ( item, i ) {
+				if ( item.real === realIndexOf( slide ) ) {
+					start = i;
 				}
 			} );
 
@@ -1222,7 +1235,8 @@
 				player.stop();
 			}
 
-			openLightbox( items, realIndexOf( slide ), function ( last ) {
+			openLightbox( items, start, function ( shown ) {
+				var last = items[ shown ].real;
 				if ( keys ) {
 					swiper.keyboard.enable();
 				}
@@ -1235,6 +1249,164 @@
 				}
 			}, { radius: config.lightbox.radius, thumbRadius: config.lightbox.thumbRadius, thumbs: withThumbs ? config.thumbs : false } );
 		} );
+	}
+
+	/* ------------------------------------------------------------------ *
+	 * Video slides
+	 *
+	 * Only the video of the slide in view plays (the current one of the
+	 * wider active slide layout), and only while the slider is on screen.
+	 * A file loads when its slide comes up (render.php leaves its address in
+	 * data-src), the next slide's ahead as "Preload" says; the copies loop
+	 * mode repeats load nothing until they come up themselves.
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * @param {Object}   swiper The slider.
+	 * @param {Element}  el     The .swiper element.
+	 * @param {Object}   config Slider config (config.video: the settings).
+	 * @param {Object}   player The slider's autoplay ({ stop, start }) or null.
+	 * @param {Function} next   Goes to the next slide.
+	 */
+	function videos( swiper, el, config, player, next ) {
+		var settings = config.video;
+		var all = [].slice.call( el.querySelectorAll( 'video.wp-swiper__video' ) );
+		var inView = true;
+		var current = null;
+		// The video the slider's autoplay is held for ("Next slide when the video ends").
+		var waiting = null;
+
+		// As properties too: the attributes alone do not mute every browser.
+		all.forEach( function ( video ) {
+			video.muted = settings.muted;
+			video.loop = settings.loop;
+			video.controls = settings.controls;
+		} );
+
+		function load( video, preload ) {
+			if ( ! video.getAttribute( 'src' ) && video.getAttribute( 'data-src' ) ) {
+				video.preload = preload;
+				video.setAttribute( 'src', video.getAttribute( 'data-src' ) );
+			}
+		}
+
+		function play( video ) {
+			load( video, 'auto' );
+			var started = video.play();
+			if ( started && started.catch ) {
+				started.catch( function () {
+					// Browsers start a video by itself only without sound: then muted
+					// (with the controls the visitor can turn it on).
+					if ( ! video.muted ) {
+						video.muted = true;
+						video.play().catch( function () {} );
+					}
+				} );
+			}
+		}
+
+		function videoOf( slide ) {
+			return slide ? slide.querySelector( 'video.wp-swiper__video' ) : null;
+		}
+
+		function activeSlide() {
+			return el.querySelector( '.swiper-slide.' + CURRENT_CLASS ) || swiper.slides[ swiper.activeIndex ];
+		}
+
+		// The slider's autoplay again, once it no longer waits for a video.
+		function release() {
+			if ( waiting ) {
+				waiting = null;
+				if ( player ) {
+					player.start();
+				}
+			}
+		}
+
+		function sync() {
+			var slide = activeSlide();
+			var video = videoOf( slide );
+
+			all.forEach( function ( other ) {
+				if ( other !== video && ! other.paused && ( settings.pause || ! inView ) ) {
+					other.pause();
+				}
+			} );
+			// Moved on (a click, the arrows) before the video ended.
+			if ( waiting && waiting !== video ) {
+				release();
+			}
+			current = video;
+
+			// The next slide's video, ahead of time.
+			if ( settings.preload !== 'none' && slide ) {
+				var following = videoOf( slide.nextElementSibling );
+				if ( following ) {
+					load( following, settings.preload );
+				}
+			}
+
+			if ( ! video ) {
+				return;
+			}
+			if ( ! settings.autoplay ) {
+				// The visitor starts it (its controls show): its first frame meanwhile.
+				load( video, 'metadata' );
+				return;
+			}
+			if ( ! inView ) {
+				return;
+			}
+			if ( settings.wait && player && waiting !== video ) {
+				// Hold the slider until the video ends; it plays once, from the start.
+				waiting = video;
+				player.stop();
+				video.loop = false;
+				if ( video.ended ) {
+					video.currentTime = 0;
+				}
+			}
+			if ( video.paused ) {
+				play( video );
+			}
+		}
+
+		all.forEach( function ( video ) {
+			video.addEventListener( 'ended', function () {
+				if ( video === waiting ) {
+					waiting = null;
+					if ( player ) {
+						player.start();
+					}
+					next();
+				}
+			} );
+			// A file that cannot play must not hold the slider.
+			video.addEventListener( 'error', function () {
+				if ( video === waiting ) {
+					release();
+				}
+			} );
+		} );
+
+		// Off screen: nothing plays.
+		if ( 'IntersectionObserver' in window ) {
+			new IntersectionObserver( function ( entries ) {
+				inView = entries[ 0 ].isIntersecting;
+				if ( inView ) {
+					sync();
+				} else if ( current && ! current.paused ) {
+					current.pause();
+				}
+			}, { threshold: 0.25 } ).observe( el );
+		}
+
+		swiper.on( 'activeIndexChange transitionEnd', sync );
+		// The wider active slide layout moves its current slide without Swiper.
+		if ( config.expand ) {
+			new MutationObserver( sync ).observe( el.querySelector( '.swiper-wrapper' ), { subtree: true, attributes: true, attributeFilter: [ 'class' ] } );
+		}
+		sync();
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -1451,6 +1623,12 @@
 			lightboxTrigger( swiper, el, config, controller, player );
 		} else if ( 'cube' === config.effect ) {
 			cubeLinks( swiper, el, config );
+		}
+
+		if ( config.video ) {
+			videos( swiper, el, config, player, config.expand ? controller.next : function () {
+				swiper.slideNext();
+			} );
 		}
 	}
 
