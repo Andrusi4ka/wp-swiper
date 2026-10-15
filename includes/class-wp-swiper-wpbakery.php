@@ -21,6 +21,21 @@ class WP_Swiper_WPBakery {
 	}
 
 	/**
+	 * The "Add element" tab: with the Woodmart theme its own "Theme elements"
+	 * (next to its galleries and carousels), named as the theme names it, its
+	 * markup and translation included, or it would be a tab of its own;
+	 * otherwise WPBakery's "Content".
+	 *
+	 * @return string
+	 */
+	private static function category() {
+		if ( function_exists( 'woodmart_get_tab_title_category_for_wpb' ) ) {
+			return woodmart_get_tab_title_category_for_wpb( esc_html__( 'Theme elements', 'woodmart' ) ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- the theme's own tab name.
+		}
+		return __( 'Content', 'wp-swiper' );
+	}
+
+	/**
 	 * @return array Element definition.
 	 */
 	public static function settings() {
@@ -28,7 +43,7 @@ class WP_Swiper_WPBakery {
 			'name'        => __( 'WP Swiper', 'wp-swiper' ),
 			'base'        => WP_Swiper_Render::SHORTCODE,
 			'icon'        => WP_SWIPER_URL . 'assets/images/wpbakery-icon.svg',
-			'category'    => __( 'Content', 'wp-swiper' ),
+			'category'    => self::category(),
 			// Last in the "Add element" list: WPBakery sorts by weight (default 0),
 			// then by mapping order, where a plugin's element comes first.
 			'weight'      => -100,

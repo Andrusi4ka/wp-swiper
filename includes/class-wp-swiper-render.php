@@ -132,6 +132,16 @@ class WP_Swiper_Render {
 			$settings['keyboard']   = false;
 		}
 
+		// Collage: not a slider. Its places crop their photos (they keep their
+		// size whatever photo comes in) and it has no controls of its own.
+		if ( WP_Swiper_Settings::is_collage( $settings ) ) {
+			$settings['direction']  = 'horizontal';
+			$settings['image_fit']  = 'cover';
+			$settings['navigation'] = false;
+			$settings['pagination'] = 'none';
+			$settings['keyboard']   = false;
+		}
+
 		// A click opens either links or the lightbox, never a mix: any link turns the lightbox off.
 		if ( array_filter( wp_list_pluck( $slides, 'link' ) ) ) {
 			$settings['lightbox'] = false;
@@ -705,6 +715,10 @@ class WP_Swiper_Render {
 			}
 		}
 
+		if ( WP_Swiper_Settings::is_collage( $settings ) ) {
+			return self::collage( $slides, $settings, $classes, $style );
+		}
+
 		$count             = count( $slides );
 		$copies            = self::copies( $settings, $count );
 		$config            = self::js_config( $settings, $count, $copies, $videos );
@@ -791,6 +805,61 @@ class WP_Swiper_Render {
 			<?php if ( $config['pagination'] && ! $pagination_inside ) : ?>
 				<div class="swiper-pagination swiper-no-swiping"></div>
 			<?php endif; ?>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Collage effect: the outer block (the slider's classes and style), an
+	 * empty grid and every slide in a <template>. frontend.js collage() puts
+	 * the slides in the grid's places in the order of the shuffle, and swaps
+	 * the ones left over in; until then nothing of them loads.
+	 *
+	 * @param array $slides   Slides.
+	 * @param array $settings Slider settings.
+	 * @param array $classes  The outer block's classes.
+	 * @param array $style    Its custom properties.
+	 * @return string
+	 */
+	private static function collage( $slides, $settings, $classes, $style ) {
+		$per_device = function ( $key ) use ( $settings ) {
+			return array_map( 'intval', WP_Swiper_Settings::responsive( $settings, $key ) );
+		};
+		$config     = array(
+			'layout'    => WP_Swiper_Settings::responsive( $settings, 'collage_layout' ),
+			'count'     => $per_device( 'collage_count' ),
+			'columns'   => $per_device( 'collage_columns' ),
+			'rowHeight' => $per_device( 'collage_row_height' ),
+			'rowExact'  => (bool) $settings['collage_row_exact'],
+			'gap'       => $per_device( 'collage_gap' ),
+			'seed'      => (int) $settings['collage_seed'],
+			'swap'      => $settings['collage_swap'] ? array(
+				'delay' => (int) $settings['collage_swap_delay'],
+				'pause' => (bool) $settings['collage_pause'],
+			) : false,
+			// Height "Auto": the templates and the grid take fixed proportions instead.
+			'fill'      => WP_Swiper_Settings::is_auto_height( $settings ),
+			'lightbox'  => $settings['lightbox'] ? array(
+				'radius' => self::lightbox_radius( $settings, 'lightbox_radius', 'border_radius' ),
+			) : false,
+		);
+		$style[]    = '--wp-swiper-collage-speed:' . (int) $settings['collage_swap_speed'] . 'ms';
+
+		ob_start();
+		?>
+		<?php // The slider's own id (Custom), if any. ?>
+		<div<?php echo '' !== $settings['css_id'] ? ' id="' . esc_attr( $settings['css_id'] ) . '"' : ''; ?> class="<?php echo esc_attr( implode( ' ', array_filter( $classes ) ) ); ?>"<?php echo $style ? ' style="' . esc_attr( implode( ';', $style ) ) . '"' : ''; ?>>
+			<div class="wp-swiper-collage" data-wp-swiper-collage="<?php echo esc_attr( wp_json_encode( $config ) ); ?>">
+				<div class="wp-swiper-collage__grid<?php echo $config['fill'] ? ' wp-swiper-collage__grid--ratio' : ''; ?>"></div>
+				<template class="wp-swiper-collage__pool">
+					<?php
+					foreach ( $slides as $index => $slide ) {
+						self::render_slide( $slide, $index, $settings, false );
+					}
+					?>
+				</template>
+			</div>
 		</div>
 		<?php
 		return ob_get_clean();

@@ -1237,6 +1237,35 @@
 	/**
 	 * Open the lightbox from a click on a slide image.
 	 */
+	// Slides the lightbox shows: images, and with "Videos in the lightbox" the
+	// video slides (render.php gives them what the lightbox shows).
+	var LIGHTBOX_SHOWN = '[data-wp-swiper-full], [data-wp-swiper-video], [data-wp-swiper-embed]';
+
+	/**
+	 * What the lightbox shows for a slide (see openLightbox()'s items).
+	 *
+	 * @param {Element} node  The slide.
+	 * @param {number}  real  Its index.
+	 * @param {string}  thumb A small file for the lightbox's strip, or ''.
+	 */
+	function lightboxItem( node, real, thumb ) {
+		var img = node.querySelector( 'img.wp-swiper__image' );
+		var caption = node.querySelector( '.wp-swiper__caption' );
+		var type = node.hasAttribute( 'data-wp-swiper-full' ) ? 'image' : ( node.hasAttribute( 'data-wp-swiper-video' ) ? 'video' : 'embed' );
+		var poster = node.getAttribute( 'data-wp-swiper-poster' ) || '';
+		return {
+			real: real,
+			type: type,
+			src: type === 'image' ? node.getAttribute( 'data-wp-swiper-full' ) : ( node.getAttribute( 'data-wp-swiper-video' ) || '' ),
+			embed: type === 'embed' ? JSON.parse( node.getAttribute( 'data-wp-swiper-embed' ) ) : null,
+			poster: poster,
+			ratio: Number( node.getAttribute( 'data-wp-swiper-ratio' ) ) || 16 / 9,
+			alt: img ? img.alt : '',
+			caption: caption ? caption.textContent.trim() : '',
+			thumb: thumb || poster
+		};
+	}
+
 	function lightboxTrigger( swiper, el, config, controller, player ) {
 		el.addEventListener( 'click', function ( e ) {
 			// Drags, slide links, and clicks the expand layout used to pick a slide
@@ -1250,9 +1279,7 @@
 				return;
 			}
 
-			// Slides in the lightbox: images, and with "Videos in the lightbox" the
-			// video slides (render.php gives them what the lightbox shows).
-			var SHOWN = '[data-wp-swiper-full], [data-wp-swiper-video], [data-wp-swiper-embed]';
+			var SHOWN = LIGHTBOX_SHOWN;
 			var slide = clickedSlide( e, swiper, config );
 			if ( ! slide || ! slide.matches( SHOWN ) ) {
 				return;
@@ -1273,22 +1300,8 @@
 					return;
 				}
 				seen[ real ] = true;
-				var img = node.querySelector( 'img.wp-swiper__image' );
-				var caption = node.querySelector( '.wp-swiper__caption' );
-				var type = node.hasAttribute( 'data-wp-swiper-full' ) ? 'image' : ( node.hasAttribute( 'data-wp-swiper-video' ) ? 'video' : 'embed' );
-				var poster = node.getAttribute( 'data-wp-swiper-poster' ) || '';
 				var thumb = small[ real ] && small[ real ].tagName === 'IMG' ? small[ real ].currentSrc || small[ real ].src : '';
-				items.push( {
-					real: real,
-					type: type,
-					src: type === 'image' ? node.getAttribute( 'data-wp-swiper-full' ) : ( node.getAttribute( 'data-wp-swiper-video' ) || '' ),
-					embed: type === 'embed' ? JSON.parse( node.getAttribute( 'data-wp-swiper-embed' ) ) : null,
-					poster: poster,
-					ratio: Number( node.getAttribute( 'data-wp-swiper-ratio' ) ) || 16 / 9,
-					alt: img ? img.alt : '',
-					caption: caption ? caption.textContent.trim() : '',
-					thumb: thumb || poster
-				} );
+				items.push( lightboxItem( node, real, thumb ) );
 			} );
 			items.sort( function ( a, b ) {
 				return a.real - b.real;
@@ -2174,7 +2187,487 @@
 		}
 	}
 
+	/* ------------------------------------------------------------------ *
+	 * Collage effect
+	 *
+	 * Not a slider: the photos sit together in places of a template, of a
+	 * grid, or arranged by their proportions (Justified rows, Masonry). The
+	 * order comes from the saved shuffle (the same number, the same order),
+	 * so the arrangement does not change from visit to visit. With more
+	 * photos than places, every so often a place at random fades to a photo
+	 * not shown yet; the places keep their size, the photo is cropped to fit.
+	 * ------------------------------------------------------------------ */
+
+	// The templates' grids: columns, rows, and each place's grid-area
+	// (row start / column start / row end / column end), the big one first.
+	var COLLAGE_TEMPLATES = {
+		'feature-left': { columns: '2fr 1fr', rows: '1fr 1fr', areas: [ '1 / 1 / 3 / 2', '1 / 2 / 2 / 3', '2 / 2 / 3 / 3' ] },
+		'feature-center': { columns: '1fr 2fr 1fr', rows: '1fr 1fr', areas: [ '1 / 2 / 3 / 3', '1 / 1 / 2 / 2', '2 / 1 / 3 / 2', '1 / 3 / 2 / 4', '2 / 3 / 3 / 4' ] },
+		mosaic: { columns: 'repeat(6, 1fr)', rows: '1fr 1fr', areas: [ '1 / 1 / 2 / 5', '1 / 5 / 2 / 7', '2 / 1 / 3 / 3', '2 / 3 / 3 / 5', '2 / 5 / 3 / 7' ] },
+		banner: { columns: 'repeat(3, 1fr)', rows: '3fr 2fr', areas: [ '1 / 1 / 2 / 4', '2 / 1 / 3 / 2', '2 / 2 / 3 / 3', '2 / 3 / 3 / 4' ] }
+	};
+
+	// A small seeded random generator (mulberry32): the same seed, the same numbers.
+	function seededRandom( seed ) {
+		var state = seed >>> 0;
+		return function () {
+			state = ( state + 0x6d2b79f5 ) >>> 0;
+			var t = state;
+			t = Math.imul( t ^ ( t >>> 15 ), t | 1 );
+			t ^= t + Math.imul( t ^ ( t >>> 7 ), t | 61 );
+			return ( ( t ^ ( t >>> 14 ) ) >>> 0 ) / 4294967296;
+		};
+	}
+
+	// 0 .. count - 1 shuffled by the seed.
+	function seededOrder( count, seed ) {
+		var random = seededRandom( seed );
+		var order = [];
+		for ( var i = 0; i < count; i++ ) {
+			order.push( i );
+		}
+		for ( var j = count - 1; j > 0; j-- ) {
+			var k = Math.floor( random() * ( j + 1 ) );
+			var swap = order[ j ];
+			order[ j ] = order[ k ];
+			order[ k ] = swap;
+		}
+		return order;
+	}
+
+	// Random mosaic: how many mosaics are tried for one shuffle (the best kept).
+	var MOSAIC_TRIES = 60;
+
+	/**
+	 * Random mosaic: the block cut in two, each part again, until there is a
+	 * place for every photo; flush on all four sides. A cut mostly runs
+	 * across the part's longer side, at a random place among its photos and
+	 * where they would fit side by side (or stacked) at their own
+	 * proportions, give or take. Of MOSAIC_TRIES such mosaics (all from the
+	 * shuffle, so the same each time) the one that crops its photos least
+	 * is kept, with no sliver and no place far smaller than the others. The
+	 * cuts are kept as shares, so a resize keeps the mosaic.
+	 *
+	 * @param {number[]} ratios Width / height of each place's photo, in order.
+	 * @param {number}   aspect Width / height of the block.
+	 * @param {Function} random Seeded random numbers.
+	 * @return {Object} { leaf: index } or { vertical, share, a, b }.
+	 */
+	function mosaicTree( ratios, aspect, random ) {
+		var count = ratios.length;
+
+		function cut( list, shape ) {
+			if ( list.length === 1 ) {
+				return { leaf: list[ 0 ] };
+			}
+			var split = 1 + Math.floor( random() * ( list.length - 1 ) );
+			var a = list.slice( 0, split );
+			var b = list.slice( split );
+			var vertical = shape >= 1 ? random() < 0.8 : random() < 0.2;
+			// Side by side the photos share the width (their widths at one
+			// height add up), stacked the height (their heights at one width).
+			var weight = function ( group ) {
+				return group.reduce( function ( sum, index ) {
+					return sum + ( vertical ? ratios[ index ] : 1 / ratios[ index ] );
+				}, 0 );
+			};
+			var share = weight( a ) / ( weight( a ) + weight( b ) ) * ( 0.85 + random() * 0.3 );
+			share = Math.max( 0.2, Math.min( 0.8, share ) );
+			return {
+				vertical: vertical,
+				share: share,
+				a: cut( a, vertical ? shape * share : shape / share ),
+				b: cut( b, vertical ? shape * ( 1 - share ) : shape / ( 1 - share ) )
+			};
+		}
+
+		// What a mosaic costs: each photo's crop (log of how far its place's
+		// shape is from its own), slivers (over 3:1) and tiny places dearer.
+		function cost( node, shape, area ) {
+			if ( undefined !== node.leaf ) {
+				var crop = Math.abs( Math.log( shape / ratios[ node.leaf ] ) );
+				var sliver = Math.max( 0, Math.abs( Math.log( shape ) ) - Math.log( 3 ) );
+				var tiny = area < 0.35 / count ? 1 : 0;
+				return crop + 3 * sliver + tiny;
+			}
+			var s = node.share;
+			return node.vertical
+				? cost( node.a, shape * s, area * s ) + cost( node.b, shape * ( 1 - s ), area * ( 1 - s ) )
+				: cost( node.a, shape / s, area * s ) + cost( node.b, shape / ( 1 - s ), area * ( 1 - s ) );
+		}
+
+		var all = ratios.map( function ( r, index ) {
+			return index;
+		} );
+		var best = null;
+		var bestCost = Infinity;
+		for ( var i = 0; i < MOSAIC_TRIES; i++ ) {
+			var tree = cut( all, aspect );
+			var price = cost( tree, aspect, 1 );
+			if ( price < bestCost ) {
+				best = tree;
+				bestCost = price;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * @param {Element} el     The .wp-swiper-collage block.
+	 * @param {Object}  config { layout, count, columns, rowHeight, gap: per
+	 *                         device; seed; swap: false or { delay, pause };
+	 *                         fill; lightbox: false or { radius } }.
+	 */
+	function collage( el, config ) {
+		var grid = el.querySelector( '.wp-swiper-collage__grid' );
+		var pool = el.querySelector( 'template.wp-swiper-collage__pool' );
+		var slides = pool ? [].slice.call( pool.content.children ) : [];
+		var order = seededOrder( slides.length, config.seed || 1 );
+		var cells = [];
+		var queue = [];
+		var tree = null;
+		var current = null;
+		var lastSwapped = -1;
+		var timer = null;
+		var paused = false;
+		var inView = true;
+		var calm = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+
+		if ( ! slides.length ) {
+			return;
+		}
+
+		function ratioOf( slide ) {
+			return Number( slide.style.getPropertyValue( '--wp-swiper-img-ratio' ) ) || 1;
+		}
+
+		// A copy of slide `real` to put in a place.
+		function copy( real ) {
+			var node = slides[ real ].cloneNode( true );
+			node.classList.add( 'wp-swiper-collage__item' );
+			return node;
+		}
+
+		// The image file the browser picks: the width it is drawn at (cropped to the place).
+		function sizeImages( cell ) {
+			var w = cell.clientWidth;
+			var h = cell.clientHeight;
+			[].forEach.call( cell.querySelectorAll( 'img.wp-swiper__image' ), function ( img ) {
+				var ratio = img.getAttribute( 'width' ) / img.getAttribute( 'height' ) || 1;
+				var drawn = Math.ceil( Math.max( w, h * ratio ) );
+				if ( drawn > 0 ) {
+					img.setAttribute( 'sizes', drawn + 'px' );
+				}
+			} );
+		}
+
+		// Justified rows and Masonry: each place absolutely positioned, the
+		// block as tall as they make it; again on every resize.
+		function place() {
+			var layout = config.layout[ current ];
+			var gap = Number( config.gap[ current ] ) || 0;
+			var width = grid.clientWidth;
+			if ( ! width ) {
+				return;
+			}
+			var set = function ( cell, left, top, w, h ) {
+				cell.style.left = left + 'px';
+				cell.style.top = top + 'px';
+				cell.style.width = w + 'px';
+				cell.style.height = h + 'px';
+			};
+
+			if ( layout === 'random' ) {
+				// The block keeps its Height; the cuts are laid over it, gaps between.
+				var apply = function ( node, left, top, w, h ) {
+					if ( undefined !== node.leaf ) {
+						set( cells[ node.leaf ], left, top, w, h );
+						return;
+					}
+					if ( node.vertical ) {
+						var first = Math.max( 0, ( w - gap ) * node.share );
+						apply( node.a, left, top, first, h );
+						apply( node.b, left + first + gap, top, Math.max( 0, w - first - gap ), h );
+					} else {
+						var upper = Math.max( 0, ( h - gap ) * node.share );
+						apply( node.a, left, top, w, upper );
+						apply( node.b, left, top + upper + gap, w, Math.max( 0, h - upper - gap ) );
+					}
+				};
+				if ( tree ) {
+					apply( tree, 0, 0, width, grid.clientHeight );
+				}
+			} else if ( layout === 'masonry' ) {
+				var columns = Math.max( 1, Number( config.columns[ current ] ) || 1 );
+				var columnWidth = ( width - gap * ( columns - 1 ) ) / columns;
+				var heights = [];
+				for ( var c = 0; c < columns; c++ ) {
+					heights.push( 0 );
+				}
+				cells.forEach( function ( cell ) {
+					var shortest = heights.indexOf( Math.min.apply( Math, heights ) );
+					var h = columnWidth / cell.wpRatio;
+					set( cell, shortest * ( columnWidth + gap ), heights[ shortest ], columnWidth, h );
+					heights[ shortest ] += h + gap;
+				} );
+				grid.style.height = Math.max( 0, Math.max.apply( Math, heights ) - gap ) + 'px';
+			} else if ( config.rowExact ) {
+				// Justified, "Exact row height": every row the row height, each photo
+				// at its own proportions; a row ends where the next photo would not
+				// fit (one wider than the block on its own is fitted to the width).
+				var rowHeight = Math.max( 20, Number( config.rowHeight[ current ] ) || 200 );
+				var x = 0;
+				var y = 0;
+				cells.forEach( function ( cell ) {
+					var w = cell.wpRatio * rowHeight;
+					var h = rowHeight;
+					if ( w > width ) {
+						h = width / cell.wpRatio;
+						w = width;
+					}
+					if ( x > 0 && x + w > width + 0.5 ) {
+						x = 0;
+						y += rowHeight + gap;
+					}
+					set( cell, x, y, w, h );
+					x += w + gap;
+				} );
+				grid.style.height = ( y + rowHeight ) + 'px';
+			} else {
+				// Justified: fill a row up to about the row height, then fit it to the width exactly.
+				var target = Math.max( 20, Number( config.rowHeight[ current ] ) || 200 );
+				var top = 0;
+				var row = [];
+				var sum = 0;
+				var flush = function ( h ) {
+					var left = 0;
+					row.forEach( function ( cell ) {
+						var w = cell.wpRatio * h;
+						set( cell, left, top, w, h );
+						left += w + gap;
+					} );
+					top += h + gap;
+					row = [];
+					sum = 0;
+				};
+				cells.forEach( function ( cell ) {
+					row.push( cell );
+					sum += cell.wpRatio;
+					if ( sum * target + gap * ( row.length - 1 ) >= width ) {
+						flush( ( width - gap * ( row.length - 1 ) ) / sum );
+					}
+				} );
+				// The last row is not stretched: at most the row height.
+				if ( row.length ) {
+					flush( Math.min( target, ( width - gap * ( row.length - 1 ) ) / sum ) );
+				}
+				grid.style.height = Math.max( 0, top - gap ) + 'px';
+			}
+			cells.forEach( sizeImages );
+		}
+
+		// The places for this device's layout, the photos in shuffle order.
+		function build() {
+			current = device();
+			var layout = config.layout[ current ] || 'grid';
+			var template = COLLAGE_TEMPLATES[ layout ];
+			// Places positioned by the script; Random mosaic keeps the block's Height.
+			var free = layout === 'justified' || layout === 'masonry' || layout === 'random';
+			var gap = Number( config.gap[ current ] ) || 0;
+			// A template has its places (photos repeat when there are fewer); the
+			// others show as many as set, at most the photos there are.
+			var count = template ? template.areas.length : Math.min( slides.length, Math.max( 1, Number( config.count[ current ] ) || 1 ) );
+
+			grid.innerHTML = '';
+			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( free ? ' wp-swiper-collage__grid--free' : '' ) + ( config.fill ? ' wp-swiper-collage__grid--ratio' : '' );
+			grid.style.cssText = '';
+			cells = [];
+			for ( var i = 0; i < count; i++ ) {
+				var real = order[ i % slides.length ];
+				var cell = document.createElement( 'div' );
+				cell.className = 'wp-swiper-collage__cell';
+				// A place's proportions stay those of the photo it got first.
+				cell.wpRatio = ratioOf( slides[ real ] );
+				cell.wpReal = real;
+				cell.appendChild( copy( real ) );
+				grid.appendChild( cell );
+				cells.push( cell );
+			}
+			// The photos not in a place wait their turn, in shuffle order.
+			queue = order.slice( count );
+
+			// Random mosaic: its cuts, from the shuffle too (and the number of places).
+			tree = null;
+			if ( layout === 'random' ) {
+				var aspect = grid.clientWidth / ( grid.clientHeight || 1 ) || 1.5;
+				tree = mosaicTree( cells.map( function ( cell ) {
+					return cell.wpRatio;
+				} ), aspect, seededRandom( ( config.seed || 1 ) * 7919 + count ) );
+			}
+
+			if ( free ) {
+				place();
+			} else {
+				grid.style.gap = gap + 'px';
+				if ( template ) {
+					grid.style.gridTemplateColumns = template.columns;
+					grid.style.gridTemplateRows = template.rows;
+					cells.forEach( function ( cell, index ) {
+						cell.style.gridArea = template.areas[ index ];
+					} );
+				} else {
+					var columns = Math.max( 1, Math.min( count, Number( config.columns[ current ] ) || 1 ) );
+					grid.style.gridTemplateColumns = 'repeat(' + columns + ', 1fr)';
+					grid.style.gridTemplateRows = 'repeat(' + Math.ceil( count / columns ) + ', 1fr)';
+				}
+				cells.forEach( sizeImages );
+			}
+			posterFallbacks( grid );
+		}
+
+		// One place, at random (not the one before), fades to the next photo waiting.
+		function swap() {
+			if ( ! queue.length || ! cells.length ) {
+				return;
+			}
+			var index;
+			do {
+				index = Math.floor( Math.random() * cells.length );
+			} while ( cells.length > 1 && index === lastSwapped );
+			lastSwapped = index;
+
+			var cell = cells[ index ];
+			var real = queue.shift();
+			queue.push( cell.wpReal );
+			cell.wpReal = real;
+
+			var fresh = copy( real );
+			fresh.classList.add( 'is-entering' );
+			cell.appendChild( fresh );
+			sizeImages( cell );
+			posterFallbacks( cell );
+
+			// Faded in once its image is there (decoded), so it does not pop in
+			// half-drawn; at the latest after the delay between swaps (a slow file).
+			var img = fresh.querySelector( 'img' );
+			var decoded = img && img.decode ? img.decode().catch( function () {} ) : Promise.resolve();
+			var late = new Promise( function ( resolve ) {
+				setTimeout( resolve, Math.max( 500, Number( config.swap.delay ) || 3000 ) );
+			} );
+			Promise.race( [ decoded, late ] ).then( function () {
+				requestAnimationFrame( function () {
+					fresh.classList.remove( 'is-entering' );
+				} );
+				// Then the photos under it go: all of them, should swaps have piled up.
+				var speed = parseFloat( getComputedStyle( fresh ).transitionDuration ) * 1000 || 0;
+				setTimeout( function () {
+					while ( fresh.parentNode === cell && cell.firstElementChild !== fresh ) {
+						cell.removeChild( cell.firstElementChild );
+					}
+				}, speed + 100 );
+			} );
+		}
+
+		function schedule() {
+			clearTimeout( timer );
+			if ( ! config.swap || calm || ! queue.length ) {
+				return;
+			}
+			timer = setTimeout( function () {
+				// Not while paused, off screen or in a hidden tab: try again later.
+				if ( ! paused && inView && ! document.hidden ) {
+					swap();
+				}
+				schedule();
+			}, Math.max( 500, Number( config.swap.delay ) || 3000 ) );
+		}
+
+		if ( config.swap && config.swap.pause ) {
+			el.addEventListener( 'mouseenter', function () {
+				paused = true;
+			} );
+			el.addEventListener( 'mouseleave', function () {
+				paused = false;
+			} );
+		}
+		if ( 'IntersectionObserver' in window ) {
+			new IntersectionObserver( function ( entries ) {
+				inView = entries[ 0 ].isIntersecting;
+			} ).observe( el );
+		}
+
+		// Lightbox: a click on a place opens its photo, the others in slide order beside it.
+		if ( config.lightbox ) {
+			el.addEventListener( 'click', function ( e ) {
+				var cell = e.target.closest( '.wp-swiper-collage__cell' );
+				if ( ! cell || e.defaultPrevented || e.target.closest( '.wp-swiper__link' ) ) {
+					return;
+				}
+				var item = cell.lastElementChild;
+				if ( ! item || ! item.matches( LIGHTBOX_SHOWN ) ) {
+					return;
+				}
+				e.preventDefault();
+				var items = [];
+				slides.forEach( function ( slide, real ) {
+					if ( slide.matches( LIGHTBOX_SHOWN ) ) {
+						items.push( lightboxItem( slide, real, '' ) );
+					}
+				} );
+				var start = 0;
+				items.forEach( function ( entry, i ) {
+					if ( entry.real === cell.wpReal ) {
+						start = i;
+					}
+				} );
+				paused = true;
+				openLightbox( items, start, function () {
+					paused = false;
+				}, { radius: config.lightbox.radius, thumbRadius: false, thumbs: false } );
+			} );
+		}
+
+		build();
+		schedule();
+		requestAnimationFrame( function () {
+			el.parentNode.classList.add( 'wp-swiper--ready' );
+		} );
+
+		// Another device: its own layout, built again (the same shuffle); the
+		// same device: the arranged layouts re-measured.
+		var queued = false;
+		window.addEventListener( 'resize', function () {
+			if ( queued ) {
+				return;
+			}
+			queued = true;
+			requestAnimationFrame( function () {
+				queued = false;
+				if ( device() !== current ) {
+					build();
+					schedule();
+				} else if ( grid.classList.contains( 'wp-swiper-collage__grid--free' ) ) {
+					place();
+				} else {
+					cells.forEach( sizeImages );
+				}
+			} );
+		} );
+
+		return { rebuild: build };
+	}
+
 	function init( root ) {
+		// Collages first: they do not need Swiper.
+		( root || document ).querySelectorAll( '[data-wp-swiper-collage]' ).forEach( function ( el ) {
+			if ( el.wpSwiperCollage ) {
+				return;
+			}
+			try {
+				el.wpSwiperCollage = collage( el, JSON.parse( el.getAttribute( 'data-wp-swiper-collage' ) ) ) || true;
+			} catch ( e ) {}
+		} );
+
 		if ( typeof window.Swiper === 'undefined' ) {
 			return;
 		}

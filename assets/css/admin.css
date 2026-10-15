@@ -29,6 +29,27 @@
 	color: var(--wp-swiper-accent-darker);
 }
 
+/* A field the chosen effect has no use for at all (the Controls of a Collage). */
+.wp-swiper-field.is-not-applicable {
+	display: none !important;
+}
+
+/* Collage: Shuffle, an icon and its label on one line. */
+.wp-swiper-field .wp-swiper-shuffle {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+/* Its own line height: the button's (taller than the icon) would draw the
+   glyph below the middle of its box. */
+.wp-swiper-field .wp-swiper-shuffle .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+	line-height: 1;
+}
+
 .wp-swiper-slides {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));

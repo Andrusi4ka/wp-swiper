@@ -17,7 +17,7 @@ class WP_Swiper_Settings {
 	/**
 	 * Effects that always show exactly one slide.
 	 */
-	const SINGLE_SLIDE_EFFECTS = array( 'fade', 'cube', 'flip', 'cards', 'creative', 'thumbs' );
+	const SINGLE_SLIDE_EFFECTS = array( 'fade', 'cube', 'flip', 'cards', 'creative', 'thumbs', 'collage' );
 
 	/**
 	 * Field definitions grouped into sections. `effects`: the effects a field
@@ -42,6 +42,8 @@ class WP_Swiper_Settings {
 					'creative'  => __( 'Creative', 'wp-swiper' ),
 					// One slide at a time, picked from a strip of thumbnails.
 					'thumbs'    => __( 'Thumbnails', 'wp-swiper' ),
+					// Not a slider: the photos placed together, the others swapped in.
+					'collage'   => __( 'Collage', 'wp-swiper' ),
 				),
 			),
 			'direction'             => array(
@@ -289,6 +291,138 @@ class WP_Swiper_Settings {
 					'door'     => __( 'Door: swing round an edge', 'wp-swiper' ),
 					'carousel' => __( 'Carousel: neighbours in view on both sides', 'wp-swiper' ),
 				),
+			),
+
+			// Collage effect: first in its Layout. The photos are placed by a
+			// template or arranged by their proportions; with more photos than
+			// places, the others are swapped in one at a time (frontend.js collage()).
+			'collage_layout'        => array(
+				'section'         => 'layout',
+				'effects'         => array( 'collage' ),
+				'label'           => __( 'Style', 'wp-swiper' ),
+				'type'            => 'select',
+				'responsive'      => true,
+				'default'         => 'feature-center',
+				'device_defaults' => array( 'mobile' => 'masonry' ),
+				'choices'         => array(
+					'feature-left'   => __( 'Template: a big photo on the left (3 photos)', 'wp-swiper' ),
+					'feature-center' => __( 'Template: a big photo in the middle (5 photos)', 'wp-swiper' ),
+					'mosaic'         => __( 'Template: mosaic (5 photos)', 'wp-swiper' ),
+					'banner'         => __( 'Template: a wide photo on top (4 photos)', 'wp-swiper' ),
+					'grid'           => __( 'Grid', 'wp-swiper' ),
+					'justified'      => __( 'Justified rows', 'wp-swiper' ),
+					'masonry'        => __( 'Masonry', 'wp-swiper' ),
+					'random'         => __( 'Random mosaic', 'wp-swiper' ),
+				),
+				'help'            => __( 'Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them.', 'wp-swiper' ),
+			),
+			// Which photos come first and where they sit: a number the Shuffle
+			// button draws (admin.js); the same number, the same arrangement.
+			'collage_seed'          => array(
+				'section' => 'layout',
+				'effects' => array( 'collage' ),
+				'label'   => __( 'Order', 'wp-swiper' ),
+				'type'    => 'seed',
+				'default' => 1,
+				'help'    => __( 'Masonry and Random mosaic: Shuffle mixes the photos, which ones show first and where, and with them the arrangement. It then stays as it is until you shuffle again.', 'wp-swiper' ),
+			),
+			'collage_count'         => array(
+				'section'         => 'layout',
+				'effects'         => array( 'collage' ),
+				'label'           => __( 'Photos on screen', 'wp-swiper' ),
+				'type'            => 'number',
+				'responsive'      => true,
+				'default'         => 6,
+				'device_defaults' => array( 'mobile' => 4 ),
+				'min'             => 2,
+				'max'             => 30,
+				'step'            => 1,
+				'help'            => __( 'Grid, Justified rows, Masonry and Random mosaic; a template has its own number of places.', 'wp-swiper' ),
+			),
+			'collage_columns'       => array(
+				'section'         => 'layout',
+				'effects'         => array( 'collage' ),
+				'label'           => __( 'Columns', 'wp-swiper' ),
+				'type'            => 'number',
+				'responsive'      => true,
+				'default'         => 3,
+				'device_defaults' => array( 'mobile' => 2 ),
+				'min'             => 1,
+				'max'             => 8,
+				'step'            => 1,
+				'help'            => __( 'Grid and Masonry.', 'wp-swiper' ),
+			),
+			'collage_row_height'    => array(
+				'section'         => 'layout',
+				'effects'         => array( 'collage' ),
+				'label'           => __( 'Row height (px)', 'wp-swiper' ),
+				'type'            => 'number',
+				'responsive'      => true,
+				'default'         => 220,
+				'device_defaults' => array( 'mobile' => 140 ),
+				'min'             => 60,
+				'max'             => 800,
+				'step'            => 10,
+				'help'            => __( 'Justified rows: the height of a row (with Exact row height off, about it).', 'wp-swiper' ),
+			),
+			// Justified rows: rows of exactly the Row height (their right ends
+			// uneven), or fitted to the width (their heights a little uneven).
+			'collage_row_exact'     => array(
+				'section' => 'layout',
+				'effects' => array( 'collage' ),
+				'label'   => __( 'Exact row height', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => true,
+				'help'    => __( 'Every row exactly the Row height, each photo at its own proportions, nothing cropped; a row ends where the next photo would not fit, so the right ends are uneven. Off: each row is fitted to the width exactly, its height a little more or less.', 'wp-swiper' ),
+			),
+			'collage_gap'           => array(
+				'section'         => 'layout',
+				'effects'         => array( 'collage' ),
+				'label'           => __( 'Gap between photos (px)', 'wp-swiper' ),
+				'type'            => 'number',
+				'responsive'      => true,
+				'default'         => 8,
+				'device_defaults' => array( 'mobile' => 6 ),
+				'min'             => 0,
+				'max'             => 60,
+				'step'            => 1,
+			),
+			'collage_swap'          => array(
+				'section' => 'layout',
+				'effects' => array( 'collage' ),
+				'label'   => __( 'Swap in the other photos', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => true,
+				'help'    => __( 'With more photos than places: every so often a place, at random, fades to a photo not shown yet. The arrangement does not change.', 'wp-swiper' ),
+			),
+			'collage_swap_delay'    => array(
+				'section' => 'layout',
+				'effects' => array( 'collage' ),
+				'label'   => __( 'A new photo every (ms)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 3000,
+				'min'     => 1000,
+				'max'     => 30000,
+				'step'    => 500,
+				'range'   => array( 1000, 10000 ),
+			),
+			'collage_swap_speed'    => array(
+				'section' => 'layout',
+				'effects' => array( 'collage' ),
+				'label'   => __( 'Fade (ms)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 800,
+				'min'     => 100,
+				'max'     => 3000,
+				'step'    => 50,
+				'range'   => array( 100, 2000 ),
+			),
+			'collage_pause'         => array(
+				'section' => 'layout',
+				'effects' => array( 'collage' ),
+				'label'   => __( 'Pause on hover', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => true,
 			),
 
 			// Thumbnails effect: how one slide gives way to the next. First in its
@@ -1133,6 +1267,16 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * Collage effect: the photos placed together, not a slider.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function is_collage( $settings ) {
+		return 'collage' === $settings['effect'];
+	}
+
+	/**
 	 * Slides that fade into one another: the Fade effect, or Thumbnails with
 	 * the Fade transition. Neither has a direction (always horizontal).
 	 *
@@ -1796,6 +1940,10 @@ class WP_Swiper_Settings {
 
 				case 'id': // An HTML id.
 					$clean[ $key ] = self::sanitize_id( (string) $value );
+					break;
+
+				case 'seed': // The Collage's shuffle: a whole number from 1.
+					$clean[ $key ] = null === $value ? $field['default'] : max( 1, min( 999999, absint( $value ) ) );
 					break;
 			}
 		}

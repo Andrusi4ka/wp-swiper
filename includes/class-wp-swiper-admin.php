@@ -60,6 +60,8 @@ class WP_Swiper_Admin {
 						'horizontal' => __( 'Image height', 'wp-swiper' ),
 						'thumbs'     => __( 'Main image height', 'wp-swiper' ),
 						'vertical'   => __( 'Slider height', 'wp-swiper' ),
+						// The whole collage (templates, Grid, Random mosaic).
+						'collage'    => __( 'Collage height', 'wp-swiper' ),
 					),
 				)
 			);
@@ -410,6 +412,13 @@ class WP_Swiper_Admin {
 				<?php elseif ( 'color' === $field['type'] ) : ?>
 					<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
 						value="<?php echo esc_attr( $value ); ?>">
+				<?php elseif ( 'seed' === $field['type'] ) : ?>
+					<?php // The number is the value kept; the button draws a new one (admin.js). ?>
+					<input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
+					<button type="button" class="button wp-swiper-shuffle">
+						<span class="dashicons dashicons-randomize" aria-hidden="true"></span>
+						<?php esc_html_e( 'Shuffle', 'wp-swiper' ); ?>
+					</button>
 				<?php elseif ( 'select' === $field['type'] ) : ?>
 					<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>">
 						<?php foreach ( $field['choices'] as $choice => $choice_label ) : ?>

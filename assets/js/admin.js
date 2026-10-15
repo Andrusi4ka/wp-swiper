@@ -538,10 +538,12 @@
 			var slide = effect === 'slide';
 			var autoWidth = slide && $( '#wp-swiper-auto_width' ).is( ':checked' );
 			var marquee = slide && $( '#wp-swiper-marquee' ).is( ':checked' );
+			// Collage: not a slider; its places crop their photos (render.php does the same).
+			var collage = effect === 'collage';
 			lockMarquee.forEach( function ( lock ) {
 				lock( marquee );
 			} );
-			lockFit( autoWidth );
+			lockFit( autoWidth || collage );
 			// After the locks on the Controls fields (see syncControls).
 			syncControls( effect );
 
@@ -549,14 +551,14 @@
 
 			// Before reading Direction: locked, it shows the fixed value.
 			// Fading slides: the Fade effect, or Thumbnails with the Fade transition.
-			lockDirection( effect === 'fade' || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' ) );
+			lockDirection( effect === 'fade' || collage || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' ) );
 			var vertical = $( '#wp-swiper-direction' ).val() === 'vertical';
 			var cover = $( '#wp-swiper-image_fit' ).val() === 'cover';
 
 			// Height says what it measures: the slides, or the whole vertical slider.
 			if ( i18n.heightLabels ) {
 				field( 'height' ).find( '.wp-swiper-field__head label' ).text(
-					vertical ? i18n.heightLabels.vertical : ( effect === 'thumbs' ? i18n.heightLabels.thumbs : i18n.heightLabels.horizontal )
+					collage ? i18n.heightLabels.collage : ( vertical ? i18n.heightLabels.vertical : ( effect === 'thumbs' ? i18n.heightLabels.thumbs : i18n.heightLabels.horizontal ) )
 				);
 			}
 			lockThumbsPerView( effect === 'thumbs' && thumbsHeightEverywhere() );
@@ -653,17 +655,49 @@
 			field( 'pagination_placement' ).toggle( paginated );
 			field( 'pagination_offset' ).toggle( paginated );
 
+			// Collage: the fields of the Style of the device being edited (the
+			// device switch; an empty tablet / mobile Style inherits), so a
+			// template's page has none of the grid's. The swapping's once it is on.
+			// Controls are a slider's: none applies, so the page goes (its menu item below).
+			var collageStyle = '';
+			field( 'collage_layout' ).find( '.wp-swiper-devices__input' ).each( function () {
+				var device = $( this ).data( 'device' );
+				collageStyle = $( this ).val() || collageStyle;
+				return device !== ( currentDevice || 'desktop' );
+			} );
+			var collageUses = function ( names ) {
+				return collage && names.indexOf( collageStyle ) !== -1;
+			};
+			// Shuffle where it changes the arrangement itself: the photos' proportions
+			// stack it in columns (Masonry) or it is cut at random (Random mosaic).
+			// Templates, the grid and the rows keep their places: no button there.
+			field( 'collage_seed' ).toggle( collageUses( [ 'masonry', 'random' ] ) );
+			// The collage's Height: not for the styles as tall as their photos make them.
+			field( 'height' ).toggle( ! collage || ! collageUses( [ 'justified', 'masonry' ] ) );
+			// Its places always crop their photos (Cover): no Image fit.
+			field( 'image_fit' ).toggle( ! collage );
+			field( 'collage_count' ).toggle( collageUses( [ 'grid', 'justified', 'masonry', 'random' ] ) );
+			field( 'collage_columns' ).toggle( collageUses( [ 'grid', 'masonry' ] ) );
+			field( 'collage_row_height' ).toggle( collageUses( [ 'justified' ] ) );
+			field( 'collage_row_exact' ).toggle( collageUses( [ 'justified' ] ) );
+			var swapping = collage && $( '#wp-swiper-collage_swap' ).is( ':checked' );
+			[ 'collage_swap_delay', 'collage_swap_speed', 'collage_pause' ].forEach( function ( name ) {
+				field( name ).toggle( swapping );
+			} );
+			// A class of its own, over the toggles above (which keep their say for the other effects).
+			$( '#wp-swiper-page-controls .wp-swiper-field' ).toggleClass( 'is-not-applicable', collage );
+
+			// Shown: not hidden by a toggle, nor as not applicable (above).
+			var shown = function () {
+				return this.style.display !== 'none' && ! $( this ).hasClass( 'is-not-applicable' );
+			};
 			// A row of fields goes too once all of them are hidden (its spacing would stay).
 			$( '.wp-swiper-field-group' ).each( function () {
-				$( this ).toggle( $( this ).children( '.wp-swiper-field' ).filter( function () {
-					return this.style.display !== 'none';
-				} ).length > 0 );
+				$( this ).toggle( $( this ).children( '.wp-swiper-field' ).filter( shown ).length > 0 );
 			} );
 			// So does the menu item of a page with nothing left in it.
 			$( '.wp-swiper-page' ).each( function () {
-				var empty = $( this ).find( '.wp-swiper-field' ).filter( function () {
-					return this.style.display !== 'none';
-				} ).length === 0;
+				var empty = $( this ).find( '.wp-swiper-field' ).filter( shown ).length === 0;
 				$( '.wp-swiper-menu__item[data-page="' + $( this ).data( 'page' ) + '"]' ).toggle( ! empty );
 			} );
 			// The page in view lost its item (Thumbnails, another effect chosen):
@@ -843,7 +877,8 @@
 		var DEVICE_KEY = 'wpSwiperDevice';
 		var DEVICES = [ 'desktop', 'tablet', 'mobile' ];
 		var currentDevice = 'desktop';
-		var deviceListeners = [];
+		// Another device: its values in the fields, and (Collage) the fields of its Style.
+		var deviceListeners = [ syncFields ];
 		try {
 			if ( DEVICES.indexOf( window.localStorage.getItem( DEVICE_KEY ) ) !== -1 ) {
 				currentDevice = window.localStorage.getItem( DEVICE_KEY );
@@ -921,6 +956,17 @@
 			};
 
 			$update.on( 'click', updatePreview );
+
+			// Collage: Shuffle draws a new order and shows it right away.
+			$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-shuffle', function () {
+				var $seed = $( this ).siblings( 'input[type="hidden"]' );
+				var seed;
+				do {
+					seed = 1 + Math.floor( Math.random() * 999999 );
+				} while ( String( seed ) === $seed.val() );
+				$seed.val( seed ).trigger( 'change' );
+				updatePreview();
+			} );
 
 			// Changes since the last update: the button says so.
 			$( '#wp-swiper-slides, #wp-swiper-settings' ).on( 'input change', 'input, select', function () {
