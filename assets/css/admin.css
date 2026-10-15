@@ -186,20 +186,41 @@
 	object-fit: cover;
 }
 
+/* The slide's name and the video's title or link: one line each, cut at the
+   right under a white fade, never wider than what the thumbnail and the
+   buttons leave. Width 0 and growing: a long title must not widen the row
+   (and with it the settings page, pushing the buttons out of sight). */
 .wp-swiper-posters__name {
+	position: relative;
 	display: flex;
-	flex: 1 1 auto;
+	flex: 1 1 0;
 	flex-direction: column;
+	width: 0;
 	min-width: 0;
+	overflow: hidden;
 	font-size: 12px;
 	line-height: 1.4;
 }
 
+.wp-swiper-posters__name strong,
 .wp-swiper-posters__name span {
 	overflow: hidden;
-	color: #646970;
-	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.wp-swiper-posters__name span {
+	color: #646970;
+}
+
+.wp-swiper-posters__name::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 32px;
+	background: linear-gradient(to right, rgba(255, 255, 255, 0), #fff);
+	pointer-events: none;
 }
 
 .wp-swiper-posters__actions {
@@ -208,6 +229,23 @@
 	flex-direction: column;
 	align-items: flex-end;
 	gap: 2px;
+}
+
+/* Remove: red like WordPress's own delete links, not the accent colour
+   WordPress gives a .button-link. */
+#wp-swiper-settings .wp-swiper-posters__remove {
+	color: #d63638;
+	font-size: 12px;
+}
+
+#wp-swiper-settings .wp-swiper-posters__remove:hover,
+#wp-swiper-settings .wp-swiper-posters__remove:active {
+	color: #b32d2e;
+}
+
+#wp-swiper-settings .wp-swiper-posters__remove:focus {
+	color: #b32d2e;
+	box-shadow: 0 0 0 2px #d63638;
 }
 
 /* Below the slides: the media library button and a YouTube / Vimeo link. */

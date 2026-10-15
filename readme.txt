@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,6 +55,12 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 1.3.1 =
+* Slider settings: one accent colour (#2271b1) for the plugin's controls and WordPress's own in its boxes (focus rings, buttons, links), whatever the admin colour scheme of the profile; the rest of the admin keeps the scheme.
+* Creative effect: Style is the first field of its Layout, above the fields that depend on it.
+* Video page: a long YouTube / Vimeo title or link is cut at the right under a fade instead of widening the settings and hiding the Change and Remove buttons.
+* Video page: Remove (a poster) is red, like WordPress's delete links.
 
 = 1.3.0 =
 * New: video slides. A video from the media library, or a YouTube / Vimeo link (pasted under the slides). Only the video of the slide in view plays, and only while the slider is on screen; a file or player loads only when its slide comes up, so the page stays as light as before. YouTube plays in its privacy-enhanced mode.
