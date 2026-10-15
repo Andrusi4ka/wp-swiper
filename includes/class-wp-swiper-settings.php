@@ -272,6 +272,25 @@ class WP_Swiper_Settings {
 				'default' => true,
 			),
 
+			// Creative effect: Swiper's demo looks (frontend.js, creativePresets()).
+			// First in its Layout: the fields below depend on it.
+			'creative_style'        => array(
+				'section' => 'layout',
+				'effects' => array( 'creative' ),
+				'label'   => __( 'Style', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'push',
+				'choices' => array(
+					'push'     => __( 'Push: the next slide covers the current one', 'wp-swiper' ),
+					'zoom'     => __( 'Zoom: the current slide sinks back', 'wp-swiper' ),
+					'apart'    => __( 'Slide apart: both move off and back', 'wp-swiper' ),
+					'flip'     => __( 'Flip: a half turn in depth', 'wp-swiper' ),
+					'rotate'   => __( 'Rotate: fly off with a quarter turn', 'wp-swiper' ),
+					'door'     => __( 'Door: swing round an edge', 'wp-swiper' ),
+					'carousel' => __( 'Carousel: neighbours in view on both sides', 'wp-swiper' ),
+				),
+			),
+
 			// Thumbnails effect: how one slide gives way to the next. First in its
 			// Layout; a select, so that other transitions can join.
 			'thumbs_transition'     => array(
@@ -476,23 +495,6 @@ class WP_Swiper_Settings {
 				),
 			),
 
-			// Creative effect: Swiper's demo looks (frontend.js, creativePresets()).
-			'creative_style'        => array(
-				'section' => 'layout',
-				'effects' => array( 'creative' ),
-				'label'   => __( 'Style', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => 'push',
-				'choices' => array(
-					'push'     => __( 'Push: the next slide covers the current one', 'wp-swiper' ),
-					'zoom'     => __( 'Zoom: the current slide sinks back', 'wp-swiper' ),
-					'apart'    => __( 'Slide apart: both move off and back', 'wp-swiper' ),
-					'flip'     => __( 'Flip: a half turn in depth', 'wp-swiper' ),
-					'rotate'   => __( 'Rotate: fly off with a quarter turn', 'wp-swiper' ),
-					'door'     => __( 'Door: swing round an edge', 'wp-swiper' ),
-					'carousel' => __( 'Carousel: neighbours in view on both sides', 'wp-swiper' ),
-				),
-			),
 			// Carousel style: the slide in the middle, its neighbours beside it.
 			'creative_neighbours'   => array(
 				'section' => 'layout',

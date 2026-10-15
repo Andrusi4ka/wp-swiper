@@ -1,5 +1,34 @@
 /* WP Swiper admin */
 
+/* The plugin's one accent colour, whatever the user's admin colour scheme.
+   WordPress colours its own controls in these boxes (focus rings, buttons)
+   with the scheme's --wp-admin-theme-color ("Modern": #3858e9), and links
+   with a colour of the scheme's own: both set to the plugin's here. */
+#wp-swiper-slides,
+#wp-swiper-settings,
+#wp-swiper-shortcode {
+	--wp-swiper-accent: #2271b1;
+	--wp-swiper-accent-darker: #135e96;
+	--wp-admin-theme-color: var(--wp-swiper-accent);
+	--wp-admin-theme-color--rgb: 34, 113, 177;
+	--wp-admin-theme-color-darker-10: var(--wp-swiper-accent-darker);
+	--wp-admin-theme-color-darker-10--rgb: 19, 94, 150;
+	--wp-admin-theme-color-darker-20: #0a4b78;
+	--wp-admin-theme-color-darker-20--rgb: 10, 75, 120;
+}
+
+#wp-swiper-slides a,
+#wp-swiper-settings a,
+#wp-swiper-shortcode a {
+	color: var(--wp-swiper-accent);
+}
+
+#wp-swiper-slides a:hover,
+#wp-swiper-settings a:hover,
+#wp-swiper-shortcode a:hover {
+	color: var(--wp-swiper-accent-darker);
+}
+
 .wp-swiper-slides {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -21,7 +50,7 @@
 
 .wp-swiper-slide--placeholder {
 	min-height: 200px;
-	border: 2px dashed #2271b1;
+	border: 2px dashed var(--wp-swiper-accent, #2271b1);
 	background: #f0f6fc;
 }
 
@@ -322,8 +351,8 @@
 /* Settings changed since the preview was drawn. */
 /* In the admin color scheme, like WordPress's own buttons. */
 #wp-swiper-settings .wp-swiper-preview__update.is-stale {
-	border-color: var(--wp-admin-theme-color, #2271b1);
-	background: var(--wp-admin-theme-color, #2271b1);
+	border-color: var(--wp-swiper-accent, #2271b1);
+	background: var(--wp-swiper-accent, #2271b1);
 	color: #fff;
 }
 
@@ -387,24 +416,24 @@
 }
 
 .wp-swiper-menu__item:hover {
-	border-color: #2271b1;
-	color: #2271b1;
+	border-color: var(--wp-swiper-accent, #2271b1);
+	color: var(--wp-swiper-accent, #2271b1);
 }
 
 .wp-swiper-menu__item[aria-current="true"] {
-	border-color: #2271b1;
+	border-color: var(--wp-swiper-accent, #2271b1);
 	background: #f0f6fc;
-	color: #2271b1;
-	box-shadow: inset 3px 0 0 #2271b1;
+	color: var(--wp-swiper-accent, #2271b1);
+	box-shadow: inset 3px 0 0 var(--wp-swiper-accent, #2271b1);
 }
 
 .wp-swiper-menu__item[aria-current="true"] .dashicons,
 .wp-swiper-menu__item[aria-current="true"]::after {
-	color: #2271b1;
+	color: var(--wp-swiper-accent, #2271b1);
 }
 
 .wp-swiper-menu__item:focus-visible {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--wp-swiper-accent, #2271b1);
 	outline-offset: 1px;
 }
 
@@ -519,7 +548,7 @@
 }
 
 .wp-swiper-devices__btn.is-active {
-	color: #2271b1;
+	color: var(--wp-swiper-accent, #2271b1);
 }
 
 /* Tablet/mobile has its own value (not inherited). */
@@ -535,7 +564,7 @@
 }
 
 .wp-swiper-devices__btn:focus-visible {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--wp-swiper-accent, #2271b1);
 	outline-offset: 0;
 }
 
@@ -581,7 +610,7 @@
 
 .wp-swiper-tip:hover,
 .wp-swiper-tip:focus-visible {
-	color: var(--wp-admin-theme-color, #2271b1);
+	color: var(--wp-swiper-accent, #2271b1);
 	outline: none;
 }
 
@@ -815,14 +844,14 @@
 }
 
 .wp-swiper-segmented__btn[aria-pressed="true"] {
-	border-color: #2271b1;
+	border-color: var(--wp-swiper-accent, #2271b1);
 	background: #fff;
-	color: #2271b1;
+	color: var(--wp-swiper-accent, #2271b1);
 	font-weight: 600;
 }
 
 .wp-swiper-segmented__btn:focus-visible {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--wp-swiper-accent, #2271b1);
 	outline-offset: 1px;
 }
 
@@ -847,7 +876,7 @@
 	flex: 1 1 auto;
 	min-width: 0;
 	margin: 0;
-	accent-color: #2271b1;
+	accent-color: var(--wp-swiper-accent, #2271b1);
 	cursor: pointer;
 }
 
@@ -902,7 +931,7 @@
 }
 
 .wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:checked {
-	background: #2271b1;
+	background: var(--wp-swiper-accent, #2271b1);
 }
 
 .wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:checked::before {
@@ -910,7 +939,7 @@
 }
 
 .wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:focus-visible {
-	outline: 2px solid #2271b1;
+	outline: 2px solid var(--wp-swiper-accent, #2271b1);
 	outline-offset: 2px;
 }
 
