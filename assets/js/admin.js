@@ -7,6 +7,10 @@
 	var i18n = window.wpSwiperAdmin || {};
 	// Effects that show exactly one slide (WP_Swiper_Settings::SINGLE_SLIDE_EFFECTS).
 	var SINGLE_SLIDE_EFFECTS = i18n.singleSlide || [];
+	// Effects that can be their block's background (WP_Swiper_Settings::BACKGROUND_EFFECTS).
+	var BACKGROUND_EFFECTS = i18n.backgroundEffects || [];
+	// Effects with a main image that can zoom (WP_Swiper_Settings::ZOOM_EFFECTS).
+	var ZOOM_EFFECTS = i18n.zoomEffects || [];
 
 	$( function () {
 		var $list = $( '#wp-swiper-slide-list' );
@@ -41,7 +45,8 @@
 			$empty.prop( 'hidden', hasSlides );
 			syncCaptions();
 			$hint.prop( 'hidden', ! hasSlides );
-			syncLightbox();
+			// The Video page, the lightbox lock (links) and what else follows the slides.
+			syncFields();
 			// The preview no longer shows these slides.
 			$( '.wp-swiper-preview__update' ).addClass( 'is-stale' );
 			// Nor the Video page its list of posters.
@@ -259,12 +264,15 @@
 		 * hidden) and shown as `shown` (unchecked unless given) while locked,
 		 * with the visitor's choice remembered and restored once it is unlocked.
 		 * A disabled box is not sent, so before the form is: enabled again with
-		 * the visitor's choice, so saving keeps it. Returns lock( bool ).
+		 * the visitor's choice, so saving keeps it. Returns lock( bool, shown ):
+		 * a lock may show another state than `shown` (two settings that lock the
+		 * same box, each its own way).
 		 */
 		function lockable( name, shown ) {
 			var $box = $( '#wp-swiper-' + name );
 			var wanted = $box.is( ':checked' );
 			var locked = false;
+			var showing = !! shown;
 
 			// Bound on the checkbox itself so it runs before the delegated syncFields,
 			// and on "input" too: a click fires "input" first, and syncFields (which
@@ -281,15 +289,16 @@
 					// Locked again should the submit be cancelled.
 					setTimeout( function () {
 						if ( locked ) {
-							$box.prop( { disabled: true, checked: !! shown } );
+							$box.prop( { disabled: true, checked: showing } );
 						}
 					} );
 				}
 			} );
 
-			return function ( lock ) {
+			return function ( lock, shownNow ) {
 				locked = lock;
-				$box.prop( { disabled: lock, checked: lock ? !! shown : wanted } );
+				showing = undefined === shownNow ? !! shown : !! shownNow;
+				$box.prop( { disabled: lock, checked: lock ? showing : wanted } );
 				field( name ).toggleClass( 'is-disabled', lock );
 			};
 		}
@@ -381,6 +390,18 @@
 		var lockVideoControls = lockable( 'video_controls', true );
 		var lockVideoWait = lockable( 'video_wait' );
 		var lockVideoLoop = lockable( 'video_loop' );
+		// Background: its videos play by themselves, muted (nobody can reach controls under the content).
+		var lockVideoAutoplay = lockable( 'video_autoplay', true );
+		var lockVideoMuted = lockable( 'video_muted', true );
+		// A click opens either links or the lightbox: unavailable while any slide
+		// has a link, or behind a block's content (Background).
+		var lockLightbox = lockable( 'lightbox' );
+		// Background: as tall as its block (the values kept, greyed); no hover reaches it.
+		var lockHeight = lockableValue( 'height' );
+		var lockPause = lockable( 'pause_on_hover' );
+		var lockCollagePause = lockable( 'collage_pause' );
+		// Zoom: the Slide effect has a main image only with one slide in view or the wider active slide.
+		var lockZoom = lockable( 'zoom' );
 		var VIDEO_FIELDS = [ 'video_posters', 'video_autoplay', 'video_muted', 'video_loop', 'video_controls', 'video_pause', 'video_wait', 'video_preload' ];
 
 		// "Thumbnail height" on every device (empty tablet/mobile inherit; 0 = none).
@@ -407,16 +428,22 @@
 			return max;
 		}
 
-		// Continuous scroll runs on its own (render.php ignores these for it).
-		var lockMarquee = [
-			lockableValue( 'speed' ),
-			lockableValue( 'autoplay_delay' ),
-			lockable( 'loop', true ), // It always loops.
-			lockable( 'autoplay' ),
-			lockable( 'navigation' ),
-			lockableValue( 'pagination', 'none' ),
-			lockable( 'keyboard' )
-		];
+		// Continuous scroll runs on its own (render.php ignores these for it); so
+		// does a background, with the slider's autoplay (render.php forces it).
+		var lockSpeed = lockableValue( 'speed' );
+		var lockDelay = lockableValue( 'autoplay_delay' );
+		var lockLoop = lockable( 'loop', true ); // Both always loop.
+		var lockAutoplay = lockable( 'autoplay' );
+		var lockNavigation = lockable( 'navigation' );
+		var lockPagination = lockableValue( 'pagination', 'none' );
+		var lockKeyboard = lockable( 'keyboard' );
+
+		// Any slide with a link (video slides have none: their field is hidden).
+		function hasLinks() {
+			return $list.find( '.wp-swiper-slide:not(.wp-swiper-slide--video) input[type="url"]' ).filter( function () {
+				return $.trim( this.value ) !== '';
+			} ).length > 0;
+		}
 
 		/*
 		 * Each effect keeps its own Layout values (WP_Swiper_Settings::layouts()):
@@ -481,6 +508,9 @@
 			lockShadows( false );
 			lockStackRotation( false );
 			lockThumbsPerView( false );
+			lockHeight( false );
+			lockCollagePause( false );
+			lockZoom( false );
 			layouts[ layoutEffect ] = readLayout();
 			if ( layouts[ effect ] ) {
 				writeLayout( layouts[ effect ] );
@@ -540,10 +570,23 @@
 			var marquee = slide && $( '#wp-swiper-marquee' ).is( ':checked' );
 			// Collage: not a slider; its places crop their photos (render.php does the same).
 			var collage = effect === 'collage';
-			lockMarquee.forEach( function ( lock ) {
-				lock( marquee );
-			} );
-			lockFit( autoWidth || collage );
+			// The block's background: behind its content, it plays on its own.
+			var background = BACKGROUND_EFFECTS.indexOf( effect ) !== -1 && $( '#wp-swiper-background' ).is( ':checked' );
+			var still = marquee || background;
+			lockSpeed( marquee );
+			lockDelay( marquee );
+			lockLoop( still );
+			// The marquee has its own (off); a background the slider's (on).
+			lockAutoplay( still, background && ! marquee );
+			lockNavigation( still );
+			lockPagination( still );
+			lockKeyboard( still );
+			lockPause( background );
+			lockCollagePause( background );
+			lockHeight( background );
+			lockLightbox( hasLinks() || background );
+			// A background crops its images to fill the block.
+			lockFit( autoWidth || collage || background );
 			// After the locks on the Controls fields (see syncControls).
 			syncControls( effect );
 
@@ -568,6 +611,11 @@
 				$( this ).toggle( $( this ).data( 'effects' ).split( ' ' ).indexOf( effect ) !== -1 );
 			} );
 
+			// Background: its settings once it is on (data-effects above: the effects that can be one).
+			[ 'background_class', 'background_overlay_opacity', 'background_overlay_color', 'background_min_height' ].forEach( function ( name ) {
+				field( name ).toggle( background );
+			} );
+
 			// Slide effect options (data-effects above) that depend on each other.
 			// Wider active slide: it always crops, so only with Image fit "Cover";
 			// not with slides sized by their images or a moving strip. Its size once on.
@@ -584,6 +632,17 @@
 			field( 'slides_per_view' ).toggle( ! autoWidth && ! single );
 			field( 'slides_per_group' ).toggle( slide && ! marquee && ! expand );
 			field( 'marquee_speed' ).toggle( marquee );
+
+			// Zoom the main image (data-effects above: the effects that have one).
+			// Slide: one slide in view on every device, or the wider active slide
+			// (render.php checks the same); otherwise greyed. Its settings once on.
+			var zoomEffect = ZOOM_EFFECTS.indexOf( effect ) !== -1;
+			var canZoom = zoomEffect && ( ! slide || ( ! marquee && ! autoWidth && ( expand || maxPerView() <= 1 ) ) );
+			lockZoom( zoomEffect && ! canZoom );
+			var zooming = canZoom && $( '#wp-swiper-zoom' ).is( ':checked' );
+			[ 'zoom_direction', 'zoom_amount', 'zoom_origin', 'zoom_duration' ].forEach( function ( name ) {
+				field( name ).toggle( zooming );
+			} );
 
 			// Effect shadows (Layout, data-effects): not with "Contain", where they
 			// would shade the empty band around the image too.
@@ -625,8 +684,11 @@
 			} );
 			// Lightbox: video slides in it, while there are some.
 			field( 'lightbox_videos' ).toggle( hasVideo && $( '#wp-swiper-lightbox' ).is( ':checked' ) );
+			lockVideoAutoplay( background );
+			lockVideoMuted( background );
 			var videoAutoplay = $( '#wp-swiper-video_autoplay' ).is( ':checked' );
-			lockVideoControls( ! videoAutoplay );
+			// Shown on without autoplay; a background has none (off).
+			lockVideoControls( ! videoAutoplay || background, ! background );
 			lockVideoWait( ! autoplay || marquee || ! videoAutoplay );
 			lockVideoLoop( ! $( '#wp-swiper-video_wait' ).prop( 'disabled' ) && $( '#wp-swiper-video_wait' ).is( ':checked' ) );
 			// Height "Auto" (the parent block's) needs no numbers.
@@ -783,19 +845,8 @@
 		$( '#wp-swiper-settings' ).on( 'change input', 'select, input', syncFields );
 		syncFields();
 
-		// A click opens either links or the lightbox: unavailable while any slide has a link.
-		var lockLightbox = lockable( 'lightbox' );
-
-		function syncLightbox() {
-			// Video slides have no link (their field is hidden).
-			lockLightbox( $list.find( '.wp-swiper-slide:not(.wp-swiper-slide--video) input[type="url"]' ).filter( function () {
-				return $.trim( this.value ) !== '';
-			} ).length > 0 );
-			syncFields();
-		}
-
-		$list.on( 'input change', 'input[type="url"]', syncLightbox );
-		syncLightbox();
+		// The lightbox lock follows the slides' links (syncFields).
+		$list.on( 'input change', 'input[type="url"]', syncFields );
 
 		// Caption settings only apply once a slide has a caption: the whole box is
 		// greyed until then (a disabled fieldset is not sent, so it is enabled

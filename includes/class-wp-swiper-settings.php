@@ -20,6 +20,17 @@ class WP_Swiper_Settings {
 	const SINGLE_SLIDE_EFFECTS = array( 'fade', 'cube', 'flip', 'cards', 'creative', 'thumbs', 'collage' );
 
 	/**
+	 * Effects that can be the background of their parent block ("Use as background").
+	 */
+	const BACKGROUND_EFFECTS = array( 'slide', 'fade', 'collage' );
+
+	/**
+	 * Effects with a main image that can zoom ("Zoom the main image"); Slide
+	 * only with one slide in view or the wider active slide (is_zoom()).
+	 */
+	const ZOOM_EFFECTS = array( 'slide', 'fade', 'cube', 'flip', 'creative', 'cards', 'thumbs' );
+
+	/**
 	 * Field definitions grouped into sections. `effects`: the effects a field
 	 * applies to (the editor hides it for the others); none = all effects.
 	 *
@@ -599,6 +610,73 @@ class WP_Swiper_Settings {
 					'center' => __( 'Center', 'wp-swiper' ),
 					'right'  => __( 'Right', 'wp-swiper' ),
 				),
+			),
+			// The image of the slide in view zooms slowly while it is shown (Ken
+			// Burns, frontend.js zoom()). Its settings once it is on.
+			'zoom'                  => array(
+				'section' => 'layout',
+				'effects' => self::ZOOM_EFFECTS,
+				'label'   => __( 'Zoom the main image', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'The image of the slide in view slowly zooms in or out while it is shown. Slide effect: with one slide in view (Slides per view 1 on every device) or the wider active slide. Not for video slides.', 'wp-swiper' ),
+			),
+			'zoom_direction'        => array(
+				'section'   => 'layout',
+				'effects'   => self::ZOOM_EFFECTS,
+				'label'     => __( 'Zoom direction', 'wp-swiper' ),
+				'type'      => 'select',
+				'segmented' => true,
+				'default'   => 'in',
+				'choices'   => array(
+					'in'  => __( 'Zoom in', 'wp-swiper' ),
+					'out' => __( 'Zoom out', 'wp-swiper' ),
+				),
+			),
+			'zoom_amount'           => array(
+				'section' => 'layout',
+				'effects' => self::ZOOM_EFFECTS,
+				'label'   => __( 'Zoom (%)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 15,
+				'min'     => 2,
+				'max'     => 50,
+				'step'    => 1,
+				'range'   => array( 2, 30 ),
+				'help'    => __( 'How much larger the image gets: 15 = 115% of its size.', 'wp-swiper' ),
+			),
+			'zoom_origin'           => array(
+				'section' => 'layout',
+				'effects' => self::ZOOM_EFFECTS,
+				'label'   => __( 'Zoom towards', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'center',
+				'choices' => array(
+					'center'       => __( 'Center', 'wp-swiper' ),
+					'top-left'     => __( 'Top left', 'wp-swiper' ),
+					'top'          => __( 'Top', 'wp-swiper' ),
+					'top-right'    => __( 'Top right', 'wp-swiper' ),
+					'left'         => __( 'Left', 'wp-swiper' ),
+					'right'        => __( 'Right', 'wp-swiper' ),
+					'bottom-left'  => __( 'Bottom left', 'wp-swiper' ),
+					'bottom'       => __( 'Bottom', 'wp-swiper' ),
+					'bottom-right' => __( 'Bottom right', 'wp-swiper' ),
+				),
+				'help'    => __( 'The point of the image that stays in place: the rest grows away from it (zoom in) or towards it (zoom out).', 'wp-swiper' ),
+			),
+			// Empty: as long as a slide is shown with Autoplay (see zoom_duration()).
+			'zoom_duration'         => array(
+				'section'     => 'layout',
+				'effects'     => self::ZOOM_EFFECTS,
+				'label'       => __( 'Zoom duration (ms)', 'wp-swiper' ),
+				'type'        => 'number',
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 1000,
+				'max'         => 60000,
+				'step'        => 100,
+				'placeholder' => __( 'Auto', 'wp-swiper' ),
+				'help'        => __( 'Auto (empty): as long as a slide is shown with Autoplay (its delay plus the transition speed); without Autoplay, 6000.', 'wp-swiper' ),
 			),
 			'height'                => array(
 				'section'    => 'layout',
@@ -1190,7 +1268,112 @@ class WP_Swiper_Settings {
 				'placeholder' => 'my-slider',
 				'help'        => __( 'The id of the slider’s outer block: letters, digits, - and _. An id must be unique on a page, so do not place this slider twice on one page.', 'wp-swiper' ),
 			),
+
+			// The slider as the background of a block it is in (a row, a column),
+			// found by a class given to that block (frontend.js background()).
+			'background'            => array(
+				'section' => 'advanced',
+				'panel'   => 'background',
+				'effects' => self::BACKGROUND_EFFECTS,
+				'label'   => __( 'Use as background', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'The slider fills the block with the class below, behind its content, and plays on its own: Autoplay and Infinite loop are on; arrows, pagination, keyboard, slide links, the lightbox and Height are not used, the images are cropped to fill.', 'wp-swiper' ),
+			),
+			'background_class'      => array(
+				'section'     => 'advanced',
+				'panel'       => 'background',
+				'effects'     => self::BACKGROUND_EFFECTS,
+				'label'       => __( 'Parent block class', 'wp-swiper' ),
+				'type'        => 'text',
+				'default'     => '',
+				'placeholder' => 'hero-block',
+				'help'        => __( 'Give this class to the row or column the slider is in (WPBakery: “Extra class name”) and enter it here. The nearest block around the slider with it is used; without one, the slider shows as usual.', 'wp-swiper' ),
+			),
+			// One row: how dark, and in what color.
+			'background_overlay_opacity' => array(
+				'section' => 'advanced',
+				'panel'   => 'background',
+				'effects' => self::BACKGROUND_EFFECTS,
+				'group'   => 'background_overlay',
+				'label'   => __( 'Overlay opacity (%)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 0,
+				'min'     => 0,
+				'max'     => 100,
+				'step'    => 5,
+				'help'    => __( 'A color over the slides, so that the content on them reads well. 0 = none.', 'wp-swiper' ),
+			),
+			'background_overlay_color' => array(
+				'section' => 'advanced',
+				'panel'   => 'background',
+				'effects' => self::BACKGROUND_EFFECTS,
+				'group'   => 'background_overlay',
+				'label'   => __( 'Overlay color', 'wp-swiper' ),
+				'type'    => 'color',
+				'default' => '#000000',
+			),
+			// Per device; empty (desktop too) = none: the block as tall as its content.
+			'background_min_height' => array(
+				'section'     => 'advanced',
+				'panel'       => 'background',
+				'effects'     => self::BACKGROUND_EFFECTS,
+				'label'       => __( 'Minimum block height (px)', 'wp-swiper' ),
+				'type'        => 'number',
+				'responsive'  => true,
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 0,
+				'max'         => 2000,
+				'step'        => 1,
+				'placeholder' => __( 'None', 'wp-swiper' ),
+				'help'        => __( 'The block is as tall as its content (or as the page builder makes it); this keeps it at least this tall. Empty: no minimum.', 'wp-swiper' ),
+			),
 		);
+	}
+
+	/**
+	 * "Use as background": on, with an effect that can be one.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function is_background( $settings ) {
+		return ! empty( $settings['background'] ) && in_array( $settings['effect'], self::BACKGROUND_EFFECTS, true );
+	}
+
+	/**
+	 * "Zoom the main image": on, with an effect that shows one main image
+	 * (Slide: one slide in view on every device, or the wider active slide).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function is_zoom( $settings ) {
+		if ( empty( $settings['zoom'] ) || ! in_array( $settings['effect'], self::ZOOM_EFFECTS, true ) ) {
+			return false;
+		}
+		if ( 'slide' !== $settings['effect'] ) {
+			return true;
+		}
+		if ( self::is_marquee( $settings ) || self::is_auto_width( $settings ) ) {
+			return false;
+		}
+		return self::is_expand( $settings ) || max( self::responsive( $settings, 'slides_per_view' ) ) <= 1;
+	}
+
+	/**
+	 * How long the zoom lasts (ms): the one set, else as long as a slide is
+	 * shown with Autoplay (its delay plus the transition), else 6000.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return int
+	 */
+	public static function zoom_duration( $settings ) {
+		if ( '' !== $settings['zoom_duration'] ) {
+			return (int) $settings['zoom_duration'];
+		}
+		return $settings['autoplay'] ? (int) $settings['autoplay_delay'] + (int) $settings['speed'] : 6000;
 	}
 
 	/**
@@ -1419,6 +1602,8 @@ class WP_Swiper_Settings {
 			'video'      => array( __( 'Video', 'wp-swiper' ), 'dashicons-video-alt3' ),
 			// The outer block's class and id.
 			'attributes' => array( __( 'Custom', 'wp-swiper' ), 'dashicons-editor-code' ),
+			// The slider behind its block's content (its menu item shows for the effects that can be).
+			'background' => array( __( 'Background', 'wp-swiper' ), 'dashicons-format-image' ),
 		);
 	}
 

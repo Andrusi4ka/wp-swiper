@@ -227,6 +227,14 @@
 
 	var CURRENT_CLASS = 'wp-swiper-slide-current';
 
+	/**
+	 * The slide in view: the one the wider active slide layout marks as its
+	 * current slide, else Swiper's active one. Videos and the zoom follow it.
+	 */
+	function shownSlide( swiper, el ) {
+		return el.querySelector( '.swiper-slide.' + CURRENT_CLASS ) || swiper.slides[ swiper.activeIndex ];
+	}
+
 	// Same breakpoints as the CSS and Swiper's own: mobile < 768 <= tablet < 1025 <= desktop.
 	// Asked through the CSS's own media queries, so both always agree (a
 	// width read too early, before the viewport settles, could not).
@@ -1628,10 +1636,6 @@
 			return null;
 		}
 
-		function activeSlide() {
-			return el.querySelector( '.swiper-slide.' + CURRENT_CLASS ) || swiper.slides[ swiper.activeIndex ];
-		}
-
 		// The slider's autoplay again, once it no longer waits for a video.
 		function release() {
 			if ( waiting ) {
@@ -1643,7 +1647,7 @@
 		}
 
 		function sync() {
-			var slide = activeSlide();
+			var slide = shownSlide( swiper, el );
 			var video = playerOf( slide );
 
 			players.forEach( function ( other ) {
@@ -2657,12 +2661,131 @@
 		return { rebuild: build };
 	}
 
+	/* ------------------------------------------------------------------ *
+	 * "Zoom the main image"
+	 *
+	 * The image of the slide in view zooms from one scale to the other
+	 * (config.zoom) towards the point chosen (CSS: transform-origin), over
+	 * the time it is shown. The slide left eases back to the waiting scale
+	 * from wherever it got to, while the slider moves on (no jump on a fade
+	 * or beside the wider active slide). Videos do not zoom.
+	 * ------------------------------------------------------------------ */
+
+	function zoom( swiper, el, config ) {
+		var settings = config.zoom;
+		var shown = null;
+
+		if ( ! Element.prototype.animate || ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches ) ) {
+			return;
+		}
+
+		function images( slide ) {
+			return slide ? [].slice.call( slide.querySelectorAll( 'img.wp-swiper__image' ) ) : [];
+		}
+
+		function scale( value ) {
+			return 'scale(' + value + ')';
+		}
+
+		function release( slide ) {
+			images( slide ).forEach( function ( img ) {
+				// Where it got to, read before the zoom is stopped.
+				var now = getComputedStyle( img ).transform;
+				if ( img.wpSwiperZoom ) {
+					img.wpSwiperZoom.cancel();
+				}
+				img.wpSwiperZoom = now && now !== 'none'
+					? img.animate( [ { transform: now }, { transform: scale( settings.from ) } ], { duration: Math.max( 200, Number( config.speed ) || 600 ), easing: 'ease-out' } )
+					: null;
+			} );
+		}
+
+		function start() {
+			var slide = shownSlide( swiper, el );
+			if ( ! slide || slide === shown ) {
+				return;
+			}
+			if ( shown ) {
+				release( shown );
+			}
+			shown = slide;
+			images( slide ).forEach( function ( img ) {
+				if ( img.wpSwiperZoom ) {
+					img.wpSwiperZoom.cancel();
+				}
+				// Kept at the end (fill) while its slide stays in view.
+				img.wpSwiperZoom = img.animate( [ { transform: scale( settings.from ) }, { transform: scale( settings.to ) } ], { duration: Number( settings.duration ) || 6000, easing: 'linear', fill: 'forwards' } );
+			} );
+		}
+
+		swiper.on( 'activeIndexChange transitionStart', start );
+		// The wider active slide layout moves its current slide without Swiper.
+		if ( config.expand ) {
+			new MutationObserver( start ).observe( el.querySelector( '.swiper-wrapper' ), { subtree: true, attributes: true, attributeFilter: [ 'class' ] } );
+		}
+		start();
+	}
+
+	/* ------------------------------------------------------------------ *
+	 * Background ("Use as background")
+	 *
+	 * The slider fills the nearest block around it with the class it was
+	 * given (a row, a column), behind that block's content: it is moved to
+	 * be the block's first child, so that no wrapper of the page builder in
+	 * between (positioned, clipping) decides its size. Before Swiper or the
+	 * collage measure it. Without such a block it stays a slider as usual,
+	 * and those who can edit it see why (render.php's notice).
+	 * ------------------------------------------------------------------ */
+
+	function background( wrapper ) {
+		if ( ! wrapper.classList.contains( 'wp-swiper--background' ) || wrapper.wpSwiperBackground ) {
+			return;
+		}
+		wrapper.wpSwiperBackground = true;
+
+		var classes = ( wrapper.getAttribute( 'data-wp-swiper-bg' ) || '' ).split( /\s+/ ).filter( Boolean );
+		var block = null;
+		if ( classes.length && wrapper.parentElement ) {
+			try {
+				block = wrapper.parentElement.closest( classes.map( function ( name ) {
+					return '.' + ( window.CSS && CSS.escape ? CSS.escape( name ) : name );
+				} ).join( '' ) );
+			} catch ( e ) {}
+		}
+
+		if ( ! block ) {
+			wrapper.classList.remove( 'wp-swiper--background' );
+			var notice = wrapper.nextElementSibling;
+			if ( notice && notice.hasAttribute( 'data-wp-swiper-bg-missing' ) ) {
+				notice.hidden = false;
+			}
+			return;
+		}
+
+		block.classList.add( 'wp-swiper-bg-host' );
+		// Its own position (absolute, sticky...) is kept: any but static holds the slider.
+		if ( getComputedStyle( block ).position === 'static' ) {
+			block.classList.add( 'wp-swiper-bg-host--static' );
+		}
+		// "Minimum block height", on the devices it is set for.
+		[ '', '-tablet', '-mobile' ].forEach( function ( suffix ) {
+			var name = '--wp-swiper-bg-min-height' + suffix;
+			var value = wrapper.style.getPropertyValue( name );
+			if ( value ) {
+				block.style.setProperty( name, value );
+				block.classList.add( 'wp-swiper-bg-host--min' );
+			}
+		} );
+		block.insertBefore( wrapper, block.firstChild );
+	}
+
 	function init( root ) {
 		// Collages first: they do not need Swiper.
 		( root || document ).querySelectorAll( '[data-wp-swiper-collage]' ).forEach( function ( el ) {
 			if ( el.wpSwiperCollage ) {
 				return;
 			}
+			background( el.parentNode );
 			try {
 				el.wpSwiperCollage = collage( el, JSON.parse( el.getAttribute( 'data-wp-swiper-collage' ) ) ) || true;
 			} catch ( e ) {}
@@ -2689,6 +2812,7 @@
 			// cannot all take the image proportions either; "Width from image"
 			// slides take their width from a set height.
 			var wrapper = el.parentNode;
+			background( wrapper );
 			var needsFixed = config.direction === 'vertical' || !! config.expand || !! config.autoWidth || !! carouselOf( config );
 			var recap = null;
 			if ( config.fill ) {
@@ -2704,6 +2828,9 @@
 			options.on = {
 				init: function ( swiper ) {
 					setupControls( swiper, el, config );
+					if ( config.zoom ) {
+						zoom( swiper, el, config );
+					}
 					if ( config.fill ) {
 						fillParent( wrapper, swiper, needsFixed, config );
 					}

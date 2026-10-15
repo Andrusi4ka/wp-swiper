@@ -85,6 +85,19 @@ class WP_Swiper_Preview {
 		WP_Swiper_Render::register_assets();
 		$slider = WP_Swiper_Render::render_slider( $post_id, WP_Swiper_Admin::posted_slides(), $settings );
 
+		// Background: in a block with its class and some content over it, as on
+		// a page (without a class there is no such block: the notice says so).
+		if ( WP_Swiper_Settings::is_background( $settings ) ) {
+			$slider = sprintf(
+				'<div class="wp-swiper-preview-block %1$s"><div class="wp-swiper-preview-block__content"><h2>%2$s</h2><p>%3$s</p><span class="wp-swiper-preview-block__button">%4$s</span></div>%5$s</div>',
+				esc_attr( $settings['background_class'] ),
+				esc_html__( 'The block’s content', 'wp-swiper' ),
+				esc_html__( 'Text, buttons and other elements of the row or column sit over the slider.', 'wp-swiper' ),
+				esc_html__( 'Button', 'wp-swiper' ),
+				$slider
+			);
+		}
+
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
 		header( 'X-Robots-Tag: noindex, nofollow' );
@@ -102,6 +115,12 @@ class WP_Swiper_Preview {
 		body { font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 		.wp-swiper-preview-page { box-sizing: border-box; min-height: 100vh; padding: 24px; }
 		@media (max-width: 767px) { .wp-swiper-preview-page { padding: 12px; } }
+		.wp-swiper-preview-block { background: #f0f0f1; }
+		.wp-swiper-preview-block__content { box-sizing: border-box; max-width: 640px; padding: 72px 40px; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+		.wp-swiper-preview-block__content h2 { margin: 0 0 12px; font-size: 32px; line-height: 1.2; }
+		.wp-swiper-preview-block__content p { margin: 0 0 24px; }
+		.wp-swiper-preview-block__button { display: inline-block; padding: 10px 24px; border-radius: 4px; background: #fff; color: #1d2327; text-shadow: none; font-weight: 600; }
+		@media (max-width: 767px) { .wp-swiper-preview-block__content { padding: 40px 20px; } .wp-swiper-preview-block__content h2 { font-size: 24px; } }
 	</style>
 </head>
 <body>

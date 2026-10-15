@@ -54,6 +54,10 @@ class WP_Swiper_Admin {
 					'slideNumber'  => __( 'Slide %d', 'wp-swiper' ),
 					'copied'      => __( 'Copied!', 'wp-swiper' ),
 					'singleSlide' => WP_Swiper_Settings::SINGLE_SLIDE_EFFECTS,
+					// Effects that can be their block's background ("Use as background").
+					'backgroundEffects' => WP_Swiper_Settings::BACKGROUND_EFFECTS,
+					// Effects with a main image that can zoom ("Zoom the main image").
+					'zoomEffects' => WP_Swiper_Settings::ZOOM_EFFECTS,
 					// What Height measures (admin.js): each slide across a horizontal
 					// slider; the whole slider, which its slides share, when vertical.
 					'heightLabels' => array(

@@ -142,12 +142,53 @@ class WP_Swiper_Render {
 			$settings['keyboard']   = false;
 		}
 
+		// The block's background (frontend.js background()): behind its content,
+		// where no click or hover reaches it, so it plays on its own and has
+		// nothing to click; it fills the block, so its images are cropped to fill
+		// and Height is not used (the CSS takes the block's).
+		$background = WP_Swiper_Settings::is_background( $settings );
+		if ( $background ) {
+			$settings['image_fit']      = 'cover';
+			$settings['height_unit']    = 'px';
+			$settings['autoplay']       = true;
+			$settings['loop']           = true;
+			$settings['pause_on_hover'] = false;
+			$settings['collage_pause']  = false;
+			$settings['navigation']     = false;
+			$settings['pagination']     = 'none';
+			$settings['keyboard']       = false;
+			$settings['lightbox']       = false;
+			$settings['video_autoplay'] = true;
+			$settings['video_muted']    = true;
+			$settings['video_controls'] = false;
+			$slides                     = array_map(
+				function ( $slide ) {
+					$slide['link'] = '';
+					return $slide;
+				},
+				$slides
+			);
+		}
+
 		// A click opens either links or the lightbox, never a mix: any link turns the lightbox off.
 		if ( array_filter( wp_list_pluck( $slides, 'link' ) ) ) {
 			$settings['lightbox'] = false;
 		}
 
-		return self::markup( $post_id, array_values( $slides ), $settings, $class );
+		$html = self::markup( $post_id, array_values( $slides ), $settings, $class );
+
+		// No block with the class around it: frontend.js leaves it a slider as
+		// usual and shows this to those who can fix it.
+		if ( $background && current_user_can( 'edit_posts' ) ) {
+			$html .= '<p class="wp-swiper-notice" data-wp-swiper-bg-missing hidden>' . esc_html(
+				'' === $settings['background_class']
+					? __( 'WP Swiper: this slider is set to be a background, but has no parent block class (Background).', 'wp-swiper' )
+					/* translators: %s: CSS class name(s). */
+					: sprintf( __( 'WP Swiper: no block with the class “%s” around this slider, so it is not a background. Give that class to its row or column.', 'wp-swiper' ), $settings['background_class'] )
+			) . '</p>';
+		}
+
+		return $html;
 	}
 
 	/**
@@ -162,6 +203,7 @@ class WP_Swiper_Render {
 	private static function js_config( $settings, $count, $copies, $videos ) {
 		$expand  = WP_Swiper_Settings::is_expand( $settings );
 		$marquee = WP_Swiper_Settings::is_marquee( $settings );
+		$zoom    = self::zoom_scales( $settings );
 
 		return array(
 			// Video slides: how they play (frontend.js videos()).
@@ -262,6 +304,12 @@ class WP_Swiper_Render {
 			'centered'      => self::centered( $settings ),
 			// Height "Auto": frontend.js sizes the slider to its parent block.
 			'fill'          => WP_Swiper_Settings::is_auto_height( $settings ),
+			// "Zoom the main image" (frontend.js zoom()): from one scale to the other.
+			'zoom'          => WP_Swiper_Settings::is_zoom( $settings ) ? array(
+				'duration' => WP_Swiper_Settings::zoom_duration( $settings ),
+				'from'     => $zoom[0],
+				'to'       => $zoom[1],
+			) : false,
 			'expand'        => $expand ? array(
 				'active'   => WP_Swiper_Settings::responsive( $settings, 'active_width' ),
 				'visible'  => WP_Swiper_Settings::expand_visible( $settings ),
@@ -270,6 +318,18 @@ class WP_Swiper_Render {
 				'centered' => self::centered( $settings ),
 			) : false,
 		);
+	}
+
+	/**
+	 * "Zoom the main image": the image's scale when its slide comes up and
+	 * when the zoom ends (zoom in: 1 to larger; zoom out: back to 1).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return float[] [ from, to ]
+	 */
+	private static function zoom_scales( $settings ) {
+		$large = round( 1 + max( 2, min( 50, (int) $settings['zoom_amount'] ) ) / 100, 2 );
+		return 'out' === $settings['zoom_direction'] ? array( $large, 1 ) : array( 1, $large );
 	}
 
 	/**
@@ -526,9 +586,11 @@ class WP_Swiper_Render {
 	}
 
 	private static function markup( $post_id, $slides, $settings, $extra_class ) {
-		$expand = WP_Swiper_Settings::is_expand( $settings );
-		$fill   = WP_Swiper_Settings::is_auto_height( $settings );
-		$videos = in_array( true, wp_list_pluck( $slides, 'video' ), true );
+		$background = WP_Swiper_Settings::is_background( $settings );
+		$zoom       = WP_Swiper_Settings::is_zoom( $settings );
+		$expand     = WP_Swiper_Settings::is_expand( $settings );
+		$fill       = WP_Swiper_Settings::is_auto_height( $settings );
+		$videos     = in_array( true, wp_list_pluck( $slides, 'video' ), true );
 
 		$classes = array(
 			'wp-swiper',
@@ -557,6 +619,11 @@ class WP_Swiper_Render {
 			// Caption background: none, or solid instead of the default gradient; text shadow.
 			! $settings['caption_bg'] ? 'wp-swiper--caption-nobg' : ( 'solid' === $settings['caption_bg_style'] ? 'wp-swiper--caption-solid' : '' ),
 			$settings['caption_shadow'] ? 'wp-swiper--caption-shadow' : '',
+			// The block's background (frontend.js background()), with a color over it.
+			$background ? 'wp-swiper--background' : '',
+			$background && $settings['background_overlay_opacity'] > 0 ? 'wp-swiper--bg-overlay' : '',
+			// "Zoom the main image" (frontend.js zoom()).
+			$zoom ? 'wp-swiper--zoom' : '',
 		);
 		// Thumbnails: where the strip sits on each device ("--thumbs-left",
 		// "--thumbs-tablet-top", "--thumbs-mobile-bottom"; one set of CSS rules per device).
@@ -714,9 +781,55 @@ class WP_Swiper_Render {
 				$style[] = '--wp-swiper-active-width' . $suffix[ $device ] . ':' . (float) $width . '%';
 			}
 		}
+		// Zoom: the point it zooms towards, and the scale of the images waiting
+		// their turn (zoom out: they come up large).
+		if ( $zoom ) {
+			$origin = array(
+				'center'       => '50% 50%',
+				'top-left'     => '0% 0%',
+				'top'          => '50% 0%',
+				'top-right'    => '100% 0%',
+				'left'         => '0% 50%',
+				'right'        => '100% 50%',
+				'bottom-left'  => '0% 100%',
+				'bottom'       => '50% 100%',
+				'bottom-right' => '100% 100%',
+			);
+			$style[] = '--wp-swiper-zoom-origin:' . ( isset( $origin[ $settings['zoom_origin'] ] ) ? $origin[ $settings['zoom_origin'] ] : '50% 50%' );
+			$style[] = '--wp-swiper-zoom-from:' . self::zoom_scales( $settings )[0];
+		}
 
-		if ( WP_Swiper_Settings::is_collage( $settings ) ) {
-			return self::collage( $slides, $settings, $classes, $style );
+		// Background: the overlay, and the block's minimum height per device where
+		// set (frontend.js hands these to the block).
+		if ( $background ) {
+			if ( $settings['background_overlay_opacity'] > 0 ) {
+				list( $r, $g, $b ) = sscanf( $settings['background_overlay_color'], '#%02x%02x%02x' );
+				$style[]            = sprintf( '--wp-swiper-bg-overlay:rgba(%d,%d,%d,%s)', $r, $g, $b, max( 0, min( 100, (int) $settings['background_overlay_opacity'] ) ) / 100 );
+			}
+			foreach ( WP_Swiper_Settings::responsive( $settings, 'background_min_height' ) as $device => $height ) {
+				if ( '' !== $height ) {
+					$style[] = '--wp-swiper-bg-min-height' . $suffix[ $device ] . ':' . (int) $height . 'px';
+				}
+			}
+		}
+
+		$collage = WP_Swiper_Settings::is_collage( $settings );
+		if ( $collage ) {
+			$style[] = '--wp-swiper-collage-speed:' . (int) $settings['collage_swap_speed'] . 'ms';
+		}
+
+		// The outer block's own attributes (both markups): its id, if any (Custom),
+		// and with Background the class of the block it fills.
+		$attrs = sprintf(
+			'%1$s class="%2$s"%3$s%4$s',
+			'' !== $settings['css_id'] ? ' id="' . esc_attr( $settings['css_id'] ) . '"' : '',
+			esc_attr( implode( ' ', array_filter( $classes ) ) ),
+			$style ? ' style="' . esc_attr( implode( ';', $style ) ) . '"' : '',
+			$background ? ' data-wp-swiper-bg="' . esc_attr( $settings['background_class'] ) . '"' : ''
+		);
+
+		if ( $collage ) {
+			return self::collage( $slides, $settings, $attrs );
 		}
 
 		$count             = count( $slides );
@@ -726,8 +839,7 @@ class WP_Swiper_Render {
 
 		ob_start();
 		?>
-		<?php // The slider's own id (Custom), if any. ?>
-		<div<?php echo '' !== $settings['css_id'] ? ' id="' . esc_attr( $settings['css_id'] ) . '"' : ''; ?> class="<?php echo esc_attr( implode( ' ', array_filter( $classes ) ) ); ?>"<?php echo $style ? ' style="' . esc_attr( implode( ';', $style ) ) . '"' : ''; ?>>
+		<div<?php echo $attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?>>
 			<div class="swiper" data-wp-swiper="<?php echo esc_attr( wp_json_encode( $config ) ); ?>">
 				<div class="swiper-wrapper">
 					<?php
@@ -816,13 +928,12 @@ class WP_Swiper_Render {
 	 * the slides in the grid's places in the order of the shuffle, and swaps
 	 * the ones left over in; until then nothing of them loads.
 	 *
-	 * @param array $slides   Slides.
-	 * @param array $settings Slider settings.
-	 * @param array $classes  The outer block's classes.
-	 * @param array $style    Its custom properties.
+	 * @param array  $slides   Slides.
+	 * @param array  $settings Slider settings.
+	 * @param string $attrs    The outer block's attributes (id, classes, style...).
 	 * @return string
 	 */
-	private static function collage( $slides, $settings, $classes, $style ) {
+	private static function collage( $slides, $settings, $attrs ) {
 		$per_device = function ( $key ) use ( $settings ) {
 			return array_map( 'intval', WP_Swiper_Settings::responsive( $settings, $key ) );
 		};
@@ -844,12 +955,10 @@ class WP_Swiper_Render {
 				'radius' => self::lightbox_radius( $settings, 'lightbox_radius', 'border_radius' ),
 			) : false,
 		);
-		$style[]    = '--wp-swiper-collage-speed:' . (int) $settings['collage_swap_speed'] . 'ms';
 
 		ob_start();
 		?>
-		<?php // The slider's own id (Custom), if any. ?>
-		<div<?php echo '' !== $settings['css_id'] ? ' id="' . esc_attr( $settings['css_id'] ) . '"' : ''; ?> class="<?php echo esc_attr( implode( ' ', array_filter( $classes ) ) ); ?>"<?php echo $style ? ' style="' . esc_attr( implode( ';', $style ) ) . '"' : ''; ?>>
+		<div<?php echo $attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?>>
 			<div class="wp-swiper-collage" data-wp-swiper-collage="<?php echo esc_attr( wp_json_encode( $config ) ); ?>">
 				<div class="wp-swiper-collage__grid<?php echo $config['fill'] ? ' wp-swiper-collage__grid--ratio' : ''; ?>"></div>
 				<template class="wp-swiper-collage__pool">

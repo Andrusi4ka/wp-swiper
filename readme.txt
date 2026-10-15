@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,7 +14,8 @@ Image sliders powered by Swiper: build a slider from the media library, pick an 
 
 WP Swiper adds a "WP Swiper" menu where you build image sliders from the media library and show them anywhere with `[wp_swiper id="123"]` or the "WP Swiper" WPBakery element.
 
-* Eight effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles) and Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions).
+* Nine effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles), Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions) and Collage (the photos placed together by a template, a grid, justified rows, masonry or a random mosaic, the others swapped in).
+* A slider can be the background of the row or column it is in, with an overlay; the main image can zoom slowly in or out (Ken Burns).
 * Each effect keeps its own Layout settings, so switching effects never loses what you set.
 * Slides per view, space between slides, border radius and height per device (desktop, tablet, mobile).
 * Slide effect extras: wider active slide, slides as wide as their images, slides per group, continuous scroll (marquee).
@@ -55,6 +56,13 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 1.4.0 =
+* New effect: Collage, last in the effects list — not a slider but the photos placed together: four templates (a big photo on the left / in the middle, mosaic, a wide photo on top), Grid, Justified rows, Masonry and Random mosaic, set per device. Order with Shuffle, photos on screen, columns, row height, gap; with more photos than places, one place at a time fades to a photo not shown yet.
+* New Background page: "Use as background" (Slide, Fade, Collage) — the slider fills the row or column with the class given to it, behind its content, with an overlay colour and a minimum block height per device. It plays on its own: arrows, pagination, keyboard, links, the lightbox and Height are not used. Without such a block it shows as usual, with a note for editors.
+* New in Layout: "Zoom the main image" — the image of the slide in view slowly zooms in or out (Ken Burns) towards a point you choose, for as long as the slide is shown or a set time. For the effects with one main image (Slide with one slide in view or the wider active slide).
+* WPBakery: with the Woodmart theme the WP Swiper element sits in its "Theme elements" tab.
+* languages/wp-swiper.pot: the new strings.
 
 = 1.3.1 =
 * Slider settings: one accent colour (#2271b1) for the plugin's controls and WordPress's own in its boxes (focus rings, buttons, links), whatever the admin colour scheme of the profile; the rest of the admin keeps the scheme.
