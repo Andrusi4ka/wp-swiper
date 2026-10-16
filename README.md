@@ -27,10 +27,14 @@ Use it with `[wp_swiper id="123"]` (the id is shown on the slider's edit screen)
    git tag v1.2.0
    git push origin main --tags
    ```
-3. The **Release** workflow (`.github/workflows/release.yml`) builds `wp-swiper.zip` and publishes a GitHub release for the tag.
+3. The **Release** workflow (`.github/workflows/release.yml`) runs the tests first; once they pass it builds `wp-swiper.zip` and publishes a GitHub release for the tag. If they fail there is no release: fix, commit, then move the tag (`git tag -f v1.2.0`, `git push -f origin v1.2.0`).
 4. Sites with the plugin see the update under **Plugins** (WordPress checks every 12 hours; **Dashboard > Updates > Check again** checks at once).
 
 The tag must match the `Version:` header, without the `v`.
+
+## Tests
+
+PHPUnit tests with the WordPress test suite, run by GitHub Actions on every push and pull request and before every release. How to run them locally: [tests/README.md](tests/README.md).
 
 ## Structure
 
@@ -46,6 +50,8 @@ The tag must match the `Version:` header, without the `v`.
 | `assets/js/frontend.js`, `assets/css/frontend.css` | Slider behaviour and styles |
 | `assets/vendor/swiper` | Swiper 11 (MIT) |
 | `vendor/plugin-update-checker` | Plugin Update Checker 5 (MIT) |
+| `tests/`, `composer.json`, `phpunit.xml.dist` | Tests (not in `wp-swiper.zip`) |
+| `.github/workflows` | Tests on every push; the release, once they pass |
 
 ## License
 

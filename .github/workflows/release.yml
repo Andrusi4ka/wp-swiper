@@ -1,5 +1,6 @@
 # Publishes a release with wp-swiper.zip for every "vX.Y.Z" tag; sites with
-# the plugin then see the update (wp-swiper.php: wp_swiper_updates()).
+# the plugin then see the update (wp-swiper.php: wp_swiper_updates()). Only
+# once the tests (tests.yml) have passed for that tag: otherwise no release.
 name: Release
 
 on:
@@ -11,7 +12,11 @@ permissions:
   contents: write
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
   release:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
