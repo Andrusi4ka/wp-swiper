@@ -199,6 +199,7 @@ class WP_Swiper_Admin {
 		$values = WP_Swiper_Settings::get( $post->ID );
 		$fields = WP_Swiper_Settings::fields();
 		$pages  = WP_Swiper_Settings::pages();
+		$blocks = WP_Swiper_Settings::blocks();
 
 		// Fields per place: Advanced's own, then each menu page's.
 		$keys = array_fill_keys( array_merge( array( 'advanced' ), array_keys( $pages ) ), array() );
@@ -258,7 +259,11 @@ class WP_Swiper_Admin {
 				self::help_tip( __( 'Shown before a video plays and as its thumbnail. Without one: the video’s featured image in the media library, else its first frame.', 'wp-swiper' ) );
 				echo '</div><ul class="wp-swiper-posters__list"></ul></div>';
 			}
-			self::render_fields( $keys[ $page ], $fields, $values );
+			if ( isset( $blocks[ $page ] ) ) {
+				self::render_blocks( $blocks[ $page ], $keys[ $page ], $fields, $values );
+			} else {
+				self::render_fields( $keys[ $page ], $fields, $values );
+			}
 			echo '</fieldset>';
 		}
 		echo '</div>';
@@ -326,8 +331,32 @@ class WP_Swiper_Admin {
 	}
 
 	/**
+	 * A page's fields in its blocks (WP_Swiper_Settings::blocks()): each with
+	 * its title, in the block's order; admin.js hides a block once none of its
+	 * fields is shown. Fields in no block come after them.
+	 *
+	 * @param array    $blocks The page's blocks.
+	 * @param string[] $keys   The page's fields.
+	 * @param array    $fields All field definitions.
+	 * @param array    $values Saved settings.
+	 */
+	private static function render_blocks( $blocks, $keys, $fields, $values ) {
+		foreach ( $blocks as $name => $block ) {
+			$in = array_values( array_intersect( $block['fields'], $keys ) );
+			if ( ! $in ) {
+				continue;
+			}
+			printf( '<div class="wp-swiper-block" data-block="%s"><h4 class="wp-swiper-subheading">%s</h4>', esc_attr( $name ), esc_html( $block['title'] ) );
+			self::render_fields( $in, $fields, $values );
+			echo '</div>';
+			$keys = array_diff( $keys, $in );
+		}
+		self::render_fields( array_values( $keys ), $fields, $values );
+	}
+
+	/**
 	 * Fields one after another; consecutive ones sharing a "group" sit side
-	 * by side in one row, and a field's "heading" goes over it.
+	 * by side in one row.
 	 *
 	 * @param string[] $keys   Field names, in order.
 	 * @param array    $fields All field definitions.
@@ -338,11 +367,6 @@ class WP_Swiper_Admin {
 		foreach ( $keys as $key ) {
 			$field       = $fields[ $key ];
 			$field_group = isset( $field['group'] ) ? $field['group'] : null;
-			if ( ! empty( $field['heading'] ) ) {
-				echo $group ? '</div>' : '';
-				$group = null;
-				echo '<h4 class="wp-swiper-subheading">' . esc_html( $field['heading'] ) . '</h4>';
-			}
 			if ( $field_group !== $group ) {
 				echo $group ? '</div>' : '';
 				echo $field_group ? '<div class="wp-swiper-field-group">' : '';
@@ -442,14 +466,14 @@ class WP_Swiper_Admin {
 							value="<?php echo esc_attr( $value ); ?>"
 							min="<?php echo esc_attr( $field['min'] ); ?>"
 							max="<?php echo esc_attr( $field['max'] ); ?>"
-							step="<?php echo esc_attr( $field['step'] ); ?>">
+							step="<?php echo esc_attr( $field['step'] ); ?>"<?php echo empty( $field['placeholder'] ) ? '' : ' placeholder="' . esc_attr( $field['placeholder'] ) . '"'; ?>>
 					</div>
 				<?php else : ?>
 					<input type="number" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
 						value="<?php echo esc_attr( $value ); ?>"
 						min="<?php echo esc_attr( $field['min'] ); ?>"
 						max="<?php echo esc_attr( $field['max'] ); ?>"
-						step="<?php echo esc_attr( $field['step'] ); ?>">
+						step="<?php echo esc_attr( $field['step'] ); ?>"<?php echo empty( $field['placeholder'] ) ? '' : ' placeholder="' . esc_attr( $field['placeholder'] ) . '"'; ?>>
 				<?php endif; ?>
 			<?php endif; ?>
 		</div>

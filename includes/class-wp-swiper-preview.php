@@ -116,6 +116,11 @@ class WP_Swiper_Preview {
 		.wp-swiper-preview-page { box-sizing: border-box; min-height: 100vh; padding: 24px; }
 		@media (max-width: 767px) { .wp-swiper-preview-page { padding: 12px; } }
 		.wp-swiper-preview-block { background: #f0f0f1; }
+		/* Background: the block at a screen's usual proportions per device, unless
+		   it has a minimum height of its own (shown as set; more content makes it taller). */
+		.wp-swiper-preview-block.wp-swiper-bg-host:not(.wp-swiper-bg-host--min) { aspect-ratio: 16 / 9; }
+		@media (max-width: 1024px) { .wp-swiper-preview-block.wp-swiper-bg-host:not(.wp-swiper-bg-host--min) { aspect-ratio: 4 / 3; } }
+		@media (max-width: 767px) { .wp-swiper-preview-block.wp-swiper-bg-host:not(.wp-swiper-bg-host--min) { aspect-ratio: 3 / 4; } }
 		.wp-swiper-preview-block__content { box-sizing: border-box; max-width: 640px; padding: 72px 40px; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
 		.wp-swiper-preview-block__content h2 { margin: 0 0 12px; font-size: 32px; line-height: 1.2; }
 		.wp-swiper-preview-block__content p { margin: 0 0 24px; }

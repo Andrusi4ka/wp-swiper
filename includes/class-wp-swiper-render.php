@@ -132,6 +132,11 @@ class WP_Swiper_Render {
 			$settings['keyboard']   = false;
 		}
 
+		// Continuous scroll runs on its own: no pagination (nor its classes and look).
+		if ( WP_Swiper_Settings::is_marquee( $settings ) ) {
+			$settings['pagination'] = 'none';
+		}
+
 		// Collage: not a slider. Its places crop their photos (they keep their
 		// size whatever photo comes in) and it has no controls of its own.
 		if ( WP_Swiper_Settings::is_collage( $settings ) ) {
@@ -645,6 +650,14 @@ class WP_Swiper_Render {
 				$classes[] = 'wp-swiper--pagv-' . $align; // top | center | bottom
 			}
 			$classes[] = 'wp-swiper--pag-' . $settings['pagination_placement'];
+			// Its own colours, over the white / text colour ones.
+			if ( $settings['pagination_colors'] ) {
+				$classes[] = 'wp-swiper--pag-colors';
+			}
+			// A fraction size on some device.
+			if ( array_filter( WP_Swiper_Settings::responsive( $settings, 'pagination_fraction_size' ), 'strlen' ) ) {
+				$classes[] = 'wp-swiper--fraction-size';
+			}
 		}
 		// The slider's own CSS class (Advanced) plus any set where it is placed.
 		$classes[] = WP_Swiper_Settings::sanitize_classes( $settings['css_class'] . ' ' . $extra_class );
@@ -710,6 +723,34 @@ class WP_Swiper_Render {
 				if ( '' !== $size ) {
 					$style[] = '--wp-swiper-arrow-size' . $suffix[ $device ] . ':' . (int) $size . 'px';
 				}
+			}
+		}
+
+		// Pagination look (frontend.css hands these to Swiper's own properties):
+		// bullet size, shape, spacing and the current one's length per device,
+		// where set; the fraction's size; its own colours.
+		if ( 'none' !== $settings['pagination'] ) {
+			$pagination = array(
+				'bullet-width'  => 'pagination_bullet_width',
+				'bullet-height' => 'pagination_bullet_height',
+				'bullet-gap'    => 'pagination_bullet_gap',
+				'bullet-active' => 'pagination_bullet_active',
+				'fraction-size' => 'pagination_fraction_size',
+			);
+			foreach ( $pagination as $name => $key ) {
+				foreach ( WP_Swiper_Settings::responsive( $settings, $key ) as $device => $value ) {
+					if ( '' !== $value ) {
+						$style[] = '--wp-swiper-' . $name . $suffix[ $device ] . ':' . (int) $value . 'px';
+					}
+				}
+			}
+			if ( '' !== $settings['pagination_bullet_radius'] ) {
+				$style[] = '--wp-swiper-bullet-radius:' . (int) $settings['pagination_bullet_radius'] . 'px';
+			}
+			if ( $settings['pagination_colors'] ) {
+				$style[] = '--wp-swiper-pag-color:' . $settings['pagination_color'];
+				$style[] = '--wp-swiper-pag-inactive-color:' . $settings['pagination_inactive_color'];
+				$style[] = '--wp-swiper-pag-inactive-opacity:' . max( 0, min( 100, (int) $settings['pagination_inactive_opacity'] ) ) / 100;
 			}
 		}
 

@@ -532,7 +532,7 @@
 		// Their own class, .is-unused: .is-disabled belongs to the locks above,
 		// which run first (syncFields) and may enable a control this then disables again.
 		var $controlsBox = $( '#wp-swiper-page-controls' );
-		var $controlsUnused = $controlsBox.find( [ 'pagination', 'pagination_position', 'pagination_position_vertical', 'pagination_placement', 'pagination_offset', 'keyboard' ].map( function ( name ) {
+		var $controlsUnused = $controlsBox.find( [ 'pagination', 'pagination_position', 'pagination_position_vertical', 'pagination_placement', 'pagination_offset', 'pagination_bullet_width', 'pagination_bullet_height', 'pagination_bullet_radius', 'pagination_bullet_gap', 'pagination_bullet_active', 'pagination_fraction_size', 'pagination_colors', 'pagination_color', 'pagination_inactive_color', 'pagination_inactive_opacity', 'keyboard' ].map( function ( name ) {
 			return '.wp-swiper-field[data-field="' + name + '"]';
 		} ).join( ', ' ) );
 		var controlsLocked = false;
@@ -716,6 +716,18 @@
 			field( 'pagination_position_vertical' ).toggle( paginated && vertical );
 			field( 'pagination_placement' ).toggle( paginated );
 			field( 'pagination_offset' ).toggle( paginated );
+			// Its look: the bullets' or the fraction's, and its own colours once on
+			// (the fraction has one colour: the current one's).
+			var bullets = paginated && $( '#wp-swiper-pagination' ).val() === 'bullets';
+			[ 'pagination_bullet_width', 'pagination_bullet_height', 'pagination_bullet_radius', 'pagination_bullet_gap', 'pagination_bullet_active' ].forEach( function ( name ) {
+				field( name ).toggle( bullets );
+			} );
+			field( 'pagination_fraction_size' ).toggle( paginated && ! bullets );
+			field( 'pagination_colors' ).toggle( paginated );
+			var ownColors = paginated && $( '#wp-swiper-pagination_colors' ).is( ':checked' );
+			field( 'pagination_color' ).toggle( ownColors );
+			field( 'pagination_inactive_color' ).toggle( ownColors && bullets );
+			field( 'pagination_inactive_opacity' ).toggle( ownColors && bullets );
 
 			// Collage: the fields of the Style of the device being edited (the
 			// device switch; an empty tablet / mobile Style inherits), so a
@@ -756,6 +768,16 @@
 			// A row of fields goes too once all of them are hidden (its spacing would stay).
 			$( '.wp-swiper-field-group' ).each( function () {
 				$( this ).toggle( $( this ).children( '.wp-swiper-field' ).filter( shown ).length > 0 );
+			} );
+			// A block (its title) goes with its last field; the first one left on
+			// a page has no line over it (CSS).
+			$( '.wp-swiper-block' ).each( function () {
+				$( this ).toggle( $( this ).find( '.wp-swiper-field' ).filter( shown ).length > 0 );
+			} );
+			$( '.wp-swiper-page' ).each( function () {
+				$( this ).find( '.wp-swiper-block' ).removeClass( 'is-first' ).filter( function () {
+					return this.style.display !== 'none';
+				} ).first().addClass( 'is-first' );
 			} );
 			// So does the menu item of a page with nothing left in it.
 			$( '.wp-swiper-page' ).each( function () {

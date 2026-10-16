@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,7 +20,7 @@ WP Swiper adds a "WP Swiper" menu where you build image sliders from the media l
 * Slides per view, space between slides, border radius and height per device (desktop, tablet, mobile).
 * Slide effect extras: wider active slide, slides as wide as their images, slides per group, continuous scroll (marquee).
 * Image fit Cover or Contain, height in px / vh / % or Auto (fills the parent column).
-* Arrows (with their own colour), bullets or fraction pagination in six positions over or outside the slider, keyboard control, autoplay, infinite loop.
+* Arrows (with their own colour), bullets or fraction pagination in six positions over or outside the slider, with their own size, shape, spacing and colours and a "pill" current bullet, keyboard control, autoplay, infinite loop.
 * Lightbox with zoom (and, with Thumbnails, the strip of thumbnails in it), per-slide links (optionally in a new tab), captions with their own typography and background.
 * Video slides from the media library or from a YouTube / Vimeo link, with a poster image: the video of the slide in view plays (muted, looped, with or without controls), the slider can wait for its end, and a file or player loads only when its slide comes up (YouTube in its privacy-enhanced mode). Videos open in the lightbox too, with sound.
 * Preview beside the settings: the slider as the current settings draw it, saved or not, as on a desktop, tablet or phone (refreshed with its Update button).
@@ -56,6 +56,15 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.0.0 =
+* New: pagination style (Controls). Bullet width and height per device, border radius (empty: round; 0: square), space between bullets per device, and a longer current bullet ("pill"), wider in a row and taller in a column, growing and shrinking smoothly. Fraction font size per device. "Own pagination colors": the current bullet's, the others' and their opacity (the fraction takes the current one's); off, white over the slider and the page's text colour outside it as before. Sliders saved before look the same.
+* Settings: Layout and Controls in blocks with titles, like the Thumbnails page — Controls: Movement, Arrows and keyboard, Pagination, Pagination style; Layout: Effect, Arrangement and Photo swapping (Collage), Slides, Size and fit, Look, Zoom. A block with none of its fields in use for the chosen effect is hidden. Some Layout fields moved with their block.
+* Settings: whatever is unavailable (greyed) has one light grey, switches on or off alike (the knob shows which), and the Controls fields the Thumbnails effect does not use are greyed like the others.
+* Settings: number fields that may stay empty show what empty means ("Round", "Auto").
+* Preview of a background: the block at a screen's proportions, 16:9 on desktop, 4:3 on tablet and 3:4 on mobile, unless it has a minimum height of its own.
+* Continuous scroll: no pagination classes or styles in the markup (it has no pagination).
+* Development: PHPUnit tests with the WordPress test suite (tests/), run by GitHub Actions on every push on PHP 7.4 and 8.3 with WordPress 6.0 and 7.1; a release is published only once they pass.
 
 = 1.4.0 =
 * New effect: Collage, last in the effects list — not a slider but the photos placed together: four templates (a big photo on the left / in the middle, mosaic, a wide photo on top), Grid, Justified rows, Masonry and Random mosaic, set per device. Order with Shuffle, photos on screen, columns, row height, gap; with more photos than places, one place at a time fades to a photo not shown yet.

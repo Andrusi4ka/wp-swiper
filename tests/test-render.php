@@ -136,6 +136,77 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringNotContainsString( 'class="swiper-pagination', $none );
 	}
 
+	public function test_pagination_look_defaults_keep_the_old_bullets() {
+		$html  = $this->render();
+		$style = $this->root_style( $html );
+
+		// 8px circles, as before; nothing else set.
+		$this->assertStringContainsString( '--wp-swiper-bullet-width:8px', $style );
+		$this->assertStringContainsString( '--wp-swiper-bullet-height:8px', $style );
+		foreach ( array( 'bullet-radius', 'bullet-gap', 'bullet-active', 'fraction-size', 'pag-color' ) as $name ) {
+			$this->assertStringNotContainsString( '--wp-swiper-' . $name, $style, $name );
+		}
+		$this->assertNotContains( 'wp-swiper--pag-colors', $this->root_classes( $html ) );
+		$this->assertNotContains( 'wp-swiper--fraction-size', $this->root_classes( $html ) );
+	}
+
+	public function test_pagination_bullets_per_device_and_pill() {
+		$style = $this->root_style(
+			$this->render(
+				array(
+					'pagination_bullet_width'         => 10,
+					'pagination_bullet_height'        => 4,
+					'pagination_bullet_height_mobile' => 3,
+					'pagination_bullet_radius'        => 0,
+					'pagination_bullet_gap'           => '',
+					'pagination_bullet_gap_tablet'    => 6,
+					'pagination_bullet_active'        => 30,
+				)
+			)
+		);
+
+		$this->assertStringContainsString( '--wp-swiper-bullet-width:10px', $style );
+		$this->assertStringContainsString( '--wp-swiper-bullet-width-mobile:10px', $style );
+		$this->assertStringContainsString( '--wp-swiper-bullet-height-tablet:4px', $style );
+		$this->assertStringContainsString( '--wp-swiper-bullet-height-mobile:3px', $style );
+		$this->assertStringContainsString( '--wp-swiper-bullet-radius:0px', $style );
+		// No gap on desktop (Swiper's own); the tablet's, inherited by mobile.
+		$this->assertStringNotContainsString( '--wp-swiper-bullet-gap:', $style );
+		$this->assertStringContainsString( '--wp-swiper-bullet-gap-tablet:6px', $style );
+		$this->assertStringContainsString( '--wp-swiper-bullet-gap-mobile:6px', $style );
+		$this->assertStringContainsString( '--wp-swiper-bullet-active:30px', $style );
+	}
+
+	public function test_pagination_own_colors_and_fraction_size() {
+		$html = $this->render(
+			array(
+				'pagination'                  => 'fraction',
+				'pagination_colors'           => true,
+				'pagination_color'            => '#ff0000',
+				'pagination_inactive_color'   => '#00ff00',
+				'pagination_inactive_opacity' => 30,
+				'pagination_fraction_size_mobile' => 12,
+			)
+		);
+		$style = $this->root_style( $html );
+
+		$this->assertContains( 'wp-swiper--pag-colors', $this->root_classes( $html ) );
+		$this->assertContains( 'wp-swiper--fraction-size', $this->root_classes( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-pag-color:#ff0000', $style );
+		$this->assertStringContainsString( '--wp-swiper-pag-inactive-color:#00ff00', $style );
+		$this->assertStringContainsString( '--wp-swiper-pag-inactive-opacity:0.3', $style );
+		$this->assertStringContainsString( '--wp-swiper-fraction-size-mobile:12px', $style );
+		$this->assertStringNotContainsString( '--wp-swiper-fraction-size:', $style );
+	}
+
+	public function test_no_pagination_look_without_pagination() {
+		foreach ( array( array( 'pagination' => 'none' ), array( 'effect' => 'thumbs' ), array( 'marquee' => true ), array( 'background' => true ) ) as $values ) {
+			$html = $this->render( $values + array( 'pagination_colors' => true, 'pagination_bullet_active' => 30 ) );
+			$this->assertStringNotContainsString( '--wp-swiper-bullet', $this->root_style( $html ), wp_json_encode( $values ) );
+			$this->assertNotContains( 'wp-swiper--pag-colors', $this->root_classes( $html ), wp_json_encode( $values ) );
+		}
+	}
+
 	public function test_captions_are_escaped_and_tag_whitelisted() {
 		$html = $this->render( array( 'caption_tag' => 'script' ), $this->slides( 1, array( 'caption' => '<b>Bold</b> & co' ) ) );
 		$this->assertStringContainsString( '<div class="wp-swiper__caption-text">&lt;b&gt;Bold&lt;/b&gt; &amp; co</div>', $html );

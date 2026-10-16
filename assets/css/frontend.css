@@ -1568,3 +1568,99 @@ html.wp-swiper-lightbox-open {
 		transform: none;
 	}
 }
+
+/* Pagination look (Controls; render.php sets the --wp-swiper-* ones given,
+   inheritance resolved): Swiper's own properties from them. Without any,
+   the bullets Swiper always drew: 8px circles, 8px apart in a row and 12px
+   in a column. */
+.wp-swiper {
+	--swiper-pagination-bullet-width: var(--wp-swiper-bullet-width, 8px);
+	--swiper-pagination-bullet-height: var(--wp-swiper-bullet-height, 8px);
+	--swiper-pagination-bullet-border-radius: var(--wp-swiper-bullet-radius, 999px);
+	--swiper-pagination-bullet-horizontal-gap: calc(var(--wp-swiper-bullet-gap, 8px) / 2);
+	--swiper-pagination-bullet-vertical-gap: calc(var(--wp-swiper-bullet-gap, 12px) / 2);
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper {
+		--swiper-pagination-bullet-width: var(--wp-swiper-bullet-width-tablet, var(--wp-swiper-bullet-width, 8px));
+		--swiper-pagination-bullet-height: var(--wp-swiper-bullet-height-tablet, var(--wp-swiper-bullet-height, 8px));
+		--swiper-pagination-bullet-horizontal-gap: calc(var(--wp-swiper-bullet-gap-tablet, var(--wp-swiper-bullet-gap, 8px)) / 2);
+		--swiper-pagination-bullet-vertical-gap: calc(var(--wp-swiper-bullet-gap-tablet, var(--wp-swiper-bullet-gap, 12px)) / 2);
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper {
+		--swiper-pagination-bullet-width: var(--wp-swiper-bullet-width-mobile, var(--wp-swiper-bullet-width-tablet, var(--wp-swiper-bullet-width, 8px)));
+		--swiper-pagination-bullet-height: var(--wp-swiper-bullet-height-mobile, var(--wp-swiper-bullet-height-tablet, var(--wp-swiper-bullet-height, 8px)));
+		--swiper-pagination-bullet-horizontal-gap: calc(var(--wp-swiper-bullet-gap-mobile, var(--wp-swiper-bullet-gap-tablet, var(--wp-swiper-bullet-gap, 8px))) / 2);
+		--swiper-pagination-bullet-vertical-gap: calc(var(--wp-swiper-bullet-gap-mobile, var(--wp-swiper-bullet-gap-tablet, var(--wp-swiper-bullet-gap, 12px))) / 2);
+	}
+}
+
+/* "Current bullet length": the current one longer along the pagination (a
+   pill), growing and shrinking as it moves on. */
+.wp-swiper .swiper-pagination-bullet {
+	transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease, background-color 0.3s ease;
+}
+
+.wp-swiper .swiper-pagination-horizontal .swiper-pagination-bullet-active {
+	width: var(--wp-swiper-bullet-active, var(--swiper-pagination-bullet-width));
+}
+
+.wp-swiper .swiper-pagination-vertical .swiper-pagination-bullet-active {
+	height: var(--wp-swiper-bullet-active, var(--swiper-pagination-bullet-height));
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper .swiper-pagination-horizontal .swiper-pagination-bullet-active {
+		width: var(--wp-swiper-bullet-active-tablet, var(--wp-swiper-bullet-active, var(--swiper-pagination-bullet-width)));
+	}
+
+	.wp-swiper .swiper-pagination-vertical .swiper-pagination-bullet-active {
+		height: var(--wp-swiper-bullet-active-tablet, var(--wp-swiper-bullet-active, var(--swiper-pagination-bullet-height)));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper .swiper-pagination-horizontal .swiper-pagination-bullet-active {
+		width: var(--wp-swiper-bullet-active-mobile, var(--wp-swiper-bullet-active-tablet, var(--wp-swiper-bullet-active, var(--swiper-pagination-bullet-width))));
+	}
+
+	.wp-swiper .swiper-pagination-vertical .swiper-pagination-bullet-active {
+		height: var(--wp-swiper-bullet-active-mobile, var(--wp-swiper-bullet-active-tablet, var(--wp-swiper-bullet-active, var(--swiper-pagination-bullet-height))));
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wp-swiper .swiper-pagination-bullet {
+		transition: none;
+	}
+}
+
+/* "Fraction font size", where set (1em: the size it has without one). */
+.wp-swiper--fraction-size .swiper-pagination-fraction {
+	font-size: var(--wp-swiper-fraction-size, 1em);
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper--fraction-size .swiper-pagination-fraction {
+		font-size: var(--wp-swiper-fraction-size-tablet, var(--wp-swiper-fraction-size, 1em));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper--fraction-size .swiper-pagination-fraction {
+		font-size: var(--wp-swiper-fraction-size-mobile, var(--wp-swiper-fraction-size-tablet, var(--wp-swiper-fraction-size, 1em)));
+	}
+}
+
+/* "Own pagination colors": over the white (inside) and text colour
+   (outside) ones above, on the pagination itself as those are. */
+.wp-swiper.wp-swiper--pag-colors .swiper-pagination {
+	--swiper-pagination-color: var(--wp-swiper-pag-color);
+	--swiper-pagination-bullet-inactive-color: var(--wp-swiper-pag-inactive-color);
+	--swiper-pagination-bullet-inactive-opacity: var(--wp-swiper-pag-inactive-opacity);
+	--swiper-pagination-fraction-color: var(--wp-swiper-pag-color);
+}

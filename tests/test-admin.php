@@ -143,6 +143,18 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		foreach ( array_keys( WP_Swiper_Settings::pages() ) as $page ) {
 			$this->assertStringContainsString( 'id="wp-swiper-page-' . $page . '"', $html );
 		}
+		// Blocks: their titles and fields, in their order.
+		foreach ( WP_Swiper_Settings::blocks() as $page => $blocks ) {
+			$this->assertSame( 1, preg_match( '#<fieldset[^>]*id="wp-swiper-page-' . $page . '"[^>]*>(.*?)</fieldset>#s', $html, $match ), $page );
+			$last = -1;
+			foreach ( $blocks as $name => $block ) {
+				$at = strpos( $match[1], 'data-block="' . $name . '"' );
+				$this->assertNotFalse( $at, "$page/$name" );
+				$this->assertGreaterThan( $last, $at, "$page/$name in order" );
+				$this->assertStringContainsString( '<h4 class="wp-swiper-subheading">' . esc_html( $block['title'] ) . '</h4>', $match[1] );
+				$last = $at;
+			}
+		}
 		// The effects a field belongs to, for admin.js.
 		$this->assertStringContainsString( 'data-field="background" data-effects="slide fade collage"', $html );
 		$this->assertStringContainsString( 'id="wp-swiper-layouts"', $html );

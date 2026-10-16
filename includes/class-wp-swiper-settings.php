@@ -277,6 +277,124 @@ class WP_Swiper_Settings {
 				'step'    => 1,
 				'help'    => __( 'Distance from the slider edge (over the slider) or gap to the slider (outside).', 'wp-swiper' ),
 			),
+			// Bullets: their size and shape per device (the CSS custom properties
+			// Swiper reads, see WP_Swiper_Render::markup()). The defaults are the
+			// look the bullets always had.
+			'pagination_bullet_width' => array(
+				'section'    => 'advanced',
+				'panel'      => 'controls',
+				'label'      => __( 'Bullet width (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 8,
+				'min'        => 2,
+				'max'        => 60,
+				'step'       => 1,
+			),
+			'pagination_bullet_height' => array(
+				'section'    => 'advanced',
+				'panel'      => 'controls',
+				'label'      => __( 'Bullet height (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 8,
+				'min'        => 2,
+				'max'        => 60,
+				'step'       => 1,
+			),
+			// Empty: fully rounded (a circle, or a pill when wider than tall).
+			'pagination_bullet_radius' => array(
+				'section'     => 'advanced',
+				'panel'       => 'controls',
+				'label'       => __( 'Bullet border radius (px)', 'wp-swiper' ),
+				'type'        => 'number',
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 0,
+				'max'         => 30,
+				'step'        => 1,
+				'placeholder' => __( 'Round', 'wp-swiper' ),
+				'help'        => __( 'Empty: fully rounded, a circle or, when wider than tall, a pill. 0 = square corners.', 'wp-swiper' ),
+			),
+			// Empty: Swiper's own spacing (8px in a row, 12px in a column).
+			'pagination_bullet_gap' => array(
+				'section'     => 'advanced',
+				'panel'       => 'controls',
+				'label'       => __( 'Space between bullets (px)', 'wp-swiper' ),
+				'type'        => 'number',
+				'responsive'  => true,
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 0,
+				'max'         => 40,
+				'step'        => 1,
+				'placeholder' => __( 'Auto', 'wp-swiper' ),
+			),
+			// The "pill": the current bullet longer than the others (frontend.css).
+			'pagination_bullet_active' => array(
+				'section'     => 'advanced',
+				'panel'       => 'controls',
+				'label'       => __( 'Current bullet length (px)', 'wp-swiper' ),
+				'type'        => 'number',
+				'responsive'  => true,
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 2,
+				'max'         => 120,
+				'step'        => 1,
+				'placeholder' => __( 'As the others', 'wp-swiper' ),
+				'help'        => __( 'Makes the current bullet longer than the others, e.g. 24 for a pill: wider in a row, taller in a column (vertical sliders). It grows and shrinks smoothly. Empty: as the others.', 'wp-swiper' ),
+			),
+			'pagination_fraction_size' => array(
+				'section'     => 'advanced',
+				'panel'       => 'controls',
+				'label'       => __( 'Fraction font size (px)', 'wp-swiper' ),
+				'type'        => 'number',
+				'responsive'  => true,
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 8,
+				'max'         => 60,
+				'step'        => 1,
+				'placeholder' => __( 'Auto', 'wp-swiper' ),
+			),
+			// Off: white over the slider, the page's text colour outside it.
+			'pagination_colors'     => array(
+				'section' => 'advanced',
+				'panel'   => 'controls',
+				'label'   => __( 'Own pagination colors', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'Off: white over the slider; outside it, the colour of the page’s text.', 'wp-swiper' ),
+			),
+			// One row: the current one, the others and how see-through they are.
+			'pagination_color'      => array(
+				'section' => 'advanced',
+				'panel'   => 'controls',
+				'group'   => 'pagination_colors',
+				'label'   => __( 'Current', 'wp-swiper' ),
+				'type'    => 'color',
+				'default' => '#ffffff',
+			),
+			'pagination_inactive_color' => array(
+				'section' => 'advanced',
+				'panel'   => 'controls',
+				'group'   => 'pagination_colors',
+				'label'   => __( 'Others', 'wp-swiper' ),
+				'type'    => 'color',
+				'default' => '#ffffff',
+			),
+			'pagination_inactive_opacity' => array(
+				'section' => 'advanced',
+				'panel'   => 'controls',
+				'group'   => 'pagination_colors',
+				'label'   => __( 'Others’ opacity (%)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 50,
+				'min'     => 0,
+				'max'     => 100,
+				'step'    => 5,
+			),
 			'keyboard'              => array(
 				'section' => 'advanced',
 				'panel'   => 'controls',
@@ -900,11 +1018,10 @@ class WP_Swiper_Settings {
 			// Thumbnails effect: the strip of small images that picks the slide, on
 			// a page of its own ("panel"); still Layout values, kept per effect.
 			// Per device: tablet and mobile may stay empty (inherit), as the numbers do.
-			// "heading": a title over it and the fields after it on that page.
+			// Its blocks (Placement, Size, Look): blocks().
 			'thumbs_position'       => array(
 				'section'    => 'layout',
 				'panel'      => 'thumbs',
-				'heading'    => __( 'Placement', 'wp-swiper' ),
 				'effects'    => array( 'thumbs' ),
 				'label'      => __( 'Thumbnails position', 'wp-swiper' ),
 				'type'       => 'select',
@@ -946,7 +1063,6 @@ class WP_Swiper_Settings {
 			'thumbs_per_view'       => array(
 				'section'         => 'layout',
 				'panel'           => 'thumbs',
-				'heading'         => __( 'Size', 'wp-swiper' ),
 				'effects'         => array( 'thumbs' ),
 				'label'           => __( 'Thumbnails per view', 'wp-swiper' ),
 				'type'            => 'number',
@@ -1023,7 +1139,6 @@ class WP_Swiper_Settings {
 			'thumbs_radius'         => array(
 				'section'    => 'layout',
 				'panel'      => 'thumbs',
-				'heading'    => __( 'Look', 'wp-swiper' ),
 				'effects'    => array( 'thumbs' ),
 				'label'      => __( 'Thumbnail border radius (px)', 'wp-swiper' ),
 				'type'       => 'number',
@@ -1604,6 +1719,113 @@ class WP_Swiper_Settings {
 			'attributes' => array( __( 'Custom', 'wp-swiper' ), 'dashicons-editor-code' ),
 			// The slider behind its block's content (its menu item shows for the effects that can be).
 			'background' => array( __( 'Background', 'wp-swiper' ), 'dashicons-format-image' ),
+		);
+	}
+
+	/**
+	 * The blocks some pages of the menu are in: a title over each and its
+	 * fields in this order (admin.js hides a block with none of them shown).
+	 * A field of such a page in no block would come after them.
+	 *
+	 * @return array page => [ block => [ 'title' => string, 'fields' => string[] ] ]
+	 */
+	public static function blocks() {
+		return array(
+			'controls' => array(
+				'movement'         => array(
+					'title'  => __( 'Movement', 'wp-swiper' ),
+					'fields' => array( 'speed', 'loop', 'autoplay', 'autoplay_delay', 'pause_on_hover' ),
+				),
+				'navigation'       => array(
+					'title'  => __( 'Arrows and keyboard', 'wp-swiper' ),
+					'fields' => array( 'navigation', 'navigation_color', 'navigation_size', 'keyboard' ),
+				),
+				'pagination'       => array(
+					'title'  => __( 'Pagination', 'wp-swiper' ),
+					'fields' => array( 'pagination', 'pagination_position', 'pagination_position_vertical', 'pagination_placement', 'pagination_offset' ),
+				),
+				'pagination_style' => array(
+					'title'  => __( 'Pagination style', 'wp-swiper' ),
+					'fields' => array(
+						'pagination_bullet_width',
+						'pagination_bullet_height',
+						'pagination_bullet_radius',
+						'pagination_bullet_gap',
+						'pagination_bullet_active',
+						'pagination_fraction_size',
+						'pagination_colors',
+						'pagination_color',
+						'pagination_inactive_color',
+						'pagination_inactive_opacity',
+					),
+				),
+			),
+			'layout'   => array(
+				// The chosen effect's own settings (the others are hidden), its
+				// style first: what follows depends on it.
+				'effect'      => array(
+					'title'  => __( 'Effect', 'wp-swiper' ),
+					'fields' => array(
+						'creative_style',
+						'creative_neighbours',
+						'creative_offset',
+						'creative_scale',
+						'creative_opacity',
+						'thumbs_transition',
+						'coverflow_rotate',
+						'coverflow_depth',
+						'coverflow_stretch',
+						'coverflow_scale',
+						'cube_shadow',
+						'cube_shadow_offset',
+						'cube_shadow_scale',
+						'cube_shadow_opacity',
+						'cube_slide_shadows',
+						'cards_offset',
+						'cards_tilt',
+						'cards_rotate',
+						'effect_shadows',
+					),
+				),
+				'arrangement' => array(
+					'title'  => __( 'Arrangement', 'wp-swiper' ),
+					'fields' => array( 'collage_layout', 'collage_seed', 'collage_count', 'collage_columns', 'collage_row_height', 'collage_row_exact', 'collage_gap' ),
+				),
+				'swapping'    => array(
+					'title'  => __( 'Photo swapping', 'wp-swiper' ),
+					'fields' => array( 'collage_swap', 'collage_swap_delay', 'collage_swap_speed', 'collage_pause' ),
+				),
+				'slides'      => array(
+					'title'  => __( 'Slides', 'wp-swiper' ),
+					'fields' => array( 'slides_per_view', 'auto_width', 'slides_per_group', 'space_between', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed' ),
+				),
+				'size'        => array(
+					'title'  => __( 'Size and fit', 'wp-swiper' ),
+					'fields' => array( 'height', 'image_fit', 'image_align', 'image_align_vertical' ),
+				),
+				'look'        => array(
+					'title'  => __( 'Look', 'wp-swiper' ),
+					'fields' => array( 'border_radius', 'image_border', 'image_border_width', 'image_border_color' ),
+				),
+				'zoom'        => array(
+					'title'  => __( 'Zoom', 'wp-swiper' ),
+					'fields' => array( 'zoom', 'zoom_direction', 'zoom_amount', 'zoom_origin', 'zoom_duration' ),
+				),
+			),
+			'thumbs'   => array(
+				'placement' => array(
+					'title'  => __( 'Placement', 'wp-swiper' ),
+					'fields' => array( 'thumbs_position', 'thumbs_align', 'thumbs_spacing' ),
+				),
+				'size'      => array(
+					'title'  => __( 'Size', 'wp-swiper' ),
+					'fields' => array( 'thumbs_per_view', 'thumbs_height', 'thumbs_gap', 'thumbs_ratio', 'thumbs_ratio_custom' ),
+				),
+				'look'      => array(
+					'title'  => __( 'Look', 'wp-swiper' ),
+					'fields' => array( 'thumbs_radius', 'thumbs_border_width', 'thumbs_border_color', 'thumbs_active_color', 'thumbs_opacity' ),
+				),
+			),
 		);
 	}
 

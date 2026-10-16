@@ -45,6 +45,31 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		}
 	}
 
+	public function test_every_field_of_a_page_with_blocks_is_in_one_block() {
+		$fields = WP_Swiper_Settings::fields();
+		foreach ( WP_Swiper_Settings::blocks() as $page => $blocks ) {
+			$this->assertArrayHasKey( $page, WP_Swiper_Settings::pages() );
+
+			$on_page = array();
+			foreach ( $fields as $key => $field ) {
+				if ( empty( $field['inline_in'] ) && ( isset( $field['panel'] ) ? $field['panel'] : $field['section'] ) === $page ) {
+					$on_page[] = $key;
+				}
+			}
+			$in_blocks = array();
+			foreach ( $blocks as $name => $block ) {
+				$this->assertNotEmpty( $block['title'], "$page/$name" );
+				foreach ( $block['fields'] as $key ) {
+					$this->assertContains( $key, $on_page, "$page/$name: $key is not a field of this page." );
+				}
+				$in_blocks = array_merge( $in_blocks, $block['fields'] );
+			}
+			sort( $on_page );
+			sort( $in_blocks );
+			$this->assertSame( $on_page, $in_blocks, "$page: every field in exactly one block." );
+		}
+	}
+
 	public function test_sanitize_clamps_and_validates_each_type() {
 		$clean = WP_Swiper_Settings::sanitize(
 			array(

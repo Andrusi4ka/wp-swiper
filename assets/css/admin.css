@@ -15,6 +15,10 @@
 	--wp-admin-theme-color-darker-10--rgb: 19, 94, 150;
 	--wp-admin-theme-color-darker-20: #0a4b78;
 	--wp-admin-theme-color-darker-20--rgb: 10, 75, 120;
+	/* Whatever is unavailable (greyed): one light grey for its fills, lines
+	   and controls, and the grey of its text. */
+	--wp-swiper-disabled: #dcdcde;
+	--wp-swiper-disabled-text: #a7aaad;
 }
 
 #wp-swiper-slides a,
@@ -628,8 +632,9 @@
 }
 
 /* Nothing to switch between: every device shows the fixed value. */
-.wp-swiper-field.is-disabled .wp-swiper-devices__btn {
-	color: #a7aaad;
+.wp-swiper-field.is-disabled .wp-swiper-devices__btn,
+.wp-swiper-field.is-unused .wp-swiper-devices__btn {
+	color: var(--wp-swiper-disabled-text);
 	pointer-events: none;
 }
 
@@ -722,7 +727,10 @@
 	text-transform: uppercase;
 }
 
-.wp-swiper-page > legend + .wp-swiper-subheading {
+/* The first block left on a page (admin.js; before it runs, the first one):
+   no line over it. */
+.wp-swiper-page > legend + .wp-swiper-block > .wp-swiper-subheading,
+.wp-swiper-block.is-first > .wp-swiper-subheading {
 	margin-top: 4px;
 	padding-top: 0;
 	border-top: 0;
@@ -767,8 +775,10 @@
 .wp-swiper-field.is-disabled label,
 .wp-swiper-field.is-disabled .description,
 .wp-swiper-field.is-unused label,
-.wp-swiper-field.is-unused .description {
-	color: #a7aaad;
+.wp-swiper-field.is-unused .description,
+.wp-swiper-field.is-disabled .wp-swiper-field__label,
+.wp-swiper-field.is-unused .wp-swiper-field__label {
+	color: var(--wp-swiper-disabled-text);
 	cursor: not-allowed;
 }
 
@@ -783,10 +793,10 @@
 .wp-swiper-field.is-disabled select,
 .wp-swiper-field.is-unused input,
 .wp-swiper-field.is-unused select {
-	border-color: #dcdcde;
+	border-color: var(--wp-swiper-disabled);
 	background-color: #f6f7f7;
 	box-shadow: none;
-	color: #a7aaad;
+	color: var(--wp-swiper-disabled-text);
 	opacity: 1;
 	cursor: not-allowed;
 }
@@ -915,14 +925,14 @@
 }
 
 .wp-swiper-segmented__btn:disabled {
-	color: #a7aaad;
+	color: var(--wp-swiper-disabled-text);
 	cursor: not-allowed;
 }
 
 .wp-swiper-segmented__btn[aria-pressed="true"]:disabled {
-	border-color: #c3c4c7;
+	border-color: var(--wp-swiper-disabled);
 	background: #fff;
-	color: #a7aaad;
+	color: var(--wp-swiper-disabled-text);
 }
 
 /* A slider beside its number (Transition speed, Delay). */
@@ -945,7 +955,7 @@
 }
 
 .wp-swiper-field .wp-swiper-field__row--range input[type="range"]:disabled {
-	accent-color: #a7aaad;
+	accent-color: var(--wp-swiper-disabled);
 	cursor: not-allowed;
 }
 
@@ -1002,10 +1012,16 @@
 	outline-offset: 2px;
 }
 
-.wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"] {
-	background: #dcdcde;
+.wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"],
+.wp-swiper-switches .wp-swiper-field.is-unused input[type="checkbox"],
+.wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"]:checked,
+.wp-swiper-switches .wp-swiper-field.is-unused input[type="checkbox"]:checked {
+	background: var(--wp-swiper-disabled);
 }
 
-.wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"]:checked {
-	background: #a7aaad;
+/* The knob white whether on or off: WordPress fades that of a disabled box
+   that is checked (in a disabled box, the Caption page without captions). */
+.wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"]::before,
+.wp-swiper-switches .wp-swiper-field.is-unused input[type="checkbox"]::before {
+	opacity: 1;
 }
