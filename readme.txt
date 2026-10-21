@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.2.0
+Stable tag: 2.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,7 @@ WP Swiper adds a "WP Swiper" menu where you build image sliders from the media l
 * Slide effect extras: wider active slide, slides as wide as their images, slides per group, continuous scroll (marquee).
 * Image fit Cover or Contain, height in px / vh / % or Auto (fills the parent column).
 * Arrows (with their own colour), bullets or fraction pagination in six positions over or outside the slider, with their own size, shape, spacing and colours and a "pill" current bullet, keyboard control, autoplay, infinite loop.
-* Lightbox with zoom (and, with Thumbnails, the strip of thumbnails in it), per-slide links (optionally in a new tab), captions with their own typography and background.
+* Lightbox with zoom (and, with Thumbnails, the strip of thumbnails in it), per-slide links (optionally in a new tab), captions (bold, italic, underline, line breaks) with their own typography and background, all of a slide edited in one window.
 * Slide descriptions written in WordPress's editor (headings, bold, italic, underline, links, lists), shown under the slider for the current slide and changing with it the way the slides move (sliding, turning with the cube, flipping...); in the lightbox too, over or under the image.
 * Image position per device for the part of a cropped image kept in view.
 * Video slides from the media library or from a YouTube / Vimeo link, with a poster image: the video of the slide in view plays (muted, looped, with or without controls), the slider can wait for its end, and a file or player loads only when its slide comes up (YouTube in its privacy-enhanced mode). Videos open in the lightbox too, with sound.
@@ -58,6 +58,10 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.3.0 =
+* Slides: each card has a thumbnail, an "Add info" button ("Edit info" once it has something) and marks of what it has (Caption, Description, Link). The caption, description, link and "Open in a new tab" are edited in one "Slide info" window with the slide's thumbnail; a video slide has no link there. Apply keeps the changes, Cancel or Escape drops them.
+* Captions: bold, italic, underline and line breaks (Enter starts a new line) in their own small editor, on the slides and in the lightbox. Text pasted in paragraphs or headings keeps its lines; links and other markup are left out (the slide's own link is the Link field). Captions saved before stay as they were.
 
 = 2.2.0 =
 * New in Lightbox: "Description place" — over the image (as before) or under it. Under the image the picture gets smaller to leave room, the text is as wide as the image within "Text width" (% of the window, per device; 75% / 100% on phones) and "At most" (800px), not narrower than 500px where the window allows, at most 40% of the window tall (longer scrolls), aligned as on the Description page.
