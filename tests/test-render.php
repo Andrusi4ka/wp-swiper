@@ -567,4 +567,41 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$config = $this->config( $this->render( array( 'lightbox' => true ) ) );
 		$this->assertFalse( $config['lightbox']['descriptions'] );
 	}
+
+	public function test_lightbox_descriptions_over_the_image_by_default() {
+		$config = $this->config( $this->render( array( 'lightbox' => true ), $this->described_slides() ) );
+		$this->assertFalse( $config['lightbox']['text'] );
+	}
+
+	public function test_lightbox_descriptions_under_the_image() {
+		$values = array(
+			'lightbox'                          => true,
+			'description_lightbox_place'        => 'under',
+			'description_lightbox_width'        => 60,
+			'description_lightbox_width_tablet' => '',
+			'description_lightbox_max'          => 700,
+			'description_align'                 => 'center',
+		);
+		$config = $this->config( $this->render( $values, $this->described_slides() ) );
+
+		// Tablet inherits the desktop's; mobile has its own default (the whole width).
+		$this->assertSame(
+			array(
+				'width' => array(
+					'desktop' => 60,
+					'tablet'  => 60,
+					'mobile'  => 100,
+				),
+				'max'   => 700,
+				'align' => 'center',
+			),
+			$config['lightbox']['text']
+		);
+
+		// Not without descriptions in the lightbox.
+		$off = $this->config( $this->render( array( 'description_lightbox' => false ) + $values, $this->described_slides() ) );
+		$this->assertFalse( $off['lightbox']['text'] );
+		$none = $this->config( $this->render( $values ) );
+		$this->assertFalse( $none['lightbox']['text'] );
+	}
 }

@@ -1026,7 +1026,9 @@
 	 *                           settings. radius, thumbRadius: the image's and
 	 *                           the thumbnails' corners per device, or false;
 	 *                           thumbs: false or the slider's strip settings
-	 *                           { perView, gap, ratio } for a strip under the image.
+	 *                           { perView, gap, ratio } for a strip under the image;
+	 *                           text: false (descriptions over the image) or
+	 *                           { width, max, align } to have them under it.
 	 */
 	function openLightbox( items, index, onClose, options ) {
 		var opener = document.activeElement;
@@ -1054,10 +1056,13 @@
 					// With a description (HTML of the slider's own, sanitized by
 					// render.php): the caption over it, both in one panel at the bottom
 					// that scrolls when long; its links and text are not for swiping.
+					// "Under the image" (options.text): the panel below it instead, sized
+					// by fitLightboxText().
+					var under = item.description && options.text;
 					var text = item.description
-						? '<div class="wp-swiper-lightbox__info swiper-no-swiping">' + caption + '<div class="wp-swiper-lightbox__description">' + item.description + '</div></div>'
+						? '<div class="wp-swiper-lightbox__info' + ( under ? ' wp-swiper-lightbox__info--under' : '' ) + ' swiper-no-swiping">' + caption + '<div class="wp-swiper-lightbox__description">' + item.description + '</div></div>'
 						: caption;
-					return '<div class="swiper-slide">' + lightboxMedia( item ) + text + '</div>';
+					return '<div class="swiper-slide' + ( under ? ' wp-swiper-lightbox__slide--text' : '' ) + '">' + lightboxMedia( item ) + text + '</div>';
 				} ).join( '' ) +
 			'</div></div>' +
 			( strip
@@ -1140,6 +1145,16 @@
 		var closed = false;
 		posterFallbacks( root );
 
+		// Descriptions under the images: sized now, as each image loads, and with the window.
+		function fitText() {
+			fitLightboxText( root, options.text );
+		}
+		if ( options.text ) {
+			fitText();
+			root.addEventListener( 'load', fitText, true );
+			window.addEventListener( 'resize', fitText );
+		}
+
 		function close() {
 			// A second click during the fade-out must not close (and destroy) twice.
 			if ( closed ) {
@@ -1159,6 +1174,7 @@
 			}
 			document.removeEventListener( 'keydown', onKey );
 			window.removeEventListener( 'resize', setRadius );
+			window.removeEventListener( 'resize', fitText );
 			root.classList.remove( 'is-open' );
 			document.documentElement.classList.remove( 'wp-swiper-lightbox-open' );
 
@@ -1214,6 +1230,44 @@
 		requestAnimationFrame( function () {
 			root.classList.add( 'is-open' );
 			root.querySelector( '.wp-swiper-lightbox__close' ).focus( { preventScroll: true } );
+		} );
+	}
+
+	// "Under the image": the text's narrowest width where the window allows (px).
+	var LIGHTBOX_TEXT_MIN = 500;
+
+	/**
+	 * Descriptions under the lightbox images (options.text { width, max,
+	 * align }): the text as wide as its image, within "Text width" (% of the
+	 * window, this device's) and its maximum, not narrower than
+	 * LIGHTBOX_TEXT_MIN (CSS); the image as tall as the slide leaves room for
+	 * once the text is under it (CSS caps the text at 40%: longer scrolls).
+	 * Each depends on the other, so twice. Layout sizes (offset*): a zoomed
+	 * image keeps its own.
+	 *
+	 * @param {Element} root The lightbox.
+	 * @param {Object}  text options.text.
+	 */
+	function fitLightboxText( root, text ) {
+		root.style.setProperty( '--wp-swiper-lightbox-text-width', ( Number( text.width[ device() ] ) || 100 ) + '%' );
+		root.style.setProperty( '--wp-swiper-lightbox-text-max', ( Number( text.max ) || 800 ) + 'px' );
+		root.style.setProperty( '--wp-swiper-lightbox-text-min', LIGHTBOX_TEXT_MIN + 'px' );
+		root.style.setProperty( '--wp-swiper-lightbox-text-align', text.align || 'left' );
+
+		root.querySelectorAll( '.wp-swiper-lightbox__slide--text' ).forEach( function ( slide ) {
+			var info = slide.querySelector( '.wp-swiper-lightbox__info' );
+			var media = slide.querySelector( '.swiper-zoom-container img, .wp-swiper-lightbox__media' );
+			var box = getComputedStyle( slide );
+			var gap = parseFloat( getComputedStyle( info ).marginTop ) || 0;
+
+			for ( var pass = 0; pass < 2; pass++ ) {
+				var room = slide.clientHeight - parseFloat( box.paddingTop ) - parseFloat( box.paddingBottom ) - gap - info.offsetHeight;
+				slide.style.setProperty( '--wp-swiper-lightbox-room', Math.max( 0, Math.floor( room ) ) + 'px' );
+				// An image not loaded yet has no width: the text's own limits meanwhile.
+				if ( media && media.offsetWidth ) {
+					slide.style.setProperty( '--wp-swiper-lightbox-media-width', media.offsetWidth + 'px' );
+				}
+			}
 		} );
 	}
 
@@ -1428,7 +1482,7 @@
 				if ( player ) {
 					player.start();
 				}
-			}, { radius: config.lightbox.radius, thumbRadius: config.lightbox.thumbRadius, thumbs: withThumbs ? config.thumbs : false } );
+			}, { radius: config.lightbox.radius, thumbRadius: config.lightbox.thumbRadius, thumbs: withThumbs ? config.thumbs : false, text: config.lightbox.text || false } );
 		} );
 	}
 
@@ -2456,8 +2510,58 @@
 			} );
 		}
 
+		/**
+		 * A background (frontend.js background()) fills its block: Justified
+		 * rows and Masonry, as tall as their photos make them, take its height
+		 * instead. Each line of places (a row; a column of Masonry) keeps its
+		 * widths, and its heights are scaled to fill the block, the gaps kept:
+		 * the places keep their order and look, their photos are cropped to
+		 * them as always.
+		 *
+		 * @param {Element[][]} lines  The places of each line, from the top or left.
+		 * @param {number}      height The block's height.
+		 * @param {number}      gap    The gap.
+		 * @param {boolean}     across The lines run across (rows): scaled together.
+		 */
+		function fillLines( lines, height, gap, across ) {
+			var size = function ( cell ) {
+				return parseFloat( cell.style.height ) || 0;
+			};
+			// Rows share one scale (a row is as tall as its places); a column has its own.
+			var groups = across ? [ lines ] : lines.map( function ( line ) {
+				return [ line ];
+			} );
+			groups.forEach( function ( group ) {
+				var spans = group.map( function ( line ) {
+					return across ? Math.max.apply( Math, line.map( size ) ) : line.reduce( function ( sum, cell ) {
+						return sum + size( cell );
+					}, 0 );
+				} );
+				var steps = across ? group.length - 1 : group[ 0 ].length - 1;
+				var total = spans.reduce( function ( sum, span ) {
+					return sum + span;
+				}, 0 );
+				var scale = total > 0 ? Math.max( 0, height - gap * steps ) / total : 1;
+				var top = 0;
+				group.forEach( function ( line, i ) {
+					line.forEach( function ( cell ) {
+						var h = size( cell ) * scale;
+						cell.style.top = top + 'px';
+						cell.style.height = h + 'px';
+						if ( ! across ) {
+							top += h + gap;
+						}
+					} );
+					if ( across ) {
+						top += spans[ i ] * scale + gap;
+					}
+				} );
+			} );
+		}
+
 		// Justified rows and Masonry: each place absolutely positioned, the
-		// block as tall as they make it; again on every resize.
+		// block as tall as they make it (a background: as its block, see
+		// fillLines()); again on every resize.
 		function place() {
 			var layout = config.layout[ current ];
 			var gap = Number( config.gap[ current ] ) || 0;
@@ -2465,11 +2569,17 @@
 			if ( ! width ) {
 				return;
 			}
+			var fill = el.parentNode.classList.contains( 'wp-swiper--background' );
+			// The places of each row (Justified) or column (Masonry), for fillLines().
+			var lines = [];
 			var set = function ( cell, left, top, w, h ) {
 				cell.style.left = left + 'px';
 				cell.style.top = top + 'px';
 				cell.style.width = w + 'px';
 				cell.style.height = h + 'px';
+			};
+			var setHeight = function ( height ) {
+				grid.style.height = fill ? '' : Math.max( 0, height ) + 'px';
 			};
 
 			if ( layout === 'random' ) {
@@ -2498,14 +2608,16 @@
 				var heights = [];
 				for ( var c = 0; c < columns; c++ ) {
 					heights.push( 0 );
+					lines.push( [] );
 				}
 				cells.forEach( function ( cell ) {
 					var shortest = heights.indexOf( Math.min.apply( Math, heights ) );
 					var h = columnWidth / cell.wpRatio;
 					set( cell, shortest * ( columnWidth + gap ), heights[ shortest ], columnWidth, h );
 					heights[ shortest ] += h + gap;
+					lines[ shortest ].push( cell );
 				} );
-				grid.style.height = Math.max( 0, Math.max.apply( Math, heights ) - gap ) + 'px';
+				setHeight( Math.max.apply( Math, heights ) - gap );
 			} else if ( config.rowExact ) {
 				// Justified, "Exact row height": every row the row height, each photo
 				// at its own proportions; a row ends where the next photo would not
@@ -2513,6 +2625,7 @@
 				var rowHeight = Math.max( 20, Number( config.rowHeight[ current ] ) || 200 );
 				var x = 0;
 				var y = 0;
+				var line = [];
 				cells.forEach( function ( cell ) {
 					var w = cell.wpRatio * rowHeight;
 					var h = rowHeight;
@@ -2523,11 +2636,15 @@
 					if ( x > 0 && x + w > width + 0.5 ) {
 						x = 0;
 						y += rowHeight + gap;
+						lines.push( line );
+						line = [];
 					}
 					set( cell, x, y, w, h );
+					line.push( cell );
 					x += w + gap;
 				} );
-				grid.style.height = ( y + rowHeight ) + 'px';
+				lines.push( line );
+				setHeight( y + rowHeight );
 			} else {
 				// Justified: fill a row up to about the row height, then fit it to the width exactly.
 				var target = Math.max( 20, Number( config.rowHeight[ current ] ) || 200 );
@@ -2542,6 +2659,7 @@
 						left += w + gap;
 					} );
 					top += h + gap;
+					lines.push( row );
 					row = [];
 					sum = 0;
 				};
@@ -2556,7 +2674,11 @@
 				if ( row.length ) {
 					flush( Math.min( target, ( width - gap * ( row.length - 1 ) ) / sum ) );
 				}
-				grid.style.height = Math.max( 0, top - gap ) + 'px';
+				setHeight( top - gap );
+			}
+			// Random mosaic is cut to the block's height already.
+			if ( fill && lines.length ) {
+				fillLines( lines, grid.clientHeight, gap, layout !== 'masonry' );
 			}
 			cells.forEach( sizeImages );
 		}
@@ -2727,6 +2849,21 @@
 		requestAnimationFrame( function () {
 			el.parentNode.classList.add( 'wp-swiper--ready' );
 		} );
+
+		// A background's block may change height with no resize of the window
+		// (its content's fonts and images load): the places positioned by the
+		// script follow it. Placing them never changes it (fillLines()).
+		if ( 'ResizeObserver' in window && el.parentNode.classList.contains( 'wp-swiper--background' ) ) {
+			var blockHeight = el.clientHeight;
+			new ResizeObserver( function () {
+				if ( Math.abs( el.clientHeight - blockHeight ) > 1 ) {
+					blockHeight = el.clientHeight;
+					if ( grid.classList.contains( 'wp-swiper-collage__grid--free' ) ) {
+						place();
+					}
+				}
+			} ).observe( el );
+		}
 
 		// Another device: its own layout, built again (the same shuffle); the
 		// same device: the arranged layouts re-measured.

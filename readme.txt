@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.1.0
+Stable tag: 2.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,7 +22,7 @@ WP Swiper adds a "WP Swiper" menu where you build image sliders from the media l
 * Image fit Cover or Contain, height in px / vh / % or Auto (fills the parent column).
 * Arrows (with their own colour), bullets or fraction pagination in six positions over or outside the slider, with their own size, shape, spacing and colours and a "pill" current bullet, keyboard control, autoplay, infinite loop.
 * Lightbox with zoom (and, with Thumbnails, the strip of thumbnails in it), per-slide links (optionally in a new tab), captions with their own typography and background.
-* Slide descriptions written in WordPress's editor (bold, italic, underline, links, lists), shown under the slider for the current slide and changing with it the way the slides move (sliding, turning with the cube, flipping...); in the lightbox too.
+* Slide descriptions written in WordPress's editor (headings, bold, italic, underline, links, lists), shown under the slider for the current slide and changing with it the way the slides move (sliding, turning with the cube, flipping...); in the lightbox too, over or under the image.
 * Image position per device for the part of a cropped image kept in view.
 * Video slides from the media library or from a YouTube / Vimeo link, with a poster image: the video of the slide in view plays (muted, looped, with or without controls), the slider can wait for its end, and a file or player loads only when its slide comes up (YouTube in its privacy-enhanced mode). Videos open in the lightbox too, with sound.
 * Preview beside the settings: the slider as the current settings draw it, saved or not, as on a desktop, tablet or phone (refreshed with its Update button).
@@ -58,6 +58,13 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.2.0 =
+* New in Lightbox: "Description place" — over the image (as before) or under it. Under the image the picture gets smaller to leave room, the text is as wide as the image within "Text width" (% of the window, per device; 75% / 100% on phones) and "At most" (800px), not narrower than 500px where the window allows, at most 40% of the window tall (longer scrolls), aligned as on the Description page.
+* Descriptions: headings (h1–h6) are kept, with a Paragraph / Heading list in the editor. On the page they take "Own text color" too; in the lightbox they are light and sized for the panel.
+* Description window: the slide's thumbnail beside the title; the slide's button shows its text only.
+* Collage as a background: Justified rows and Masonry (the phones' default style) fill the block's height instead of stopping where the photos end, also when the block changes height later.
+* Settings: fields side by side line up (the lightbox text's width, the image border's width and colour).
 
 = 2.1.0 =
 * New: slide descriptions. Each slide has an "Add description" button that opens WordPress's editor in a window (bold, italic, underline, links, lists). The current slide's description shows under the slider, below an outside pagination and a strip of thumbnails beside it; the block is as tall as the longest one, so the page under it does not move. Not with a vertical slider, Continuous scroll, Collage or as a background.

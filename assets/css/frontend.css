@@ -504,6 +504,12 @@
 	color: var(--wp-swiper-description-color);
 }
 
+/* Headings keep the theme's sizes and font, but take "Own text color" too
+   (themes give headings a colour of their own). */
+.wp-swiper-descriptions--color :is(h1, h2, h3, h4, h5, h6) {
+	color: inherit;
+}
+
 /* Unseen: out of reach of clicks and screen readers too. */
 .wp-swiper-descriptions__item {
 	grid-area: 1 / 1;
@@ -1188,11 +1194,88 @@ html.wp-swiper-lightbox-open {
 	text-decoration: underline;
 }
 
+/* Headings: the lightbox's light text (a theme's dark heading colour would
+   vanish on it), at sizes that fit a panel rather than a page. */
+.wp-swiper-lightbox__description :is(h1, h2, h3, h4, h5, h6) {
+	margin: 0.6em 0 0.3em;
+	color: inherit;
+	line-height: 1.3;
+}
+
+.wp-swiper-lightbox__description h1 {
+	font-size: 1.6em;
+}
+
+.wp-swiper-lightbox__description h2 {
+	font-size: 1.4em;
+}
+
+.wp-swiper-lightbox__description h3 {
+	font-size: 1.25em;
+}
+
+.wp-swiper-lightbox__description :is(h4, h5, h6) {
+	font-size: 1.1em;
+}
+
 .wp-swiper-lightbox__description ul,
 .wp-swiper-lightbox__description ol {
 	display: inline-block;
 	margin: 0.5em 0;
 	text-align: left;
+}
+
+/* "Under the image": the slide a column, the image (or video) as tall as
+   the text below it leaves room for, the text as wide as the image within
+   its limits (frontend.js fitLightboxText() measures both), at most 40% of
+   the window tall and scrolling beyond. */
+.wp-swiper-lightbox .wp-swiper-lightbox__slide--text {
+	box-sizing: border-box;
+	flex-direction: column;
+	padding: 70px 0 20px;
+}
+
+.wp-swiper-lightbox .wp-swiper-lightbox__slide--text .swiper-zoom-container {
+	flex: none;
+	height: auto;
+}
+
+.wp-swiper-lightbox .wp-swiper-lightbox__slide--text .swiper-zoom-container img {
+	max-height: var(--wp-swiper-lightbox-room, 60vh);
+}
+
+.wp-swiper-lightbox .wp-swiper-lightbox__slide--text .wp-swiper-lightbox__media {
+	flex: none;
+	width: min(calc(100% - 140px), calc(var(--wp-swiper-lightbox-room, 60vh) * var(--wp-swiper-lightbox-ratio, 1.7778)));
+}
+
+.wp-swiper-lightbox .wp-swiper-lightbox__info--under {
+	position: static;
+	flex: none;
+	width: clamp(min(var(--wp-swiper-lightbox-text-min, 500px), var(--wp-swiper-lightbox-text-width, 75%), var(--wp-swiper-lightbox-text-max, 800px), 100% - 32px), var(--wp-swiper-lightbox-media-width, 100%), min(var(--wp-swiper-lightbox-text-width, 75%), var(--wp-swiper-lightbox-text-max, 800px), 100% - 32px));
+	max-height: 40%;
+	margin-top: 16px;
+	padding: 0;
+	border-radius: 0;
+	background: none;
+	text-align: var(--wp-swiper-lightbox-text-align, left);
+	transform: none;
+}
+
+.wp-swiper-lightbox__info--under .wp-swiper-lightbox__description ul,
+.wp-swiper-lightbox__info--under .wp-swiper-lightbox__description ol {
+	display: block;
+	padding-left: 1.5em;
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-lightbox .wp-swiper-lightbox__slide--text {
+		padding-top: 56px;
+	}
+
+	.wp-swiper-lightbox .wp-swiper-lightbox__slide--text .wp-swiper-lightbox__media {
+		width: min(100%, calc(var(--wp-swiper-lightbox-room, 60vh) * var(--wp-swiper-lightbox-ratio, 1.7778)));
+	}
 }
 
 /* Thumbnails under the image ("Thumbnails in the lightbox"): the image takes
@@ -1953,7 +2036,7 @@ html.wp-swiper-lightbox-open {
 }
 
 /* The block's height, not the Height (collages arranged by their photos'
-   proportions set theirs inline: what is beyond the block is cut off). */
+   proportions are fitted to it by the script, frontend.js fillLines()). */
 .wp-swiper.wp-swiper--background .swiper,
 .wp-swiper.wp-swiper--background .wp-swiper-collage,
 .wp-swiper.wp-swiper--background .wp-swiper-collage__grid {

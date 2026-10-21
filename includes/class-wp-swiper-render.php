@@ -907,6 +907,13 @@ class WP_Swiper_Render {
 		$config['descriptions'] = '' !== $descriptions;
 		if ( $config['lightbox'] ) {
 			$config['lightbox']['descriptions'] = $config['descriptions'] && $settings['description_lightbox'];
+			// Under the image (frontend.js fitLightboxText()): the text's width per
+			// device (% of the window), its limit (px) and its alignment.
+			$config['lightbox']['text'] = $config['lightbox']['descriptions'] && 'under' === $settings['description_lightbox_place'] ? array(
+				'width' => array_map( 'intval', WP_Swiper_Settings::responsive( $settings, 'description_lightbox_width' ) ),
+				'max'   => (int) $settings['description_lightbox_max'],
+				'align' => $settings['description_align'],
+			) : false;
 		}
 
 		ob_start();

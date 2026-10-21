@@ -9,7 +9,7 @@ Image sliders for WordPress powered by [Swiper](https://swiperjs.com/): build a 
 - **Per effect Layout:** each effect keeps its own layout values.
 - **Per device:** slides per view, spacing, radius and height for desktop, tablet and mobile.
 - **Controls:** arrows, bullets or fraction pagination (its own size, shape, spacing and colours, a "pill" current bullet), keyboard, autoplay, loop, lightbox, links, captions.
-- **Descriptions:** rich text per slide (WordPress's editor) under the slider, the current slide's, changing the way the slides move; in the lightbox too.
+- **Descriptions:** rich text per slide (WordPress's editor, with headings) under the slider, the current slide's, changing the way the slides move; in the lightbox too, over or under the image.
 - **Image position:** the part of a cropped image kept in view, per device.
 - **Video slides:** videos from the media library or YouTube / Vimeo links, with a poster image; only the slide in view plays, its file or player loads when the slide comes up, the slider can wait for a video to end, and videos open in the lightbox too.
 

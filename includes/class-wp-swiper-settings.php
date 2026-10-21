@@ -186,6 +186,47 @@ class WP_Swiper_Settings {
 				'default' => true,
 				'help'    => __( 'The slide’s description under its image, with the caption.', 'wp-swiper' ),
 			),
+			// Where: a panel over the bottom of the image, or below the image
+			// (frontend.js fitLightboxText()), its width set below.
+			'description_lightbox_place' => array(
+				'section'   => 'advanced',
+				'panel'     => 'lightbox',
+				'label'     => __( 'Description place', 'wp-swiper' ),
+				'type'      => 'select',
+				'segmented' => true,
+				'default'   => 'over',
+				'choices'   => array(
+					'over'  => __( 'Over the image', 'wp-swiper' ),
+					'under' => __( 'Under the image', 'wp-swiper' ),
+				),
+				'help'      => __( 'Under the image: the image gets smaller to leave room for the text (at most 40% of the window; longer text scrolls).', 'wp-swiper' ),
+			),
+			// One row: the text's width under the image, per device, and its limit.
+			'description_lightbox_width' => array(
+				'section'         => 'advanced',
+				'panel'           => 'lightbox',
+				'group'           => 'description_lightbox_width',
+				'label'           => __( 'Text width (% of the window)', 'wp-swiper' ),
+				'type'            => 'number',
+				'responsive'      => true,
+				'default'         => 75,
+				'device_defaults' => array( 'mobile' => 100 ),
+				'min'             => 30,
+				'max'             => 100,
+				'step'            => 5,
+				'help'            => __( 'As wide as the image above it, within this width and the maximum; not narrower than 500px where the window allows.', 'wp-swiper' ),
+			),
+			'description_lightbox_max' => array(
+				'section' => 'advanced',
+				'panel'   => 'lightbox',
+				'group'   => 'description_lightbox_width',
+				'label'   => __( 'At most (px)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 800,
+				'min'     => 300,
+				'max'     => 2000,
+				'step'    => 10,
+			),
 
 			'navigation'            => array(
 				'section' => 'advanced',
@@ -452,7 +493,7 @@ class WP_Swiper_Settings {
 					'masonry'        => __( 'Masonry', 'wp-swiper' ),
 					'random'         => __( 'Random mosaic', 'wp-swiper' ),
 				),
-				'help'            => __( 'Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them.', 'wp-swiper' ),
+				'help'            => __( 'Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them; as a background, as tall as the block (the places stretched or shrunk to it).', 'wp-swiper' ),
 			),
 			// Which photos come first and where they sit: a number the Shuffle
 			// button draws (admin.js); the same number, the same arrangement.
@@ -1623,14 +1664,20 @@ class WP_Swiper_Settings {
 	}
 
 	/**
-	 * The markup a slide description may have: paragraphs, line breaks, bold,
-	 * italic, underline (a span the editor styles), links and lists.
+	 * The markup a slide description may have: paragraphs, headings, line
+	 * breaks, bold, italic, underline (a span the editor styles), links and lists.
 	 *
 	 * @return array wp_kses() allowed tags.
 	 */
 	public static function description_tags() {
 		return array(
 			'p'      => array(),
+			'h1'     => array(),
+			'h2'     => array(),
+			'h3'     => array(),
+			'h4'     => array(),
+			'h5'     => array(),
+			'h6'     => array(),
 			'br'     => array(),
 			'strong' => array(),
 			'b'      => array(),

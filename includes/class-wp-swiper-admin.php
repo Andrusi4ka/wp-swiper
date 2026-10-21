@@ -123,11 +123,13 @@ class WP_Swiper_Admin {
 			<div class="wp-swiper-modal__backdrop"></div>
 			<div class="wp-swiper-modal__box">
 				<div class="wp-swiper-modal__head">
+					<?php // The slide's thumbnail (admin.js puts it in: its image or poster, else a video icon). ?>
+					<span class="wp-swiper-modal__thumb" aria-hidden="true"></span>
 					<h2 class="wp-swiper-modal__title" id="wp-swiper-description-title"><?php esc_html_e( 'Slide description', 'wp-swiper' ); ?> <span class="wp-swiper-modal__slide"></span></h2>
 					<button type="button" class="wp-swiper-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-swiper' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button>
 				</div>
 				<div class="wp-swiper-modal__body">
-					<p class="description"><?php esc_html_e( 'Shown under the slider while this slide is the current one. Bold, italic, underline, links and lists.', 'wp-swiper' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Shown under the slider while this slide is the current one. Headings, bold, italic, underline, links and lists.', 'wp-swiper' ); ?></p>
 					<textarea id="wp-swiper-description-editor" rows="10"></textarea>
 				</div>
 				<div class="wp-swiper-modal__foot">
@@ -216,7 +218,6 @@ class WP_Swiper_Admin {
 			<?php // The description (HTML), edited in its window (admin.js); the button says whether there is one. ?>
 			<textarea name="wp_swiper_slides[description][]" hidden><?php echo esc_textarea( $description ); ?></textarea>
 			<button type="button" class="button button-small wp-swiper-slide__description<?php echo '' !== $description ? ' has-description' : ''; ?>">
-				<span class="dashicons dashicons-text-page" aria-hidden="true"></span>
 				<span class="wp-swiper-slide__description-label"><?php echo '' !== $description ? esc_html__( 'Edit description', 'wp-swiper' ) : esc_html__( 'Add description', 'wp-swiper' ); ?></span>
 			</button>
 			<input type="url" name="wp_swiper_slides[link][]" value="<?php echo esc_attr( $slide['link'] ); ?>" placeholder="<?php esc_attr_e( 'Link (https://…)', 'wp-swiper' ); ?>">
@@ -412,7 +413,7 @@ class WP_Swiper_Admin {
 			$field_group = isset( $field['group'] ) ? $field['group'] : null;
 			if ( $field_group !== $group ) {
 				echo $group ? '</div>' : '';
-				echo $field_group ? '<div class="wp-swiper-field-group">' : '';
+				echo $field_group ? '<div class="wp-swiper-field-group" data-group="' . esc_attr( $field_group ) . '">' : '';
 				$group = $field_group;
 			}
 			if ( ! empty( $field['responsive'] ) ) {

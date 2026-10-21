@@ -770,18 +770,8 @@
 
 /* A slide's description: a button that opens its editor; marked once there is one. */
 .wp-swiper-slide .wp-swiper-slide__description {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 4px;
 	width: 100%;
-}
-
-.wp-swiper-slide__description .dashicons {
-	width: 16px;
-	height: 16px;
-	font-size: 16px;
-	line-height: 1;
+	text-align: center;
 }
 
 .wp-swiper-slide .wp-swiper-slide__description.has-description {
@@ -836,7 +826,29 @@ body.wp-swiper-modal-open {
 	border-bottom: 1px solid #dcdcde;
 }
 
+/* The slide's thumbnail, before the title. */
+.wp-swiper-modal__thumb {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 128px;
+	height: 96px;
+	overflow: hidden;
+	border-radius: 4px;
+	background: #1d2327;
+	color: #fff;
+}
+
+.wp-swiper-modal__thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
 .wp-swiper-modal__title {
+	flex: 1 1 auto;
 	margin: 0;
 	font-size: 16px;
 	line-height: 1.4;
@@ -977,6 +989,23 @@ body.wp-swiper-modal-open {
 
 .wp-swiper-field-group > .wp-swiper-field + .wp-swiper-field {
 	flex: 0 0 auto;
+}
+
+/* Side by side, the labels on one line and the controls under them on
+   another: every head as tall as one with device buttons (26px). */
+.wp-swiper-field-group > .wp-swiper-field > .wp-swiper-field__head {
+	min-height: 26px;
+}
+
+/* Two numbers of one thing (the lightbox text's width and its limit):
+   halves, their inputs level even where a label takes two lines. */
+.wp-swiper-field-group[data-group="description_lightbox_width"] {
+	align-items: flex-end;
+}
+
+.wp-swiper-field-group[data-group="description_lightbox_width"] > .wp-swiper-field {
+	flex: 1 1 0;
+	min-width: 0;
 }
 
 /* A compact field (no label above) sits right after the one before it, on its line. */

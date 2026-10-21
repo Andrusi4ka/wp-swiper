@@ -386,5 +386,11 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 			$this->assertSame( '', WP_Swiper_Settings::sanitize_description( $empty ), $empty );
 		}
 		$this->assertSame( 'Plain text', WP_Swiper_Settings::sanitize_description( 'Plain text' ) );
+		// Headings, without attributes.
+		$this->assertSame(
+			'<h1>One</h1><h2>Two</h2><h3>Three</h3><h4>Four</h4><h5>Five</h5><h6>Six</h6>',
+			WP_Swiper_Settings::sanitize_description( '<h1 class="x">One</h1><h2 style="color:red">Two</h2><h3>Three</h3><h4>Four</h4><h5>Five</h5><h6>Six</h6>' )
+		);
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_description( '<h2></h2>' ) );
 	}
 }

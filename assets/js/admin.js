@@ -294,6 +294,14 @@
 		function openDescription( $slide ) {
 			$editing = $slide;
 			$modal.find( '.wp-swiper-modal__slide' ).text( '— ' + ( i18n.slideNumber || '%d' ).replace( '%d', $slide.index() + 1 ) );
+			// Which picture it is about: the slide's own thumbnail, as in the list.
+			var $img = $slide.find( '.wp-swiper-slide__thumb img' );
+			var $thumb = $modal.find( '.wp-swiper-modal__thumb' ).empty();
+			if ( ! $img.prop( 'hidden' ) && $img.attr( 'src' ) ) {
+				$( '<img alt="">' ).attr( 'src', $img.attr( 'src' ) ).appendTo( $thumb );
+			} else {
+				$thumb.append( '<span class="dashicons dashicons-video-alt3"></span>' );
+			}
 			$( '#' + EDITOR_ID ).val( descriptionInput( $slide ).val() );
 			$modal.prop( 'hidden', false );
 			$( document.body ).addClass( 'wp-swiper-modal-open' );
@@ -302,8 +310,10 @@
 				editor().initialize( EDITOR_ID, {
 					// Without the visual editor (the user's profile turns it off): the code one only.
 					tinymce: window.tinymce ? {
-						toolbar1: 'bold,italic,underline,bullist,numlist,link,unlink,removeformat,undo,redo',
+						// Paragraph or heading, then the inline styles (what render.php keeps).
+						toolbar1: 'formatselect,bold,italic,underline,bullist,numlist,link,unlink,removeformat,undo,redo',
 						toolbar2: '',
+						block_formats: 'Paragraph=p;Heading 1=h1;Heading 2=h2;Heading 3=h3;Heading 4=h4;Heading 5=h5;Heading 6=h6',
 						height: 240,
 						init_instance_callback: function ( instance ) {
 							instance.focus();
@@ -826,6 +836,12 @@
 			var described = hasDescriptions();
 			syncDescriptions( ! described ? 'empty' : ( describable ? '' : 'unavailable' ) );
 			field( 'description_lightbox' ).toggle( lightbox && describable && described );
+			// Where they go, and (under the image) how wide the text is.
+			var lightboxText = lightbox && describable && described && $( '#wp-swiper-description_lightbox' ).is( ':checked' );
+			field( 'description_lightbox_place' ).toggle( lightboxText );
+			var textUnder = lightboxText && $( '#wp-swiper-description_lightbox_place' ).val() === 'under';
+			field( 'description_lightbox_width' ).toggle( textUnder );
+			field( 'description_lightbox_max' ).toggle( textUnder );
 			field( 'description_color' ).toggle( $( '#wp-swiper-description_own_color' ).is( ':checked' ) );
 
 			// Pagination layout: one position field per direction.
