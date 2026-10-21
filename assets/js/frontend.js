@@ -641,6 +641,76 @@
 		}
 	}
 
+	/**
+	 * The slides' descriptions (render.php descriptions()): the block right
+	 * after the slider's, or null.
+	 *
+	 * @param {Element} el The .swiper element.
+	 */
+	function descriptionsBox( el ) {
+		var box = el.parentNode.nextElementSibling;
+		return box && box.classList.contains( 'wp-swiper-descriptions' ) ? box : null;
+	}
+
+	/**
+	 * The current slide's description shown; a slide without one shows none.
+	 * On a change the one going and the one coming play the Text transition
+	 * (frontend.css, .is-leaving / .is-entering) the way the slider went:
+	 * forward or back (--wp-swiper-description-dir), with a loop the shorter
+	 * way round. "None", or no motion wanted: they just swap.
+	 */
+	function descriptions( box, controller, config ) {
+		var items = [].slice.call( box.querySelectorAll( '.wp-swiper-descriptions__item' ) );
+		var count = config.slideCount;
+		var still = box.classList.contains( 'wp-swiper-descriptions--none' ) || ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches );
+		var current = controller.current();
+
+		function forward( from, to ) {
+			if ( config.loop ) {
+				return ( to - from + count ) % count <= count / 2;
+			}
+			return to > from;
+		}
+
+		function settle( e ) {
+			// Its own animation, not one of the text inside.
+			if ( e.target === this ) {
+				this.classList.remove( 'is-entering', 'is-leaving' );
+			}
+		}
+
+		items.forEach( function ( item ) {
+			item.addEventListener( 'animationend', settle );
+		} );
+
+		function show( index ) {
+			if ( index === current ) {
+				return;
+			}
+			box.style.setProperty( '--wp-swiper-description-dir', forward( current, index ) ? '1' : '-1' );
+			current = index;
+			items.forEach( function ( item ) {
+				var coming = Number( item.getAttribute( 'data-wp-swiper-index' ) ) === index;
+				var going = ! coming && item.classList.contains( 'is-active' );
+
+				// A change during the last one's: from where things are now.
+				item.classList.remove( 'is-entering', 'is-leaving' );
+				item.classList.toggle( 'is-active', coming );
+				if ( still || ! ( coming || going ) ) {
+					return;
+				}
+				// Read layout so the animation starts over even with the same class.
+				void item.offsetWidth;
+				item.classList.add( coming ? 'is-entering' : 'is-leaving' );
+			} );
+		}
+
+		controller.onChange( show );
+		items.forEach( function ( item ) {
+			item.classList.toggle( 'is-active', Number( item.getAttribute( 'data-wp-swiper-index' ) ) === current );
+		} );
+	}
+
 	var THUMB_ACTIVE_CLASS = 'wp-swiper-thumb-active';
 
 	/**
@@ -948,7 +1018,8 @@
 	}
 
 	/**
-	 * @param {Array}    items   [ { type: 'image'|'video'|'embed', src, embed, poster, ratio, alt, caption, thumb } ]
+	 * @param {Array}    items   [ { type: 'image'|'video'|'embed', src, embed, poster, ratio, alt, caption, description, thumb } ]
+	 *                           (description: HTML, or none)
 	 * @param {number}   index   Item to open.
 	 * @param {Function} onClose Called with the index shown last.
 	 * @param {Object}   options { radius, thumbs, thumbRadius } from the slider
@@ -979,10 +1050,14 @@
 			'</div>' +
 			'<div class="swiper wp-swiper-lightbox__swiper"><div class="swiper-wrapper">' +
 				items.map( function ( item ) {
-					return '<div class="swiper-slide">' +
-						lightboxMedia( item ) +
-						( item.caption ? '<div class="wp-swiper-lightbox__caption">' + escapeHtml( item.caption ) + '</div>' : '' ) +
-					'</div>';
+					var caption = item.caption ? '<div class="wp-swiper-lightbox__caption">' + escapeHtml( item.caption ) + '</div>' : '';
+					// With a description (HTML of the slider's own, sanitized by
+					// render.php): the caption over it, both in one panel at the bottom
+					// that scrolls when long; its links and text are not for swiping.
+					var text = item.description
+						? '<div class="wp-swiper-lightbox__info swiper-no-swiping">' + caption + '<div class="wp-swiper-lightbox__description">' + item.description + '</div></div>'
+						: caption;
+					return '<div class="swiper-slide">' + lightboxMedia( item ) + text + '</div>';
 				} ).join( '' ) +
 			'</div></div>' +
 			( strip
@@ -1131,7 +1206,7 @@
 
 		// A click on the backdrop (not the image, video, caption or buttons) closes.
 		root.addEventListener( 'click', function ( e ) {
-			if ( viewer.allowClick && ! e.target.closest( 'img, button, .wp-swiper-lightbox__media, .wp-swiper-lightbox__caption, .wp-swiper-lightbox__thumbs' ) ) {
+			if ( viewer.allowClick && ! e.target.closest( 'img, button, .wp-swiper-lightbox__media, .wp-swiper-lightbox__caption, .wp-swiper-lightbox__info, .wp-swiper-lightbox__thumbs' ) ) {
 				close();
 			}
 		} );
@@ -1298,6 +1373,15 @@
 			var withThumbs = config.lightbox.thumbs && config.thumbs;
 			var small = withThumbs ? el.parentNode.querySelectorAll( '.wp-swiper__thumbs .wp-swiper__thumb-image' ) : [];
 
+			// "Descriptions in the lightbox": each slide's, from the block under the slider.
+			var texts = {};
+			var box = config.lightbox.descriptions ? descriptionsBox( el ) : null;
+			if ( box ) {
+				box.querySelectorAll( '.wp-swiper-descriptions__item' ).forEach( function ( item ) {
+					texts[ item.getAttribute( 'data-wp-swiper-index' ) ] = item.innerHTML;
+				} );
+			}
+
 			// One item per real slide it shows, whatever copies the markup holds, in
 			// slide order; `real`: its slide's index.
 			var items = [];
@@ -1309,7 +1393,9 @@
 				}
 				seen[ real ] = true;
 				var thumb = small[ real ] && small[ real ].tagName === 'IMG' ? small[ real ].currentSrc || small[ real ].src : '';
-				items.push( lightboxItem( node, real, thumb ) );
+				var item = lightboxItem( node, real, thumb );
+				item.description = texts[ real ] || '';
+				items.push( item );
 			} );
 			items.sort( function ( a, b ) {
 				return a.real - b.real;
@@ -1961,6 +2047,11 @@
 			if ( config.thumbs ) {
 				thumbs( el.parentNode.querySelector( '.wp-swiper__thumbs' ), controller, config );
 			}
+		}
+
+		var described = config.descriptions ? descriptionsBox( el ) : null;
+		if ( described ) {
+			descriptions( described, controller, config );
 		}
 
 		if ( config.lightbox ) {

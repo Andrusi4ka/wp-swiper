@@ -126,6 +126,49 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( $image, $slides[2]['poster'] );
 	}
 
+	public function test_posted_slides_keep_their_description() {
+		$image = $this->image();
+		$video = $this->video();
+
+		$_POST = array(
+			'wp_swiper_slides' => array(
+				'id'          => array( $image, $video, $image ),
+				'embed'       => array( '', '', '' ),
+				'caption'     => array( '', '', '' ),
+				'description' => array( '<p>Hi <strong>there</strong><script>x()</script></p>', '<p>&nbsp;</p>', '' ),
+				'link'        => array( '', '', '' ),
+				'new_tab'     => array( '0', '0', '0' ),
+				'poster'      => array( '', '', '' ),
+			),
+		);
+		$this->assertSame( array( '<p>Hi <strong>there</strong>x()</p>', '', '' ), wp_list_pluck( WP_Swiper_Admin::posted_slides(), 'description' ) );
+
+		// Forms from before descriptions: none.
+		$_POST = array( 'wp_swiper_slides' => $this->one_slide( $image ) );
+		$this->assertSame( '', WP_Swiper_Admin::posted_slides()[0]['description'] );
+	}
+
+	public function test_slides_box_has_each_description_and_its_window() {
+		$this->as_role( 'editor' );
+		$slides                   = $this->slides( 2 );
+		$slides[0]['description'] = '<p>A <em>long</em> text</p>';
+		$id                       = $this->slider( $slides );
+
+		ob_start();
+		WP_Swiper_Admin::render_slides_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// Two slides and the template: a textarea each, the first one filled.
+		$this->assertSame( 3, substr_count( $html, '<textarea name="wp_swiper_slides[description][]" hidden>' ) );
+		$this->assertStringContainsString( '&lt;p&gt;A &lt;em&gt;long&lt;/em&gt; text&lt;/p&gt;</textarea>', $html );
+		$this->assertSame( 1, substr_count( $html, 'wp-swiper-slide__description has-description' ) );
+		$this->assertStringContainsString( 'Edit description', $html );
+		$this->assertStringContainsString( 'Add description', $html );
+		// One editor for all, its textarea not sent with the form.
+		$this->assertSame( 1, substr_count( $html, 'id="wp-swiper-description-modal"' ) );
+		$this->assertStringContainsString( '<textarea id="wp-swiper-description-editor" rows="10"></textarea>', $html );
+	}
+
 	public function test_settings_screen_has_every_field_once() {
 		$this->as_role( 'editor' );
 		$id = $this->slider();
@@ -157,6 +200,9 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		}
 		// The effects a field belongs to, for admin.js.
 		$this->assertStringContainsString( 'data-field="background" data-effects="slide fade collage"', $html );
+		// Description: its two notes (no description yet, or none shown).
+		$this->assertStringContainsString( 'data-note="empty"', $html );
+		$this->assertStringContainsString( 'data-note="unavailable"', $html );
 		$this->assertStringContainsString( 'id="wp-swiper-layouts"', $html );
 	}
 
@@ -223,5 +269,12 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 
 		$this->assertSame( 'wp_swiper', $settings['base'] );
 		$this->assertSame( (string) $id, $settings['params'][0]['value'][ 'Home hero (#' . $id . ')' ] );
+		// The slider choice only: no class field.
+		$this->assertSame( array( 'id' ), wp_list_pluck( $settings['params'], 'param_name' ) );
+	}
+
+	public function test_wpbakery_element_keeps_a_class_given_before() {
+		$id = $this->slider();
+		$this->assertContains( 'old-class', $this->root_classes( do_shortcode( '[wp_swiper id="' . $id . '" class="old-class"]' ) ) );
 	}
 }

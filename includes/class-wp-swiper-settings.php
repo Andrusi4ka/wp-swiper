@@ -177,6 +177,15 @@ class WP_Swiper_Settings {
 				'placeholder' => __( 'As the slider’s', 'wp-swiper' ),
 				'help'        => __( 'Empty: the thumbnail border radius (Layout).', 'wp-swiper' ),
 			),
+			// Shown while some slide has a description that the slider shows (admin.js).
+			'description_lightbox'  => array(
+				'section' => 'advanced',
+				'panel'   => 'lightbox',
+				'label'   => __( 'Descriptions in the lightbox', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => true,
+				'help'    => __( 'The slide’s description under its image, with the caption.', 'wp-swiper' ),
+			),
 
 			'navigation'            => array(
 				'section' => 'advanced',
@@ -704,6 +713,28 @@ class WP_Swiper_Settings {
 				'max'             => 95,
 				'step'            => 0.5,
 				'help'            => __( '% of the slider width (vertical sliders: of its height).', 'wp-swiper' ),
+			),
+			// "Cover": the part of a cropped image kept in view, per device (a
+			// narrow phone screen often needs another one). Background and Collage
+			// crop too. See WP_Swiper_Render::point().
+			'image_position'        => array(
+				'section'    => 'layout',
+				'label'      => __( 'Image position', 'wp-swiper' ),
+				'type'       => 'select',
+				'responsive' => true,
+				'default'    => 'center',
+				'choices'    => array(
+					'center'       => __( 'Center', 'wp-swiper' ),
+					'top-left'     => __( 'Top left', 'wp-swiper' ),
+					'top'          => __( 'Top', 'wp-swiper' ),
+					'top-right'    => __( 'Top right', 'wp-swiper' ),
+					'left'         => __( 'Left', 'wp-swiper' ),
+					'right'        => __( 'Right', 'wp-swiper' ),
+					'bottom-left'  => __( 'Bottom left', 'wp-swiper' ),
+					'bottom'       => __( 'Bottom', 'wp-swiper' ),
+					'bottom-right' => __( 'Bottom right', 'wp-swiper' ),
+				),
+				'help'       => __( 'The part of the image kept in view where it is cropped to fill its slide. Not for YouTube / Vimeo videos.', 'wp-swiper' ),
 			),
 			// Where a whole ("Contain") image sits in its slide: across a horizontal
 			// slider (top...bottom) or a vertical one (left...right).
@@ -1299,6 +1330,87 @@ class WP_Swiper_Settings {
 				'help'    => __( 'Keeps the text readable on light images, e.g. without a background.', 'wp-swiper' ),
 			),
 
+			// Slide descriptions: under the slider, the current slide's only (see
+			// can_describe() for the sliders that show them). The page is greyed
+			// while no slide has one (admin.js).
+			'description_font_size' => array(
+				'section'    => 'description',
+				'label'      => __( 'Font size (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 16,
+				'min'        => 8,
+				'max'        => 200,
+				'step'       => 1,
+			),
+			'description_weight'    => array(
+				'section' => 'description',
+				'label'   => __( 'Font weight', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => '',
+				'choices' => array(
+					''    => __( 'Default (of the page)', 'wp-swiper' ),
+					'100' => '100',
+					'200' => '200',
+					'300' => '300',
+					'400' => __( '400 (normal)', 'wp-swiper' ),
+					'500' => '500',
+					'600' => '600',
+					'700' => __( '700 (bold)', 'wp-swiper' ),
+					'800' => '800',
+					'900' => '900',
+				),
+			),
+			'description_align'     => array(
+				'section'   => 'description',
+				'label'     => __( 'Alignment', 'wp-swiper' ),
+				'type'      => 'select',
+				'segmented' => true,
+				'default'   => 'left',
+				'choices'   => array(
+					'left'   => __( 'Left', 'wp-swiper' ),
+					'center' => __( 'Center', 'wp-swiper' ),
+					'right'  => __( 'Right', 'wp-swiper' ),
+				),
+			),
+			// How the text changes with the slide (see description_motion()).
+			'description_transition' => array(
+				'section' => 'description',
+				'label'   => __( 'Text transition', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'effect',
+				'choices' => array(
+					'effect' => __( 'As the slider', 'wp-swiper' ),
+					'fade'   => __( 'Fade', 'wp-swiper' ),
+					'slide'  => __( 'Slide', 'wp-swiper' ),
+					'none'   => __( 'None', 'wp-swiper' ),
+				),
+				'help'    => __( 'As the slider: the text moves the way the slides do (slides, turns with a cube, flips...), at the same speed, once a slide is let go.', 'wp-swiper' ),
+			),
+			'description_offset'    => array(
+				'section' => 'description',
+				'label'   => __( 'Gap to the slider (px)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 16,
+				'min'     => 0,
+				'max'     => 200,
+				'step'    => 1,
+				'help'    => __( 'Under the slider and its pagination, if that is outside.', 'wp-swiper' ),
+			),
+			'description_own_color' => array(
+				'section' => 'description',
+				'label'   => __( 'Own text color', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'Off: the colour of the page’s text.', 'wp-swiper' ),
+			),
+			'description_color'     => array(
+				'section' => 'description',
+				'label'   => __( 'Color', 'wp-swiper' ),
+				'type'    => 'color',
+				'default' => '#333333',
+			),
+
 			// Video slides (a video from the media library): how they play. The
 			// page shows while the slider has one (admin.js). Only the video of
 			// the slide in view plays, and only while the slider is on screen.
@@ -1455,6 +1567,100 @@ class WP_Swiper_Settings {
 	 */
 	public static function is_background( $settings ) {
 		return ! empty( $settings['background'] ) && in_array( $settings['effect'], self::BACKGROUND_EFFECTS, true );
+	}
+
+	/**
+	 * Whether the slider shows its slides' descriptions (under it, the current
+	 * slide's): not as a background (behind a block's content), nor without a
+	 * current slide (Continuous scroll, Collage), nor beside a vertical slider.
+	 *
+	 * @param array $settings Slider settings (Direction as shown: render.php
+	 *                        makes fading sliders horizontal).
+	 * @return bool
+	 */
+	public static function can_describe( $settings ) {
+		return 'horizontal' === $settings['direction']
+			&& ! self::is_background( $settings )
+			&& ! self::is_marquee( $settings )
+			&& ! self::is_collage( $settings );
+	}
+
+	/**
+	 * How a description changes with its slide (frontend.css: the motion's
+	 * animations): "Text transition", where "As the slider" takes the motion
+	 * nearest to the effect's.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string none | fade | slide | push | zoom | cube | flip | coverflow | cards | rotate
+	 */
+	public static function description_motion( $settings ) {
+		// Fade, Slide or None (a choice: sanitized).
+		if ( 'effect' !== $settings['description_transition'] ) {
+			return $settings['description_transition'];
+		}
+		switch ( $settings['effect'] ) {
+			case 'thumbs':
+				return 'fade' === $settings['thumbs_transition'] ? 'fade' : 'slide';
+			case 'creative':
+				$styles = array(
+					'push'     => 'push',
+					'zoom'     => 'zoom',
+					'apart'    => 'slide',
+					'flip'     => 'flip',
+					'rotate'   => 'rotate',
+					'door'     => 'cube',
+					'carousel' => 'coverflow',
+				);
+				return isset( $styles[ $settings['creative_style'] ] ) ? $styles[ $settings['creative_style'] ] : 'push';
+			case 'fade':
+			case 'cube':
+			case 'flip':
+			case 'coverflow':
+			case 'cards':
+				return $settings['effect'];
+		}
+		return 'slide';
+	}
+
+	/**
+	 * The markup a slide description may have: paragraphs, line breaks, bold,
+	 * italic, underline (a span the editor styles), links and lists.
+	 *
+	 * @return array wp_kses() allowed tags.
+	 */
+	public static function description_tags() {
+		return array(
+			'p'      => array(),
+			'br'     => array(),
+			'strong' => array(),
+			'b'      => array(),
+			'em'     => array(),
+			'i'      => array(),
+			'u'      => array(),
+			'span'   => array( 'style' => true ),
+			'a'      => array(
+				'href'   => true,
+				'target' => true,
+				'rel'    => true,
+			),
+			'ul'     => array(),
+			'ol'     => array(),
+			'li'     => array(),
+		);
+	}
+
+	/**
+	 * A slide description from the editor: its allowed markup only; '' when
+	 * no text is left.
+	 *
+	 * @param string $html Raw input.
+	 * @return string
+	 */
+	public static function sanitize_description( $html ) {
+		$html = trim( wp_kses( (string) $html, self::description_tags() ) );
+		// The editor's empty paragraph is "<p>&nbsp;</p>": no-break spaces count as none.
+		$text = preg_replace( '/[\s\x{00A0}]+/u', '', html_entity_decode( wp_strip_all_tags( $html ), ENT_QUOTES, 'UTF-8' ) );
+		return '' === (string) $text ? '' : $html;
 	}
 
 	/**
@@ -1707,18 +1913,20 @@ class WP_Swiper_Settings {
 	 */
 	public static function pages() {
 		return array(
-			'lightbox'   => array( __( 'Lightbox', 'wp-swiper' ), 'dashicons-format-gallery' ),
-			'controls'   => array( __( 'Controls', 'wp-swiper' ), 'dashicons-leftright' ),
-			'layout'     => array( __( 'Layout', 'wp-swiper' ), 'dashicons-layout' ),
+			'lightbox'    => array( __( 'Lightbox', 'wp-swiper' ), 'dashicons-format-gallery' ),
+			'controls'    => array( __( 'Controls', 'wp-swiper' ), 'dashicons-leftright' ),
+			'layout'      => array( __( 'Layout', 'wp-swiper' ), 'dashicons-layout' ),
 			// The Thumbnails effect's strip (its menu item shows for that effect only).
-			'thumbs'     => array( __( 'Thumbnails', 'wp-swiper' ), 'dashicons-images-alt2' ),
-			'caption'    => array( __( 'Caption', 'wp-swiper' ), 'dashicons-editor-textcolor' ),
+			'thumbs'      => array( __( 'Thumbnails', 'wp-swiper' ), 'dashicons-images-alt2' ),
+			'caption'     => array( __( 'Caption', 'wp-swiper' ), 'dashicons-editor-textcolor' ),
+			// The slides' descriptions under the slider.
+			'description' => array( __( 'Description', 'wp-swiper' ), 'dashicons-text-page' ),
 			// Video slides (its menu item shows while the slider has one).
-			'video'      => array( __( 'Video', 'wp-swiper' ), 'dashicons-video-alt3' ),
+			'video'       => array( __( 'Video', 'wp-swiper' ), 'dashicons-video-alt3' ),
 			// The outer block's class and id.
-			'attributes' => array( __( 'Custom', 'wp-swiper' ), 'dashicons-editor-code' ),
+			'attributes'  => array( __( 'Custom', 'wp-swiper' ), 'dashicons-editor-code' ),
 			// The slider behind its block's content (its menu item shows for the effects that can be).
-			'background' => array( __( 'Background', 'wp-swiper' ), 'dashicons-format-image' ),
+			'background'  => array( __( 'Background', 'wp-swiper' ), 'dashicons-format-image' ),
 		);
 	}
 
@@ -1801,7 +2009,7 @@ class WP_Swiper_Settings {
 				),
 				'size'        => array(
 					'title'  => __( 'Size and fit', 'wp-swiper' ),
-					'fields' => array( 'height', 'image_fit', 'image_align', 'image_align_vertical' ),
+					'fields' => array( 'height', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
 				),
 				'look'        => array(
 					'title'  => __( 'Look', 'wp-swiper' ),
@@ -2002,9 +2210,10 @@ class WP_Swiper_Settings {
 
 	/**
 	 * Saved slides: list of [ 'id' => int, 'caption' => string, 'link' => string,
-	 * 'new_tab' => bool, 'poster' => int, 'embed' => string ] (slides saved
-	 * before "new tab" or video slides existed have no new_tab / poster /
-	 * embed key). "id": an image, or a video (its "poster": the image shown
+	 * 'new_tab' => bool, 'poster' => int, 'embed' => string, 'description' =>
+	 * string ] (slides saved before "new tab", video slides or descriptions
+	 * existed have no new_tab / poster / embed / description key). A
+	 * description: HTML (see description_tags()). "id": an image, or a video (its "poster": the image shown
 	 * before it plays; 0 = none); or "embed": a YouTube / Vimeo link (id 0).
 	 *
 	 * @param int $post_id Slider ID.

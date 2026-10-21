@@ -248,6 +248,112 @@
 			$( this ).closest( '.wp-swiper-slide' ).find( 'input[name="wp_swiper_slides[new_tab][]"]' ).val( this.checked ? '1' : '0' );
 		} );
 
+		/*
+		 * Slide descriptions: HTML kept in the slide's hidden textarea, edited
+		 * in one window with WordPress's editor (wp.editor), started when it
+		 * opens and removed when it closes, so the slides stay plain fields that
+		 * can be dragged. "Apply" puts the text into the slide; saving the
+		 * slider saves it.
+		 */
+		var EDITOR_ID = 'wp-swiper-description-editor';
+		// Out of the form (its textarea is not sent) and of the box, which may be folded.
+		var $modal = $( '#wp-swiper-description-modal' ).appendTo( document.body );
+		var $editing = null;
+
+		function descriptionInput( $slide ) {
+			return $slide.find( 'textarea[name="wp_swiper_slides[description][]"]' );
+		}
+
+		// Some text, not just tags or the editor's empty paragraph ($.trim takes
+		// its no-break space too). DOMParser: the HTML is read, nothing of it
+		// loads or runs.
+		function hasText( html ) {
+			var text = new window.DOMParser().parseFromString( html || '', 'text/html' ).body.textContent || '';
+			return $.trim( text ) !== '';
+		}
+
+		// Any slide with a description.
+		function hasDescriptions() {
+			return $list.find( 'textarea[name="wp_swiper_slides[description][]"]' ).filter( function () {
+				return hasText( this.value );
+			} ).length > 0;
+		}
+
+		function setDescription( $slide, html ) {
+			var filled = hasText( html );
+			descriptionInput( $slide ).val( filled ? html : '' );
+			$slide.find( '.wp-swiper-slide__description' )
+				.toggleClass( 'has-description', filled )
+				.find( '.wp-swiper-slide__description-label' ).text( filled ? i18n.descriptionEdit : i18n.descriptionAdd );
+		}
+
+		function editor() {
+			return window.wp && window.wp.editor && window.wp.editor.initialize ? window.wp.editor : null;
+		}
+
+		function openDescription( $slide ) {
+			$editing = $slide;
+			$modal.find( '.wp-swiper-modal__slide' ).text( '— ' + ( i18n.slideNumber || '%d' ).replace( '%d', $slide.index() + 1 ) );
+			$( '#' + EDITOR_ID ).val( descriptionInput( $slide ).val() );
+			$modal.prop( 'hidden', false );
+			$( document.body ).addClass( 'wp-swiper-modal-open' );
+
+			if ( editor() ) {
+				editor().initialize( EDITOR_ID, {
+					// Without the visual editor (the user's profile turns it off): the code one only.
+					tinymce: window.tinymce ? {
+						toolbar1: 'bold,italic,underline,bullist,numlist,link,unlink,removeformat,undo,redo',
+						toolbar2: '',
+						height: 240,
+						init_instance_callback: function ( instance ) {
+							instance.focus();
+						}
+					} : false,
+					quicktags: { buttons: 'strong,em,link,ul,ol,li' },
+					mediaButtons: false
+				} );
+			}
+			if ( ! window.tinymce ) {
+				$( '#' + EDITOR_ID ).trigger( 'focus' );
+			}
+		}
+
+		function closeDescription( apply ) {
+			if ( ! $editing ) {
+				return;
+			}
+			if ( apply ) {
+				setDescription( $editing, editor() ? editor().getContent( EDITOR_ID ) : $( '#' + EDITOR_ID ).val() );
+				$( '.wp-swiper-preview__update' ).addClass( 'is-stale' );
+				// The Description page and its lightbox setting follow the slides.
+				syncFields();
+			}
+			if ( editor() ) {
+				editor().remove( EDITOR_ID );
+			}
+			$modal.prop( 'hidden', true );
+			$( document.body ).removeClass( 'wp-swiper-modal-open' );
+			var $button = $editing.find( '.wp-swiper-slide__description' );
+			$editing = null;
+			$button.trigger( 'focus' );
+		}
+
+		$list.on( 'click', '.wp-swiper-slide__description', function () {
+			openDescription( $( this ).closest( '.wp-swiper-slide' ) );
+		} );
+		$modal.on( 'click', '.wp-swiper-modal__apply', function () {
+			closeDescription( true );
+		} );
+		$modal.on( 'click', '.wp-swiper-modal__cancel, .wp-swiper-modal__close', function () {
+			closeDescription( false );
+		} );
+		$( document ).on( 'keydown', function ( e ) {
+			// Not while the editor's own link window is open (Escape closes that).
+			if ( e.key === 'Escape' && $editing && ! $( '#wp-link-wrap' ).is( ':visible' ) ) {
+				closeDescription( false );
+			}
+		} );
+
 		// Sortable treats items as a row only when they float or are inline;
 		// CSS grid items are neither, so it would only react to vertical moves.
 		$list.sortable( 'instance' )._isFloating = function () {
@@ -700,6 +806,9 @@
 			// Alignment of a whole ("Contain") image, across the slider axis.
 			field( 'image_align' ).toggle( ! cover && ! vertical );
 			field( 'image_align_vertical' ).toggle( ! cover && vertical );
+			// The part kept of a cropped ("Cover") image; a background and a collage
+			// always crop (Image fit locked above); slides sized by their images do not.
+			field( 'image_position' ).toggle( cover && ! autoWidth );
 			// Caption background options, only with a background.
 			var captionBg = $( '#wp-swiper-caption_bg' ).is( ':checked' );
 			[ 'caption_bg_style', 'caption_bg_color', 'caption_bg_opacity' ].forEach( function ( name ) {
@@ -709,6 +818,15 @@
 			field( 'lightbox_radius' ).toggle( lightbox );
 			field( 'lightbox_thumbs' ).toggle( lightbox && effect === 'thumbs' );
 			field( 'lightbox_thumbs_radius' ).toggle( lightbox && effect === 'thumbs' && $( '#wp-swiper-lightbox_thumbs' ).is( ':checked' ) );
+
+			// Descriptions: under a horizontal slider with a current slide, not as a
+			// background (WP_Swiper_Settings::can_describe()); the page is greyed
+			// otherwise, and while no slide has one.
+			var describable = ! vertical && ! background && ! marquee && ! collage;
+			var described = hasDescriptions();
+			syncDescriptions( ! described ? 'empty' : ( describable ? '' : 'unavailable' ) );
+			field( 'description_lightbox' ).toggle( lightbox && describable && described );
+			field( 'description_color' ).toggle( $( '#wp-swiper-description_own_color' ).is( ':checked' ) );
 
 			// Pagination layout: one position field per direction.
 			var paginated = $( '#wp-swiper-pagination' ).val() !== 'none';
@@ -894,6 +1012,32 @@
 			}
 		} );
 		syncCaptions();
+
+		/*
+		 * Description settings: greyed like Caption's (see above) while no slide
+		 * has a description, or while the slider shows none (syncFields), with
+		 * the note that says which. syncFields has run it before this point, so
+		 * the state is declared without a value (one would undo that run's).
+		 */
+		var descriptionsLocked;
+
+		function syncDescriptions( why ) {
+			var $box = $( 'fieldset[data-section="description"]' );
+			descriptionsLocked = !! why;
+			$box.prop( 'disabled', descriptionsLocked ).find( '.wp-swiper-field' ).toggleClass( 'is-disabled', descriptionsLocked );
+			$box.find( '.wp-swiper-section-note' ).each( function () {
+				this.hidden = $( this ).data( 'note' ) !== why;
+			} );
+		}
+
+		beforeSend( function () {
+			if ( descriptionsLocked ) {
+				var $box = $( 'fieldset[data-section="description"]' ).prop( 'disabled', false );
+				setTimeout( function () {
+					$box.prop( 'disabled', descriptionsLocked );
+				} );
+			}
+		} );
 
 		// Responsive fields: desktop / tablet / mobile switcher.
 		function syncResponsive( $field ) {

@@ -17,6 +17,16 @@ class WP_Swiper_Render {
 	 */
 	const AUTO_WIDTH_VISIBLE = 8;
 
+	/**
+	 * What a per-device custom property's name ends with on each device
+	 * ("--wp-swiper-height", "--wp-swiper-height-tablet"...).
+	 */
+	const SUFFIX = array(
+		'desktop' => '',
+		'tablet'  => '-tablet',
+		'mobile'  => '-mobile',
+	);
+
 	public static function init() {
 		add_shortcode( self::SHORTCODE, array( __CLASS__, 'shortcode' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
@@ -323,6 +333,28 @@ class WP_Swiper_Render {
 				'centered' => self::centered( $settings ),
 			) : false,
 		);
+	}
+
+	/**
+	 * One of the nine points of an image ("Zoom towards", "Image position")
+	 * as a CSS position.
+	 *
+	 * @param string $name center, top-left, top... bottom-right.
+	 * @return string "x% y%"; the middle for an unknown one.
+	 */
+	private static function point( $name ) {
+		$points = array(
+			'center'       => '50% 50%',
+			'top-left'     => '0% 0%',
+			'top'          => '50% 0%',
+			'top-right'    => '100% 0%',
+			'left'         => '0% 50%',
+			'right'        => '100% 50%',
+			'bottom-left'  => '0% 100%',
+			'bottom'       => '50% 100%',
+			'bottom-right' => '100% 100%',
+		);
+		return isset( $points[ $name ] ) ? $points[ $name ] : '50% 50%';
 	}
 
 	/**
@@ -693,23 +725,18 @@ class WP_Swiper_Render {
 			$style[] = '--wp-swiper-cube-shadow-opacity:' . max( 0, min( 100, (int) $settings['cube_shadow_opacity'] ) ) / 100;
 			$style[] = '--wp-swiper-cube-shadow-room:' . ( (int) $settings['cube_shadow_offset'] + 20 ) . 'px';
 		}
-		$suffix = array(
-			'desktop' => '',
-			'tablet'  => '-tablet',
-			'mobile'  => '-mobile',
-		);
 
 		// Thumbnails: the look of the strip (its sizes come from frontend.js).
 		$thumbs = WP_Swiper_Settings::is_thumbs( $settings );
 		if ( $thumbs ) {
 			foreach ( WP_Swiper_Settings::responsive( $settings, 'thumbs_spacing' ) as $device => $spacing ) {
-				$style[] = '--wp-swiper-thumbs-spacing' . $suffix[ $device ] . ':' . (int) $spacing . 'px';
+				$style[] = '--wp-swiper-thumbs-spacing' . self::SUFFIX[ $device ] . ':' . (int) $spacing . 'px';
 			}
 			foreach ( WP_Swiper_Settings::thumbs_ratio( $settings ) as $device => $ratio ) {
-				$style[] = '--wp-swiper-thumb-ratio' . $suffix[ $device ] . ':' . implode( ' / ', $ratio );
+				$style[] = '--wp-swiper-thumb-ratio' . self::SUFFIX[ $device ] . ':' . implode( ' / ', $ratio );
 			}
 			foreach ( WP_Swiper_Settings::responsive( $settings, 'thumbs_radius' ) as $device => $radius ) {
-				$style[] = '--wp-swiper-thumb-radius' . $suffix[ $device ] . ':' . (int) $radius . 'px';
+				$style[] = '--wp-swiper-thumb-radius' . self::SUFFIX[ $device ] . ':' . (int) $radius . 'px';
 			}
 			$style[] = '--wp-swiper-thumb-border-width:' . (int) $settings['thumbs_border_width'] . 'px';
 			$style[] = '--wp-swiper-thumb-border-color:' . $settings['thumbs_border_color'];
@@ -721,7 +748,7 @@ class WP_Swiper_Render {
 		if ( $settings['navigation'] ) {
 			foreach ( WP_Swiper_Settings::responsive( $settings, 'navigation_size' ) as $device => $size ) {
 				if ( '' !== $size ) {
-					$style[] = '--wp-swiper-arrow-size' . $suffix[ $device ] . ':' . (int) $size . 'px';
+					$style[] = '--wp-swiper-arrow-size' . self::SUFFIX[ $device ] . ':' . (int) $size . 'px';
 				}
 			}
 		}
@@ -740,7 +767,7 @@ class WP_Swiper_Render {
 			foreach ( $pagination as $name => $key ) {
 				foreach ( WP_Swiper_Settings::responsive( $settings, $key ) as $device => $value ) {
 					if ( '' !== $value ) {
-						$style[] = '--wp-swiper-' . $name . $suffix[ $device ] . ':' . (int) $value . 'px';
+						$style[] = '--wp-swiper-' . $name . self::SUFFIX[ $device ] . ':' . (int) $value . 'px';
 					}
 				}
 			}
@@ -757,7 +784,7 @@ class WP_Swiper_Render {
 		// Height of the slides per device (0 = 500px), unless "Auto".
 		if ( ! $fill ) {
 			foreach ( WP_Swiper_Settings::css_heights( $settings ) as $device => $height ) {
-				$style[] = '--wp-swiper-height' . $suffix[ $device ] . ':' . $height;
+				$style[] = '--wp-swiper-height' . self::SUFFIX[ $device ] . ':' . $height;
 			}
 		}
 
@@ -768,6 +795,14 @@ class WP_Swiper_Render {
 		$first = WP_Swiper_Settings::slide_size( $slides[0] );
 		if ( $first ) {
 			$style[] = '--wp-swiper-ratio:' . (int) $first[0] . ' / ' . (int) $first[1];
+		}
+		// "Cover": the part of a cropped image kept in view per device, unless it
+		// is the middle everywhere (the CSS default).
+		$positions = WP_Swiper_Settings::responsive( $settings, 'image_position' );
+		if ( 'cover' === $settings['image_fit'] && array( 'center' ) !== array_values( array_unique( $positions ) ) ) {
+			foreach ( $positions as $device => $position ) {
+				$style[] = '--wp-swiper-img-position' . self::SUFFIX[ $device ] . ':' . self::point( $position );
+			}
 		}
 		// "Contain": where the image sits in its slide (slides are flex rows).
 		if ( 'contain' === $settings['image_fit'] ) {
@@ -786,7 +821,7 @@ class WP_Swiper_Render {
 		}
 		// Caption typography.
 		foreach ( WP_Swiper_Settings::responsive( $settings, 'caption_font_size' ) as $device => $size ) {
-			$style[] = '--wp-swiper-caption-size' . $suffix[ $device ] . ':' . (int) $size . 'px';
+			$style[] = '--wp-swiper-caption-size' . self::SUFFIX[ $device ] . ':' . (int) $size . 'px';
 		}
 		$style[] = '--wp-swiper-caption-color:' . $settings['caption_color'];
 		if ( $settings['caption_bg'] ) {
@@ -813,30 +848,19 @@ class WP_Swiper_Render {
 		// Image border: width per device (0 = none there), one color.
 		if ( $settings['image_border'] ) {
 			foreach ( WP_Swiper_Settings::responsive( $settings, 'image_border_width' ) as $device => $width ) {
-				$style[] = '--wp-swiper-border-width' . $suffix[ $device ] . ':' . (int) $width . 'px';
+				$style[] = '--wp-swiper-border-width' . self::SUFFIX[ $device ] . ':' . (int) $width . 'px';
 			}
 			$style[] = '--wp-swiper-border-color:' . $settings['image_border_color'];
 		}
 		if ( $expand ) {
 			foreach ( WP_Swiper_Settings::responsive( $settings, 'active_width' ) as $device => $width ) {
-				$style[] = '--wp-swiper-active-width' . $suffix[ $device ] . ':' . (float) $width . '%';
+				$style[] = '--wp-swiper-active-width' . self::SUFFIX[ $device ] . ':' . (float) $width . '%';
 			}
 		}
 		// Zoom: the point it zooms towards, and the scale of the images waiting
 		// their turn (zoom out: they come up large).
 		if ( $zoom ) {
-			$origin = array(
-				'center'       => '50% 50%',
-				'top-left'     => '0% 0%',
-				'top'          => '50% 0%',
-				'top-right'    => '100% 0%',
-				'left'         => '0% 50%',
-				'right'        => '100% 50%',
-				'bottom-left'  => '0% 100%',
-				'bottom'       => '50% 100%',
-				'bottom-right' => '100% 100%',
-			);
-			$style[] = '--wp-swiper-zoom-origin:' . ( isset( $origin[ $settings['zoom_origin'] ] ) ? $origin[ $settings['zoom_origin'] ] : '50% 50%' );
+			$style[] = '--wp-swiper-zoom-origin:' . self::point( $settings['zoom_origin'] );
 			$style[] = '--wp-swiper-zoom-from:' . self::zoom_scales( $settings )[0];
 		}
 
@@ -849,7 +873,7 @@ class WP_Swiper_Render {
 			}
 			foreach ( WP_Swiper_Settings::responsive( $settings, 'background_min_height' ) as $device => $height ) {
 				if ( '' !== $height ) {
-					$style[] = '--wp-swiper-bg-min-height' . $suffix[ $device ] . ':' . (int) $height . 'px';
+					$style[] = '--wp-swiper-bg-min-height' . self::SUFFIX[ $device ] . ':' . (int) $height . 'px';
 				}
 			}
 		}
@@ -877,6 +901,13 @@ class WP_Swiper_Render {
 		$copies            = self::copies( $settings, $count );
 		$config            = self::js_config( $settings, $count, $copies, $videos );
 		$pagination_inside = 'inside' === $settings['pagination_placement'];
+
+		// Slide descriptions, under the slider (frontend.js descriptions()).
+		$descriptions           = self::descriptions( $post_id, $slides, $settings );
+		$config['descriptions'] = '' !== $descriptions;
+		if ( $config['lightbox'] ) {
+			$config['lightbox']['descriptions'] = $config['descriptions'] && $settings['description_lightbox'];
+		}
 
 		ob_start();
 		?>
@@ -960,7 +991,72 @@ class WP_Swiper_Render {
 			<?php endif; ?>
 		</div>
 		<?php
+		echo $descriptions; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built.
 		return ob_get_clean();
+	}
+
+	/**
+	 * The slides' descriptions: a block right after the slider's (so under
+	 * all of it, whatever sits beside or above its slides), the current
+	 * slide's shown. They share one place in it (CSS), so the block is as
+	 * tall as the longest and the page under it does not move as they change;
+	 * the one going and the one coming move there at once (Text transition).
+	 * Slides without one show none there.
+	 *
+	 * @param int   $post_id  Slider ID.
+	 * @param array $slides   Slides.
+	 * @param array $settings Slider settings.
+	 * @return string '' if the slider shows none.
+	 */
+	private static function descriptions( $post_id, $slides, $settings ) {
+		if ( ! WP_Swiper_Settings::can_describe( $settings ) ) {
+			return '';
+		}
+		$items = '';
+		foreach ( $slides as $index => $slide ) {
+			// Sanitized again: saved before, or posted by the preview.
+			$text = empty( $slide['description'] ) ? '' : WP_Swiper_Settings::sanitize_description( $slide['description'] );
+			if ( '' !== $text ) {
+				$items .= sprintf(
+					'<div class="wp-swiper-descriptions__item%1$s" data-wp-swiper-index="%2$d">%3$s</div>',
+					// The first slide's until frontend.js takes over.
+					0 === $index ? ' is-active' : '',
+					(int) $index,
+					// Paragraphs for text typed in the editor's code view (only <p> and <br> are added).
+					wpautop( $text )
+				);
+			}
+		}
+		if ( '' === $items ) {
+			return '';
+		}
+
+		$style = array(
+			'--wp-swiper-speed:' . (int) $settings['speed'] . 'ms',
+			'--wp-swiper-description-offset:' . (int) $settings['description_offset'] . 'px',
+			'--wp-swiper-description-align:' . $settings['description_align'],
+		);
+		foreach ( WP_Swiper_Settings::responsive( $settings, 'description_font_size' ) as $device => $size ) {
+			$style[] = '--wp-swiper-description-size' . self::SUFFIX[ $device ] . ':' . (int) $size . 'px';
+		}
+		// "Text transition": the motion's animations (frontend.css).
+		$classes = array( 'wp-swiper-descriptions', 'wp-swiper-descriptions--' . $post_id, 'wp-swiper-descriptions--' . WP_Swiper_Settings::description_motion( $settings ) );
+		if ( '' !== $settings['description_weight'] ) {
+			$classes[] = 'wp-swiper-descriptions--weight';
+			$style[]   = '--wp-swiper-description-weight:' . (int) $settings['description_weight'];
+		}
+		// Off: the page's text colour.
+		if ( $settings['description_own_color'] ) {
+			$classes[] = 'wp-swiper-descriptions--color';
+			$style[]   = '--wp-swiper-description-color:' . $settings['description_color'];
+		}
+
+		return sprintf(
+			'<div class="%1$s" style="%2$s">%3$s</div>',
+			esc_attr( implode( ' ', $classes ) ),
+			esc_attr( implode( ';', $style ) ),
+			$items
+		);
 	}
 
 	/**

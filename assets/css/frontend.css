@@ -72,6 +72,23 @@
 	height: 100%;
 	max-width: none;
 	object-fit: var(--wp-swiper-fit);
+	object-position: var(--wp-swiper-img-position, 50% 50%);
+}
+
+/* "Image position" per device (render.php sets all three, or none: the
+   middle), for what "Cover" crops: images, video files, video posters. */
+@media (max-width: 1024px) {
+	.wp-swiper .wp-swiper__image,
+	.wp-swiper .wp-swiper__embed-poster {
+		object-position: var(--wp-swiper-img-position-tablet, var(--wp-swiper-img-position, 50% 50%));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper .wp-swiper__image,
+	.wp-swiper .wp-swiper__embed-poster {
+		object-position: var(--wp-swiper-img-position-mobile, var(--wp-swiper-img-position, 50% 50%));
+	}
 }
 
 /* A video slide's player (sized as an image, see above): dark until its
@@ -104,6 +121,7 @@
 	height: 100%;
 	max-width: none;
 	object-fit: var(--wp-swiper-fit, cover);
+	object-position: var(--wp-swiper-img-position, 50% 50%);
 	transition: opacity 0.3s;
 }
 
@@ -453,6 +471,360 @@
 	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 14px rgba(0, 0, 0, 0.35);
 }
 
+/* Slide descriptions: a block after the slider's, in the page's text style
+   unless given its own size, weight and colour. All of them share one grid
+   cell, so the block is as tall as the longest; the current slide's shows
+   (frontend.js descriptions()), the others stay there unseen. */
+.wp-swiper-descriptions {
+	--wp-swiper-description-dir: 1;
+
+	display: grid;
+	margin-top: var(--wp-swiper-description-offset, 16px);
+	font-size: var(--wp-swiper-description-size, 16px);
+	text-align: var(--wp-swiper-description-align, left);
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper-descriptions {
+		font-size: var(--wp-swiper-description-size-tablet, var(--wp-swiper-description-size, 16px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-descriptions {
+		font-size: var(--wp-swiper-description-size-mobile, var(--wp-swiper-description-size-tablet, var(--wp-swiper-description-size, 16px)));
+	}
+}
+
+.wp-swiper-descriptions--weight {
+	font-weight: var(--wp-swiper-description-weight);
+}
+
+.wp-swiper-descriptions--color {
+	color: var(--wp-swiper-description-color);
+}
+
+/* Unseen: out of reach of clicks and screen readers too. */
+.wp-swiper-descriptions__item {
+	grid-area: 1 / 1;
+	min-width: 0;
+	visibility: hidden;
+}
+
+.wp-swiper-descriptions__item.is-active,
+.wp-swiper-descriptions__item.is-leaving {
+	visibility: visible;
+}
+
+/* Text transition: the one going (.is-leaving) and the one coming
+   (.is-entering) at the slider's speed; --wp-swiper-description-dir is 1
+   going forward, -1 back (frontend.js), so they move the way the slides did.
+   Motions in depth get a perspective; those that move sideways stay inside
+   the block. With reduced motion wanted, frontend.js plays none of them. */
+.wp-swiper-descriptions__item.is-entering,
+.wp-swiper-descriptions__item.is-leaving {
+	animation-duration: var(--wp-swiper-speed, 600ms);
+	animation-timing-function: ease;
+	animation-fill-mode: both;
+	backface-visibility: hidden;
+}
+
+.wp-swiper-descriptions--slide,
+.wp-swiper-descriptions--push,
+.wp-swiper-descriptions--zoom,
+.wp-swiper-descriptions--cube,
+.wp-swiper-descriptions--coverflow,
+.wp-swiper-descriptions--cards,
+.wp-swiper-descriptions--rotate {
+	overflow: hidden;
+}
+
+.wp-swiper-descriptions--cube,
+.wp-swiper-descriptions--flip,
+.wp-swiper-descriptions--coverflow,
+.wp-swiper-descriptions--zoom {
+	perspective: 1200px;
+}
+
+.wp-swiper-descriptions--fade .is-entering {
+	animation-name: wp-swiper-text-fade-in;
+}
+
+.wp-swiper-descriptions--fade .is-leaving {
+	animation-name: wp-swiper-text-fade-out;
+}
+
+.wp-swiper-descriptions--slide .is-entering {
+	animation-name: wp-swiper-text-slide-in;
+}
+
+.wp-swiper-descriptions--slide .is-leaving {
+	animation-name: wp-swiper-text-slide-out;
+}
+
+.wp-swiper-descriptions--push .is-entering {
+	animation-name: wp-swiper-text-slide-in;
+}
+
+.wp-swiper-descriptions--push .is-leaving {
+	animation-name: wp-swiper-text-push-out;
+}
+
+.wp-swiper-descriptions--zoom .is-entering {
+	animation-name: wp-swiper-text-slide-in;
+}
+
+.wp-swiper-descriptions--zoom .is-leaving {
+	animation-name: wp-swiper-text-zoom-out;
+}
+
+.wp-swiper-descriptions--cube .is-entering {
+	animation-name: wp-swiper-text-cube-in;
+}
+
+.wp-swiper-descriptions--cube .is-leaving {
+	animation-name: wp-swiper-text-cube-out;
+}
+
+.wp-swiper-descriptions--flip .is-entering {
+	animation-name: wp-swiper-text-flip-in;
+}
+
+.wp-swiper-descriptions--flip .is-leaving {
+	animation-name: wp-swiper-text-flip-out;
+}
+
+.wp-swiper-descriptions--coverflow .is-entering {
+	animation-name: wp-swiper-text-coverflow-in;
+}
+
+.wp-swiper-descriptions--coverflow .is-leaving {
+	animation-name: wp-swiper-text-coverflow-out;
+}
+
+.wp-swiper-descriptions--cards .is-entering {
+	animation-name: wp-swiper-text-cards-in;
+}
+
+.wp-swiper-descriptions--cards .is-leaving {
+	animation-name: wp-swiper-text-cards-out;
+}
+
+.wp-swiper-descriptions--rotate .is-entering {
+	animation-name: wp-swiper-text-rotate-in;
+}
+
+.wp-swiper-descriptions--rotate .is-leaving {
+	animation-name: wp-swiper-text-rotate-out;
+}
+
+
+/* The going one goes behind the coming one where they overlap (Push: covered). */
+.wp-swiper-descriptions__item.is-leaving {
+	z-index: 0;
+}
+
+.wp-swiper-descriptions__item.is-entering {
+	z-index: 1;
+}
+
+@keyframes wp-swiper-text-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes wp-swiper-text-fade-out {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+/* Slide: in from the side the slides came from, out the other way. */
+@keyframes wp-swiper-text-slide-in {
+	from {
+		transform: translateX(calc(var(--wp-swiper-description-dir) * 100%));
+	}
+	to {
+		transform: none;
+	}
+}
+
+@keyframes wp-swiper-text-slide-out {
+	from {
+		transform: none;
+	}
+	to {
+		transform: translateX(calc(var(--wp-swiper-description-dir) * -100%));
+	}
+}
+
+/* Push: covered as it moves off a little and dims. */
+@keyframes wp-swiper-text-push-out {
+	from {
+		opacity: 1;
+		transform: none;
+	}
+	to {
+		opacity: 0;
+		transform: translateX(calc(var(--wp-swiper-description-dir) * -20%));
+	}
+}
+
+/* Zoom: sinks back. */
+@keyframes wp-swiper-text-zoom-out {
+	from {
+		opacity: 1;
+		transform: none;
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.8);
+	}
+}
+
+/* Cube: two faces turning round the edge between them (forward: the
+   coming one's left edge, the going one's right). */
+.wp-swiper-descriptions--cube .is-entering {
+	transform-origin: calc(50% - var(--wp-swiper-description-dir) * 50%) 50%;
+}
+
+.wp-swiper-descriptions--cube .is-leaving {
+	transform-origin: calc(50% + var(--wp-swiper-description-dir) * 50%) 50%;
+}
+
+@keyframes wp-swiper-text-cube-in {
+	from {
+		transform: translateX(calc(var(--wp-swiper-description-dir) * 100%)) rotateY(calc(var(--wp-swiper-description-dir) * 90deg));
+	}
+	to {
+		transform: none;
+	}
+}
+
+@keyframes wp-swiper-text-cube-out {
+	from {
+		transform: none;
+	}
+	to {
+		transform: translateX(calc(var(--wp-swiper-description-dir) * -100%)) rotateY(calc(var(--wp-swiper-description-dir) * -90deg));
+	}
+}
+
+/* Flip: the first half turns the old one edge-on, the second the new one face-on. */
+@keyframes wp-swiper-text-flip-in {
+	0%, 50% {
+		opacity: 0;
+		transform: rotateY(calc(var(--wp-swiper-description-dir) * 90deg));
+	}
+	51% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes wp-swiper-text-flip-out {
+	0% {
+		opacity: 1;
+		transform: none;
+	}
+	49% {
+		opacity: 1;
+	}
+	50%, 100% {
+		opacity: 0;
+		transform: rotateY(calc(var(--wp-swiper-description-dir) * -90deg));
+	}
+}
+
+/* Coverflow: past each other, turned and smaller off centre. */
+@keyframes wp-swiper-text-coverflow-in {
+	from {
+		opacity: 0;
+		transform: translateX(calc(var(--wp-swiper-description-dir) * 60%)) rotateY(calc(var(--wp-swiper-description-dir) * -45deg)) scale(0.8);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes wp-swiper-text-coverflow-out {
+	from {
+		opacity: 1;
+		transform: none;
+	}
+	to {
+		opacity: 0;
+		transform: translateX(calc(var(--wp-swiper-description-dir) * -60%)) rotateY(calc(var(--wp-swiper-description-dir) * 45deg)) scale(0.8);
+	}
+}
+
+/* Cards: forward, the top card is thrown aside, tilted, and the next comes
+   up from the stack; back, a card comes in over it from the side. */
+@keyframes wp-swiper-text-cards-in {
+	from {
+		opacity: 0;
+		transform: translateX(calc((1 - var(--wp-swiper-description-dir)) * -55%)) rotate(calc((1 - var(--wp-swiper-description-dir)) * -4deg)) scale(calc(0.95 + (1 - var(--wp-swiper-description-dir)) * 0.025));
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes wp-swiper-text-cards-out {
+	from {
+		opacity: 1;
+		transform: none;
+	}
+	to {
+		opacity: 0;
+		transform: translateX(calc((1 + var(--wp-swiper-description-dir)) * -55%)) rotate(calc((1 + var(--wp-swiper-description-dir)) * -4deg)) scale(calc(0.95 + (1 + var(--wp-swiper-description-dir)) * 0.025));
+	}
+}
+
+/* Rotate: off and in with a turn. */
+@keyframes wp-swiper-text-rotate-in {
+	from {
+		opacity: 0;
+		transform: translateX(calc(var(--wp-swiper-description-dir) * 100%)) rotate(calc(var(--wp-swiper-description-dir) * 20deg));
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes wp-swiper-text-rotate-out {
+	from {
+		opacity: 1;
+		transform: none;
+	}
+	to {
+		opacity: 0;
+		transform: translateX(calc(var(--wp-swiper-description-dir) * -100%)) rotate(calc(var(--wp-swiper-description-dir) * -20deg));
+	}
+}
+
+/* The theme's paragraph and list spacing inside, but none around the text. */
+.wp-swiper-descriptions__item > :first-child {
+	margin-top: 0;
+}
+
+.wp-swiper-descriptions__item > :last-child {
+	margin-bottom: 0;
+}
+
 /* Effects that render outside the slide box. */
 .wp-swiper--effect-cube .swiper,
 .wp-swiper--effect-flip .swiper,
@@ -773,6 +1145,54 @@ html.wp-swiper-lightbox-open {
 	font-size: 15px;
 	line-height: 1.4;
 	text-align: center;
+}
+
+/* "Descriptions in the lightbox": the caption and the description in one
+   panel at the bottom, over the image where it is long (dark, so it stays
+   readable), scrolling past a third of the window. */
+.wp-swiper-lightbox__info {
+	position: absolute;
+	bottom: 16px;
+	left: 50%;
+	z-index: 1;
+	box-sizing: border-box;
+	width: min(760px, calc(100% - 32px));
+	max-height: 33%;
+	overflow-y: auto;
+	padding: 12px 18px;
+	border-radius: 6px;
+	background: rgba(0, 0, 0, 0.6);
+	font-size: 15px;
+	line-height: 1.5;
+	text-align: center;
+	transform: translateX(-50%);
+}
+
+.wp-swiper-lightbox__info .wp-swiper-lightbox__caption {
+	position: static;
+	margin-bottom: 6px;
+	padding: 0;
+	font-weight: 600;
+}
+
+.wp-swiper-lightbox__description > :first-child {
+	margin-top: 0;
+}
+
+.wp-swiper-lightbox__description > :last-child {
+	margin-bottom: 0;
+}
+
+.wp-swiper-lightbox__description a {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.wp-swiper-lightbox__description ul,
+.wp-swiper-lightbox__description ol {
+	display: inline-block;
+	margin: 0.5em 0;
+	text-align: left;
 }
 
 /* Thumbnails under the image ("Thumbnails in the lightbox"): the image takes

@@ -399,6 +399,30 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringNotContainsString( 'data-wp-swiper-bg', $html );
 	}
 
+	/* Image position -------------------------------------------------- */
+
+	public function test_image_position_per_device() {
+		$style = $this->root_style( $this->render( array( 'image_position' => 'top', 'image_position_mobile' => 'bottom-right' ) ) );
+
+		$this->assertStringContainsString( '--wp-swiper-img-position:50% 0%', $style );
+		// Tablet inherits the desktop's.
+		$this->assertStringContainsString( '--wp-swiper-img-position-tablet:50% 0%', $style );
+		$this->assertStringContainsString( '--wp-swiper-img-position-mobile:100% 100%', $style );
+	}
+
+	public function test_image_position_only_where_it_crops() {
+		// The middle everywhere: the CSS default.
+		$this->assertStringNotContainsString( '--wp-swiper-img-position', $this->root_style( $this->render() ) );
+		$this->assertStringContainsString( '--wp-swiper-img-position-mobile:50% 0%', $this->root_style( $this->render( array( 'image_position_mobile' => 'top' ) ) ) );
+		// "Contain" crops nothing.
+		$this->assertStringNotContainsString( '--wp-swiper-img-position', $this->root_style( $this->render( array( 'image_fit' => 'contain', 'image_position' => 'top' ) ) ) );
+		// A background crops whatever Image fit says.
+		$style = $this->root_style( $this->render( array( 'image_fit' => 'contain', 'image_position' => 'left', 'background' => true, 'background_class' => 'hero' ) ) );
+		$this->assertStringContainsString( '--wp-swiper-img-position:0% 50%', $style );
+		// So does a collage.
+		$this->assertStringContainsString( '--wp-swiper-img-position:100% 0%', $this->render( array( 'effect' => 'collage', 'image_position' => 'top-right' ) ) );
+	}
+
 	/* Zoom ------------------------------------------------------------ */
 
 	public function test_zoom_in() {
@@ -422,5 +446,125 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertFalse( $this->config( $html )['zoom'] );
 		$this->assertNotContains( 'wp-swiper--zoom', $this->root_classes( $html ) );
 		$this->assertStringNotContainsString( '--wp-swiper-zoom', $this->root_style( $html ) );
+	}
+
+	/* Descriptions ---------------------------------------------------- */
+
+	/**
+	 * Three slides, the first and the last with a description.
+	 *
+	 * @return array
+	 */
+	private function described_slides() {
+		$slides                   = $this->slides( 3 );
+		$slides[0]['description'] = '<p>First <strong>one</strong></p>';
+		$slides[2]['description'] = "Third\n\nparagraph";
+		return $slides;
+	}
+
+	/**
+	 * The descriptions block of some markup, or ''.
+	 *
+	 * @param string $html Markup.
+	 * @return string
+	 */
+	private function descriptions_block( $html ) {
+		return preg_match( '#<div class="wp-swiper-descriptions .*$#s', $html, $match ) ? $match[0] : '';
+	}
+
+	public function test_descriptions_after_the_slider() {
+		$html  = $this->render( array( 'pagination_placement' => 'outside' ), $this->described_slides() );
+		$block = $this->descriptions_block( $html );
+
+		$this->assertTrue( $this->config( $html )['descriptions'] );
+		// After the slider's block, its outside pagination included.
+		$this->assertGreaterThan( strrpos( $html, 'class="swiper-pagination' ), strpos( $html, 'wp-swiper-descriptions' ) );
+		// One per slide with a description, by its index; the first shown before the script runs.
+		$this->assertSame( 2, substr_count( $block, 'wp-swiper-descriptions__item' ) );
+		$this->assertStringContainsString( '<div class="wp-swiper-descriptions__item is-active" data-wp-swiper-index="0"><p>First <strong>one</strong></p>', $block );
+		$this->assertStringContainsString( '<div class="wp-swiper-descriptions__item" data-wp-swiper-index="2"><p>Third</p>', $block );
+		$this->assertStringContainsString( '<p>paragraph</p>', $block );
+		$this->assertStringNotContainsString( 'data-wp-swiper-index="1"', $block );
+	}
+
+	public function test_description_look() {
+		$block = $this->descriptions_block(
+			$this->render(
+				array(
+					'speed'                        => 400,
+					'description_font_size'        => 18,
+					'description_font_size_mobile' => 14,
+					'description_offset'           => 24,
+					'description_align'            => 'center',
+				),
+				$this->described_slides()
+			)
+		);
+		// Its motion: the Slide effect's by default.
+		$this->assertStringContainsString( 'class="wp-swiper-descriptions wp-swiper-descriptions--1 wp-swiper-descriptions--slide"', $block );
+		foreach ( array( '--wp-swiper-speed:400ms', '--wp-swiper-description-offset:24px', '--wp-swiper-description-align:center', '--wp-swiper-description-size:18px', '--wp-swiper-description-size-tablet:18px', '--wp-swiper-description-size-mobile:14px' ) as $value ) {
+			$this->assertStringContainsString( $value, $block );
+		}
+		// The page's own weight and colour unless set.
+		$this->assertStringNotContainsString( '--wp-swiper-description-weight', $block );
+		$this->assertStringNotContainsString( '--wp-swiper-description-color', $block );
+
+		$own = $this->descriptions_block( $this->render( array( 'description_weight' => '600', 'description_own_color' => true, 'description_color' => '#123456' ), $this->described_slides() ) );
+		$this->assertStringContainsString( 'wp-swiper-descriptions--weight wp-swiper-descriptions--color', $own );
+		$this->assertStringContainsString( '--wp-swiper-description-weight:600', $own );
+		$this->assertStringContainsString( '--wp-swiper-description-color:#123456', $own );
+	}
+
+	public function test_description_motion_class() {
+		$block = $this->descriptions_block( $this->render( array( 'effect' => 'cube' ), $this->described_slides() ) );
+		$this->assertStringContainsString( 'wp-swiper-descriptions--cube', $block );
+
+		$block = $this->descriptions_block( $this->render( array( 'effect' => 'cube', 'description_transition' => 'none' ), $this->described_slides() ) );
+		$this->assertStringContainsString( 'wp-swiper-descriptions--none', $block );
+		$this->assertStringNotContainsString( 'wp-swiper-descriptions--cube', $block );
+	}
+
+	public function test_description_markup_is_sanitized_again() {
+		$slides                   = $this->slides( 1 );
+		$slides[0]['description'] = '<p onclick="x()">Hi<script>alert(1)</script></p>';
+		$block                    = $this->descriptions_block( $this->render( array(), $slides ) );
+
+		$this->assertStringContainsString( '<p>Hialert(1)</p>', $block );
+		$this->assertStringNotContainsString( '<script', $block );
+		$this->assertStringNotContainsString( 'onclick', $block );
+	}
+
+	public function test_no_descriptions_block_without_one() {
+		$html = $this->render( array(), $this->slides( 2, array( 'description' => '<p>&nbsp;</p>' ) ) );
+		$this->assertStringNotContainsString( 'wp-swiper-descriptions', $html );
+		$this->assertFalse( $this->config( $html )['descriptions'] );
+		// Slides saved before descriptions.
+		$this->assertStringNotContainsString( 'wp-swiper-descriptions', $this->render() );
+	}
+
+	public function test_no_descriptions_where_the_slider_shows_none() {
+		$cases = array(
+			'vertical'   => array( 'direction' => 'vertical' ),
+			'marquee'    => array( 'marquee' => true ),
+			'background' => array( 'background' => true, 'background_class' => 'hero' ),
+			'collage'    => array( 'effect' => 'collage' ),
+		);
+		foreach ( $cases as $name => $values ) {
+			$this->assertStringNotContainsString( 'wp-swiper-descriptions', $this->render( $values, $this->described_slides() ), $name );
+		}
+		// Fade always slides horizontally, whatever Direction was saved.
+		$this->assertStringContainsString( 'wp-swiper-descriptions', $this->render( array( 'effect' => 'fade', 'direction' => 'vertical' ), $this->described_slides() ) );
+	}
+
+	public function test_descriptions_in_the_lightbox() {
+		$config = $this->config( $this->render( array( 'lightbox' => true ), $this->described_slides() ) );
+		$this->assertTrue( $config['lightbox']['descriptions'] );
+
+		$config = $this->config( $this->render( array( 'lightbox' => true, 'description_lightbox' => false ), $this->described_slides() ) );
+		$this->assertFalse( $config['lightbox']['descriptions'] );
+
+		// None to show.
+		$config = $this->config( $this->render( array( 'lightbox' => true ) ) );
+		$this->assertFalse( $config['lightbox']['descriptions'] );
 	}
 }

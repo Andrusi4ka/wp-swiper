@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.0
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,8 @@ WP Swiper adds a "WP Swiper" menu where you build image sliders from the media l
 * Image fit Cover or Contain, height in px / vh / % or Auto (fills the parent column).
 * Arrows (with their own colour), bullets or fraction pagination in six positions over or outside the slider, with their own size, shape, spacing and colours and a "pill" current bullet, keyboard control, autoplay, infinite loop.
 * Lightbox with zoom (and, with Thumbnails, the strip of thumbnails in it), per-slide links (optionally in a new tab), captions with their own typography and background.
+* Slide descriptions written in WordPress's editor (bold, italic, underline, links, lists), shown under the slider for the current slide and changing with it the way the slides move (sliding, turning with the cube, flipping...); in the lightbox too.
+* Image position per device for the part of a cropped image kept in view.
 * Video slides from the media library or from a YouTube / Vimeo link, with a poster image: the video of the slide in view plays (muted, looped, with or without controls), the slider can wait for its end, and a file or player loads only when its slide comes up (YouTube in its privacy-enhanced mode). Videos open in the lightbox too, with sound.
 * Preview beside the settings: the slider as the current settings draw it, saved or not, as on a desktop, tablet or phone (refreshed with its Update button).
 * Settings that do not apply in the current setup are greyed out, and keep their values.
@@ -56,6 +58,13 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.1.0 =
+* New: slide descriptions. Each slide has an "Add description" button that opens WordPress's editor in a window (bold, italic, underline, links, lists). The current slide's description shows under the slider, below an outside pagination and a strip of thumbnails beside it; the block is as tall as the longest one, so the page under it does not move. Not with a vertical slider, Continuous scroll, Collage or as a background.
+* New Description page: font size per device, weight, alignment, gap to the slider, own text colour (off: the page's), and "Text transition": As the slider (the text slides, turns with the cube, flips, moves as Coverflow, Cards or the Creative style do, at the slider's speed and the way it went), Fade, Slide or None. No motion where the visitor's system asks for reduced motion.
+* New in Lightbox: "Descriptions in the lightbox", with the caption in a panel under the image.
+* New in Layout: "Image position" per device — the part of an image cropped by "Cover" kept in view (also for a background and a collage); video posters follow it.
+* WPBakery: the WP Swiper element has the slider choice only (no "Extra CSS class" field). A class given before is kept, and the shortcode's `class` still works.
 
 = 2.0.0 =
 * New: pagination style (Controls). Bullet width and height per device, border radius (empty: round; 0: square), space between bullets per device, and a longer current bullet ("pill"), wider in a row and taller in a column, growing and shrinking smoothly. Fraction font size per device. "Own pagination colors": the current bullet's, the others' and their opacity (the fraction takes the current one's); off, white over the slider and the page's text colour outside it as before. Sliders saved before look the same.

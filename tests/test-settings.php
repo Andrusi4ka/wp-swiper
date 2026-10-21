@@ -18,7 +18,7 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 	public function test_every_field_is_valid() {
 		$pages = WP_Swiper_Settings::pages();
 		foreach ( WP_Swiper_Settings::fields() as $key => $field ) {
-			$this->assertContains( $field['section'], array( 'advanced', 'layout', 'caption' ), $key );
+			$this->assertContains( $field['section'], array( 'advanced', 'layout', 'caption', 'description' ), $key );
 			if ( isset( $field['panel'] ) ) {
 				$this->assertArrayHasKey( $field['panel'], $pages, "$key: unknown page" );
 			}
@@ -329,5 +329,62 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( 'a b', WP_Swiper_Settings::sanitize_classes( ' a  b a ' ) );
 		$this->assertSame( '', WP_Swiper_Settings::sanitize_classes( '"><' ) );
 		$this->assertSame( 'my-hero_1', WP_Swiper_Settings::sanitize_id( 'my hero_1' ) );
+	}
+
+	public function test_can_describe() {
+		$this->assertTrue( WP_Swiper_Settings::can_describe( $this->settings() ) );
+		foreach ( array( 'fade', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'thumbs' ) as $effect ) {
+			$this->assertTrue( WP_Swiper_Settings::can_describe( $this->settings( array( 'effect' => $effect ) ) ), $effect );
+		}
+		$this->assertTrue( WP_Swiper_Settings::can_describe( $this->settings( array( 'expand_active' => true ) ) ) );
+
+		$this->assertFalse( WP_Swiper_Settings::can_describe( $this->settings( array( 'direction' => 'vertical' ) ) ) );
+		$this->assertFalse( WP_Swiper_Settings::can_describe( $this->settings( array( 'effect' => 'collage' ) ) ) );
+		$this->assertFalse( WP_Swiper_Settings::can_describe( $this->settings( array( 'marquee' => true ) ) ) );
+		$this->assertFalse( WP_Swiper_Settings::can_describe( $this->settings( array( 'background' => true ) ) ) );
+		// Background is for some effects only: a cube is a slider as usual.
+		$this->assertTrue( WP_Swiper_Settings::can_describe( $this->settings( array( 'effect' => 'cube', 'background' => true ) ) ) );
+	}
+
+	/**
+	 * @dataProvider description_motions
+	 */
+	public function test_description_motion( $values, $expected ) {
+		$this->assertSame( $expected, WP_Swiper_Settings::description_motion( $this->settings( $values ) ) );
+	}
+
+	public function description_motions() {
+		return array(
+			'slide'              => array( array(), 'slide' ),
+			'wider active slide' => array( array( 'expand_active' => true ), 'slide' ),
+			'fade'               => array( array( 'effect' => 'fade' ), 'fade' ),
+			'cube'               => array( array( 'effect' => 'cube' ), 'cube' ),
+			'flip'               => array( array( 'effect' => 'flip' ), 'flip' ),
+			'coverflow'          => array( array( 'effect' => 'coverflow' ), 'coverflow' ),
+			'cards'              => array( array( 'effect' => 'cards' ), 'cards' ),
+			'creative push'      => array( array( 'effect' => 'creative' ), 'push' ),
+			'creative door'      => array( array( 'effect' => 'creative', 'creative_style' => 'door' ), 'cube' ),
+			'creative carousel'  => array( array( 'effect' => 'creative', 'creative_style' => 'carousel' ), 'coverflow' ),
+			'thumbs sliding'     => array( array( 'effect' => 'thumbs' ), 'slide' ),
+			'thumbs fading'      => array( array( 'effect' => 'thumbs', 'thumbs_transition' => 'fade' ), 'fade' ),
+			'own fade'           => array( array( 'effect' => 'cube', 'description_transition' => 'fade' ), 'fade' ),
+			'own slide'          => array( array( 'effect' => 'fade', 'description_transition' => 'slide' ), 'slide' ),
+			'none'               => array( array( 'effect' => 'cube', 'description_transition' => 'none' ), 'none' ),
+		);
+	}
+
+	public function test_sanitize_description() {
+		$this->assertSame(
+			'<p>Hi <strong>you</strong> <em>and</em> <span style="text-decoration: underline">me</span> <a href="https://example.com" target="_blank" rel="noopener">here</a></p><ul><li>One</li></ul>',
+			WP_Swiper_Settings::sanitize_description( ' <p>Hi <strong>you</strong> <em>and</em> <span style="text-decoration: underline;">me</span> <a href="https://example.com" target="_blank" rel="noopener" onclick="x()">here</a></p><ul><li>One</li></ul> ' )
+		);
+		// Other markup goes, its text stays; scripts and unsafe links do not run.
+		$this->assertSame( '<p>Hi alert(1)</p>', WP_Swiper_Settings::sanitize_description( '<p>Hi <img src=x onerror=alert(1)><script>alert(1)</script></p>' ) );
+		$this->assertSame( '<a href="alert(1)">x</a>', WP_Swiper_Settings::sanitize_description( '<a href="javascript:alert(1)">x</a>' ) );
+		// No text: none.
+		foreach ( array( '', '<p>&nbsp;</p>', '<p> </p><br>', '<strong></strong>', "<p>\xC2\xA0</p>" ) as $empty ) {
+			$this->assertSame( '', WP_Swiper_Settings::sanitize_description( $empty ), $empty );
+		}
+		$this->assertSame( 'Plain text', WP_Swiper_Settings::sanitize_description( 'Plain text' ) );
 	}
 }

@@ -61,11 +61,6 @@ class WP_Swiper_WPBakery {
 						'<a href="' . esc_url( admin_url( 'edit.php?post_type=' . WP_Swiper_Settings::POST_TYPE ) ) . '" target="_blank">WP Swiper</a>'
 					),
 				),
-				array(
-					'type'       => 'textfield',
-					'heading'    => __( 'Extra CSS class', 'wp-swiper' ),
-					'param_name' => 'class',
-				),
 			),
 		);
 	}
