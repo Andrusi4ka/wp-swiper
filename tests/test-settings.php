@@ -393,4 +393,22 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		);
 		$this->assertSame( '', WP_Swiper_Settings::sanitize_description( '<h2></h2>' ) );
 	}
+
+	public function test_sanitize_caption() {
+		// Bold, italic, underline and line breaks.
+		$this->assertSame(
+			'<strong>Big</strong> <em>and</em> <span style="text-decoration: underline">me</span><br>next line',
+			WP_Swiper_Settings::sanitize_caption( ' <strong>Big</strong> <em>and</em> <span style="text-decoration: underline;">me</span><br>next line ' )
+		);
+		// Blocks become lines (no words run together), links and scripts go, their text stays.
+		$this->assertSame( 'One<br>Two<br>link', WP_Swiper_Settings::sanitize_caption( '<p>One</p><h2>Two</h2><a href="https://example.com">link</a>' ) );
+		$this->assertSame( 'Hi alert(1)', WP_Swiper_Settings::sanitize_caption( 'Hi <script>alert(1)</script>' ) );
+		// No line breaks around the text.
+		$this->assertSame( 'Text', WP_Swiper_Settings::sanitize_caption( '<br><p>Text</p><br />' ) );
+		// A plain caption saved before: kept, its "&" as HTML.
+		$this->assertSame( 'Salt &amp; pepper', WP_Swiper_Settings::sanitize_caption( 'Salt & pepper' ) );
+		foreach ( array( '', '<br>', '<p>&nbsp;</p>', '<strong> </strong>' ) as $empty ) {
+			$this->assertSame( '', WP_Swiper_Settings::sanitize_caption( $empty ), $empty );
+		}
+	}
 }

@@ -207,12 +207,17 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		}
 	}
 
-	public function test_captions_are_escaped_and_tag_whitelisted() {
-		$html = $this->render( array( 'caption_tag' => 'script' ), $this->slides( 1, array( 'caption' => '<b>Bold</b> & co' ) ) );
-		$this->assertStringContainsString( '<div class="wp-swiper__caption-text">&lt;b&gt;Bold&lt;/b&gt; &amp; co</div>', $html );
+	public function test_captions_keep_their_styles_only_and_tag_whitelisted() {
+		$html = $this->render( array( 'caption_tag' => 'script' ), $this->slides( 1, array( 'caption' => '<b>Bold</b> & co<br>line <a href="https://example.com" onclick="x()">two</a><img src=x onerror=alert(1)>' ) ) );
+		$this->assertStringContainsString( '<div class="wp-swiper__caption-text"><b>Bold</b> &amp; co<br>line two</div>', $html );
 
 		$h2 = $this->render( array( 'caption_tag' => 'h2' ), $this->slides( 1, array( 'caption' => 'Title' ) ) );
 		$this->assertStringContainsString( '<h2 class="wp-swiper__caption-text">Title</h2>', $h2 );
+	}
+
+	public function test_no_caption_without_text() {
+		$html = $this->render( array(), $this->slides( 1, array( 'caption' => '<strong> </strong><br>' ) ) );
+		$this->assertStringNotContainsString( 'wp-swiper__caption', $html );
 	}
 
 	/* Links and the lightbox ------------------------------------------ */

@@ -243,25 +243,21 @@
 		$list.on( 'sortupdate', syncPosters );
 		syncPosters();
 
-		// "Open in a new tab": mirror the (unnamed) checkbox into its hidden input.
-		$list.on( 'change', '.wp-swiper-slide__new-tab input', function () {
-			$( this ).closest( '.wp-swiper-slide' ).find( 'input[name="wp_swiper_slides[new_tab][]"]' ).val( this.checked ? '1' : '0' );
-		} );
-
 		/*
-		 * Slide descriptions: HTML kept in the slide's hidden textarea, edited
-		 * in one window with WordPress's editor (wp.editor), started when it
-		 * opens and removed when it closes, so the slides stay plain fields that
-		 * can be dragged. "Apply" puts the text into the slide; saving the
-		 * slider saves it.
+		 * A slide's caption, description and link: kept in its hidden fields,
+		 * edited in one window (WordPress's editor, wp.editor, for the two
+		 * texts), whose editors start when it opens and are removed when it
+		 * closes, so the slides stay plain fields that can be dragged. "Apply"
+		 * puts the values into the slide; saving the slider saves them.
 		 */
-		var EDITOR_ID = 'wp-swiper-description-editor';
-		// Out of the form (its textarea is not sent) and of the box, which may be folded.
-		var $modal = $( '#wp-swiper-description-modal' ).appendTo( document.body );
+		var CAPTION_EDITOR = 'wp-swiper-caption-editor';
+		var DESCRIPTION_EDITOR = 'wp-swiper-description-editor';
+		// Out of the form (its fields are not sent) and of the box, which may be folded.
+		var $modal = $( '#wp-swiper-slide-modal' ).appendTo( document.body );
 		var $editing = null;
 
-		function descriptionInput( $slide ) {
-			return $slide.find( 'textarea[name="wp_swiper_slides[description][]"]' );
+		function slideInput( $slide, name ) {
+			return $slide.find( '[name="wp_swiper_slides[' + name + '][]"]' );
 		}
 
 		// Some text, not just tags or the editor's empty paragraph ($.trim takes
@@ -272,26 +268,51 @@
 			return $.trim( text ) !== '';
 		}
 
-		// Any slide with a description.
-		function hasDescriptions() {
-			return $list.find( 'textarea[name="wp_swiper_slides[description][]"]' ).filter( function () {
+		// Any slide with this text (caption, description).
+		function slidesWith( name ) {
+			return $list.find( 'textarea[name="wp_swiper_slides[' + name + '][]"]' ).filter( function () {
 				return hasText( this.value );
 			} ).length > 0;
 		}
 
-		function setDescription( $slide, html ) {
-			var filled = hasText( html );
-			descriptionInput( $slide ).val( filled ? html : '' );
-			$slide.find( '.wp-swiper-slide__description' )
-				.toggleClass( 'has-description', filled )
-				.find( '.wp-swiper-slide__description-label' ).text( filled ? i18n.descriptionEdit : i18n.descriptionAdd );
+		function hasDescriptions() {
+			return slidesWith( 'description' );
+		}
+
+		// The marks under the button: what the slide has; the button says Add or Edit.
+		function syncMarks( $slide ) {
+			var marks = {
+				caption: hasText( slideInput( $slide, 'caption' ).val() ),
+				description: hasText( slideInput( $slide, 'description' ).val() ),
+				link: ! $slide.hasClass( 'wp-swiper-slide--video' ) && $.trim( slideInput( $slide, 'link' ).val() ) !== ''
+			};
+			$slide.find( '.wp-swiper-slide__mark' ).each( function () {
+				this.hidden = ! marks[ $( this ).data( 'mark' ) ];
+			} );
+			$slide.find( '.wp-swiper-slide__edit' ).text( marks.caption || marks.description || marks.link ? i18n.infoEdit : i18n.infoAdd );
 		}
 
 		function editor() {
 			return window.wp && window.wp.editor && window.wp.editor.initialize ? window.wp.editor : null;
 		}
 
-		function openDescription( $slide ) {
+		// One of the window's editors; without the visual one (the user's
+		// profile turns it off) the code one only.
+		function startEditor( id, tinymce, buttons ) {
+			if ( editor() ) {
+				editor().initialize( id, {
+					tinymce: window.tinymce ? tinymce : false,
+					quicktags: { buttons: buttons },
+					mediaButtons: false
+				} );
+			}
+		}
+
+		function editorValue( id ) {
+			return editor() ? editor().getContent( id ) : $( '#' + id ).val();
+		}
+
+		function openSlide( $slide ) {
 			$editing = $slide;
 			$modal.find( '.wp-swiper-modal__slide' ).text( '— ' + ( i18n.slideNumber || '%d' ).replace( '%d', $slide.index() + 1 ) );
 			// Which picture it is about: the slide's own thumbnail, as in the list.
@@ -302,65 +323,88 @@
 			} else {
 				$thumb.append( '<span class="dashicons dashicons-video-alt3"></span>' );
 			}
-			$( '#' + EDITOR_ID ).val( descriptionInput( $slide ).val() );
+			$( '#' + CAPTION_EDITOR ).val( slideInput( $slide, 'caption' ).val() );
+			$( '#' + DESCRIPTION_EDITOR ).val( slideInput( $slide, 'description' ).val() );
+			// A video slide has no link (a click on it is the player's).
+			$modal.find( '.wp-swiper-modal__link' ).prop( 'hidden', $slide.hasClass( 'wp-swiper-slide--video' ) );
+			$( '#wp-swiper-link-input' ).val( slideInput( $slide, 'link' ).val() );
+			$( '#wp-swiper-new-tab-input' ).prop( 'checked', slideInput( $slide, 'new_tab' ).val() === '1' );
 			$modal.prop( 'hidden', false );
 			$( document.body ).addClass( 'wp-swiper-modal-open' );
 
-			if ( editor() ) {
-				editor().initialize( EDITOR_ID, {
-					// Without the visual editor (the user's profile turns it off): the code one only.
-					tinymce: window.tinymce ? {
-						// Paragraph or heading, then the inline styles (what render.php keeps).
-						toolbar1: 'formatselect,bold,italic,underline,bullist,numlist,link,unlink,removeformat,undo,redo',
-						toolbar2: '',
-						block_formats: 'Paragraph=p;Heading 1=h1;Heading 2=h2;Heading 3=h3;Heading 4=h4;Heading 5=h5;Heading 6=h6',
-						height: 240,
-						init_instance_callback: function ( instance ) {
-							instance.focus();
-						}
-					} : false,
-					quicktags: { buttons: 'strong,em,link,ul,ol,li' },
-					mediaButtons: false
-				} );
-			}
+			// The caption: inline styles only, Enter a line break (render.php keeps
+			// what caption_tags() allows); the first field, so it takes the focus.
+			startEditor( CAPTION_EDITOR, {
+				toolbar1: 'bold,italic,underline,removeformat,undo,redo',
+				toolbar2: '',
+				forced_root_block: false,
+				height: 70,
+				init_instance_callback: function ( instance ) {
+					instance.focus();
+				}
+			}, 'strong,em' );
+			// The description: paragraph or heading, the inline styles, links and lists.
+			startEditor( DESCRIPTION_EDITOR, {
+				toolbar1: 'formatselect,bold,italic,underline,bullist,numlist,link,unlink,removeformat,undo,redo',
+				toolbar2: '',
+				block_formats: 'Paragraph=p;Heading 1=h1;Heading 2=h2;Heading 3=h3;Heading 4=h4;Heading 5=h5;Heading 6=h6',
+				height: 220
+			}, 'strong,em,link,ul,ol,li' );
 			if ( ! window.tinymce ) {
-				$( '#' + EDITOR_ID ).trigger( 'focus' );
+				$( '#' + CAPTION_EDITOR ).trigger( 'focus' );
 			}
 		}
 
-		function closeDescription( apply ) {
+		function closeSlide( apply ) {
 			if ( ! $editing ) {
 				return;
 			}
 			if ( apply ) {
-				setDescription( $editing, editor() ? editor().getContent( EDITOR_ID ) : $( '#' + EDITOR_ID ).val() );
+				var caption = editorValue( CAPTION_EDITOR );
+				var description = editorValue( DESCRIPTION_EDITOR );
+				slideInput( $editing, 'caption' ).val( hasText( caption ) ? $.trim( caption ) : '' );
+				slideInput( $editing, 'description' ).val( hasText( description ) ? description : '' );
+				if ( ! $editing.hasClass( 'wp-swiper-slide--video' ) ) {
+					slideInput( $editing, 'link' ).val( $.trim( $( '#wp-swiper-link-input' ).val() ) );
+					slideInput( $editing, 'new_tab' ).val( $( '#wp-swiper-new-tab-input' ).is( ':checked' ) ? '1' : '0' );
+				}
+				syncMarks( $editing );
 				$( '.wp-swiper-preview__update' ).addClass( 'is-stale' );
-				// The Description page and its lightbox setting follow the slides.
+				// The Caption and Description pages and the lightbox lock (links) follow the slides.
+				syncCaptions();
 				syncFields();
 			}
 			if ( editor() ) {
-				editor().remove( EDITOR_ID );
+				editor().remove( CAPTION_EDITOR );
+				editor().remove( DESCRIPTION_EDITOR );
 			}
 			$modal.prop( 'hidden', true );
 			$( document.body ).removeClass( 'wp-swiper-modal-open' );
-			var $button = $editing.find( '.wp-swiper-slide__description' );
+			var $button = $editing.find( '.wp-swiper-slide__edit' );
 			$editing = null;
 			$button.trigger( 'focus' );
 		}
 
-		$list.on( 'click', '.wp-swiper-slide__description', function () {
-			openDescription( $( this ).closest( '.wp-swiper-slide' ) );
+		$list.on( 'click', '.wp-swiper-slide__edit', function () {
+			openSlide( $( this ).closest( '.wp-swiper-slide' ) );
 		} );
 		$modal.on( 'click', '.wp-swiper-modal__apply', function () {
-			closeDescription( true );
+			closeSlide( true );
 		} );
 		$modal.on( 'click', '.wp-swiper-modal__cancel, .wp-swiper-modal__close', function () {
-			closeDescription( false );
+			closeSlide( false );
+		} );
+		// Enter in the link field applies, as in a form.
+		$( '#wp-swiper-link-input' ).on( 'keydown', function ( e ) {
+			if ( e.key === 'Enter' ) {
+				e.preventDefault();
+				closeSlide( true );
+			}
 		} );
 		$( document ).on( 'keydown', function ( e ) {
 			// Not while the editor's own link window is open (Escape closes that).
 			if ( e.key === 'Escape' && $editing && ! $( '#wp-link-wrap' ).is( ':visible' ) ) {
-				closeDescription( false );
+				closeSlide( false );
 			}
 		} );
 
@@ -554,9 +598,9 @@
 		var lockPagination = lockableValue( 'pagination', 'none' );
 		var lockKeyboard = lockable( 'keyboard' );
 
-		// Any slide with a link (video slides have none: their field is hidden).
+		// Any slide with a link (a video slide's is not used).
 		function hasLinks() {
-			return $list.find( '.wp-swiper-slide:not(.wp-swiper-slide--video) input[type="url"]' ).filter( function () {
+			return $list.find( '.wp-swiper-slide:not(.wp-swiper-slide--video) input[name="wp_swiper_slides[link][]"]' ).filter( function () {
 				return $.trim( this.value ) !== '';
 			} ).length > 0;
 		}
@@ -1001,24 +1045,19 @@
 		$( '#wp-swiper-settings' ).on( 'change input', 'select, input', syncFields );
 		syncFields();
 
-		// The lightbox lock follows the slides' links (syncFields).
-		$list.on( 'input change', 'input[type="url"]', syncFields );
-
 		// Caption settings only apply once a slide has a caption: the whole box is
 		// greyed until then (a disabled fieldset is not sent, so it is enabled
-		// again for the submit and saving keeps its values).
+		// again for the submit and saving keeps its values). The slide's window
+		// runs it again on Apply, as does a change of the slides.
 		var $captionBox = $( 'fieldset[data-section="caption"]' );
 		var captionsLocked = false;
 
 		function syncCaptions() {
-			captionsLocked = $list.find( 'input[name="wp_swiper_slides[caption][]"]' ).filter( function () {
-				return $.trim( this.value ) !== '';
-			} ).length === 0;
+			captionsLocked = ! slidesWith( 'caption' );
 			$captionBox.prop( 'disabled', captionsLocked ).find( '.wp-swiper-field' ).toggleClass( 'is-disabled', captionsLocked );
 			$captionBox.find( '.wp-swiper-section-note' ).prop( 'hidden', ! captionsLocked );
 		}
 
-		$list.on( 'input change', 'input[name="wp_swiper_slides[caption][]"]', syncCaptions );
 		beforeSend( function () {
 			if ( captionsLocked ) {
 				$captionBox.prop( 'disabled', false );

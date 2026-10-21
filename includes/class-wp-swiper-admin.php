@@ -54,9 +54,9 @@ class WP_Swiper_Admin {
 					'posterRemove' => __( 'Remove', 'wp-swiper' ),
 					/* translators: %d: slide number. */
 					'slideNumber'  => __( 'Slide %d', 'wp-swiper' ),
-					// A slide's description button, without and with one.
-					'descriptionAdd'  => __( 'Add description', 'wp-swiper' ),
-					'descriptionEdit' => __( 'Edit description', 'wp-swiper' ),
+					// A slide's button: without and with a caption, description or link.
+					'infoAdd'      => __( 'Add info', 'wp-swiper' ),
+					'infoEdit'     => __( 'Edit info', 'wp-swiper' ),
 					'copied'      => __( 'Copied!', 'wp-swiper' ),
 					'singleSlide' => WP_Swiper_Settings::SINGLE_SLIDE_EFFECTS,
 					// Effects that can be their block's background ("Use as background").
@@ -84,7 +84,7 @@ class WP_Swiper_Admin {
 		$shown  = count( $slides );
 		?>
 		<?php // Only useful once there are slides; admin.js toggles it with the list. ?>
-		<p class="description wp-swiper-hint"<?php echo $shown ? '' : ' hidden'; ?>><?php esc_html_e( 'Drag slides to reorder. Caption, description and link are optional; a video slide has no link, its poster image is set on the Video page of the settings.', 'wp-swiper' ); ?></p>
+		<p class="description wp-swiper-hint"<?php echo $shown ? '' : ' hidden'; ?>><?php esc_html_e( 'Drag slides to reorder. “Add info”: a slide’s caption, description and link, all optional; a video slide has no link, its poster image is set on the Video page of the settings.', 'wp-swiper' ); ?></p>
 
 		<ul class="wp-swiper-slides" id="wp-swiper-slide-list">
 			<?php
@@ -114,23 +114,42 @@ class WP_Swiper_Admin {
 		</script>
 
 		<?php
-		// A slide's description: one editor for all slides, in this window
-		// (admin.js starts it on opening and removes it on closing, so the
-		// slides stay plain fields that can be dragged). Its textarea has no
-		// name: what is applied goes to the slide's own.
+		// A slide's caption, description and link: one window for all slides
+		// (admin.js fills it from the slide and starts its editors on opening,
+		// removes them on closing, so the slides stay plain fields that can be
+		// dragged). Its fields have no name: what is applied goes to the
+		// slide's own hidden ones.
 		?>
-		<div class="wp-swiper-modal" id="wp-swiper-description-modal" role="dialog" aria-modal="true" aria-labelledby="wp-swiper-description-title" hidden>
+		<div class="wp-swiper-modal" id="wp-swiper-slide-modal" role="dialog" aria-modal="true" aria-labelledby="wp-swiper-slide-modal-title" hidden>
 			<div class="wp-swiper-modal__backdrop"></div>
 			<div class="wp-swiper-modal__box">
 				<div class="wp-swiper-modal__head">
 					<?php // The slide's thumbnail (admin.js puts it in: its image or poster, else a video icon). ?>
 					<span class="wp-swiper-modal__thumb" aria-hidden="true"></span>
-					<h2 class="wp-swiper-modal__title" id="wp-swiper-description-title"><?php esc_html_e( 'Slide description', 'wp-swiper' ); ?> <span class="wp-swiper-modal__slide"></span></h2>
+					<h2 class="wp-swiper-modal__title" id="wp-swiper-slide-modal-title"><?php esc_html_e( 'Slide info', 'wp-swiper' ); ?> <span class="wp-swiper-modal__slide"></span></h2>
 					<button type="button" class="wp-swiper-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-swiper' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button>
 				</div>
 				<div class="wp-swiper-modal__body">
-					<p class="description"><?php esc_html_e( 'Shown under the slider while this slide is the current one. Headings, bold, italic, underline, links and lists.', 'wp-swiper' ); ?></p>
-					<textarea id="wp-swiper-description-editor" rows="10"></textarea>
+					<div class="wp-swiper-modal__section">
+						<h3 class="wp-swiper-modal__label"><label for="wp-swiper-caption-editor"><?php esc_html_e( 'Caption', 'wp-swiper' ); ?></label></h3>
+						<p class="description"><?php esc_html_e( 'Over the image, styled on the Caption page. Bold, italic, underline; Enter starts a new line.', 'wp-swiper' ); ?></p>
+						<textarea id="wp-swiper-caption-editor" rows="3"></textarea>
+					</div>
+					<div class="wp-swiper-modal__section">
+						<h3 class="wp-swiper-modal__label"><label for="wp-swiper-description-editor"><?php esc_html_e( 'Description', 'wp-swiper' ); ?></label></h3>
+						<p class="description"><?php esc_html_e( 'Shown under the slider while this slide is the current one. Headings, bold, italic, underline, links and lists.', 'wp-swiper' ); ?></p>
+						<textarea id="wp-swiper-description-editor" rows="10"></textarea>
+					</div>
+					<?php // Not for video slides (a click on one is the player's): admin.js hides it. ?>
+					<div class="wp-swiper-modal__section wp-swiper-modal__link">
+						<h3 class="wp-swiper-modal__label"><label for="wp-swiper-link-input"><?php esc_html_e( 'Link', 'wp-swiper' ); ?></label></h3>
+						<p class="description"><?php esc_html_e( 'A click on the image opens it. A slider with links has no lightbox.', 'wp-swiper' ); ?></p>
+						<input type="url" id="wp-swiper-link-input" class="large-text" placeholder="https://…" spellcheck="false">
+						<label class="wp-swiper-modal__new-tab">
+							<input type="checkbox" id="wp-swiper-new-tab-input">
+							<?php esc_html_e( 'Open in a new tab', 'wp-swiper' ); ?>
+						</label>
+					</div>
 				</div>
 				<div class="wp-swiper-modal__foot">
 					<button type="button" class="button wp-swiper-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-swiper' ); ?></button>
@@ -143,8 +162,9 @@ class WP_Swiper_Admin {
 
 	/**
 	 * One slide row. Inputs use parallel arrays so DOM order = saved order.
+	 * Its caption, description and link are edited in the slide's window.
 	 * A video slide (.wp-swiper-slide--video): its poster as the thumbnail (a
-	 * video icon without one), no link (CSS); its poster is chosen on the Video
+	 * video icon without one), no link (the window has none); its poster is chosen on the Video
 	 * page of the settings (admin.js), kept in the row's hidden input.
 	 *
 	 * The JS template ($template) has {{id}}, {{thumb}}, {{title}}, {{embed}}
@@ -162,7 +182,9 @@ class WP_Swiper_Admin {
 				'embed'   => '{{embed}}',
 			);
 		}
+		$caption     = isset( $slide['caption'] ) ? (string) $slide['caption'] : '';
 		$description = isset( $slide['description'] ) ? (string) $slide['description'] : '';
+		$link        = isset( $slide['link'] ) ? (string) $slide['link'] : '';
 
 		$embed      = ! $template && ! empty( $slide['embed'] ) ? WP_Swiper_Settings::parse_embed( $slide['embed'] ) : false;
 		$video      = ! $template && ( $embed || WP_Swiper_Settings::is_video( $slide['id'] ) );
@@ -214,19 +236,19 @@ class WP_Swiper_Admin {
 			<input type="hidden" name="wp_swiper_slides[id][]" value="<?php echo esc_attr( $slide['id'] ); ?>">
 			<?php // A YouTube / Vimeo slide: its link (id 0); empty for the others. ?>
 			<input type="hidden" name="wp_swiper_slides[embed][]" value="<?php echo esc_attr( isset( $slide['embed'] ) ? $slide['embed'] : '' ); ?>">
-			<input type="text" name="wp_swiper_slides[caption][]" value="<?php echo esc_attr( $slide['caption'] ); ?>" placeholder="<?php esc_attr_e( 'Caption', 'wp-swiper' ); ?>">
-			<?php // The description (HTML), edited in its window (admin.js); the button says whether there is one. ?>
+			<?php // Caption and description (HTML), link and "new tab" ("1" / "0"): edited in the slide's window (admin.js). ?>
+			<textarea name="wp_swiper_slides[caption][]" hidden><?php echo esc_textarea( $caption ); ?></textarea>
 			<textarea name="wp_swiper_slides[description][]" hidden><?php echo esc_textarea( $description ); ?></textarea>
-			<button type="button" class="button button-small wp-swiper-slide__description<?php echo '' !== $description ? ' has-description' : ''; ?>">
-				<span class="wp-swiper-slide__description-label"><?php echo '' !== $description ? esc_html__( 'Edit description', 'wp-swiper' ) : esc_html__( 'Add description', 'wp-swiper' ); ?></span>
-			</button>
-			<input type="url" name="wp_swiper_slides[link][]" value="<?php echo esc_attr( $slide['link'] ); ?>" placeholder="<?php esc_attr_e( 'Link (https://…)', 'wp-swiper' ); ?>">
-			<?php // The checkbox has no name: an unchecked box is not submitted and would shift the parallel arrays. JS mirrors it into the hidden input. ?>
-			<label class="wp-swiper-slide__new-tab">
-				<input type="checkbox" <?php checked( ! empty( $slide['new_tab'] ) ); ?>>
-				<?php esc_html_e( 'Open in a new tab', 'wp-swiper' ); ?>
-			</label>
+			<input type="hidden" name="wp_swiper_slides[link][]" value="<?php echo esc_attr( $link ); ?>">
 			<input type="hidden" name="wp_swiper_slides[new_tab][]" value="<?php echo empty( $slide['new_tab'] ) ? '0' : '1'; ?>">
+			<?php // "Add info" until the slide has a caption, description or link (admin.js keeps it so). ?>
+			<button type="button" class="button button-small wp-swiper-slide__edit"><?php echo '' !== $caption || '' !== $description || ( '' !== $link && ! $video ) ? esc_html__( 'Edit info', 'wp-swiper' ) : esc_html__( 'Add info', 'wp-swiper' ); ?></button>
+			<?php // What the slide has (admin.js shows them as it changes; a video's link is not used). ?>
+			<span class="wp-swiper-slide__marks">
+				<span class="wp-swiper-slide__mark" data-mark="caption"<?php echo '' !== $caption ? '' : ' hidden'; ?>><?php esc_html_e( 'Caption', 'wp-swiper' ); ?></span>
+				<span class="wp-swiper-slide__mark" data-mark="description"<?php echo '' !== $description ? '' : ' hidden'; ?>><?php esc_html_e( 'Description', 'wp-swiper' ); ?></span>
+				<span class="wp-swiper-slide__mark" data-mark="link"<?php echo '' !== $link && ! $video ? '' : ' hidden'; ?>><?php esc_html_e( 'Link', 'wp-swiper' ); ?></span>
+			</span>
 			<?php // Video slides: the poster, an image from the media library (set on the Video page). ?>
 			<input type="hidden" name="wp_swiper_slides[poster][]" value="<?php echo $own_poster ? (int) $own_poster : ''; ?>">
 		</li>
@@ -293,7 +315,7 @@ class WP_Swiper_Admin {
 			if ( 'description' === $page ) {
 				// admin.js shows one of them (and greys the box): no slide has a
 				// description yet, or this slider shows none (can_describe()).
-				echo '<p class="description wp-swiper-section-note" data-note="empty" hidden>' . esc_html__( 'Add a description to a slide (the button under its caption) to use these settings.', 'wp-swiper' ) . '</p>';
+				echo '<p class="description wp-swiper-section-note" data-note="empty" hidden>' . esc_html__( 'Add a description to a slide (“Add info”) to use these settings.', 'wp-swiper' ) . '</p>';
 				echo '<p class="description wp-swiper-section-note" data-note="unavailable" hidden>' . esc_html__( 'Descriptions are not shown with a vertical slider, Continuous scroll, the Collage effect or as a background.', 'wp-swiper' ) . '</p>';
 			}
 			if ( 'video' === $page ) {
@@ -692,7 +714,7 @@ class WP_Swiper_Admin {
 		foreach ( $ids as $i => $attachment_id ) {
 			$attachment_id = absint( $attachment_id );
 			$poster        = isset( $raw['poster'][ $i ] ) ? absint( $raw['poster'][ $i ] ) : 0;
-			$caption       = isset( $raw['caption'][ $i ] ) ? sanitize_text_field( $raw['caption'][ $i ] ) : '';
+			$caption       = isset( $raw['caption'][ $i ] ) ? WP_Swiper_Settings::sanitize_caption( $raw['caption'][ $i ] ) : '';
 			$description   = isset( $raw['description'][ $i ] ) ? WP_Swiper_Settings::sanitize_description( $raw['description'][ $i ] ) : '';
 
 			// A YouTube / Vimeo slide: its link, once it reads as one (anything else

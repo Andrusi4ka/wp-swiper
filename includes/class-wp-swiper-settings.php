@@ -1697,6 +1697,26 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * The markup a caption may have: bold, italic, underline (a span the
+	 * editor styles) and line breaks. It sits over the image in one tag of
+	 * its own (Caption page), letting clicks through to the slide: no blocks,
+	 * no links.
+	 *
+	 * @return array wp_kses() allowed tags.
+	 */
+	public static function caption_tags() {
+		return array(
+			'br'     => array(),
+			'strong' => array(),
+			'b'      => array(),
+			'em'     => array(),
+			'i'      => array(),
+			'u'      => array(),
+			'span'   => array( 'style' => true ),
+		);
+	}
+
+	/**
 	 * A slide description from the editor: its allowed markup only; '' when
 	 * no text is left.
 	 *
@@ -1704,7 +1724,33 @@ class WP_Swiper_Settings {
 	 * @return string
 	 */
 	public static function sanitize_description( $html ) {
-		$html = trim( wp_kses( (string) $html, self::description_tags() ) );
+		return self::sanitize_rich_text( $html, self::description_tags() );
+	}
+
+	/**
+	 * A caption from the editor (or a plain one saved before it had one): its
+	 * allowed markup only; '' when no text is left.
+	 *
+	 * @param string $html Raw input.
+	 * @return string
+	 */
+	public static function sanitize_caption( $html ) {
+		// Paragraphs and other blocks (text pasted in) become lines, so their
+		// words do not run together once the blocks are gone.
+		$html = preg_replace( '#\s*</(?:p|div|h[1-6]|li|blockquote)>\s*#i', '<br>', (string) $html );
+		$html = self::sanitize_rich_text( $html, self::caption_tags() );
+		return preg_replace( '#^(?:\s*<br\s*/?>)+|(?:<br\s*/?>\s*)+$#i', '', $html );
+	}
+
+	/**
+	 * Editor HTML with the given tags only, trimmed; '' when no text is left.
+	 *
+	 * @param string $html Raw input.
+	 * @param array  $tags wp_kses() allowed tags.
+	 * @return string
+	 */
+	private static function sanitize_rich_text( $html, $tags ) {
+		$html = trim( wp_kses( (string) $html, $tags ) );
 		// The editor's empty paragraph is "<p>&nbsp;</p>": no-break spaces count as none.
 		$text = preg_replace( '/[\s\x{00A0}]+/u', '', html_entity_decode( wp_strip_all_tags( $html ), ENT_QUOTES, 'UTF-8' ) );
 		return '' === (string) $text ? '' : $html;
@@ -2260,7 +2306,8 @@ class WP_Swiper_Settings {
 	 * 'new_tab' => bool, 'poster' => int, 'embed' => string, 'description' =>
 	 * string ] (slides saved before "new tab", video slides or descriptions
 	 * existed have no new_tab / poster / embed / description key). A
-	 * description: HTML (see description_tags()). "id": an image, or a video (its "poster": the image shown
+	 * description: HTML (see description_tags()); a caption too (see
+	 * caption_tags()), plain text when saved before it had an editor. "id": an image, or a video (its "poster": the image shown
 	 * before it plays; 0 = none); or "embed": a YouTube / Vimeo link (id 0).
 	 *
 	 * @param int $post_id Slider ID.

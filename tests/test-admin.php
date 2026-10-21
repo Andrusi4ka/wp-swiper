@@ -95,7 +95,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 			'wp_swiper_slides' => array(
 				'id'      => array( $image, $video, $post, 0, 0, 999999 ),
 				'embed'   => array( '', '', '', $embed, 'https://example.com/not-a-video', '' ),
-				'caption' => array( '<b>Hi</b>', 'Clip', 'x', 'Song', 'y', 'z' ),
+				'caption' => array( '<b>Hi</b><script>x()</script>', 'Clip', 'x', 'Song', 'y', 'z' ),
 				'link'    => array( 'javascript:alert(1)', 'https://example.com', '', 'https://example.com', '', '' ),
 				'new_tab' => array( '1', '1', '0', '1', '0', '0' ),
 				'poster'  => array( (string) $poster, (string) $poster, '', (string) $image, '', '' ),
@@ -107,7 +107,8 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertCount( 3, $slides );
 
 		$this->assertSame( $image, $slides[0]['id'] );
-		$this->assertSame( 'Hi', $slides[0]['caption'] );
+		// The caption keeps its bold (not the script).
+		$this->assertSame( '<b>Hi</b>x()', $slides[0]['caption'] );
 		$this->assertSame( '', $slides[0]['link'] );
 		$this->assertTrue( $slides[0]['new_tab'] );
 		// An image has no poster.
@@ -148,25 +149,65 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( '', WP_Swiper_Admin::posted_slides()[0]['description'] );
 	}
 
-	public function test_slides_box_has_each_description_and_its_window() {
+	public function test_slides_box_keeps_each_slide_in_hidden_fields_and_one_window() {
 		$this->as_role( 'editor' );
 		$slides                   = $this->slides( 2 );
+		$slides[0]['caption']     = '<strong>Big</strong> title';
 		$slides[0]['description'] = '<p>A <em>long</em> text</p>';
+		$slides[0]['link']        = 'https://example.com/page';
+		$slides[0]['new_tab']     = true;
 		$id                       = $this->slider( $slides );
 
 		ob_start();
 		WP_Swiper_Admin::render_slides_box( get_post( $id ) );
 		$html = ob_get_clean();
 
-		// Two slides and the template: a textarea each, the first one filled.
-		$this->assertSame( 3, substr_count( $html, '<textarea name="wp_swiper_slides[description][]" hidden>' ) );
+		// Two slides and the template: hidden fields each, the first one filled.
+		foreach ( array( 'caption', 'description' ) as $name ) {
+			$this->assertSame( 3, substr_count( $html, '<textarea name="wp_swiper_slides[' . $name . '][]" hidden>' ), $name );
+		}
+		$this->assertStringContainsString( '&lt;strong&gt;Big&lt;/strong&gt; title</textarea>', $html );
 		$this->assertStringContainsString( '&lt;p&gt;A &lt;em&gt;long&lt;/em&gt; text&lt;/p&gt;</textarea>', $html );
-		$this->assertSame( 1, substr_count( $html, 'wp-swiper-slide__description has-description' ) );
-		$this->assertStringContainsString( 'Edit description', $html );
-		$this->assertStringContainsString( 'Add description', $html );
-		// One editor for all, its textarea not sent with the form.
-		$this->assertSame( 1, substr_count( $html, 'id="wp-swiper-description-modal"' ) );
+		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[link][]" value="https://example.com/page">', $html );
+		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[new_tab][]" value="1">', $html );
+		// No visible field in the slides: a button each, and marks of what they have.
+		$this->assertStringNotContainsString( 'type="url" name=', $html );
+		$this->assertSame( 3, substr_count( $html, 'class="button button-small wp-swiper-slide__edit"' ) );
+		// "Edit info" for the slide with some, "Add info" for the other one and the template.
+		$this->assertSame( 1, substr_count( $html, 'wp-swiper-slide__edit">Edit info<' ) );
+		$this->assertSame( 2, substr_count( $html, 'wp-swiper-slide__edit">Add info<' ) );
+		foreach ( array( 'caption', 'description', 'link' ) as $mark ) {
+			$this->assertSame( 1, substr_count( $html, 'data-mark="' . $mark . '">' ), $mark );
+		}
+		// One window for all, its fields not sent with the form.
+		$this->assertSame( 1, substr_count( $html, 'id="wp-swiper-slide-modal"' ) );
+		$this->assertStringContainsString( '<textarea id="wp-swiper-caption-editor" rows="3"></textarea>', $html );
 		$this->assertStringContainsString( '<textarea id="wp-swiper-description-editor" rows="10"></textarea>', $html );
+		$this->assertStringContainsString( '<input type="url" id="wp-swiper-link-input"', $html );
+		$this->assertStringContainsString( '<input type="checkbox" id="wp-swiper-new-tab-input">', $html );
+	}
+
+	public function test_a_video_slide_shows_no_link_mark() {
+		$this->as_role( 'editor' );
+		$id = $this->slider(
+			array(
+				array(
+					'id'      => $this->video(),
+					'caption' => '',
+					'link'    => 'https://example.com',
+					'new_tab' => false,
+					'poster'  => 0,
+				),
+			)
+		);
+
+		ob_start();
+		WP_Swiper_Admin::render_slides_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'data-mark="link" hidden>', $html );
+		// Its link is not used: nothing to edit there.
+		$this->assertStringContainsString( 'wp-swiper-slide__edit">Add info<', $html );
 	}
 
 	public function test_settings_screen_has_every_field_once() {

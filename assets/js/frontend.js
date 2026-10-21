@@ -1019,7 +1019,7 @@
 
 	/**
 	 * @param {Array}    items   [ { type: 'image'|'video'|'embed', src, embed, poster, ratio, alt, caption, description, thumb } ]
-	 *                           (description: HTML, or none)
+	 *                           (caption, description: HTML, or none)
 	 * @param {number}   index   Item to open.
 	 * @param {Function} onClose Called with the index shown last.
 	 * @param {Object}   options { radius, thumbs, thumbRadius } from the slider
@@ -1052,7 +1052,8 @@
 			'</div>' +
 			'<div class="swiper wp-swiper-lightbox__swiper"><div class="swiper-wrapper">' +
 				items.map( function ( item ) {
-					var caption = item.caption ? '<div class="wp-swiper-lightbox__caption">' + escapeHtml( item.caption ) + '</div>' : '';
+					// The caption's HTML, as the slider shows it (sanitized by render.php).
+					var caption = item.caption ? '<div class="wp-swiper-lightbox__caption">' + item.caption + '</div>' : '';
 					// With a description (HTML of the slider's own, sanitized by
 					// render.php): the caption over it, both in one panel at the bottom
 					// that scrolls when long; its links and text are not for swiping.
@@ -1387,7 +1388,8 @@
 	 */
 	function lightboxItem( node, real, thumb ) {
 		var img = node.querySelector( 'img.wp-swiper__image' );
-		var caption = node.querySelector( '.wp-swiper__caption' );
+		// Its HTML (render.php keeps the caption's own bold, italic and line breaks only).
+		var caption = node.querySelector( '.wp-swiper__caption-text' );
 		var type = node.hasAttribute( 'data-wp-swiper-full' ) ? 'image' : ( node.hasAttribute( 'data-wp-swiper-video' ) ? 'video' : 'embed' );
 		var poster = node.getAttribute( 'data-wp-swiper-poster' ) || '';
 		return {
@@ -1398,7 +1400,7 @@
 			poster: poster,
 			ratio: Number( node.getAttribute( 'data-wp-swiper-ratio' ) ) || 16 / 9,
 			alt: img ? img.alt : '',
-			caption: caption ? caption.textContent.trim() : '',
+			caption: caption ? caption.innerHTML.trim() : '',
 			thumb: thumb || poster
 		};
 	}

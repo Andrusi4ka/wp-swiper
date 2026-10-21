@@ -1165,12 +1165,14 @@ class WP_Swiper_Render {
 				echo $image; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core image markup.
 			}
 			?>
-			<?php if ( $slide['caption'] ) : ?>
-				<?php
+			<?php
+			// Sanitized again: saved before, or posted by the preview.
+			$caption = empty( $slide['caption'] ) ? '' : WP_Swiper_Settings::sanitize_caption( $slide['caption'] );
+			if ( '' !== $caption ) :
 				// Outer block: position and background; inner tag: semantics and typography.
 				$tag = in_array( $settings['caption_tag'], array( 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ), true ) ? $settings['caption_tag'] : 'div';
 				?>
-				<div class="wp-swiper__caption"><<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?> class="wp-swiper__caption-text"><?php echo esc_html( $slide['caption'] ); ?></<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?>></div>
+				<div class="wp-swiper__caption"><<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?> class="wp-swiper__caption-text"><?php echo $caption; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized above (caption_tags()). ?></<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?>></div>
 			<?php endif; ?>
 			</div>
 		</div>

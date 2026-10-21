@@ -115,12 +115,6 @@
 	background: #d63638;
 }
 
-.wp-swiper-slide input[type="text"],
-.wp-swiper-slide input[type="url"] {
-	width: 100%;
-	cursor: text;
-}
-
 /* Video slides: a badge, the poster as the thumbnail (a video icon without
    one) and no link; the poster is chosen on the Video page. */
 .wp-swiper-slide__video-icon,
@@ -160,11 +154,6 @@
 	color: #fff;
 	font-size: 11px;
 	line-height: 18px;
-}
-
-.wp-swiper-slide--video input[type="url"],
-.wp-swiper-slide--video .wp-swiper-slide__new-tab {
-	display: none;
 }
 
 .wp-swiper-slide__thumb img[hidden] {
@@ -751,35 +740,32 @@
 	font-size: 16px;
 }
 
-/* "Open in a new tab": only meaningful once a link is entered. */
-.wp-swiper-slide__new-tab {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	font-size: 12px;
-	cursor: pointer;
-}
-
-.wp-swiper-slide__new-tab input {
-	margin: 0;
-}
-
-.wp-swiper-slide input[type="url"]:placeholder-shown + .wp-swiper-slide__new-tab {
-	display: none;
-}
-
-/* A slide's description: a button that opens its editor; marked once there is one. */
-.wp-swiper-slide .wp-swiper-slide__description {
+/* A slide's button that opens its window, and the marks of what it has. */
+.wp-swiper-slide .wp-swiper-slide__edit {
 	width: 100%;
 	text-align: center;
 }
 
-.wp-swiper-slide .wp-swiper-slide__description.has-description {
-	border-color: var(--wp-swiper-accent);
-	color: var(--wp-swiper-accent);
+.wp-swiper-slide__marks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
 }
 
-/* The description's window: over the admin bar, under the editor's own link
+.wp-swiper-slide__mark {
+	padding: 0 6px;
+	border-radius: 3px;
+	background: #f0f6fc;
+	color: var(--wp-swiper-accent);
+	font-size: 11px;
+	line-height: 18px;
+}
+
+.wp-swiper-slide__mark[hidden] {
+	display: none;
+}
+
+/* The slide's window: over the admin bar, under the editor's own link
    window (#wp-link-wrap, z-index 100105). */
 body.wp-swiper-modal-open {
 	overflow: hidden;
@@ -884,8 +870,33 @@ body.wp-swiper-modal-open {
 	padding: 16px 20px;
 }
 
-.wp-swiper-modal__body > .description {
-	margin: 0 0 12px;
+/* Its parts: caption, description, link (none for a video slide). */
+.wp-swiper-modal__section + .wp-swiper-modal__section {
+	margin-top: 20px;
+}
+
+.wp-swiper-modal__section[hidden] {
+	display: none;
+}
+
+.wp-swiper-modal__label {
+	margin: 0 0 4px;
+	font-size: 14px;
+}
+
+.wp-swiper-modal__section > .description {
+	margin: 0 0 8px;
+}
+
+.wp-swiper-modal__new-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.wp-swiper-modal__new-tab input {
+	margin: 0;
 }
 
 .wp-swiper-modal__body textarea {
