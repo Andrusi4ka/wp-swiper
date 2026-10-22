@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.3.0
+Stable tag: 2.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,9 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.3.1 =
+* Settings: a "Want to see more effects? Swiper demos" link in the bottom left corner of the Slider settings box, opening swiperjs.com/demos in a new tab.
 
 = 2.3.0 =
 * Slides: each card has a thumbnail, an "Add info" button ("Edit info" once it has something) and marks of what it has (Caption, Description, Link). The caption, description, link and "Open in a new tab" are edited in one "Slide info" window with the slide's thumbnail; a video slide has no link there. Apply keeps the changes, Cancel or Escape drops them.
