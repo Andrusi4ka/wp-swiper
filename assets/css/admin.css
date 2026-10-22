@@ -319,6 +319,25 @@
 	flex-direction: column;
 	gap: 16px;
 	min-width: 0;
+	/* As tall as the row, so the demos link sits in the bottom left corner. */
+	align-self: stretch;
+}
+
+.wp-swiper-demos {
+	margin: auto 0 0;
+	color: #646970;
+}
+
+.wp-swiper-demos a {
+	white-space: nowrap;
+}
+
+.wp-swiper-demos .dashicons {
+	width: 14px;
+	height: 14px;
+	margin-left: 2px;
+	font-size: 14px;
+	vertical-align: middle;
 }
 
 .wp-swiper-settings__pane {

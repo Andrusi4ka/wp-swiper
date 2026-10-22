@@ -289,6 +289,14 @@ class WP_Swiper_Admin {
 			);
 		}
 		echo '</nav>';
+
+		// At the foot of the column (admin.css), the box's bottom left corner.
+		printf(
+			'<p class="wp-swiper-demos">%1$s <a href="https://swiperjs.com/demos" target="_blank" rel="noopener noreferrer">%2$s<span class="screen-reader-text"> %3$s</span><span class="dashicons dashicons-external" aria-hidden="true"></span></a></p>',
+			esc_html__( 'Want to see more effects?', 'wp-swiper' ),
+			esc_html__( 'Swiper demos', 'wp-swiper' ),
+			esc_html__( '(opens in a new tab)', 'wp-swiper' )
+		);
 		echo '</div>';
 
 		echo '<div class="wp-swiper-settings__pane">';

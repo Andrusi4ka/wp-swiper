@@ -245,6 +245,11 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'data-note="empty"', $html );
 		$this->assertStringContainsString( 'data-note="unavailable"', $html );
 		$this->assertStringContainsString( 'id="wp-swiper-layouts"', $html );
+		// The demos link: in the left column (before the pages), in a new tab.
+		$demos = strpos( $html, '<p class="wp-swiper-demos">' );
+		$this->assertNotFalse( $demos );
+		$this->assertLessThan( strpos( $html, 'wp-swiper-settings__pane' ), $demos );
+		$this->assertStringContainsString( '<a href="https://swiperjs.com/demos" target="_blank" rel="noopener noreferrer">', $html );
 	}
 
 	public function test_list_columns() {
