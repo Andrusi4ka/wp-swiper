@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.4.0
+Stable tag: 2.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,10 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.5.0 =
+* New in Layout, Size and fit: "Image proportions" per device (Off, 1:1, 4:3, 3:2, 16:9, 3:4, 9:16 or Custom such as 2.35x1), Slide effect. Every image is as tall as the Height and as wide as its proportions make it, Slides per view of them share the row and the free width goes around them like flex items — "Distribution": Space between (the outer images at the row's edges) or Space around (each image in the middle of its equal share). Space between slides is the least space left: where the images do not fit with it, they get smaller, and so does the slider. Off keeps the images filling the row, as before. Works with the continuous scroll and its separator.
+* Preview: a "Developer mode" button right of its title. It draws over the preview the slides' boxes, the images' boxes with their size, the space between the slides and the empty space around an image, and the distances between the images and from the slider's edges; it follows the moving slides and is kept for the next visit. Only in the preview, never on the site.
 
 = 2.4.0 =
 * Continuous scroll: a "Separator" between the slides (Layout, Slides) — None, Dot or Own image from the media library (PNG or SVG with a transparent background suits best). It stands in the middle of the space between the slides and moves with them. "Separator size" per device (the dot's diameter; an image fits in a square of that size) and "Dot color". The space between the slides is at least as wide as the separator.
