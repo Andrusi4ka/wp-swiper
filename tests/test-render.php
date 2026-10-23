@@ -610,6 +610,32 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertFalse( $none['lightbox']['text'] );
 	}
 
+	/* Image proportions ---------------------------------------------- */
+
+	public function test_distribute_config_per_device() {
+		$values = array( 'slide_ratio' => '4-3', 'slide_ratio_mobile' => 'off', 'slides_per_view' => 5, 'space_between' => 10, 'height' => 200 );
+		$config = $this->config( $this->render( $values ) );
+
+		$this->assertEquals( array( 'desktop' => 1.3333, 'tablet' => 1.3333, 'mobile' => false ), $config['distribute']['ratio'] );
+		$this->assertSame( 'between', $config['distribute']['mode'] );
+		// The set space and count stay: the least space, the images in the row.
+		$this->assertEquals( 10, $config['spaceBetween']['desktop'] );
+		$this->assertEquals( 5, $config['slidesPerView']['desktop'] );
+
+		$around = $this->config( $this->render( array( 'slide_distribution' => 'around' ) + $values ) );
+		$this->assertSame( 'around', $around['distribute']['mode'] );
+	}
+
+	public function test_no_distribute_without_proportions() {
+		$this->assertFalse( $this->config( $this->render( array( 'slide_distribution' => 'around' ) ) )['distribute'] );
+		$this->assertFalse( $this->config( $this->render( array( 'slide_ratio' => '1-1', 'effect' => 'fade' ) ) )['distribute'] );
+	}
+
+	public function test_distribute_keeps_the_height_as_set() {
+		$style = $this->root_style( $this->render( array( 'slide_ratio' => '1-1', 'height' => 240 ) ) );
+		$this->assertStringContainsString( '--wp-swiper-height:240px', $style );
+	}
+
 	/* Continuous scroll separator ------------------------------------ */
 
 	public function test_marquee_separator_dot_after_every_slide() {

@@ -632,6 +632,17 @@
 			return max;
 		}
 
+		// "Image proportions" of each device (desktop, tablet, mobile), an empty one inherited.
+		function slideRatios() {
+			var values = [];
+			var inherited = 'off';
+			field( 'slide_ratio' ).find( '.wp-swiper-devices__input' ).each( function () {
+				inherited = $( this ).val() || inherited;
+				values.push( inherited );
+			} );
+			return values;
+		}
+
 		// Continuous scroll runs on its own (render.php ignores these for it); so
 		// does a background, with the slider's autoplay (render.php forces it).
 		var lockSpeed = lockableValue( 'speed' );
@@ -980,6 +991,18 @@
 			field( 'collage_seed' ).toggle( collageUses( [ 'masonry', 'random' ] ) );
 			// The collage's Height: not for the styles as tall as their photos make them.
 			field( 'height' ).toggle( ! collage || ! collageUses( [ 'justified', 'masonry' ] ) );
+			// Image proportions (Slide effect, data-effects): a horizontal row of slides
+			// of one width, not as a background (WP_Swiper_Settings::slide_ratios()).
+			// Their custom numbers and Distribution once a device has them.
+			var canRatio = slide && ! vertical && ! background && ! autoWidth && ! expand;
+			var ratioOn = ( canRatio ? slideRatios() : [] ).filter( function ( value ) {
+				return value !== 'off';
+			} );
+			if ( ! canRatio ) {
+				field( 'slide_ratio' ).hide();
+			}
+			field( 'slide_ratio_custom' ).toggle( ratioOn.indexOf( 'custom' ) !== -1 );
+			field( 'slide_distribution' ).toggle( ratioOn.length > 0 );
 			// Its places always crop their photos (Cover): no Image fit.
 			field( 'image_fit' ).toggle( ! collage );
 			field( 'collage_count' ).toggle( collageUses( [ 'grid', 'justified', 'masonry', 'random' ] ) );

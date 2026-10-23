@@ -412,6 +412,48 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		}
 	}
 
+	/* Image proportions ---------------------------------------------- */
+
+	public function test_slide_ratios_per_device() {
+		$this->assertFalse( WP_Swiper_Settings::slide_ratios( $this->settings() ) );
+
+		$ratios = WP_Swiper_Settings::slide_ratios( $this->settings( array( 'slide_ratio' => '4-3', 'slide_ratio_tablet' => 'custom', 'slide_ratio_custom_tablet' => '2.35x1', 'slide_ratio_mobile' => 'off' ) ) );
+		$this->assertSame( array( 4.0, 3.0 ), $ratios['desktop'] );
+		$this->assertSame( array( 2.35, 1.0 ), $ratios['tablet'] );
+		$this->assertFalse( $ratios['mobile'] );
+
+		// Inherited from the larger screen.
+		$this->assertSame( array( 16.0, 9.0 ), WP_Swiper_Settings::slide_ratios( $this->settings( array( 'slide_ratio' => '16-9' ) ) )['mobile'] );
+		// Only on a phone.
+		$this->assertSame( array( 'desktop' => false, 'tablet' => false, 'mobile' => array( 9.0, 16.0 ) ), WP_Swiper_Settings::slide_ratios( $this->settings( array( 'slide_ratio_mobile' => '9-16' ) ) ) );
+	}
+
+	public function test_slide_ratios_only_for_a_horizontal_row_of_slides() {
+		$on  = array( 'slide_ratio' => '1-1' );
+		$off = array(
+			'fade'             => array( 'effect' => 'fade' ),
+			'vertical'         => array( 'direction' => 'vertical' ),
+			'width from image' => array( 'auto_width' => true ),
+			'wider active'     => array( 'expand_active' => true ),
+			'background'       => array( 'background' => true ),
+		);
+		foreach ( $off as $name => $values ) {
+			$this->assertFalse( WP_Swiper_Settings::slide_ratios( $this->settings( $values + $on ) ), $name );
+		}
+		// The continuous scroll keeps them.
+		$this->assertNotFalse( WP_Swiper_Settings::slide_ratios( $this->settings( array( 'marquee' => true ) + $on ) ) );
+	}
+
+	public function test_sanitize_slide_ratio_and_distribution() {
+		$clean = WP_Swiper_Settings::sanitize( array( 'slide_ratio' => '5-4', 'slide_ratio_tablet' => 'off', 'slide_ratio_mobile' => '', 'slide_ratio_custom' => '21 : 9', 'slide_distribution' => 'evenly' ) );
+		$this->assertSame( 'off', $clean['slide_ratio'] );
+		$this->assertSame( 'off', $clean['slide_ratio_tablet'] );
+		$this->assertSame( '', $clean['slide_ratio_mobile'] );
+		$this->assertSame( '21x9', $clean['slide_ratio_custom'] );
+		$this->assertSame( 'between', $clean['slide_distribution'] );
+		$this->assertSame( 'around', WP_Swiper_Settings::sanitize( array( 'slide_distribution' => 'around' ) )['slide_distribution'] );
+	}
+
 	/* Continuous scroll separator ------------------------------------ */
 
 	public function test_sanitize_keeps_only_an_image_for_an_image_field() {

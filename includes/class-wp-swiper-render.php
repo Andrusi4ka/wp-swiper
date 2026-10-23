@@ -315,6 +315,10 @@ class WP_Swiper_Render {
 			'group'         => WP_Swiper_Settings::groups( $settings ),
 			// With a separator, at least its size (WP_Swiper_Settings::gaps()).
 			'spaceBetween'  => WP_Swiper_Settings::gaps( $settings ),
+			// Image proportions (frontend.js distribute()): width / height per
+			// device (false: the images fill the row) and where the free width
+			// goes; spaceBetween is then the least space between the images.
+			'distribute'    => self::distribute( $settings ),
 			// Slide effect only (the editor offers it there; coverflow, cards and
 			// the creative carousel centre on their own).
 			'centered'      => self::centered( $settings ),
@@ -520,6 +524,28 @@ class WP_Swiper_Render {
 				return round( $ratio[0] / $ratio[1], 4 );
 			},
 			WP_Swiper_Settings::thumbs_ratio( $settings )
+		);
+	}
+
+	/**
+	 * Image proportions and Distribution for frontend.js.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array|false [ 'ratio' => [ device => float|false ], 'mode' => 'between'|'around' ]
+	 */
+	private static function distribute( $settings ) {
+		$ratios = WP_Swiper_Settings::slide_ratios( $settings );
+		if ( ! $ratios ) {
+			return false;
+		}
+		return array(
+			'ratio' => array_map(
+				function ( $ratio ) {
+					return $ratio ? round( $ratio[0] / $ratio[1], 4 ) : false;
+				},
+				$ratios
+			),
+			'mode'  => 'around' === $settings['slide_distribution'] ? 'around' : 'between',
 		);
 	}
 

@@ -923,6 +923,53 @@ class WP_Swiper_Settings {
 				// Shown instead of "help" while Image fit is "Contain".
 				'help_contain' => __( '0 = 500px. Auto: fills the free height of the parent column. If the height is greater than that of the images that fit in a row, it is ignored: the slider is as tall as the tallest of them.', 'wp-swiper' ),
 			),
+			// Slide effect: every image of the Height and these proportions, the
+			// free width of the row spread around them (slide_distribution).
+			'slide_ratio'           => array(
+				'section'    => 'layout',
+				'effects'    => array( 'slide' ),
+				'label'      => __( 'Image proportions', 'wp-swiper' ),
+				'type'       => 'select',
+				'responsive' => true,
+				'default'    => 'off',
+				'choices'    => array(
+					'off'    => __( 'Off', 'wp-swiper' ),
+					'1-1'    => '1:1',
+					'4-3'    => '4:3',
+					'3-2'    => '3:2',
+					'16-9'   => '16:9',
+					'3-4'    => '3:4',
+					'9-16'   => '9:16',
+					// Its two numbers: the field below.
+					'custom' => __( 'Custom', 'wp-swiper' ),
+				),
+				'help'       => __( 'Every image is as tall as the Height and as wide as these proportions make it; Slides per view of them share the row and the free width goes around them (Distribution). Space between slides is the least space left; where they do not fit with it, they get smaller. Off: the images fill the row.', 'wp-swiper' ),
+			),
+			// Shown while a device has "Custom" (like thumbs_ratio_custom).
+			'slide_ratio_custom'    => array(
+				'section'     => 'layout',
+				'effects'     => array( 'slide' ),
+				'label'       => __( 'Custom proportions', 'wp-swiper' ),
+				'type'        => 'ratio',
+				'responsive'  => true,
+				'default'     => '4x3',
+				'placeholder' => '4x3',
+				'help'        => __( 'Width x height, for example 4x3 or 2.35x1.', 'wp-swiper' ),
+			),
+			// Where the free width of the row goes, like flex's justify-content.
+			'slide_distribution'    => array(
+				'section'   => 'layout',
+				'effects'   => array( 'slide' ),
+				'label'     => __( 'Distribution', 'wp-swiper' ),
+				'type'      => 'select',
+				'segmented' => true,
+				'default'   => 'between',
+				'choices'   => array(
+					'between' => __( 'Space between', 'wp-swiper' ),
+					'around'  => __( 'Space around', 'wp-swiper' ),
+				),
+				'help'      => __( 'Space between: the outer images at the row\'s edges, the free width between them. Space around: each image in the middle of its equal share, so half a space at the edges.', 'wp-swiper' ),
+			),
 			// Rendered next to the Height input (its "unit"), not as a field of its own.
 			'height_unit'           => array(
 				'section'   => 'layout',
@@ -1953,11 +2000,43 @@ class WP_Swiper_Settings {
 		$ratios = array();
 
 		foreach ( self::responsive( $settings, 'thumbs_ratio' ) as $device => $choice ) {
-			// Both are "4x3" / "4-3": two numbers and a separator.
-			$ratio             = array_map( 'floatval', preg_split( '/[x-]/', 'custom' === $choice ? $custom[ $device ] : $choice ) ) + array( 1, 1 );
-			$ratios[ $device ] = $ratio[0] > 0 && $ratio[1] > 0 ? array( $ratio[0], $ratio[1] ) : array( 4.0, 3.0 );
+			$ratios[ $device ] = self::ratio_sides( 'custom' === $choice ? $custom[ $device ] : $choice );
 		}
 		return $ratios;
+	}
+
+	/**
+	 * Image proportions on each device (Slide effect): [ width, height ], or
+	 * false where they are "Off" (the images fill the row there); false
+	 * altogether without any. Only for a horizontal row of slides of one
+	 * width: not with "Width from image", the wider active slide or as a
+	 * background (it fills its block).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array|false device => [ width, height ] | false
+	 */
+	public static function slide_ratios( $settings ) {
+		if ( 'slide' !== $settings['effect'] || 'horizontal' !== $settings['direction']
+			|| self::is_auto_width( $settings ) || self::is_expand( $settings ) || self::is_background( $settings ) ) {
+			return false;
+		}
+		$custom = self::responsive( $settings, 'slide_ratio_custom' );
+		$ratios = array();
+		foreach ( self::responsive( $settings, 'slide_ratio' ) as $device => $choice ) {
+			$ratios[ $device ] = 'off' === $choice ? false : self::ratio_sides( 'custom' === $choice ? $custom[ $device ] : $choice );
+		}
+		return array_filter( $ratios ) ? $ratios : false;
+	}
+
+	/**
+	 * The two sides of proportions stored as "4x3" (Custom) or "4-3" (a preset).
+	 *
+	 * @param string $value Two numbers and a separator.
+	 * @return array [ width, height ], both above 0 (4:3 for anything else).
+	 */
+	private static function ratio_sides( $value ) {
+		$ratio = array_map( 'floatval', preg_split( '/[x-]/', (string) $value ) ) + array( 1, 1 );
+		return $ratio[0] > 0 && $ratio[1] > 0 ? array( $ratio[0], $ratio[1] ) : array( 4.0, 3.0 );
 	}
 
 	/**
@@ -2195,7 +2274,7 @@ class WP_Swiper_Settings {
 				),
 				'size'        => array(
 					'title'  => __( 'Size and fit', 'wp-swiper' ),
-					'fields' => array( 'height', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
+					'fields' => array( 'height', 'slide_ratio', 'slide_ratio_custom', 'slide_distribution', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
 				),
 				'look'        => array(
 					'title'  => __( 'Look', 'wp-swiper' ),

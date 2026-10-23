@@ -2061,6 +2061,67 @@
 	}
 
 	/**
+	 * Image proportions: on the devices that have them every image is as tall
+	 * as the slider (Height) and as wide as its proportions make it, and
+	 * Slides per view of them share the row like flex items. Space between:
+	 * the outer ones at the edges, Swiper's gap is the free width shared out.
+	 * Space around: no gap, each slide an equal share with its image in the
+	 * middle (.wp-swiper--around). The set gap is the least space between the
+	 * images; where they do not fit with it they get smaller, and so does the
+	 * slider's height. Again whenever the slider resizes or changes device.
+	 */
+	function distribute( swiper, el, config ) {
+		var root = el.parentNode;
+		var last = '';
+
+		function apply() {
+			var current = device();
+			var ratio = config.distribute.ratio[ current ];
+			var gap = Number( config.spaceBetween[ current ] ) || 0;
+			var around = false;
+			var imageWidth = 0;
+
+			el.style.height = '';
+			if ( ratio && el.clientWidth && el.clientHeight ) {
+				var width = el.clientWidth;
+				var height = el.clientHeight;
+				var perView = Math.max( 1, Number( config.slidesPerView[ current ] ) || 1 );
+				around = 'around' === config.distribute.mode || perView <= 1;
+				imageWidth = height * ratio;
+				if ( around ) {
+					imageWidth = Math.min( imageWidth, width / perView - gap );
+					gap = 0;
+				} else {
+					imageWidth = Math.min( imageWidth, ( width - gap * ( perView - 1 ) ) / perView );
+					gap = ( width - perView * imageWidth ) / ( perView - 1 );
+				}
+				imageWidth = Math.max( 1, imageWidth );
+				if ( imageWidth / ratio < height - 0.5 ) {
+					el.style.height = ( imageWidth / ratio ) + 'px';
+				}
+			}
+
+			root.classList.toggle( 'wp-swiper--around', around );
+			root.style.setProperty( '--wp-swiper-image-width', imageWidth ? imageWidth + 'px' : '' );
+			// The separator stands in the middle of the space Swiper leaves.
+			root.style.setProperty( '--wp-swiper-gap-live', ratio ? gap + 'px' : '' );
+
+			var key = [ current, gap, imageWidth, el.style.height ].join( '|' );
+			if ( key === last ) {
+				return;
+			}
+			last = key;
+			swiper.params.spaceBetween = gap;
+			swiper.update();
+		}
+
+		apply();
+		swiper.on( 'resize breakpoint', function () {
+			requestAnimationFrame( apply );
+		} );
+	}
+
+	/**
 	 * Wire up the controls Swiper does not handle itself for this slider.
 	 */
 	function setupControls( swiper, el, config ) {
@@ -3064,6 +3125,10 @@
 					}
 					if ( config.fill ) {
 						fillParent( wrapper, swiper, needsFixed, config );
+					}
+					// Image proportions: after the height is known (Height "Auto" above).
+					if ( config.distribute ) {
+						distribute( swiper, el, config );
 					}
 					// After the slider has its final size; again whenever it changes.
 					imageSizes( swiper, config );
