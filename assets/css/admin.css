@@ -54,6 +54,42 @@
 	line-height: 1;
 }
 
+/* An image setting (the separator): its thumbnail on a checkered square
+   (a transparent PNG or SVG shows as it will), Choose / Change and Remove. */
+.wp-swiper-picker {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.wp-swiper-picker__thumb {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 48px;
+	height: 48px;
+	overflow: hidden;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: repeating-conic-gradient(#f0f0f1 0% 25%, #fff 0% 50%) 50% / 12px 12px;
+}
+
+.wp-swiper-picker__thumb img {
+	display: block;
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+}
+
+.wp-swiper-picker__remove[hidden] {
+	display: none;
+}
+
+.wp-swiper-picker .button-link.wp-swiper-picker__remove {
+	color: #b32d2e;
+}
+
 .wp-swiper-slides {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));

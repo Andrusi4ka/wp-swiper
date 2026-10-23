@@ -2139,7 +2139,8 @@
 		var carousel = carouselOf( config );
 
 		swiper.slides.forEach( function ( slide, index ) {
-			var img = slide.querySelector( 'img' );
+			// The slide's own image, not the continuous scroll's separator.
+			var img = slide.querySelector( '.wp-swiper__media img' );
 			if ( ! img ) {
 				return;
 			}

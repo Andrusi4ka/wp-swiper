@@ -609,4 +609,60 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$none = $this->config( $this->render( $values ) );
 		$this->assertFalse( $none['lightbox']['text'] );
 	}
+
+	/* Continuous scroll separator ------------------------------------ */
+
+	public function test_marquee_separator_dot_after_every_slide() {
+		$values = array(
+			'marquee'                       => true,
+			'marquee_separator'             => 'dot',
+			'marquee_separator_size'        => 16,
+			'marquee_separator_size_tablet' => 12,
+			'marquee_separator_color'       => '#ff0000',
+			'space_between'                 => 40,
+			'space_between_tablet'          => 4,
+		);
+		$html   = $this->render( $values, $this->slides( 2 ) );
+		$config = $this->config( $html );
+
+		$this->assertContains( 'wp-swiper--separator', $this->root_classes( $html ) );
+		// One per slide, its copies included (the loop copies it with its slide).
+		$this->assertSame( 2 * $config['copies'], substr_count( $html, '<span class="wp-swiper__separator" aria-hidden="true"><span class="wp-swiper__separator-dot"></span></span>' ) );
+		// The gap fits the separator on every device.
+		$this->assertEquals( array( 'desktop' => 40, 'tablet' => 12, 'mobile' => 12 ), $config['spaceBetween'] );
+
+		$style = $this->root_style( $html );
+		$this->assertStringContainsString( '--wp-swiper-separator-size:16px', $style );
+		$this->assertStringContainsString( '--wp-swiper-separator-size-tablet:12px', $style );
+		$this->assertStringContainsString( '--wp-swiper-separator-size-mobile:12px', $style );
+		$this->assertStringContainsString( '--wp-swiper-gap:40px', $style );
+		$this->assertStringContainsString( '--wp-swiper-gap-tablet:12px', $style );
+		$this->assertStringContainsString( '--wp-swiper-separator-color:#ff0000', $style );
+	}
+
+	public function test_marquee_separator_own_image() {
+		$image = $this->image( 64, 32 );
+		$html  = $this->render( array( 'marquee' => true, 'marquee_separator' => 'image', 'marquee_separator_image' => $image, 'marquee_separator_size' => 24 ), $this->slides( 3 ) );
+
+		$this->assertSame( 1, preg_match( '#<span class="wp-swiper__separator" aria-hidden="true">(<img[^>]*>)</span>#', $html, $match ) );
+		$this->assertStringContainsString( 'class="wp-swiper__separator-image"', $match[1] );
+		$this->assertStringContainsString( 'alt=""', $match[1] );
+		$this->assertStringContainsString( 'loading="lazy"', $match[1] );
+		// A dot's color only for a dot.
+		$this->assertStringNotContainsString( '--wp-swiper-separator-color', $this->root_style( $html ) );
+	}
+
+	public function test_no_separator_without_marquee_or_image() {
+		$cases = array(
+			'no marquee'       => array( 'marquee_separator' => 'dot' ),
+			'none'             => array( 'marquee' => true ),
+			'image not chosen' => array( 'marquee' => true, 'marquee_separator' => 'image' ),
+		);
+		foreach ( $cases as $name => $values ) {
+			$html = $this->render( $values + array( 'space_between' => 10 ) );
+			$this->assertStringNotContainsString( 'wp-swiper__separator', $html, $name );
+			$this->assertNotContains( 'wp-swiper--separator', $this->root_classes( $html ), $name );
+			$this->assertSame( 10, $this->config( $html )['spaceBetween']['desktop'], $name );
+		}
+	}
 }

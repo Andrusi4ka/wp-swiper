@@ -313,7 +313,8 @@ class WP_Swiper_Render {
 			'autoWidth'     => WP_Swiper_Settings::is_auto_width( $settings ),
 			'slidesPerView' => WP_Swiper_Settings::responsive( $settings, 'slides_per_view' ),
 			'group'         => WP_Swiper_Settings::groups( $settings ),
-			'spaceBetween'  => WP_Swiper_Settings::responsive( $settings, 'space_between' ),
+			// With a separator, at least its size (WP_Swiper_Settings::gaps()).
+			'spaceBetween'  => WP_Swiper_Settings::gaps( $settings ),
 			// Slide effect only (the editor offers it there; coverflow, cards and
 			// the creative carousel centre on their own).
 			'centered'      => self::centered( $settings ),
@@ -641,6 +642,7 @@ class WP_Swiper_Render {
 			$fill ? 'wp-swiper--fill' : '',
 			WP_Swiper_Settings::is_auto_width( $settings ) ? 'wp-swiper--auto-width' : '',
 			WP_Swiper_Settings::is_marquee( $settings ) ? 'wp-swiper--marquee' : '',
+			WP_Swiper_Settings::separator( $settings ) ? 'wp-swiper--separator' : '',
 			WP_Swiper_Settings::is_carousel( $settings ) ? 'wp-swiper--carousel' : '',
 			$settings['lightbox'] ? 'wp-swiper--lightbox' : '',
 			// Video slides the visitor starts: the YouTube / Vimeo play button shows.
@@ -781,6 +783,20 @@ class WP_Swiper_Render {
 			}
 		}
 
+		// Continuous scroll separator: its size and the gap it stands in the
+		// middle of, per device; the dot's color.
+		$separator = WP_Swiper_Settings::separator( $settings );
+		if ( $separator ) {
+			$gaps = WP_Swiper_Settings::gaps( $settings );
+			foreach ( $separator['size'] as $device => $size ) {
+				$style[] = '--wp-swiper-separator-size' . self::SUFFIX[ $device ] . ':' . $size . 'px';
+				$style[] = '--wp-swiper-gap' . self::SUFFIX[ $device ] . ':' . $gaps[ $device ] . 'px';
+			}
+			if ( 'dot' === $separator['type'] ) {
+				$style[] = '--wp-swiper-separator-color:' . $settings['marquee_separator_color'];
+			}
+		}
+
 		// Height of the slides per device (0 = 500px), unless "Auto".
 		if ( ! $fill ) {
 			foreach ( WP_Swiper_Settings::css_heights( $settings ) as $device => $height ) {
@@ -901,6 +917,7 @@ class WP_Swiper_Render {
 		$copies            = self::copies( $settings, $count );
 		$config            = self::js_config( $settings, $count, $copies, $videos );
 		$pagination_inside = 'inside' === $settings['pagination_placement'];
+		$separator         = self::separator( $settings );
 
 		// Slide descriptions, under the slider (frontend.js descriptions()).
 		$descriptions           = self::descriptions( $post_id, $slides, $settings );
@@ -926,7 +943,7 @@ class WP_Swiper_Render {
 					// keeps the real index so pagination counts real slides only.
 					for ( $copy = 0; $copy < $copies; $copy++ ) {
 						foreach ( $slides as $index => $slide ) {
-							self::render_slide( $slide, $index, $settings, 0 === $copy && 0 === $index );
+							self::render_slide( $slide, $index, $settings, 0 === $copy && 0 === $index, $separator );
 						}
 					}
 					?>
@@ -1119,12 +1136,46 @@ class WP_Swiper_Render {
 	}
 
 	/**
-	 * @param array $slide    Slide data.
-	 * @param int   $index    Real slide index.
+	 * The continuous scroll's separator, put after each slide's image: in the
+	 * middle of the gap to the next slide (CSS), copied with the slide by the
+	 * loop. Decoration only: hidden from screen readers, not in the lightbox.
+	 *
 	 * @param array $settings Slider settings.
-	 * @param bool  $eager    Load the image right away (first slide).
+	 * @return string Markup; '' without a separator.
 	 */
-	private static function render_slide( $slide, $index, $settings, $eager ) {
+	private static function separator( $settings ) {
+		$separator = WP_Swiper_Settings::separator( $settings );
+		if ( ! $separator ) {
+			return '';
+		}
+		if ( 'dot' === $separator['type'] ) {
+			$inner = '<span class="wp-swiper__separator-dot"></span>';
+		} else {
+			// The file that fits the largest size set (srcset), not the full one.
+			$inner = wp_get_attachment_image(
+				$separator['image'],
+				'full',
+				false,
+				array(
+					'class'    => 'wp-swiper__separator-image',
+					'alt'      => '',
+					'sizes'    => max( $separator['size'] ) . 'px',
+					'loading'  => 'lazy',
+					'decoding' => 'async',
+				)
+			);
+		}
+		return '<span class="wp-swiper__separator" aria-hidden="true">' . $inner . '</span>';
+	}
+
+	/**
+	 * @param array  $slide     Slide data.
+	 * @param int    $index     Real slide index.
+	 * @param array  $settings  Slider settings.
+	 * @param bool   $eager     Load the image right away (first slide).
+	 * @param string $separator The continuous scroll's separator (separator()).
+	 */
+	private static function render_slide( $slide, $index, $settings, $eager, $separator = '' ) {
 		// The media's proportions size its box (.wp-swiper__media) with "Contain",
 		// and the slide itself with "Width from image".
 		$size  = WP_Swiper_Settings::slide_size( $slide );
@@ -1175,6 +1226,7 @@ class WP_Swiper_Render {
 				<div class="wp-swiper__caption"><<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?> class="wp-swiper__caption-text"><?php echo $caption; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized above (caption_tags()). ?></<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?>></div>
 			<?php endif; ?>
 			</div>
+			<?php echo $separator; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built in separator(). ?>
 		</div>
 		<?php
 	}

@@ -411,4 +411,42 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 			$this->assertSame( '', WP_Swiper_Settings::sanitize_caption( $empty ), $empty );
 		}
 	}
+
+	/* Continuous scroll separator ------------------------------------ */
+
+	public function test_sanitize_keeps_only_an_image_for_an_image_field() {
+		$image = $this->image();
+		$this->assertSame( $image, WP_Swiper_Settings::sanitize( array( 'marquee_separator_image' => (string) $image ) )['marquee_separator_image'] );
+		$others = array( '', '0', 'abc', (string) $this->video(), (string) self::factory()->post->create(), '999999' );
+		foreach ( $others as $value ) {
+			$this->assertSame( 0, WP_Swiper_Settings::sanitize( array( 'marquee_separator_image' => $value ) )['marquee_separator_image'], $value );
+		}
+		$this->assertSame( 'none', WP_Swiper_Settings::sanitize( array( 'marquee_separator' => 'star' ) )['marquee_separator'] );
+	}
+
+	public function test_separator_needs_the_marquee_and_an_image_when_own() {
+		$marquee = array( 'marquee' => true, 'marquee_separator' => 'dot' );
+		$this->assertFalse( WP_Swiper_Settings::separator( $this->settings( array( 'marquee' => true ) ) ) );
+		$this->assertFalse( WP_Swiper_Settings::separator( $this->settings( array( 'marquee_separator' => 'dot' ) ) ) );
+		$this->assertFalse( WP_Swiper_Settings::separator( $this->settings( array( 'effect' => 'fade' ) + $marquee ) ) );
+		$this->assertFalse( WP_Swiper_Settings::separator( $this->settings( array( 'marquee_separator' => 'image' ) + $marquee ) ) );
+
+		$dot = WP_Swiper_Settings::separator( $this->settings( array( 'marquee_separator_size' => 12, 'marquee_separator_size_mobile' => 6 ) + $marquee ) );
+		$this->assertSame( 'dot', $dot['type'] );
+		$this->assertSame( 0, $dot['image'] );
+		$this->assertSame( array( 'desktop' => 12, 'tablet' => 12, 'mobile' => 6 ), $dot['size'] );
+
+		$image = $this->image( 64, 64 );
+		$own   = WP_Swiper_Settings::separator( $this->settings( array( 'marquee_separator' => 'image', 'marquee_separator_image' => $image ) + $marquee ) );
+		$this->assertSame( 'image', $own['type'] );
+		$this->assertSame( $image, $own['image'] );
+	}
+
+	public function test_gaps_are_at_least_the_separator() {
+		$values = array( 'space_between' => 30, 'space_between_tablet' => 8, 'space_between_mobile' => '' );
+		$this->assertSame( array( 'desktop' => 30, 'tablet' => 8, 'mobile' => 8 ), WP_Swiper_Settings::gaps( $this->settings( $values ) ) );
+
+		$values += array( 'marquee' => true, 'marquee_separator' => 'dot', 'marquee_separator_size' => 20, 'marquee_separator_size_mobile' => 4 );
+		$this->assertSame( array( 'desktop' => 30, 'tablet' => 20, 'mobile' => 8 ), WP_Swiper_Settings::gaps( $this->settings( $values ) ) );
+	}
 }

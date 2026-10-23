@@ -52,6 +52,9 @@ class WP_Swiper_Admin {
 					'posterChoose' => __( 'Choose', 'wp-swiper' ),
 					'posterChange' => __( 'Change', 'wp-swiper' ),
 					'posterRemove' => __( 'Remove', 'wp-swiper' ),
+					// An image setting (the continuous scroll's separator).
+					'imageTitle'   => __( 'Choose an image', 'wp-swiper' ),
+					'imageButton'  => __( 'Use this image', 'wp-swiper' ),
 					/* translators: %d: slide number. */
 					'slideNumber'  => __( 'Slide %d', 'wp-swiper' ),
 					// A slide's button: without and with a caption, description or link.
@@ -511,6 +514,17 @@ class WP_Swiper_Admin {
 						value="<?php echo esc_attr( $value ); ?>"
 						placeholder="<?php echo esc_attr( isset( $field['placeholder'] ) ? $field['placeholder'] : '' ); ?>"
 						spellcheck="false">
+				<?php elseif ( 'image' === $field['type'] ) : ?>
+					<?php
+					// The ID is the value kept; the buttons pick it from the media library (admin.js).
+					$thumb = $value ? wp_get_attachment_image_url( $value, 'thumbnail' ) : '';
+					?>
+					<input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo $value ? (int) $value : ''; ?>" data-url="<?php echo esc_url( (string) $thumb ); ?>">
+					<div class="wp-swiper-picker">
+						<span class="wp-swiper-picker__thumb"><?php echo $thumb ? '<img src="' . esc_url( $thumb ) . '" alt="">' : ''; ?></span>
+						<button type="button" class="button wp-swiper-picker__choose"><?php echo $thumb ? esc_html__( 'Change', 'wp-swiper' ) : esc_html__( 'Choose', 'wp-swiper' ); ?></button>
+						<button type="button" class="button-link wp-swiper-picker__remove"<?php echo $thumb ? '' : ' hidden'; ?>><?php esc_html_e( 'Remove', 'wp-swiper' ); ?></button>
+					</div>
 				<?php elseif ( 'color' === $field['type'] ) : ?>
 					<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
 						value="<?php echo esc_attr( $value ); ?>">

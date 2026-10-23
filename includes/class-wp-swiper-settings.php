@@ -723,6 +723,47 @@ class WP_Swiper_Settings {
 				'max'     => 1000,
 				'step'    => 5,
 			),
+			// Continuous scroll: something between the images that moves with them.
+			'marquee_separator'     => array(
+				'section' => 'layout',
+				'effects' => array( 'slide' ),
+				'label'   => __( 'Separator', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'none',
+				'choices' => array(
+					'none'  => __( 'None', 'wp-swiper' ),
+					'dot'   => __( 'Dot', 'wp-swiper' ),
+					'image' => __( 'Own image', 'wp-swiper' ),
+				),
+				'help'    => __( 'Stands in the middle of the space between the slides and moves with them.', 'wp-swiper' ),
+			),
+			'marquee_separator_image' => array(
+				'section' => 'layout',
+				'effects' => array( 'slide' ),
+				'label'   => __( 'Separator image', 'wp-swiper' ),
+				'type'    => 'image',
+				'default' => 0,
+				'help'    => __( 'From the media library; PNG or SVG with a transparent background suits best.', 'wp-swiper' ),
+			),
+			'marquee_separator_size' => array(
+				'section'    => 'layout',
+				'effects'    => array( 'slide' ),
+				'label'      => __( 'Separator size (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 10,
+				'min'        => 2,
+				'max'        => 200,
+				'step'       => 1,
+				'help'       => __( 'The dot\'s diameter; an image fits in a square of this size. The space between the slides is at least as wide.', 'wp-swiper' ),
+			),
+			'marquee_separator_color' => array(
+				'section' => 'layout',
+				'effects' => array( 'slide' ),
+				'label'   => __( 'Dot color', 'wp-swiper' ),
+				'type'    => 'color',
+				'default' => '#000000',
+			),
 			'image_fit'             => array(
 				'section' => 'layout',
 				'label'   => __( 'Image fit', 'wp-swiper' ),
@@ -1968,6 +2009,58 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * Whether an attachment is an image (an SVG too, which WordPress itself
+	 * does not count as one).
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return bool
+	 */
+	public static function is_image( $attachment_id ) {
+		return $attachment_id > 0 && 'attachment' === get_post_type( $attachment_id )
+			&& 0 === strpos( (string) get_post_mime_type( $attachment_id ), 'image/' );
+	}
+
+	/**
+	 * The continuous scroll's separator: what it is and its size per device;
+	 * false without one (or with "Own image" and no image chosen).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array|false [ 'type' => 'dot'|'image', 'image' => int, 'size' => [ device => int ] ]
+	 */
+	public static function separator( $settings ) {
+		if ( ! self::is_marquee( $settings ) || empty( $settings['marquee_separator'] ) || 'none' === $settings['marquee_separator'] ) {
+			return false;
+		}
+		$image = (int) $settings['marquee_separator_image'];
+		if ( 'image' === $settings['marquee_separator'] && ! self::is_image( $image ) ) {
+			return false;
+		}
+		return array(
+			'type'  => $settings['marquee_separator'],
+			'image' => 'image' === $settings['marquee_separator'] ? $image : 0,
+			'size'  => array_map( 'intval', self::responsive( $settings, 'marquee_separator_size' ) ),
+		);
+	}
+
+	/**
+	 * Space between the slides per device: the one set, and with a separator
+	 * at least its size (so it never covers the images).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array [ 'desktop' => int, 'tablet' => int, 'mobile' => int ]
+	 */
+	public static function gaps( $settings ) {
+		$gaps      = array_map( 'intval', self::responsive( $settings, 'space_between' ) );
+		$separator = self::separator( $settings );
+		if ( $separator ) {
+			foreach ( $gaps as $device => $gap ) {
+				$gaps[ $device ] = max( $gap, $separator['size'][ $device ] );
+			}
+		}
+		return $gaps;
+	}
+
+	/**
 	 * Slides per group for each device: Slide effect only, and not where the
 	 * slider moves one slide at a time anyway (wider active slide, marquee).
 	 *
@@ -2098,7 +2191,7 @@ class WP_Swiper_Settings {
 				),
 				'slides'      => array(
 					'title'  => __( 'Slides', 'wp-swiper' ),
-					'fields' => array( 'slides_per_view', 'auto_width', 'slides_per_group', 'space_between', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed' ),
+					'fields' => array( 'slides_per_view', 'auto_width', 'slides_per_group', 'space_between', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),
 				),
 				'size'        => array(
 					'title'  => __( 'Size and fit', 'wp-swiper' ),
@@ -2654,6 +2747,10 @@ class WP_Swiper_Settings {
 
 				case 'seed': // The Collage's shuffle: a whole number from 1.
 					$clean[ $key ] = null === $value ? $field['default'] : max( 1, min( 999999, absint( $value ) ) );
+					break;
+
+				case 'image': // An image of the media library (its ID); 0 = none.
+					$clean[ $key ] = self::is_image( absint( $value ) ) ? absint( $value ) : 0;
 					break;
 			}
 		}

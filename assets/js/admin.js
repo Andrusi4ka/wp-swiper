@@ -244,6 +244,50 @@
 		syncPosters();
 
 		/*
+		 * Image settings (the continuous scroll's separator): the hidden input
+		 * keeps the image's ID, its data-url the thumbnail shown; the buttons
+		 * pick one from the media library or clear it. "change" on the input
+		 * lets syncFields and the preview know.
+		 */
+		var pickerFrame;
+		var $pickerInput;
+
+		function syncPicker( $input ) {
+			var url = Number( $input.val() ) > 0 ? $input.attr( 'data-url' ) : '';
+			var $picker = $input.siblings( '.wp-swiper-picker' );
+			$picker.find( '.wp-swiper-picker__thumb' ).empty().append( url ? $( '<img alt="">' ).attr( 'src', url ) : null );
+			$picker.find( '.wp-swiper-picker__choose' ).text( url ? i18n.posterChange : i18n.posterChoose );
+			$picker.find( '.wp-swiper-picker__remove' ).prop( 'hidden', ! url );
+		}
+
+		$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-picker__choose', function () {
+			$pickerInput = $( this ).closest( '.wp-swiper-field' ).find( 'input[type="hidden"]' );
+			if ( ! pickerFrame ) {
+				pickerFrame = wp.media( {
+					title: i18n.imageTitle,
+					button: { text: i18n.imageButton },
+					library: { type: 'image' },
+					multiple: false
+				} );
+				pickerFrame.on( 'select', function () {
+					var data = pickerFrame.state().get( 'selection' ).first().toJSON();
+					var sizes = data.sizes || {};
+					$pickerInput.attr( 'data-url', ( sizes.thumbnail || sizes.medium || data ).url ).val( data.id );
+					syncPicker( $pickerInput );
+					$pickerInput.trigger( 'change' );
+				} );
+			}
+			pickerFrame.open();
+		} );
+
+		$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-picker__remove', function () {
+			var $input = $( this ).closest( '.wp-swiper-field' ).find( 'input[type="hidden"]' );
+			$input.val( '' );
+			syncPicker( $input );
+			$input.trigger( 'change' );
+		} );
+
+		/*
 		 * A slide's caption, description and link: kept in its hidden fields,
 		 * edited in one window (WordPress's editor, wp.editor, for the two
 		 * texts), whose editors start when it opens and are removed when it
@@ -652,6 +696,10 @@
 			$( '.wp-swiper-field--responsive' ).each( function () {
 				syncResponsive( $( this ) );
 			} );
+			// An image setting's thumbnail (the one picked stays in its data-url).
+			$( '.wp-swiper-field--image input[type="hidden"]' ).each( function () {
+				syncPicker( $( this ) );
+			} );
 		}
 
 		// Bound on the select itself: runs before syncFields, which then shows,
@@ -792,6 +840,12 @@
 			field( 'slides_per_view' ).toggle( ! autoWidth && ! single );
 			field( 'slides_per_group' ).toggle( slide && ! marquee && ! expand );
 			field( 'marquee_speed' ).toggle( marquee );
+			// Its separator: the image to pick, the size and the dot's color once chosen.
+			var separator = marquee ? $( '#wp-swiper-marquee_separator' ).val() : 'none';
+			field( 'marquee_separator' ).toggle( marquee );
+			field( 'marquee_separator_image' ).toggle( separator === 'image' );
+			field( 'marquee_separator_size' ).toggle( separator !== 'none' );
+			field( 'marquee_separator_color' ).toggle( separator === 'dot' );
 
 			// Zoom the main image (data-effects above: the effects that have one).
 			// Slide: one slide in view on every device, or the wider active slide

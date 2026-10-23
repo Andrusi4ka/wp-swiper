@@ -323,4 +323,26 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$id = $this->slider();
 		$this->assertContains( 'old-class', $this->root_classes( do_shortcode( '[wp_swiper id="' . $id . '" class="old-class"]' ) ) );
 	}
+
+	public function test_image_field_shows_the_chosen_image() {
+		$this->as_role( 'editor' );
+		$image = $this->image();
+		$id    = $this->slider( null, array( 'marquee' => true, 'marquee_separator' => 'image', 'marquee_separator_image' => $image ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="wp_swiper_settings[marquee_separator_image]" value="' . $image . '"', $html );
+		$this->assertStringContainsString( '<span class="wp-swiper-picker__thumb"><img src="', $html );
+		$this->assertStringContainsString( '<button type="button" class="button-link wp-swiper-picker__remove">', $html );
+
+		// None chosen: no thumbnail, Remove hidden.
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $this->slider() ) );
+		$html = ob_get_clean();
+		$this->assertStringContainsString( 'name="wp_swiper_settings[marquee_separator_image]" value=""', $html );
+		$this->assertStringContainsString( '<span class="wp-swiper-picker__thumb"></span>', $html );
+		$this->assertStringContainsString( 'wp-swiper-picker__remove" hidden>', $html );
+	}
 }
