@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.3.1
+Stable tag: 2.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,10 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.4.0 =
+* Continuous scroll: a "Separator" between the slides (Layout, Slides) — None, Dot or Own image from the media library (PNG or SVG with a transparent background suits best). It stands in the middle of the space between the slides and moves with them. "Separator size" per device (the dot's diameter; an image fits in a square of that size) and "Dot color". The space between the slides is at least as wide as the separator.
+* Settings: an image field with a thumbnail and Choose / Change / Remove buttons.
 
 = 2.3.1 =
 * Settings: a "Want to see more effects? Swiper demos" link in the bottom left corner of the Slider settings box, opening swiperjs.com/demos in a new tab.
