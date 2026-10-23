@@ -1,0 +1,67 @@
+/* Developer mode of the preview (preview-dev.js): over the slider, clipped
+   by it; it never takes clicks. */
+.wp-swiper-dev {
+	position: absolute;
+	inset: 0;
+	z-index: 50;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.wp-swiper-dev > div {
+	position: absolute;
+	box-sizing: border-box;
+}
+
+/* A slide's box. */
+.wp-swiper-dev__cell {
+	outline: 1px dashed #2271b1;
+	outline-offset: -1px;
+}
+
+/* Its image's box, with its size. */
+.wp-swiper-dev__media {
+	outline: 2px solid #00a32a;
+	outline-offset: -2px;
+}
+
+/* Space between the slides, and empty space in a slide around its image. */
+.wp-swiper-dev__gap,
+.wp-swiper-dev__empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.wp-swiper-dev__gap {
+	background: repeating-linear-gradient(45deg, rgba(219, 166, 23, 0.45) 0 4px, rgba(219, 166, 23, 0.15) 4px 8px);
+}
+
+.wp-swiper-dev__empty {
+	background: repeating-linear-gradient(-45deg, rgba(135, 64, 196, 0.45) 0 4px, rgba(135, 64, 196, 0.15) 4px 8px);
+}
+
+.wp-swiper-dev__label {
+	padding: 1px 4px;
+	border-radius: 3px;
+	background: rgba(29, 35, 39, 0.85);
+	color: #fff;
+	font: 600 11px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	white-space: nowrap;
+}
+
+/* The distance between two images (or from the slider's edge), between them. */
+.wp-swiper-dev > .wp-swiper-dev__dimension {
+	position: absolute;
+	z-index: 1;
+	transform: translate(-50%, -50%);
+	background: #b26200;
+}
+
+/* The image's size: in its top left corner. */
+.wp-swiper-dev__media .wp-swiper-dev__label {
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	background: #00a32a;
+}

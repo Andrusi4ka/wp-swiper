@@ -46,6 +46,11 @@ class WP_Swiper_Preview {
 				data-sizes="<?php echo esc_attr( wp_json_encode( self::SIZES ) ); ?>">
 				<div class="wp-swiper-preview__bar">
 					<span class="wp-swiper-preview__title"><?php esc_html_e( 'Preview', 'wp-swiper' ); ?></span>
+					<?php // Developer mode: the slides', images' and empty spaces' boxes over the preview (assets/js/preview-dev.js). ?>
+					<button type="button" class="button wp-swiper-preview__dev" aria-pressed="false" title="<?php esc_attr_e( 'Show the boxes of the slides and images and the empty space around them, with their sizes', 'wp-swiper' ); ?>">
+						<span class="dashicons dashicons-editor-code" aria-hidden="true"></span>
+						<?php esc_html_e( 'Developer mode', 'wp-swiper' ); ?>
+					</button>
 					<?php // The same device as the settings' values (admin.js). ?>
 					<?php WP_Swiper_Admin::render_device_switch( 'wp-swiper-preview__devices' ); ?>
 					<button type="button" class="button wp-swiper-preview__update">
@@ -110,6 +115,8 @@ class WP_Swiper_Preview {
 	<meta name="robots" content="noindex, nofollow">
 	<title><?php echo esc_html( $post->post_title ); ?></title>
 	<?php wp_print_styles( array( 'wp-swiper' ) ); ?>
+	<?php // Developer mode (the button by "Preview"; admin.js turns it on in here). ?>
+	<link rel="stylesheet" href="<?php echo esc_url( WP_SWIPER_URL . 'assets/css/preview-dev.css?ver=' . wp_swiper_asset_version( 'assets/css/preview-dev.css' ) ); ?>">
 	<style>
 		html, body { margin: 0; background: #fff; }
 		body { font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -133,6 +140,7 @@ class WP_Swiper_Preview {
 		<?php echo $slider; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the slider's markup, escaped where it is built. ?>
 	</div>
 	<?php wp_print_scripts( array( 'wp-swiper' ) ); ?>
+	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-dev.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-dev.js' ) ); ?>"></script>
 </body>
 </html>
 		<?php

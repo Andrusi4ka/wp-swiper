@@ -2083,7 +2083,9 @@
 
 			el.style.height = '';
 			if ( ratio && el.clientWidth && el.clientHeight ) {
-				var width = el.clientWidth;
+				// The width Swiper divides (its own measure), so the slides come out
+				// exactly as wide as the images.
+				var width = swiper.width || el.clientWidth;
 				var height = el.clientHeight;
 				var perView = Math.max( 1, Number( config.slidesPerView[ current ] ) || 1 );
 				around = 'around' === config.distribute.mode || perView <= 1;
@@ -2116,9 +2118,9 @@
 		}
 
 		apply();
-		swiper.on( 'resize breakpoint', function () {
-			requestAnimationFrame( apply );
-		} );
+		// Right after Swiper's own resize (its handler runs first), not a frame
+		// later: the slides would show at the old space for that frame.
+		swiper.on( 'resize breakpoint', apply );
 	}
 
 	/**

@@ -1306,6 +1306,34 @@
 
 			$update.on( 'click', updatePreview );
 
+			// Developer mode: the boxes and empty spaces drawn over the preview
+			// (preview-dev.js in the frame), again after every update; kept for
+			// the next visit (this browser only).
+			var DEV_KEY = 'wpSwiperDev';
+			var $dev = $preview.find( '.wp-swiper-preview__dev' );
+			var devOn = false;
+			try {
+				devOn = window.localStorage.getItem( DEV_KEY ) === '1';
+			} catch ( e ) {}
+			var applyDev = function () {
+				$dev.attr( 'aria-pressed', devOn ? 'true' : 'false' );
+				var win = previewFrame.contentWindow;
+				try {
+					if ( win && win.wpSwiperDev ) {
+						win.wpSwiperDev( devOn );
+					}
+				} catch ( e ) {}
+			};
+			$dev.on( 'click', function () {
+				devOn = ! devOn;
+				try {
+					window.localStorage.setItem( DEV_KEY, devOn ? '1' : '0' );
+				} catch ( e ) {}
+				applyDev();
+			} );
+			$( previewFrame ).on( 'load', applyDev );
+			applyDev();
+
 			// Collage: Shuffle draws a new order and shows it right away.
 			$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-shuffle', function () {
 				var $seed = $( this ).siblings( 'input[type="hidden"]' );

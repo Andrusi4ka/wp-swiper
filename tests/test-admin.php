@@ -265,6 +265,22 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '[wp_swiper id=&quot;' . $id . '&quot;]', $html );
 	}
 
+	public function test_preview_has_the_developer_mode_button_right_of_its_title() {
+		$this->as_role( 'editor' );
+
+		ob_start();
+		WP_Swiper_Preview::render_panel( get_post( $this->slider() ) );
+		$html = ob_get_clean();
+
+		$title  = strpos( $html, 'wp-swiper-preview__title' );
+		$button = strpos( $html, '<button type="button" class="button wp-swiper-preview__dev" aria-pressed="false"' );
+		$this->assertNotFalse( $button );
+		$this->assertGreaterThan( $title, $button );
+		// Before the device switch and Update.
+		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__update' ), $button );
+		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__devices' ), $button );
+	}
+
 	public function test_preview_refuses_a_bad_nonce() {
 		$this->as_role( 'editor' );
 		$id    = $this->slider();
