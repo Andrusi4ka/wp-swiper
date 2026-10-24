@@ -2029,6 +2029,15 @@ html.wp-swiper-lightbox-open {
 	aspect-ratio: 3 / 2;
 }
 
+/* Height "Auto" in a column: the script makes .wp-swiper as tall as the
+   column's free height (frontend.js collage() stretch()), the grid takes all
+   of it instead of the proportions above. */
+.wp-swiper-collage.wp-swiper-collage--stretch,
+.wp-swiper-collage__grid.wp-swiper-collage__grid--ratio.wp-swiper-collage__grid--stretch {
+	height: 100%;
+	aspect-ratio: auto;
+}
+
 .wp-swiper-collage__cell {
 	position: relative;
 	min-width: 0;

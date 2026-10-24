@@ -2376,30 +2376,39 @@
 
 		window.addEventListener( 'resize', refit );
 		window.addEventListener( 'load', refit );
+		watchNeighbours( root, refit );
+	}
 
-		// Neighbour columns change height as their images load or text wraps.
-		// Watch their content, not the row: once the slider is the tallest thing
-		// in the row, the row keeps its height and a shrinking neighbour would go
-		// unnoticed. Collapsing and restoring the slider in one go leaves the
-		// observed sizes unchanged, so this does not feed itself.
-		if ( 'ResizeObserver' in window ) {
-			var box = fillBox( root );
-			var row = box.parentElement || box;
-			var observer = new ResizeObserver( refit );
-
-			observer.observe( row );
-			[].forEach.call( row.querySelectorAll( '.wpb_wrapper, .vc_column-inner > *' ), function ( node ) {
-				if ( ! node.contains( root ) && ! root.contains( node ) ) {
-					observer.observe( node );
-				}
-			} );
-			// Outside the page builder: the other content next to the slider.
-			[].forEach.call( box.children, function ( node ) {
-				if ( ! node.contains( root ) ) {
-					observer.observe( node );
-				}
-			} );
+	/**
+	 * Neighbour columns change height as their images load or text wraps.
+	 * Watch their content, not the row: once the slider is the tallest thing
+	 * in the row, the row keeps its height and a shrinking neighbour would go
+	 * unnoticed. Collapsing and restoring the slider in one go leaves the
+	 * observed sizes unchanged, so this does not feed itself.
+	 *
+	 * @param {Element}  root     The .wp-swiper block.
+	 * @param {Function} callback Called on a change.
+	 */
+	function watchNeighbours( root, callback ) {
+		if ( ! ( 'ResizeObserver' in window ) ) {
+			return;
 		}
+		var box = fillBox( root );
+		var row = box.parentElement || box;
+		var observer = new ResizeObserver( callback );
+
+		observer.observe( row );
+		[].forEach.call( row.querySelectorAll( '.wpb_wrapper, .vc_column-inner > *' ), function ( node ) {
+			if ( ! node.contains( root ) && ! root.contains( node ) ) {
+				observer.observe( node );
+			}
+		} );
+		// Outside the page builder: the other content next to the slider.
+		[].forEach.call( box.children, function ( node ) {
+			if ( ! node.contains( root ) ) {
+				observer.observe( node );
+			}
+		} );
 	}
 
 	/* ------------------------------------------------------------------ *
@@ -2547,9 +2556,46 @@
 		var paused = false;
 		var inView = true;
 		var calm = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+		var root = el.parentNode;
+		// Height "Auto" in a column: the collage fills the column's height, like a
+		// slider (fillHeight()); not a background (it fills its block anyway).
+		var stretchy = !! config.fill && ! root.classList.contains( 'wp-swiper--background' );
+		var stretched = false;
 
 		if ( ! slides.length ) {
 			return;
+		}
+
+		/**
+		 * Height "Auto": as tall as the free height of the column (the templates,
+		 * Grid and Random mosaic). Justified rows and Masonry stay as tall as
+		 * their photos make them. Too little free height (stacked columns on
+		 * phones): the fixed proportions (.wp-swiper-collage__grid--ratio).
+		 *
+		 * @return {boolean} The height changed.
+		 */
+		function stretch() {
+			var before = root.offsetHeight;
+			var layout = config.layout[ device() ] || 'grid';
+			if ( stretchy && layout !== 'justified' && layout !== 'masonry' ) {
+				fillHeight( root, false, 0 );
+				stretched = !! root.style.height;
+			} else {
+				root.style.height = '';
+				stretched = false;
+			}
+			el.classList.toggle( 'wp-swiper-collage--stretch', stretched );
+			grid.classList.toggle( 'wp-swiper-collage__grid--stretch', stretched );
+			return Math.abs( root.offsetHeight - before ) > 1;
+		}
+
+		// Random mosaic: its cuts for the block's proportions, from the shuffle
+		// too (and the number of places).
+		function cut() {
+			var aspect = grid.clientWidth / ( grid.clientHeight || 1 ) || 1.5;
+			tree = mosaicTree( cells.map( function ( cell ) {
+				return cell.wpRatio;
+			} ), aspect, seededRandom( ( config.seed || 1 ) * 7919 + cells.length ) );
 		}
 
 		function ratioOf( slide ) {
@@ -2762,7 +2808,7 @@
 			var count = template ? template.areas.length : Math.min( slides.length, Math.max( 1, Number( config.count[ current ] ) || 1 ) );
 
 			grid.innerHTML = '';
-			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( free ? ' wp-swiper-collage__grid--free' : '' ) + ( config.fill ? ' wp-swiper-collage__grid--ratio' : '' );
+			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( free ? ' wp-swiper-collage__grid--free' : '' ) + ( config.fill ? ' wp-swiper-collage__grid--ratio' : '' ) + ( stretched ? ' wp-swiper-collage__grid--stretch' : '' );
 			grid.style.cssText = '';
 			cells = [];
 			for ( var i = 0; i < count; i++ ) {
@@ -2779,13 +2825,9 @@
 			// The photos not in a place wait their turn, in shuffle order.
 			queue = order.slice( count );
 
-			// Random mosaic: its cuts, from the shuffle too (and the number of places).
 			tree = null;
 			if ( layout === 'random' ) {
-				var aspect = grid.clientWidth / ( grid.clientHeight || 1 ) || 1.5;
-				tree = mosaicTree( cells.map( function ( cell ) {
-					return cell.wpRatio;
-				} ), aspect, seededRandom( ( config.seed || 1 ) * 7919 + count ) );
+				cut();
 			}
 
 			if ( free ) {
@@ -2910,6 +2952,8 @@
 			} );
 		}
 
+		// The height first: Random mosaic cuts for the block's proportions.
+		stretch();
 		build();
 		schedule();
 		requestAnimationFrame( function () {
@@ -2932,25 +2976,35 @@
 		}
 
 		// Another device: its own layout, built again (the same shuffle); the
-		// same device: the arranged layouts re-measured.
+		// same device: the arranged layouts re-measured (Random mosaic cut
+		// again when the column's height changed).
 		var queued = false;
-		window.addEventListener( 'resize', function () {
+		function refit() {
 			if ( queued ) {
 				return;
 			}
 			queued = true;
 			requestAnimationFrame( function () {
 				queued = false;
+				var resized = stretch();
 				if ( device() !== current ) {
 					build();
 					schedule();
 				} else if ( grid.classList.contains( 'wp-swiper-collage__grid--free' ) ) {
+					if ( resized && tree ) {
+						cut();
+					}
 					place();
 				} else {
 					cells.forEach( sizeImages );
 				}
 			} );
-		} );
+		}
+		window.addEventListener( 'resize', refit );
+		if ( stretchy ) {
+			window.addEventListener( 'load', refit );
+			watchNeighbours( root, refit );
+		}
 
 		return { rebuild: build };
 	}

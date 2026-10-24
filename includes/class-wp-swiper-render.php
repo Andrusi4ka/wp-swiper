@@ -1136,7 +1136,8 @@ class WP_Swiper_Render {
 				'delay' => (int) $settings['collage_swap_delay'],
 				'pause' => (bool) $settings['collage_pause'],
 			) : false,
-			// Height "Auto": the templates and the grid take fixed proportions instead.
+			// Height "Auto": the collage fills the free height of its column (frontend.js
+			// collage() stretch()); where there is none, the grid takes fixed proportions.
 			'fill'      => WP_Swiper_Settings::is_auto_height( $settings ),
 			'lightbox'  => $settings['lightbox'] ? array(
 				'radius' => self::lightbox_radius( $settings, 'lightbox_radius', 'border_radius' ),
