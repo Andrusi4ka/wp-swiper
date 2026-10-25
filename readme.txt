@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.6.0
+Stable tag: 2.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,9 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.6.1 =
+* WPBakery element: an "Edit slider" button under the Slider list opens the chosen slider's edit screen in a new tab. It follows the slider chosen and is hidden while none is; the shortcode stays as it was.
 
 = 2.6.0 =
 * Slides: each image can have its own position for Image fit "Cover" — the point kept in view where the slider crops it, on every device, over the slider's Image position. The button on the image's thumbnail opens a window with the larger image: click, drag or use the arrow keys to set the point, and see the crops of a wide, a square and a tall slide. "Use the slider's position" clears it. The thumbnail shows the crop and a "Position" mark. Also for a collage and a background, which always crop.
