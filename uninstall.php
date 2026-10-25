@@ -23,6 +23,10 @@ function wp_swiper_uninstall_site() {
 	foreach ( $ids as $id ) {
 		wp_delete_post( (int) $id, true );
 	}
+
+	// "What's new": the version last run and the one updated from.
+	delete_option( 'wp_swiper_version' );
+	delete_option( 'wp_swiper_updated_from' );
 }
 
 if ( is_multisite() ) {
@@ -34,6 +38,9 @@ if ( is_multisite() ) {
 } else {
 	wp_swiper_uninstall_site();
 }
+
+// "What's new": the version each user has seen (users are shared by a network's sites).
+delete_metadata( 'user', 0, 'wp_swiper_seen_version', '', true );
 
 // Last update check (Plugin Update Checker).
 delete_site_option( 'external_updates-wp-swiper' );
