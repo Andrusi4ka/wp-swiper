@@ -220,6 +220,26 @@ class WP_Swiper_Admin {
 	}
 
 	/**
+	 * The Image position button's icon (assets/images/position-icon.svg, from
+	 * iconoir, MIT): inline, so it takes the button's color (currentColor).
+	 * Read once; its comments left out.
+	 *
+	 * @return string SVG markup, or a dashicon without the file.
+	 */
+	private static function position_icon() {
+		static $svg = null;
+		if ( null === $svg ) {
+			$file = WP_SWIPER_DIR . 'assets/images/position-icon.svg';
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local plugin file.
+			$svg = is_readable( $file ) ? trim( preg_replace( '/<!--.*?-->/s', '', (string) file_get_contents( $file ) ) ) : '';
+			$svg = '' !== $svg
+				? preg_replace( '/^<svg\b/', '<svg class="wp-swiper-slide__position-icon" aria-hidden="true" focusable="false"', $svg )
+				: '<span class="dashicons dashicons-location" aria-hidden="true"></span>';
+		}
+		return $svg;
+	}
+
+	/**
 	 * One slide row. Inputs use parallel arrays so DOM order = saved order.
 	 * Its caption, description and link are edited in the slide's window.
 	 * A video slide (.wp-swiper-slide--video): its poster as the thumbnail (a
@@ -296,7 +316,7 @@ class WP_Swiper_Admin {
 				<span class="wp-swiper-slide__badge"><?php echo esc_html( $badge ); ?></span>
 				<?php // An image's own position ("Cover"): its window (admin.js). Shown while the slider crops (.wp-swiper-slides--positions). ?>
 				<button type="button" class="wp-swiper-slide__position<?php echo '' !== $position ? ' is-set' : ''; ?>" title="<?php esc_attr_e( 'Image position', 'wp-swiper' ); ?>">
-					<span class="dashicons dashicons-location" aria-hidden="true"></span>
+					<?php echo self::position_icon(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
 				</button>
 				<button type="button" class="wp-swiper-slide__remove" title="<?php esc_attr_e( 'Remove slide', 'wp-swiper' ); ?>">
 					<span class="dashicons dashicons-no-alt"></span>

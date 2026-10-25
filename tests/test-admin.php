@@ -459,7 +459,10 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 
 		// Two slides and the template: a field and a button each; the window once.
 		$this->assertSame( 3, substr_count( $html, 'name="wp_swiper_slides[position][]"' ) );
-		$this->assertSame( 3, substr_count( $html, 'class="wp-swiper-slide__position' ) );
+		$this->assertSame( 3, preg_match_all( '/class="wp-swiper-slide__position( is-set)?"/', $html ) );
+		// Its icon inline (it takes the button's color), comments left out.
+		$this->assertSame( 3, substr_count( $html, '<svg class="wp-swiper-slide__position-icon" aria-hidden="true" focusable="false"' ) );
+		$this->assertStringNotContainsString( 'iconoir', $html );
 		$this->assertSame( 1, substr_count( $html, 'id="wp-swiper-position-modal"' ) );
 		$this->assertStringContainsString( 'name="wp_swiper_slides[position][]" value="20 75"', $html );
 		// The thumbnail shows the crop; the button and the mark say it is set.

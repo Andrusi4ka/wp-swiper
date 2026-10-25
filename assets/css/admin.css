@@ -171,10 +171,12 @@
 	cursor: pointer;
 }
 
-.wp-swiper-slide__position .dashicons {
-	width: 16px;
-	height: 16px;
-	font-size: 16px;
+.wp-swiper-slide__position .dashicons,
+.wp-swiper-slide__position-icon {
+	display: block;
+	width: 18px;
+	height: 18px;
+	font-size: 18px;
 }
 
 .wp-swiper-slides--positions .wp-swiper-slide:not(.wp-swiper-slide--video) .wp-swiper-slide__position {

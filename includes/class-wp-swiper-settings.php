@@ -607,12 +607,14 @@ class WP_Swiper_Settings {
 			// Thumbnails effect: how one slide gives way to the next. First in its
 			// Layout; a select, so that other transitions can join.
 			'thumbs_transition'     => array(
-				'section' => 'layout',
-				'effects' => array( 'thumbs' ),
-				'label'   => __( 'Transition', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => 'slide',
-				'choices' => array(
+				'section'   => 'layout',
+				'effects'   => array( 'thumbs' ),
+				'label'     => __( 'Transition', 'wp-swiper' ),
+				'type'      => 'select',
+				// Shown as a row of buttons, like Direction (admin.js keeps the select behind them).
+				'segmented' => true,
+				'default'   => 'slide',
+				'choices'   => array(
 					'slide' => __( 'Slide', 'wp-swiper' ),
 					'fade'  => __( 'Fade', 'wp-swiper' ),
 				),
@@ -779,14 +781,17 @@ class WP_Swiper_Settings {
 				'default' => '#000000',
 			),
 			'image_fit'             => array(
-				'section' => 'layout',
-				'label'   => __( 'Image fit', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => 'cover',
-				'choices' => array(
-					'cover'   => __( 'Cover (crop to fill)', 'wp-swiper' ),
-					'contain' => __( 'Contain (show whole image)', 'wp-swiper' ),
+				'section'   => 'layout',
+				'label'     => __( 'Image fit', 'wp-swiper' ),
+				'type'      => 'select',
+				// Shown as a row of buttons, like Direction (admin.js keeps the select behind them).
+				'segmented' => true,
+				'default'   => 'cover',
+				'choices'   => array(
+					'cover'   => __( 'Cover', 'wp-swiper' ),
+					'contain' => __( 'Contain', 'wp-swiper' ),
 				),
+				'help'      => __( 'Cover: the image fills the slide, cropped where its proportions differ. Contain: the whole image is shown, with empty space beside it where its proportions differ.', 'wp-swiper' ),
 			),
 			// Wider active slide layout: Slide effect with Image fit "Cover" only.
 			'expand_active'         => array(
