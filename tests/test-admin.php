@@ -1,7 +1,7 @@
 <?php
 /**
  * WP_Swiper_Admin and WP_Swiper_Preview: saving (nonce, capability, the
- * slides as posted), the settings screen and the preview's checks.
+ * slides as posted), the settings screen, the preview's checks and cloning.
  */
 
 class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
@@ -360,5 +360,67 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'name="wp_swiper_settings[marquee_separator_image]" value=""', $html );
 		$this->assertStringContainsString( '<span class="wp-swiper-picker__thumb"></span>', $html );
 		$this->assertStringContainsString( 'wp-swiper-picker__remove" hidden>', $html );
+	}
+
+	public function test_clone_copies_the_slides_and_settings_as_a_draft() {
+		$this->as_role( 'editor' );
+		$slides = array(
+			array(
+				'id'          => $this->image(),
+				'caption'     => 'A \ backslash',
+				'description' => '',
+				'link'        => '',
+				'new_tab'     => false,
+				'poster'      => 0,
+			),
+		);
+		$id = $this->slider( array(), array( 'height' => 420 ), array( 'post_title' => 'Brands' ) );
+		update_post_meta( $id, WP_Swiper_Settings::META_SLIDES, wp_slash( $slides ) );
+
+		$copy = WP_Swiper_Admin::clone_slider( $id );
+		$this->assertGreaterThan( $id, $copy );
+		$this->assertSame( 'Brands (copy)', get_post( $copy )->post_title );
+		$this->assertSame( 'draft', get_post( $copy )->post_status );
+		$this->assertSame( $slides, get_post_meta( $copy, WP_Swiper_Settings::META_SLIDES, true ) );
+		$this->assertSame( 420, WP_Swiper_Settings::get( $copy )['height'] );
+		// The original is left as it was.
+		$this->assertSame( 'publish', get_post( $id )->post_status );
+	}
+
+	public function test_clone_needs_the_capability() {
+		$id = $this->slider();
+		$this->as_role( 'subscriber' );
+
+		$this->assertSame( 0, WP_Swiper_Admin::clone_slider( $id ) );
+	}
+
+	public function test_clone_only_sliders_not_in_the_trash() {
+		$this->as_role( 'editor' );
+		$page    = self::factory()->post->create( array( 'post_type' => 'page' ) );
+		$trashed = $this->slider( null, array(), array( 'post_status' => 'trash' ) );
+
+		$this->assertSame( 0, WP_Swiper_Admin::clone_slider( $page ) );
+		$this->assertSame( 0, WP_Swiper_Admin::clone_slider( $trashed ) );
+	}
+
+	public function test_clone_link_after_quick_edit() {
+		$this->as_role( 'editor' );
+		$post    = get_post( $this->slider() );
+		$actions = WP_Swiper_Admin::row_actions(
+			array(
+				'edit'                 => 'Edit',
+				'inline hide-if-no-js' => 'Quick Edit',
+				'trash'                => 'Trash',
+			),
+			$post
+		);
+
+		$this->assertSame( array( 'edit', 'inline hide-if-no-js', 'wp_swiper_clone', 'trash' ), array_keys( $actions ) );
+		$this->assertStringContainsString( 'action=wp_swiper_clone', $actions['wp_swiper_clone'] );
+		$this->assertStringContainsString( '_wpnonce=', $actions['wp_swiper_clone'] );
+
+		// Other post types keep their links.
+		$page = get_post( self::factory()->post->create( array( 'post_type' => 'page' ) ) );
+		$this->assertSame( array( 'edit' => 'Edit' ), WP_Swiper_Admin::row_actions( array( 'edit' => 'Edit' ), $page ) );
 	}
 }
