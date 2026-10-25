@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.5.0
+Stable tag: 2.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,16 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.6.0 =
+* Slides: each image can have its own position for Image fit "Cover" — the point kept in view where the slider crops it, on every device, over the slider's Image position. The button on the image's thumbnail opens a window with the larger image: click, drag or use the arrow keys to set the point, and see the crops of a wide, a square and a tall slide. "Use the slider's position" clears it. The thumbnail shows the crop and a "Position" mark. Also for a collage and a background, which always crop.
+* Collage: Height "Auto" fills the free height of the column, like the other effects (templates, Grid and Random mosaic; Justified rows and Masonry stay as tall as their photos make them). Where there is no free height, as with stacked columns on phones, it keeps the 3:2 proportions.
+* Continuous scroll: "Scroll direction" — right to left (as before) or left to right; a vertical slider moves bottom to top or top to bottom. Slides of different widths keep an even speed either way, and Pause on hover works.
+* Sliders list: "Clone" under a slider's title makes a copy with its slides and settings, titled "(copy)", as a draft.
+* Slider edit screen: leaving it (closing, reloading, a link) with unsaved changes to the slides, the settings or the title asks first.
+* After an update, a "What's new" window with the changes since the version you last saw: on the plugin's screens, and from a notice on the Dashboard. Once for each user who edits sliders; not after a first install.
+* Settings: Image fit and the Thumbnails' Transition are buttons, like Direction.
+* Fix: Image proportions with Space around and Image fit "Contain" — the caption and the rounded corners are the image's, not its frame's, and Image alignment applies, as with Space between.
 
 = 2.5.0 =
 * New in Layout, Size and fit: "Image proportions" per device (Off, 1:1, 4:3, 3:2, 16:9, 3:4, 9:16 or Custom such as 2.35x1), Slide effect. Every image is as tall as the Height and as wide as its proportions make it, Slides per view of them share the row and the free width goes around them like flex items — "Distribution": Space between (the outer images at the row's edges) or Space around (each image in the middle of its equal share). Space between slides is the least space left: where the images do not fit with it, they get smaller, and so does the slider. Off keeps the images filling the row, as before. Works with the continuous scroll and its separator.
