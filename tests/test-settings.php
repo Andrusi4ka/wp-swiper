@@ -503,4 +503,10 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 			$this->assertSame( '', WP_Swiper_Settings::sanitize_position( $value ), var_export( $value, true ) );
 		}
 	}
+
+	public function test_marquee_direction_is_one_of_its_choices() {
+		$this->assertSame( 'normal', WP_Swiper_Settings::defaults()['marquee_direction'] );
+		$this->assertSame( 'reverse', WP_Swiper_Settings::sanitize( array( 'marquee_direction' => 'reverse' ) )['marquee_direction'] );
+		$this->assertSame( 'normal', WP_Swiper_Settings::sanitize( array( 'marquee_direction' => 'sideways' ) )['marquee_direction'] );
+	}
 }

@@ -723,6 +723,20 @@ class WP_Swiper_Settings {
 				'max'     => 1000,
 				'step'    => 5,
 			),
+			// Continuous scroll: which way the strip moves (Swiper's autoplay
+			// reverseDirection). The labels are the horizontal slider's; admin.js
+			// names them for a vertical one (bottom to top, top to bottom).
+			'marquee_direction'     => array(
+				'section' => 'layout',
+				'effects' => array( 'slide' ),
+				'label'   => __( 'Scroll direction', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'normal',
+				'choices' => array(
+					'normal'  => __( 'Right to left', 'wp-swiper' ),
+					'reverse' => __( 'Left to right', 'wp-swiper' ),
+				),
+			),
 			// Continuous scroll: something between the images that moves with them.
 			'marquee_separator'     => array(
 				'section' => 'layout',
@@ -2292,7 +2306,7 @@ class WP_Swiper_Settings {
 				),
 				'slides'      => array(
 					'title'  => __( 'Slides', 'wp-swiper' ),
-					'fields' => array( 'slides_per_view', 'auto_width', 'slides_per_group', 'space_between', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),
+					'fields' => array( 'slides_per_view', 'auto_width', 'slides_per_group', 'space_between', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_direction', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),
 				),
 				'size'        => array(
 					'title'  => __( 'Size and fit', 'wp-swiper' ),

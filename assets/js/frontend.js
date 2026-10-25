@@ -1962,8 +1962,9 @@
 		// Continuous scroll: autoplay with no pause between steps, each step at
 		// an even speed (marquee() sets it per slide) and linear (CSS). Nothing
 		// may stop it: no dragging, no pause on hover (it would halt mid-step).
+		// Left to right (vertical: top to bottom): the autoplay goes back.
 		if ( config.marquee ) {
-			options.autoplay = { delay: 0, disableOnInteraction: false, pauseOnMouseEnter: false };
+			options.autoplay = { delay: 0, disableOnInteraction: false, pauseOnMouseEnter: false, reverseDirection: !! config.marquee.reverse };
 			options.allowTouchMove = false;
 		}
 
@@ -1996,11 +1997,15 @@
 	/**
 	 * Continuous scroll: a step moves the strip by the current slide (plus the
 	 * gap), so its duration is that distance at the set speed, whatever the
-	 * slide's width ("Width from image" slides differ).
+	 * slide's width ("Width from image" slides differ). Going back (Left to
+	 * right), by the slide before it, the one coming in (before the first: the
+	 * last, the loop goes round).
 	 */
 	function marquee( swiper, config ) {
 		function setSpeed() {
-			var size = swiper.slidesSizesGrid[ swiper.activeIndex ] || swiper.size;
+			var sizes = swiper.slidesSizesGrid;
+			var index = config.marquee.reverse ? ( swiper.activeIndex - 1 + sizes.length ) % ( sizes.length || 1 ) : swiper.activeIndex;
+			var size = sizes[ index ] || swiper.size;
 			var gap = Number( swiper.params.spaceBetween ) || 0;
 			swiper.params.speed = Math.round( ( size + gap ) / config.marquee.speed * 1000 );
 		}

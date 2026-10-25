@@ -999,6 +999,16 @@
 			field( 'slides_per_view' ).toggle( ! autoWidth && ! single );
 			field( 'slides_per_group' ).toggle( slide && ! marquee && ! expand );
 			field( 'marquee_speed' ).toggle( marquee );
+			field( 'marquee_direction' ).toggle( marquee );
+			// Its choices named for the Direction: a vertical strip moves up or down.
+			if ( i18n.marqueeDirections ) {
+				var directionNames = i18n.marqueeDirections[ vertical ? 'vertical' : 'horizontal' ];
+				$( '#wp-swiper-marquee_direction option' ).each( function () {
+					if ( directionNames[ this.value ] ) {
+						this.textContent = directionNames[ this.value ];
+					}
+				} );
+			}
 			// Its separator: the image to pick, the size and the dot's color once chosen.
 			var separator = marquee ? $( '#wp-swiper-marquee_separator' ).val() : 'none';
 			field( 'marquee_separator' ).toggle( marquee );

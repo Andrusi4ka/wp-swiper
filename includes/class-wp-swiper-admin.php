@@ -86,6 +86,17 @@ class WP_Swiper_Admin {
 						// The whole collage (templates, Grid, Random mosaic).
 						'collage'    => __( 'Collage height', 'wp-swiper' ),
 					),
+					// Continuous scroll's Scroll direction, named for the slider's Direction.
+					'marqueeDirections' => array(
+						'horizontal' => array(
+							'normal'  => __( 'Right to left', 'wp-swiper' ),
+							'reverse' => __( 'Left to right', 'wp-swiper' ),
+						),
+						'vertical'   => array(
+							'normal'  => __( 'Bottom to top', 'wp-swiper' ),
+							'reverse' => __( 'Top to bottom', 'wp-swiper' ),
+						),
+					),
 				)
 			);
 		}

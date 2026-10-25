@@ -124,6 +124,14 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertSame( 50, $config['marquee']['speed'] );
 	}
 
+	public function test_marquee_direction() {
+		// Right to left by default (as before the setting).
+		$this->assertFalse( $this->config( $this->render( array( 'marquee' => true ) ) )['marquee']['reverse'] );
+		$this->assertTrue( $this->config( $this->render( array( 'marquee' => true, 'marquee_direction' => 'reverse' ) ) )['marquee']['reverse'] );
+		// No continuous scroll, nothing of it.
+		$this->assertFalse( $this->config( $this->render( array( 'marquee_direction' => 'reverse' ) ) )['marquee'] );
+	}
+
 	public function test_pagination_classes() {
 		$html = $this->render( array( 'pagination' => 'fraction', 'pagination_position' => 'top-right', 'pagination_placement' => 'outside' ) );
 		$classes = $this->root_classes( $html );

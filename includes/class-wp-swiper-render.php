@@ -297,8 +297,10 @@ class WP_Swiper_Render {
 			'pagination'    => 'none' === $settings['pagination'] || $marquee ? false : $settings['pagination'],
 			'keyboard'      => $settings['keyboard'] && ! $marquee,
 			'marquee'       => $marquee ? array(
-				'speed' => $settings['marquee_speed'],
-				'pause' => $settings['pause_on_hover'],
+				'speed'   => $settings['marquee_speed'],
+				'pause'   => $settings['pause_on_hover'],
+				// Left to right (a vertical slider: top to bottom).
+				'reverse' => 'reverse' === $settings['marquee_direction'],
 			) : false,
 			'lightbox'      => $settings['lightbox'] ? array(
 				// Corners of the image and of the strip's thumbnails, per device.
