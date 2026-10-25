@@ -307,10 +307,21 @@
 	justify-content: center;
 }
 
-.wp-swiper--around .swiper-slide .wp-swiper__media {
+.wp-swiper--around:not(.wp-swiper--fit-contain) .swiper-slide .wp-swiper__media {
 	flex: none;
 	width: var(--wp-swiper-image-width, 100%);
 	height: 100%;
+}
+
+/* With "Contain" the slide's content box is the frame (the share less the
+   free width either side, frontend.js distribute()): the image's box fits
+   in it and is placed per Image alignment, as with Space between, so the
+   caption and the corners are the image's, not the frame's. */
+.wp-swiper--around.wp-swiper--fit-contain .swiper-slide {
+	box-sizing: border-box;
+	padding: 0 var(--wp-swiper-around-pad, 0px);
+	align-items: var(--wp-swiper-align, center);
+	justify-content: var(--wp-swiper-justify, center);
 }
 
 /* Continuous scroll: an even pace, not Swiper's ease. */

@@ -2110,6 +2110,9 @@
 
 			root.classList.toggle( 'wp-swiper--around', around );
 			root.style.setProperty( '--wp-swiper-image-width', imageWidth ? imageWidth + 'px' : '' );
+			// Space around: the share's free width either side of the image's
+			// frame ("Contain" fits the image in the frame, not the whole share).
+			root.style.setProperty( '--wp-swiper-around-pad', around ? Math.max( 0, ( ( swiper.width || el.clientWidth ) / Math.max( 1, Number( config.slidesPerView[ current ] ) || 1 ) - imageWidth ) / 2 ) + 'px' : '' );
 			// The separator stands in the middle of the space Swiper leaves.
 			root.style.setProperty( '--wp-swiper-gap-live', ratio ? gap + 'px' : '' );
 
