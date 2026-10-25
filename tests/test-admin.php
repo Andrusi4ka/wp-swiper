@@ -331,8 +331,21 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 
 		$this->assertSame( 'wp_swiper', $settings['base'] );
 		$this->assertSame( (string) $id, $settings['params'][0]['value'][ 'Home hero (#' . $id . ')' ] );
-		// The slider choice only: no class field.
-		$this->assertSame( array( 'id' ), wp_list_pluck( $settings['params'], 'param_name' ) );
+		// The slider choice and, under it, its Edit button: no class field.
+		$this->assertSame( array( 'id', WP_Swiper_WPBakery::EDIT_PARAM ), wp_list_pluck( $settings['params'], 'param_name' ) );
+		$this->assertSame( WP_Swiper_WPBakery::EDIT_PARAM, $settings['params'][1]['type'] );
+	}
+
+	public function test_wpbakery_edit_button() {
+		$html = WP_Swiper_WPBakery::edit_param( array( 'param_name' => WP_Swiper_WPBakery::EDIT_PARAM ), '' );
+
+		// wpbakery.js adds the chosen slider's ID to this address.
+		$this->assertStringContainsString( 'data-url="' . esc_url( admin_url( 'post.php?action=edit&post=' ) ) . '"', $html );
+		// A new tab; hidden until a slider is chosen.
+		$this->assertStringContainsString( 'target="_blank" rel="noopener" hidden>', $html );
+		// Its field is empty: WPBakery adds nothing to the shortcode.
+		$this->assertStringContainsString( 'name="' . WP_Swiper_WPBakery::EDIT_PARAM . '" class="wpb_vc_param_value', $html );
+		$this->assertStringContainsString( 'value=""', $html );
 	}
 
 	public function test_wpbakery_element_keeps_a_class_given_before() {
