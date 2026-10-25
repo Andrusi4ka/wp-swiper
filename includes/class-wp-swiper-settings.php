@@ -1805,6 +1805,28 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * A slide's own image position ("Cover": the point kept in view, on every
+	 * device): "x y", percent of its width and height, 0–100 to one decimal.
+	 * '' for none (the slider's Image position) or anything else.
+	 *
+	 * @param string $value Raw input, e.g. "30 72.5".
+	 * @return string
+	 */
+	public static function sanitize_position( $value ) {
+		if ( ! is_string( $value ) || ! preg_match( '/^\s*(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*$/', $value, $match ) ) {
+			return '';
+		}
+		// %F: a dot whatever the locale (PHP 7.4); "30.0" as "30".
+		$point = array_map(
+			function ( $number ) {
+				return rtrim( rtrim( sprintf( '%.1F', min( 100, max( 0, (float) $number ) ) ), '0' ), '.' );
+			},
+			array( $match[1], $match[2] )
+		);
+		return $point[0] . ' ' . $point[1];
+	}
+
+	/**
 	 * A slide description from the editor: its allowed markup only; '' when
 	 * no text is left.
 	 *

@@ -691,4 +691,58 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 			$this->assertSame( 10, $this->config( $html )['spaceBetween']['desktop'], $name );
 		}
 	}
+
+	/* An image's own position -------------------------------------------- */
+
+	/**
+	 * The style of slide `index` in some markup.
+	 */
+	private function slide_style( $html, $index = 0 ) {
+		$this->assertSame( 1, preg_match( '/data-wp-swiper-index="' . $index . '" style="([^"]*)"/', $html, $match ), "No slide $index." );
+		return html_entity_decode( $match[1], ENT_QUOTES );
+	}
+
+	public function test_slide_position_over_the_sliders_on_every_device() {
+		$slides                = $this->slides( 2 );
+		$slides[0]['position'] = '20 75';
+		$html                  = $this->render( array( 'image_position' => 'top', 'image_position_mobile' => 'bottom' ), $slides );
+
+		$style = $this->slide_style( $html, 0 );
+		$this->assertStringContainsString( '--wp-swiper-img-position:20% 75%', $style );
+		$this->assertStringContainsString( '--wp-swiper-img-position-tablet:20% 75%', $style );
+		$this->assertStringContainsString( '--wp-swiper-img-position-mobile:20% 75%', $style );
+		// The other slide: the slider's (on the block).
+		$this->assertStringNotContainsString( '--wp-swiper-img-position', $this->slide_style( $html, 1 ) );
+		$this->assertStringContainsString( '--wp-swiper-img-position:50% 0%', $this->root_style( $html ) );
+	}
+
+	public function test_slide_position_only_where_it_crops() {
+		$slides                = $this->slides( 2 );
+		$slides[0]['position'] = '20 75';
+
+		// "Contain" crops nothing; nor do slides as wide as their images.
+		$this->assertStringNotContainsString( '--wp-swiper-img-position', $this->slide_style( $this->render( array( 'image_fit' => 'contain' ), $slides ) ) );
+		$this->assertStringNotContainsString( '--wp-swiper-img-position', $this->slide_style( $this->render( array( 'auto_width' => true ), $slides ) ) );
+		// A collage and a background crop whatever Image fit says.
+		$this->assertStringContainsString( '--wp-swiper-img-position:20% 75%', $this->slide_style( $this->render( array( 'image_fit' => 'contain', 'effect' => 'collage' ), $slides ) ) );
+		$this->assertStringContainsString( '--wp-swiper-img-position:20% 75%', $this->slide_style( $this->render( array( 'image_fit' => 'contain', 'background' => true, 'background_class' => 'hero' ), $slides ) ) );
+	}
+
+	public function test_slide_position_not_for_videos_nor_when_invalid() {
+		$slides = array(
+			array(
+				'id'       => $this->video(),
+				'caption'  => '',
+				'link'     => '',
+				'new_tab'  => false,
+				'poster'   => 0,
+				'position' => '20 75',
+			),
+		);
+		$this->assertStringNotContainsString( '--wp-swiper-img-position', $this->slide_style( $this->render( array(), $slides ) ) );
+
+		$slides                = $this->slides( 1 );
+		$slides[0]['position'] = '20% 75%;color:red';
+		$this->assertSame( '--wp-swiper-img-ratio:2', $this->slide_style( $this->render( array(), $slides ) ) );
+	}
 }

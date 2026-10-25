@@ -423,4 +423,50 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$page = get_post( self::factory()->post->create( array( 'post_type' => 'page' ) ) );
 		$this->assertSame( array( 'edit' => 'Edit' ), WP_Swiper_Admin::row_actions( array( 'edit' => 'Edit' ), $page ) );
 	}
+
+	public function test_posted_slides_keep_an_images_position() {
+		$image = $this->image();
+		$video = $this->video();
+
+		$_POST = array(
+			'wp_swiper_slides' => array(
+				'id'       => array( $image, $image, $video ),
+				'embed'    => array( '', '', '' ),
+				'caption'  => array( '', '', '' ),
+				'link'     => array( '', '', '' ),
+				'new_tab'  => array( '0', '0', '0' ),
+				'poster'   => array( '', '', '' ),
+				'position' => array( '25.55 80', 'top', '10 10' ),
+			),
+		);
+		// Sanitized; a video's is not kept (its picture is not a cropped image here).
+		$this->assertSame( array( '25.6 80', '', '' ), wp_list_pluck( WP_Swiper_Admin::posted_slides(), 'position' ) );
+
+		// Forms from before positions: none.
+		$_POST = array( 'wp_swiper_slides' => $this->one_slide( $image ) );
+		$this->assertSame( '', WP_Swiper_Admin::posted_slides()[0]['position'] );
+	}
+
+	public function test_slides_box_keeps_the_position_and_shows_it() {
+		$this->as_role( 'editor' );
+		$slides                = $this->slides( 2 );
+		$slides[0]['position'] = '20 75';
+		$id                    = $this->slider( $slides );
+
+		ob_start();
+		WP_Swiper_Admin::render_slides_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// Two slides and the template: a field and a button each; the window once.
+		$this->assertSame( 3, substr_count( $html, 'name="wp_swiper_slides[position][]"' ) );
+		$this->assertSame( 3, substr_count( $html, 'class="wp-swiper-slide__position' ) );
+		$this->assertSame( 1, substr_count( $html, 'id="wp-swiper-position-modal"' ) );
+		$this->assertStringContainsString( 'name="wp_swiper_slides[position][]" value="20 75"', $html );
+		// The thumbnail shows the crop; the button and the mark say it is set.
+		$this->assertStringContainsString( 'style="--wp-swiper-thumb-position:20% 75%"', $html );
+		$this->assertSame( 1, substr_count( $html, 'wp-swiper-slide__position is-set"' ) );
+		$this->assertSame( 1, substr_count( $html, 'data-mark="position">' ) );
+		// The larger image for the window.
+		$this->assertStringContainsString( 'data-full="' . esc_attr( wp_get_attachment_image_url( $slides[0]['id'], 'large' ) ) . '"', $html );
+	}
 }

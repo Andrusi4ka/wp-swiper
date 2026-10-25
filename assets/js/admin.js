@@ -58,10 +58,11 @@
 		}
 
 		// A new slide's row from the template.
-		function slideRow( id, thumb, title, embed, badge ) {
+		function slideRow( id, thumb, title, embed, badge, full ) {
 			return template
 				.replace( /\{\{id\}\}/g, escapeAttr( id ) )
 				.replace( /\{\{thumb\}\}/g, escapeAttr( thumb ) )
+				.replace( /\{\{full\}\}/g, escapeAttr( full || '' ) )
 				.replace( /\{\{title\}\}/g, escapeAttr( title ) )
 				.replace( /\{\{embed\}\}/g, escapeAttr( embed ) )
 				.replace( /\{\{badge\}\}/g, escapeAttr( badge ) );
@@ -136,7 +137,9 @@
 						// A video has no picture of its own until a poster is chosen.
 						var thumb = video ? '' : ( sizes.medium || sizes.thumbnail || data ).url;
 
-						var $item = $( slideRow( data.id, thumb, data.title || data.filename || '', '', i18n.videoBadge ) ).appendTo( $list );
+						// The larger image for the Image position window.
+						var full = video ? '' : ( sizes.large || data ).url;
+						var $item = $( slideRow( data.id, thumb, data.title || data.filename || '', '', i18n.videoBadge, full ) ).appendTo( $list );
 						// Without a poster a video has no thumbnail to go back to.
 						$item.attr( 'data-default-thumb', '' );
 						if ( video ) {
@@ -449,6 +452,151 @@
 			// Not while the editor's own link window is open (Escape closes that).
 			if ( e.key === 'Escape' && $editing && ! $( '#wp-link-wrap' ).is( ':visible' ) ) {
 				closeSlide( false );
+			}
+		} );
+
+		/*
+		 * An image's own position ("Cover"): the point of it kept in view, on
+		 * every device, over the slider's Image position. Kept in the slide's
+		 * hidden input as "x y" (percent; empty: none), set in its window by a
+		 * click, a drag or the arrow keys on the image; the frames beside it show
+		 * the crops of a wide, a square and a tall slide. The slide's thumbnail
+		 * follows it. Images only: the button shows while the slider crops
+		 * (syncFields: .wp-swiper-slides--positions).
+		 */
+		var $focusModal = $( '#wp-swiper-position-modal' ).appendTo( document.body );
+		var $focusStage = $focusModal.find( '.wp-swiper-focus__stage' );
+		var $focusImage = $focusModal.find( '.wp-swiper-focus__image' );
+		var $focusMark = $focusModal.find( '.wp-swiper-focus__point' );
+		var $focusFrames = $focusModal.find( '.wp-swiper-focus__frame img' );
+		var $focusValue = $focusModal.find( '.wp-swiper-focus__value' );
+		var $focusReset = $focusModal.find( '.wp-swiper-focus__reset' );
+		var $focusSlide = null;
+		var focusPoint = null;
+
+		// "x y" as [ x, y ] (WP_Swiper_Settings::sanitize_position() reads it so), or null.
+		function parsePoint( value ) {
+			var match = /^(\d+(?:\.\d+)?) (\d+(?:\.\d+)?)$/.exec( $.trim( value || '' ) );
+			return match ? [ Math.min( 100, Number( match[ 1 ] ) ), Math.min( 100, Number( match[ 2 ] ) ) ] : null;
+		}
+
+		function roundPercent( value ) {
+			return Math.round( Math.min( 100, Math.max( 0, value ) ) * 10 ) / 10;
+		}
+
+		// The point on the image, the crops, the text; none: the middle, dimmed.
+		function showFocus() {
+			var point = focusPoint || [ 50, 50 ];
+			var css = point[ 0 ] + '% ' + point[ 1 ] + '%';
+			$focusMark.css( { left: point[ 0 ] + '%', top: point[ 1 ] + '%' } ).toggleClass( 'is-default', ! focusPoint );
+			$focusFrames.css( 'object-position', css );
+			var text = focusPoint ?
+				( i18n.positionPoint || '%1$s%% %2$s%%' ).replace( '%1$s', point[ 0 ] ).replace( '%2$s', point[ 1 ] ).replace( /%%/g, '%' ) :
+				( i18n.positionNone || '' );
+			$focusValue.text( text );
+			$focusStage.attr( { 'aria-valuenow': point[ 0 ], 'aria-valuetext': text } );
+			$focusReset.prop( 'disabled', ! focusPoint );
+		}
+
+		// The point where the image was clicked or dragged to.
+		function focusAt( e ) {
+			var rect = $focusImage[ 0 ].getBoundingClientRect();
+			if ( ! rect.width || ! rect.height ) {
+				return;
+			}
+			focusPoint = [
+				roundPercent( ( e.clientX - rect.left ) / rect.width * 100 ),
+				roundPercent( ( e.clientY - rect.top ) / rect.height * 100 )
+			];
+			showFocus();
+		}
+
+		function openFocus( $slide ) {
+			$focusSlide = $slide;
+			focusPoint = parsePoint( slideInput( $slide, 'position' ).val() );
+			$focusModal.find( '.wp-swiper-modal__slide' ).text( '— ' + ( i18n.slideNumber || '%d' ).replace( '%d', $slide.index() + 1 ) );
+			// The larger image (data-full), else the thumbnail.
+			var src = $slide.attr( 'data-full' ) || $slide.find( '.wp-swiper-slide__thumb img' ).attr( 'src' ) || '';
+			$focusImage.attr( 'src', src );
+			$focusFrames.attr( 'src', src );
+			showFocus();
+			$focusModal.prop( 'hidden', false );
+			$( document.body ).addClass( 'wp-swiper-modal-open' );
+			$focusStage.trigger( 'focus' );
+		}
+
+		function closeFocus( apply ) {
+			if ( ! $focusSlide ) {
+				return;
+			}
+			if ( apply ) {
+				var value = focusPoint ? focusPoint[ 0 ] + ' ' + focusPoint[ 1 ] : '';
+				slideInput( $focusSlide, 'position' ).val( value );
+				$focusSlide.css( '--wp-swiper-thumb-position', focusPoint ? focusPoint[ 0 ] + '% ' + focusPoint[ 1 ] + '%' : '' );
+				$focusSlide.find( '.wp-swiper-slide__position' ).toggleClass( 'is-set', !! focusPoint );
+				$focusSlide.find( '.wp-swiper-slide__mark[data-mark="position"]' ).prop( 'hidden', ! focusPoint );
+				$( '.wp-swiper-preview__update' ).addClass( 'is-stale' );
+			}
+			$focusModal.prop( 'hidden', true );
+			$( document.body ).removeClass( 'wp-swiper-modal-open' );
+			var $button = $focusSlide.find( '.wp-swiper-slide__position' );
+			$focusSlide = null;
+			$button.trigger( 'focus' );
+		}
+
+		$list.on( 'click', '.wp-swiper-slide__position', function () {
+			openFocus( $( this ).closest( '.wp-swiper-slide' ) );
+		} );
+		$focusModal.on( 'click', '.wp-swiper-modal__apply', function () {
+			closeFocus( true );
+		} );
+		$focusModal.on( 'click', '.wp-swiper-modal__cancel, .wp-swiper-modal__close', function () {
+			closeFocus( false );
+		} );
+		$focusReset.on( 'click', function () {
+			focusPoint = null;
+			showFocus();
+		} );
+
+		// A click sets the point; dragging moves it.
+		$focusStage.on( 'pointerdown', function ( e ) {
+			if ( e.originalEvent.button !== 0 ) {
+				return;
+			}
+			e.preventDefault();
+			this.focus();
+			if ( this.setPointerCapture ) {
+				this.setPointerCapture( e.originalEvent.pointerId );
+			}
+			$focusStage.addClass( 'is-dragging' );
+			focusAt( e.originalEvent );
+		} ).on( 'pointermove', function ( e ) {
+			if ( $focusStage.hasClass( 'is-dragging' ) ) {
+				focusAt( e.originalEvent );
+			}
+		} ).on( 'pointerup pointercancel', function () {
+			$focusStage.removeClass( 'is-dragging' );
+		} ).on( 'keydown', function ( e ) {
+			// Arrow keys: 1% (Shift: 10%); Enter applies.
+			var steps = { ArrowLeft: [ -1, 0 ], ArrowRight: [ 1, 0 ], ArrowUp: [ 0, -1 ], ArrowDown: [ 0, 1 ] };
+			if ( e.key === 'Enter' ) {
+				e.preventDefault();
+				closeFocus( true );
+				return;
+			}
+			if ( ! steps[ e.key ] ) {
+				return;
+			}
+			e.preventDefault();
+			var by = e.shiftKey ? 10 : 1;
+			var point = focusPoint || [ 50, 50 ];
+			focusPoint = [ roundPercent( point[ 0 ] + steps[ e.key ][ 0 ] * by ), roundPercent( point[ 1 ] + steps[ e.key ][ 1 ] * by ) ];
+			showFocus();
+		} );
+
+		$( document ).on( 'keydown', function ( e ) {
+			if ( e.key === 'Escape' && $focusSlide ) {
+				closeFocus( false );
 			}
 		} );
 
@@ -928,6 +1076,8 @@
 			// The part kept of a cropped ("Cover") image; a background and a collage
 			// always crop (Image fit locked above); slides sized by their images do not.
 			field( 'image_position' ).toggle( cover && ! autoWidth );
+			// Each image's own position too (render.php uses it on the same terms).
+			$list.toggleClass( 'wp-swiper-slides--positions', cover && ! autoWidth );
 			// Caption background options, only with a background.
 			var captionBg = $( '#wp-swiper-caption_bg' ).is( ':checked' );
 			[ 'caption_bg_style', 'caption_bg_color', 'caption_bg_opacity' ].forEach( function ( name ) {

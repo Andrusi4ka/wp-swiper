@@ -1207,6 +1207,17 @@ class WP_Swiper_Render {
 		// and the slide itself with "Width from image".
 		$size  = WP_Swiper_Settings::slide_size( $slide );
 		$ratio = $size ? round( $size[0] / $size[1], 4 ) : 1;
+		$style = '--wp-swiper-img-ratio:' . $ratio;
+
+		// "Cover": an image's own position, on every device, over the slider's
+		// (all three variables: the slider may set its own per device).
+		$position = empty( $slide['position'] ) || $slide['video'] ? '' : WP_Swiper_Settings::sanitize_position( $slide['position'] );
+		if ( '' !== $position && 'cover' === $settings['image_fit'] && ! WP_Swiper_Settings::is_auto_width( $settings ) ) {
+			$point = str_replace( ' ', '% ', $position ) . '%';
+			foreach ( self::SUFFIX as $suffix ) {
+				$style .= ';--wp-swiper-img-position' . $suffix . ':' . $point;
+			}
+		}
 
 		if ( $slide['embed_info'] ) {
 			$image = self::embed( $slide );
@@ -1226,7 +1237,7 @@ class WP_Swiper_Render {
 			);
 		}
 		?>
-		<div class="swiper-slide<?php echo $slide['video'] ? ' wp-swiper-slide--video' : ''; ?>" data-wp-swiper-index="<?php echo (int) $index; ?>" style="--wp-swiper-img-ratio:<?php echo esc_attr( $ratio ); ?>"
+		<div class="swiper-slide<?php echo $slide['video'] ? ' wp-swiper-slide--video' : ''; ?>" data-wp-swiper-index="<?php echo (int) $index; ?>" style="<?php echo esc_attr( $style ); ?>"
 			<?php self::lightbox_attrs( $slide, $settings, $ratio ); ?>
 		>
 			<?php // Box of the visible image: the whole slide with "Cover", the letterboxed image with "Contain"; caption and corners follow it. ?>

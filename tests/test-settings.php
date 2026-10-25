@@ -491,4 +491,16 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$values += array( 'marquee' => true, 'marquee_separator' => 'dot', 'marquee_separator_size' => 20, 'marquee_separator_size_mobile' => 4 );
 		$this->assertSame( array( 'desktop' => 30, 'tablet' => 20, 'mobile' => 8 ), WP_Swiper_Settings::gaps( $this->settings( $values ) ) );
 	}
+
+	public function test_sanitize_position_reads_a_point_in_percent() {
+		$this->assertSame( '30 72.5', WP_Swiper_Settings::sanitize_position( '30 72.5' ) );
+		$this->assertSame( '0 100', WP_Swiper_Settings::sanitize_position( ' 0   100 ' ) );
+		// One decimal, within 0–100, "30.0" as "30".
+		$this->assertSame( '33.3 100', WP_Swiper_Settings::sanitize_position( '33.333 250' ) );
+		$this->assertSame( '30 50', WP_Swiper_Settings::sanitize_position( '30.04 50.0' ) );
+		// Anything else: none.
+		foreach ( array( '', '50', '50% 50%', '-5 10', 'top left', '1 2 3', null, array( 1, 2 ) ) as $value ) {
+			$this->assertSame( '', WP_Swiper_Settings::sanitize_position( $value ), var_export( $value, true ) );
+		}
+	}
 }

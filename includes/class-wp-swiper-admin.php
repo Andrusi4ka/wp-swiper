@@ -69,6 +69,9 @@ class WP_Swiper_Admin {
 					'infoEdit'     => __( 'Edit info', 'wp-swiper' ),
 					'copied'      => __( 'Copied!', 'wp-swiper' ),
 					'unsaved'     => __( 'The changes you made will be lost if you leave this page.', 'wp-swiper' ),
+					/* translators: 1: percent across the image, 2: percent down it. */
+					'positionPoint' => __( 'Kept in view: %1$s%% across, %2$s%% down.', 'wp-swiper' ),
+					'positionNone'  => __( 'Not set: the slider\'s Image position applies.', 'wp-swiper' ),
 					'singleSlide' => WP_Swiper_Settings::SINGLE_SLIDE_EFFECTS,
 					// Effects that can be their block's background ("Use as background").
 					'backgroundEffects' => WP_Swiper_Settings::BACKGROUND_EFFECTS,
@@ -169,6 +172,40 @@ class WP_Swiper_Admin {
 			</div>
 		</div>
 		<?php
+		// An image's own position ("Cover"): a click (or drag, or the arrow keys)
+		// on the image sets the point kept in view; the frames show the crops.
+		?>
+		<div class="wp-swiper-modal wp-swiper-modal--position" id="wp-swiper-position-modal" role="dialog" aria-modal="true" aria-labelledby="wp-swiper-position-modal-title" hidden>
+			<div class="wp-swiper-modal__backdrop"></div>
+			<div class="wp-swiper-modal__box">
+				<div class="wp-swiper-modal__head">
+					<h2 class="wp-swiper-modal__title" id="wp-swiper-position-modal-title"><?php esc_html_e( 'Image position', 'wp-swiper' ); ?> <span class="wp-swiper-modal__slide"></span></h2>
+					<button type="button" class="wp-swiper-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-swiper' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button>
+				</div>
+				<div class="wp-swiper-modal__body">
+					<p class="description"><?php esc_html_e( 'Click the part of the image to keep in view when the slider crops it (Image fit "Cover"). It applies on every device, over the slider\'s Image position.', 'wp-swiper' ); ?></p>
+					<div class="wp-swiper-focus">
+						<div class="wp-swiper-focus__stage" tabindex="0" role="slider" aria-label="<?php esc_attr_e( 'Point kept in view', 'wp-swiper' ); ?>" aria-valuemin="0" aria-valuemax="100">
+							<img class="wp-swiper-focus__image" alt="" draggable="false">
+							<span class="wp-swiper-focus__point" aria-hidden="true"></span>
+						</div>
+						<?php // The crops of a wide, a square and a tall slide (admin.js sets their object-position). ?>
+						<div class="wp-swiper-focus__frames" aria-hidden="true">
+							<span class="wp-swiper-focus__frame wp-swiper-focus__frame--wide"><img alt=""></span>
+							<span class="wp-swiper-focus__frame wp-swiper-focus__frame--square"><img alt=""></span>
+							<span class="wp-swiper-focus__frame wp-swiper-focus__frame--tall"><img alt=""></span>
+						</div>
+					</div>
+					<p class="wp-swiper-focus__value"></p>
+				</div>
+				<div class="wp-swiper-modal__foot">
+					<button type="button" class="button-link wp-swiper-focus__reset"><?php esc_html_e( 'Use the slider\'s position', 'wp-swiper' ); ?></button>
+					<button type="button" class="button wp-swiper-modal__cancel"><?php esc_html_e( 'Cancel', 'wp-swiper' ); ?></button>
+					<button type="button" class="button button-primary wp-swiper-modal__apply"><?php esc_html_e( 'Apply', 'wp-swiper' ); ?></button>
+				</div>
+			</div>
+		</div>
+		<?php
 	}
 
 	/**
@@ -196,12 +233,15 @@ class WP_Swiper_Admin {
 		$caption     = isset( $slide['caption'] ) ? (string) $slide['caption'] : '';
 		$description = isset( $slide['description'] ) ? (string) $slide['description'] : '';
 		$link        = isset( $slide['link'] ) ? (string) $slide['link'] : '';
+		$position    = isset( $slide['position'] ) ? WP_Swiper_Settings::sanitize_position( $slide['position'] ) : '';
 
 		$embed      = ! $template && ! empty( $slide['embed'] ) ? WP_Swiper_Settings::parse_embed( $slide['embed'] ) : false;
 		$video      = ! $template && ( $embed || WP_Swiper_Settings::is_video( $slide['id'] ) );
 		$poster     = $video ? WP_Swiper_Settings::poster( $slide ) : 0;
 		$own_poster = $video && ! empty( $slide['poster'] ) && $poster === (int) $slide['poster'] ? $poster : 0;
 		$thumb      = '{{thumb}}';
+		// The image in the Image position window (larger than the thumbnail).
+		$full       = '{{full}}';
 		$title      = '{{title}}';
 		$badge      = '{{badge}}';
 		// A video's thumbnail without a poster of its own (admin.js shows it again
@@ -230,16 +270,23 @@ class WP_Swiper_Admin {
 			// An image: itself; a video: its own poster, else its default thumbnail.
 			if ( ! $video ) {
 				$thumb = wp_get_attachment_image_url( $slide['id'], 'medium' );
+				$full  = wp_get_attachment_image_url( $slide['id'], 'large' );
 			} else {
-				$thumb = $own_poster ? wp_get_attachment_image_url( $own_poster, 'medium' ) : $default;
+				$thumb    = $own_poster ? wp_get_attachment_image_url( $own_poster, 'medium' ) : $default;
+				$full     = '';
+				$position = '';
 			}
 		}
 		?>
-		<li class="wp-swiper-slide<?php echo $video ? ' wp-swiper-slide--video' : ''; ?><?php echo $embed ? ' wp-swiper-slide--embed' : ''; ?>" data-title="<?php echo esc_attr( $title ); ?>" data-default-thumb="<?php echo esc_attr( $default ); ?>">
+		<li class="wp-swiper-slide<?php echo $video ? ' wp-swiper-slide--video' : ''; ?><?php echo $embed ? ' wp-swiper-slide--embed' : ''; ?>" data-title="<?php echo esc_attr( $title ); ?>" data-default-thumb="<?php echo esc_attr( $default ); ?>" data-full="<?php echo esc_attr( (string) $full ); ?>"<?php echo '' !== $position ? ' style="--wp-swiper-thumb-position:' . esc_attr( str_replace( ' ', '% ', $position ) . '%' ) . '"' : ''; ?>>
 			<div class="wp-swiper-slide__thumb">
 				<img src="<?php echo esc_attr( $thumb ); ?>" alt=""<?php echo $thumb ? '' : ' hidden'; ?>>
 				<span class="dashicons dashicons-video-alt3 wp-swiper-slide__video-icon" aria-hidden="true"></span>
 				<span class="wp-swiper-slide__badge"><?php echo esc_html( $badge ); ?></span>
+				<?php // An image's own position ("Cover"): its window (admin.js). Shown while the slider crops (.wp-swiper-slides--positions). ?>
+				<button type="button" class="wp-swiper-slide__position<?php echo '' !== $position ? ' is-set' : ''; ?>" title="<?php esc_attr_e( 'Image position', 'wp-swiper' ); ?>">
+					<span class="dashicons dashicons-location" aria-hidden="true"></span>
+				</button>
 				<button type="button" class="wp-swiper-slide__remove" title="<?php esc_attr_e( 'Remove slide', 'wp-swiper' ); ?>">
 					<span class="dashicons dashicons-no-alt"></span>
 				</button>
@@ -259,7 +306,10 @@ class WP_Swiper_Admin {
 				<span class="wp-swiper-slide__mark" data-mark="caption"<?php echo '' !== $caption ? '' : ' hidden'; ?>><?php esc_html_e( 'Caption', 'wp-swiper' ); ?></span>
 				<span class="wp-swiper-slide__mark" data-mark="description"<?php echo '' !== $description ? '' : ' hidden'; ?>><?php esc_html_e( 'Description', 'wp-swiper' ); ?></span>
 				<span class="wp-swiper-slide__mark" data-mark="link"<?php echo '' !== $link && ! $video ? '' : ' hidden'; ?>><?php esc_html_e( 'Link', 'wp-swiper' ); ?></span>
+				<span class="wp-swiper-slide__mark wp-swiper-slide__mark--position" data-mark="position"<?php echo '' !== $position ? '' : ' hidden'; ?>><?php esc_html_e( 'Position', 'wp-swiper' ); ?></span>
 			</span>
+			<?php // The image's own position, "x y" in percent; empty: the slider's Image position. ?>
+			<input type="hidden" name="wp_swiper_slides[position][]" value="<?php echo esc_attr( $position ); ?>">
 			<?php // Video slides: the poster, an image from the media library (set on the Video page). ?>
 			<input type="hidden" name="wp_swiper_slides[poster][]" value="<?php echo $own_poster ? (int) $own_poster : ''; ?>">
 		</li>
@@ -762,6 +812,7 @@ class WP_Swiper_Admin {
 					'link'        => '',
 					'new_tab'     => false,
 					'poster'      => $poster && wp_attachment_is_image( $poster ) ? $poster : 0,
+					'position'    => '',
 				);
 				continue;
 			}
@@ -780,6 +831,8 @@ class WP_Swiper_Admin {
 				'new_tab'     => ! $video && isset( $raw['new_tab'][ $i ] ) && '1' === $raw['new_tab'][ $i ],
 				// A video's poster: an image from the media library, or none.
 				'poster'      => $poster && wp_attachment_is_image( $poster ) ? $poster : 0,
+				// An image's own position ("Cover"), or none: the slider's.
+				'position'    => ! $video && isset( $raw['position'][ $i ] ) ? WP_Swiper_Settings::sanitize_position( $raw['position'][ $i ] ) : '',
 			);
 		}
 		return $slides;
