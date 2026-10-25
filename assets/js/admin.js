@@ -1379,5 +1379,44 @@
 				} );
 			}
 		} );
+
+		/*
+		 * Unsaved changes: leaving the page (closing it, reloading, a link) asks
+		 * first. WordPress's own check only knows the title and the content. What
+		 * would be saved (prepareForm(), as for the preview: the locked fields and
+		 * the Layout values of every effect as they are sent) is compared with
+		 * what it was when the page opened or was last saved.
+		 */
+		var $post = $( '#post' );
+		if ( $post.length && $( '#wp-swiper-settings' ).length ) {
+			var formState = function () {
+				prepareForm();
+				return $post.serializeArray().filter( function ( item ) {
+					return item.name === 'post_title' || /^wp_swiper_(settings|slides)\[/.test( item.name );
+				} ).map( function ( item ) {
+					return item.name + '=' + item.value;
+				} ).join( '&' );
+			};
+			var savedState = formState();
+			var saving = false;
+
+			$post.on( 'submit', function () {
+				saving = true;
+				// The submit stopped (a check of WordPress's own): asked again on leaving.
+				setTimeout( function () {
+					saving = false;
+				}, 3000 );
+			} );
+
+			$( window ).on( 'beforeunload.wp-swiper', function ( e ) {
+				if ( saving || formState() === savedState ) {
+					return;
+				}
+				// Browsers show their own text; this one is for the older ones.
+				e.preventDefault();
+				e.originalEvent.returnValue = i18n.unsaved || '';
+				return i18n.unsaved || '';
+			} );
+		}
 	} );
 }( jQuery ) );
