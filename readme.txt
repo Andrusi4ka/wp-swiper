@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.6.1
+Stable tag: 2.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,11 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.7.0 =
+* Collage: drag a photo onto another place in the preview to swap the two. While dragging, a small copy of the photo follows the pointer, its place shows an empty frame, and over another place both show the swap before you let go (Escape gives it up). A hint under the preview says so.
+* Collage: the order of the photos is kept per device (Order field, in Arrangement) — tablet and phone take the larger screen's until they get their own. It is kept by photo, so reordering the slides does not change it, and new photos come after it. Shuffle mixes the photos and Reset goes back to the larger screen's order, both for the device shown; Shuffle now works for every collage style. Collages saved before keep their order.
+* WPBakery element: the "Edit slider" button has no icon now, with "Opens in a new tab." under it.
 
 = 2.6.1 =
 * WPBakery element: an "Edit slider" button under the Slider list opens the chosen slider's edit screen in a new tab. It follows the slider chosen and is hidden while none is; the shortcode stays as it was.
