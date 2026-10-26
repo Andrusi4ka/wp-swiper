@@ -20,6 +20,58 @@
 		var frame;
 
 		/*
+		 * A slider saved with the old Description Alignment (center or right,
+		 * WP_Swiper_Settings::legacy_description_align()): each description's
+		 * paragraphs, headings and list items without an alignment of their own
+		 * take it, so that it stays once the slider is saved (each one now has
+		 * its own, the editor's buttons). Text outside any of them (typed in
+		 * the code view) becomes paragraphs first, as it is shown.
+		 */
+		function alignDescription( html, align ) {
+			var box = document.createElement( 'template' );
+			box.innerHTML = String( html || '' );
+			[].slice.call( box.content.childNodes ).forEach( function ( node ) {
+				if ( node.nodeType !== 3 || ! node.textContent.trim() ) {
+					return;
+				}
+				node.textContent.trim().split( /\n\s*\n/ ).forEach( function ( text ) {
+					var p = document.createElement( 'p' );
+					text.split( '\n' ).forEach( function ( line, i ) {
+						if ( i ) {
+							p.appendChild( document.createElement( 'br' ) );
+						}
+						p.appendChild( document.createTextNode( line ) );
+					} );
+					node.parentNode.insertBefore( p, node );
+				} );
+				node.parentNode.removeChild( node );
+			} );
+			var blocks = [];
+			[].forEach.call( box.content.children, function ( node ) {
+				if ( /^(P|H[1-6])$/.test( node.tagName ) ) {
+					blocks.push( node );
+				} else if ( /^(UL|OL)$/.test( node.tagName ) ) {
+					[].push.apply( blocks, [].filter.call( node.children, function ( item ) {
+						return item.tagName === 'LI';
+					} ) );
+				}
+			} );
+			blocks.forEach( function ( node ) {
+				if ( ! node.style.textAlign ) {
+					node.style.textAlign = align;
+				}
+			} );
+			return box.innerHTML;
+		}
+		if ( [ 'center', 'right' ].indexOf( i18n.legacyDescriptionAlign ) !== -1 ) {
+			$list.find( '[name="wp_swiper_slides[description][]"]' ).each( function () {
+				if ( this.value.trim() ) {
+					this.value = alignDescription( this.value, i18n.legacyDescriptionAlign );
+				}
+			} );
+		}
+
+		/*
 		 * What must happen before the form's values are read: locked fields put
 		 * their own values back and are enabled, the Layout values of every
 		 * effect are written out. Run on submit, and before the preview reads
@@ -343,12 +395,29 @@
 			return window.wp && window.wp.editor && window.wp.editor.initialize ? window.wp.editor : null;
 		}
 
+		// The "Text color" button's palette (class-wp-swiper-palette.php): the
+		// theme's colors, the user's (WP Swiper > Settings), black, white and
+		// greys, as many rows as they take; "Custom..." under them for any other.
+		function textColors() {
+			var map = $.isArray( i18n.textColors ) ? i18n.textColors : [];
+			if ( ! map.length ) {
+				return {};
+			}
+			var cols = 8;
+			return {
+				forecolor_map: map,
+				forecolor_cols: cols,
+				// One more place: TinyMCE's "No color".
+				forecolor_rows: Math.ceil( ( map.length / 2 + 1 ) / cols )
+			};
+		}
+
 		// One of the window's editors; without the visual one (the user's
 		// profile turns it off) the code one only.
 		function startEditor( id, tinymce, buttons ) {
 			if ( editor() ) {
 				editor().initialize( id, {
-					tinymce: window.tinymce ? tinymce : false,
+					tinymce: window.tinymce ? $.extend( textColors(), tinymce ) : false,
 					quicktags: { buttons: buttons },
 					mediaButtons: false
 				} );
@@ -357,6 +426,28 @@
 
 		function editorValue( id ) {
 			return editor() ? editor().getContent( id ) : $( '#' + id ).val();
+		}
+
+		// A caption's aligned lines are kept as spans shown as blocks
+		// (WP_Swiper_Settings::sanitize_caption()); the editor aligns blocks, so
+		// they go back to the blocks it made, and its buttons show their alignment.
+		function captionForEditor( html ) {
+			// Parsed inert (a template): nothing in it loads or runs.
+			var box = document.createElement( 'template' );
+			box.innerHTML = String( html || '' );
+			[].slice.call( box.content.children ).forEach( function ( node ) {
+				var align = node.tagName === 'SPAN' && node.style.display === 'block' ? node.style.textAlign : '';
+				if ( [ 'left', 'center', 'right' ].indexOf( align ) === -1 ) {
+					return;
+				}
+				var line = document.createElement( 'div' );
+				line.style.textAlign = align;
+				while ( node.firstChild ) {
+					line.appendChild( node.firstChild );
+				}
+				node.parentNode.replaceChild( line, node );
+			} );
+			return box.innerHTML;
 		}
 
 		function openSlide( $slide ) {
@@ -370,7 +461,7 @@
 			} else {
 				$thumb.append( '<span class="dashicons dashicons-video-alt3"></span>' );
 			}
-			$( '#' + CAPTION_EDITOR ).val( slideInput( $slide, 'caption' ).val() );
+			$( '#' + CAPTION_EDITOR ).val( captionForEditor( slideInput( $slide, 'caption' ).val() ) );
 			$( '#' + DESCRIPTION_EDITOR ).val( slideInput( $slide, 'description' ).val() );
 			// A video slide has no link (a click on it is the player's).
 			$modal.find( '.wp-swiper-modal__link' ).prop( 'hidden', $slide.hasClass( 'wp-swiper-slide--video' ) );
@@ -379,10 +470,10 @@
 			$modal.prop( 'hidden', false );
 			$( document.body ).addClass( 'wp-swiper-modal-open' );
 
-			// The caption: inline styles only, Enter a line break (render.php keeps
+			// The caption: inline styles (text color too) and each line's alignment only, Enter a line break (render.php keeps
 			// what caption_tags() allows); the first field, so it takes the focus.
 			startEditor( CAPTION_EDITOR, {
-				toolbar1: 'bold,italic,underline,removeformat,undo,redo',
+				toolbar1: 'bold,italic,underline,forecolor,alignleft,aligncenter,alignright,removeformat,undo,redo',
 				toolbar2: '',
 				forced_root_block: false,
 				height: 70,
@@ -390,9 +481,9 @@
 					instance.focus();
 				}
 			}, 'strong,em' );
-			// The description: paragraph or heading, the inline styles, links and lists.
+			// The description: paragraph or heading (aligned), the inline styles (text color too), links and lists.
 			startEditor( DESCRIPTION_EDITOR, {
-				toolbar1: 'formatselect,bold,italic,underline,bullist,numlist,link,unlink,removeformat,undo,redo',
+				toolbar1: 'formatselect,bold,italic,underline,forecolor,alignleft,aligncenter,alignright,bullist,numlist,link,unlink,removeformat,undo,redo',
 				toolbar2: '',
 				block_formats: 'Paragraph=p;Heading 1=h1;Heading 2=h2;Heading 3=h3;Heading 4=h4;Heading 5=h5;Heading 6=h6',
 				height: 220
@@ -928,6 +1019,8 @@
 
 		function syncFields() {
 			var effect = $( '#wp-swiper-effect' ).val();
+			// The fields Art hid (below) back first: another effect has its say on them.
+			$( '.wp-swiper-field.is-art-hidden' ).removeClass( 'is-art-hidden' ).show();
 			var single = SINGLE_SLIDE_EFFECTS.indexOf( effect ) !== -1;
 
 			// Slide effect modes (Layout) that make other settings unused: locked
@@ -1101,7 +1194,8 @@
 			// Descriptions: under a horizontal slider with a current slide, not as a
 			// background (WP_Swiper_Settings::can_describe()); the page is greyed
 			// otherwise, and while no slide has one.
-			var describable = ! vertical && ! background && ! marquee && ! collage;
+			// Art: always under it (Direction does not apply).
+			var describable = effect === 'art' || ( ! vertical && ! background && ! marquee && ! collage );
 			var described = hasDescriptions();
 			syncDescriptions( ! described ? 'empty' : ( describable ? '' : 'unavailable' ) );
 			field( 'description_lightbox' ).toggle( lightbox && describable && described );
@@ -1112,6 +1206,9 @@
 			field( 'description_lightbox_width' ).toggle( textUnder );
 			field( 'description_lightbox_max' ).toggle( textUnder );
 			field( 'description_color' ).toggle( $( '#wp-swiper-description_own_color' ).is( ':checked' ) );
+			// Font size: its Size only when Custom (Default: the plugin's 16px).
+			field( 'caption_font_size' ).toggle( $( '#wp-swiper-caption_font' ).val() === 'custom' );
+			field( 'description_font_size' ).toggle( $( '#wp-swiper-description_font' ).val() === 'custom' );
 
 			// Pagination layout: one position field per direction.
 			var paginated = $( '#wp-swiper-pagination' ).val() !== 'none';
@@ -1174,33 +1271,52 @@
 			[ 'collage_swap_delay', 'collage_swap_speed', 'collage_pause' ].forEach( function ( name ) {
 				field( name ).toggle( swapping );
 			} );
-			// A class of its own, over the toggles above (which keep their say for the other effects).
-			$( '#wp-swiper-page-controls .wp-swiper-field' ).toggleClass( 'is-not-applicable', collage );
+			// A class of its own, over the toggles above (which keep their say for the
+			// other effects): of the Controls page a Collage uses Photo swapping only.
+			$( '#wp-swiper-page-controls .wp-swiper-field' ).not( '[data-effects~="collage"]' ).toggleClass( 'is-not-applicable', collage );
 
 			// Art: the preview says its photos swap by dragging.
 			$( '.wp-swiper-preview__hint[data-effect="art"]' ).prop( 'hidden', effect !== 'art' );
 			// Art (class-wp-swiper-art.php): its own fields only, those of its Style
-			// (data-styles); of the rest just the Effect and the slider's class and id.
-			// Last, over the toggles above: none of them applies to it.
+			// (data-styles); of the rest the Effect, the slider's class and id, the
+			// lightbox's (images only, no strip), and the Caption and Description
+			// pages (all as the toggles above left them; vertical captions
+			// excepted). Last, over the toggles above: none of the others applies to it.
+			var ART_SHARED = [ 'effect', 'css_class', 'css_id', 'lightbox', 'lightbox_radius', 'description_lightbox', 'description_lightbox_place', 'description_lightbox_width', 'description_lightbox_max' ];
 			if ( effect === 'art' ) {
 				var artStyle = $( '#wp-swiper-art_style' ).val();
 				$( '.wp-swiper-field' ).each( function () {
 					var $field = $( this );
 					if ( String( $field.data( 'effects' ) || '' ).split( ' ' ).indexOf( 'art' ) === -1 ) {
-						if ( [ 'effect', 'css_class', 'css_id' ].indexOf( $field.data( 'field' ) ) === -1 ) {
-							$field.hide();
+						var name = $field.data( 'field' );
+						var text = $field.closest( 'fieldset[data-section="caption"], fieldset[data-section="description"]' ).length > 0;
+						if ( ( ! text || name === 'caption_orientation' ) && ART_SHARED.indexOf( name ) === -1 ) {
+							$field.addClass( 'is-art-hidden' ).hide();
 						}
 						return;
 					}
 					var styles = $field.data( 'styles' );
 					$field.toggle( ! styles || String( styles ).split( ' ' ).indexOf( artStyle ) !== -1 );
 				} );
-				// Ring: the label only with an opening it fits in (photos all around: none).
-				if ( artStyle === 'ring' && ( Number( $( '#wp-swiper-art_ring_opening' ).val() ) || 0 ) < 20 ) {
-					[ 'art_label_image', 'art_label_title', 'art_label_subtitle', 'art_label_color' ].forEach( function ( name ) {
+				// Image border: its width and color only while it is on (as a slider's).
+				if ( ! $( '#wp-swiper-art_border' ).is( ':checked' ) ) {
+					field( 'art_border_width' ).hide();
+					field( 'art_border_color' ).hide();
+				}
+				// Photo swapping's own settings only while it is on (as the Collage's).
+				if ( ! $( '#wp-swiper-art_swap' ).is( ':checked' ) ) {
+					[ 'art_swap_delay', 'art_swap_speed', 'art_pause' ].forEach( function ( name ) {
 						field( name ).hide();
 					} );
 				}
+				// Size "Auto" on a device (its unit, else the larger screen's): its
+				// number does not apply there (greyed, kept).
+				var sizeUnit = 'px';
+				[ 'desktop', 'tablet', 'mobile' ].forEach( function ( device ) {
+					var suffix = device === 'desktop' ? '' : '_' + device;
+					sizeUnit = $( '#wp-swiper-art_size_unit' + suffix ).val() || sizeUnit;
+					$( '#wp-swiper-art_size' + suffix ).prop( 'readOnly', sizeUnit === 'auto' ).toggleClass( 'is-unused', sizeUnit === 'auto' );
+				} );
 			}
 
 			// Shown: not hidden by a toggle, nor as not applicable (above).
@@ -1409,10 +1525,21 @@
 				$field.find( '.wp-swiper-devices__btn' ).removeClass( 'is-active' ).attr( 'aria-pressed', 'false' );
 				$btn.addClass( 'is-active' ).attr( 'aria-pressed', 'true' );
 				$field.find( '.wp-swiper-devices__input' ).prop( 'hidden', true )
-					.filter( '[data-device="' + device + '"]' ).prop( 'hidden', false ).trigger( 'focus' );
+					// Its value (and its unit, where it has one of its own); the value takes the focus.
+					.filter( '[data-device="' + device + '"]' ).prop( 'hidden', false ).first().trigger( 'focus' );
 			} )
 			.on( 'input change', '.wp-swiper-devices__input', function () {
 				syncResponsive( $( this ).closest( '.wp-swiper-field--responsive' ) );
+			} )
+			// A size per device side by side: the button shows (or hides) tablet and mobile.
+			.on( 'click', '.wp-swiper-inline-devices__toggle', function () {
+				var $box = $( this ).closest( '.wp-swiper-inline-devices' );
+				var open = ! $box.hasClass( 'is-open' );
+				$box.toggleClass( 'is-open', open );
+				$( this ).attr( 'aria-expanded', open ? 'true' : 'false' );
+				if ( open ) {
+					$box.find( '.wp-swiper-devices__input[data-device="tablet"]' ).trigger( 'focus' );
+				}
 			} );
 
 		/*
@@ -1511,16 +1638,31 @@
 			try {
 				devOn = window.localStorage.getItem( DEV_KEY ) === '1';
 			} catch ( e ) {}
+			// It draws a slider's slides only: nothing to show for the effects
+			// that are no slider (Collage, Art). Greyed there, with a note why;
+			// the choice is kept for the others.
+			var devTitle = $dev.attr( 'title' );
+			var devAvailable = function () {
+				return [ 'collage', 'art' ].indexOf( $( '#wp-swiper-effect' ).val() ) === -1;
+			};
 			var applyDev = function () {
-				$dev.attr( 'aria-pressed', devOn ? 'true' : 'false' );
+				var available = devAvailable();
+				$dev.toggleClass( 'is-unavailable', ! available )
+					.attr( 'aria-disabled', available ? null : 'true' )
+					.attr( 'title', available ? devTitle : ( i18n.devUnavailable || devTitle ) )
+					.attr( 'aria-pressed', devOn && available ? 'true' : 'false' );
 				var win = previewFrame.contentWindow;
 				try {
 					if ( win && win.wpSwiperDev ) {
-						win.wpSwiperDev( devOn );
+						win.wpSwiperDev( devOn && available );
 					}
 				} catch ( e ) {}
 			};
+			$( '#wp-swiper-effect' ).on( 'change', applyDev );
 			$dev.on( 'click', function () {
+				if ( ! devAvailable() ) {
+					return;
+				}
 				devOn = ! devOn;
 				try {
 					window.localStorage.setItem( DEV_KEY, devOn ? '1' : '0' );

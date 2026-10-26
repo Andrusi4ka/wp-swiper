@@ -386,6 +386,20 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 			$this->assertSame( '', WP_Swiper_Settings::sanitize_description( $empty ), $empty );
 		}
 		$this->assertSame( 'Plain text', WP_Swiper_Settings::sanitize_description( 'Plain text' ) );
+		// Text color (the editor's button): a span's, kept in captions and descriptions.
+		$this->assertSame( '<h2><span style="color: #2dc26b">Green</span></h2>', WP_Swiper_Settings::sanitize_description( '<h2><span style="color: #2dc26b;">Green</span></h2>' ) );
+		$this->assertSame( 'A <span style="color: #e03e2d">red</span> word', WP_Swiper_Settings::sanitize_caption( 'A <span style="color: #e03e2d;">red</span> word' ) );
+		// Alignment (the editor's buttons): kept on paragraphs, headings and list
+		// items, their only attribute; a caption's aligned lines become block spans.
+		$this->assertSame(
+			'<p style="text-align: center">Para</p><h2 style="text-align: right">Head</h2><ul><li style="text-align: left">i</li></ul><p>p</p>',
+			WP_Swiper_Settings::sanitize_description( '<p style="text-align: center;">Para</p><h2 style="color:red; text-align: right" class="x">Head</h2><ul><li style="text-align:left">i</li></ul><p style="position: fixed">p</p>' )
+		);
+		$this->assertSame(
+			'Plain<br><span style="display: block;text-align: center">Center <span style="color: #e03e2d">red</span></span>',
+			WP_Swiper_Settings::sanitize_caption( 'Plain<br><div style="text-align: center;" onclick="x()">Center <span style="color: #e03e2d;">red</span></div>' )
+		);
+		$this->assertSame( 'pasted<br>two', WP_Swiper_Settings::sanitize_caption( '<p>pasted</p><p>two</p>' ) );
 		// Headings, without attributes.
 		$this->assertSame(
 			'<h1>One</h1><h2>Two</h2><h3>Three</h3><h4>Four</h4><h5>Five</h5><h6>Six</h6>',

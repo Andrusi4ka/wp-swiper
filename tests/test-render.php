@@ -505,9 +505,11 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 			$this->render(
 				array(
 					'speed'                        => 400,
+					'description_font'             => 'custom',
 					'description_font_size'        => 18,
 					'description_font_size_mobile' => 14,
 					'description_offset'           => 24,
+					// Saved while it had an Alignment field (until 2.8): still applies.
 					'description_align'            => 'center',
 				),
 				$this->described_slides()
@@ -586,6 +588,37 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertFalse( $config['lightbox']['text'] );
 	}
 
+	public function test_font_size_default_or_custom() {
+		// Default: no size of its own (the CSS's 16px), whatever Size holds.
+		$html = $this->render( array( 'caption_font_size' => 30, 'description_font_size' => 30 ), $this->described_slides() );
+		$this->assertStringNotContainsString( '--wp-swiper-caption-size', $html );
+		$this->assertStringNotContainsString( '--wp-swiper-description-size', $html );
+		// Custom: Size per device.
+		$html = $this->render( array( 'caption_font' => 'custom', 'caption_font_size' => 22, 'caption_font_size_mobile' => '12' ), $this->described_slides() );
+		$this->assertStringContainsString( '--wp-swiper-caption-size:22px;--wp-swiper-caption-size-tablet:22px;--wp-swiper-caption-size-mobile:12px', $html );
+
+		// Saved before it had the choice (until 2.8): a size of its own stays Custom.
+		$this->assertSame( 'default', WP_Swiper_Settings::get( $this->slider( null, array( '_version' => 6, 'caption_font_size' => 16 ) ) )['caption_font'] );
+		$this->assertSame( 'custom', WP_Swiper_Settings::get( $this->slider( null, array( '_version' => 6, 'caption_font_size' => 20 ) ) )['caption_font'] );
+		$this->assertSame( 'custom', WP_Swiper_Settings::get( $this->slider( null, array( '_version' => 6, 'description_font_size' => 16, 'description_font_size_mobile' => '14' ) ) )['description_font'] );
+		$this->assertSame( 'default', WP_Swiper_Settings::get( $this->slider( null, array( 'caption_font' => 'default', 'caption_font_size' => 30 ) ) )['caption_font'] );
+	}
+
+	public function test_descriptions_align_per_paragraph() {
+		// No Alignment field any more: each paragraph has its own (the editor's
+		// buttons); the block sets none, the lightbox text starts on the left.
+		$this->assertArrayNotHasKey( 'description_align', WP_Swiper_Settings::fields() );
+		$this->assertArrayNotHasKey( 'description_align', WP_Swiper_Settings::defaults() );
+		$this->assertStringNotContainsString( '--wp-swiper-description-align', $this->descriptions_block( $this->render( array(), $this->described_slides() ) ) );
+		$config = $this->config( $this->render( array( 'lightbox' => true, 'description_lightbox_place' => 'under' ), $this->described_slides() ) );
+		$this->assertSame( 'left', $config['lightbox']['text']['align'] );
+
+		// An old left one needs nothing; saving drops the old value.
+		$this->assertSame( '', WP_Swiper_Settings::legacy_description_align( array( 'description_align' => 'left' ) ) );
+		$this->assertSame( 'right', WP_Swiper_Settings::legacy_description_align( array( 'description_align' => 'right' ) ) );
+		$this->assertArrayNotHasKey( 'description_align', WP_Swiper_Settings::sanitize( array( 'description_align' => 'center' ) ) );
+	}
+
 	public function test_lightbox_descriptions_under_the_image() {
 		$values = array(
 			'lightbox'                          => true,
@@ -593,6 +626,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 			'description_lightbox_width'        => 60,
 			'description_lightbox_width_tablet' => '',
 			'description_lightbox_max'          => 700,
+			// Saved while it had an Alignment field (until 2.8): still applies.
 			'description_align'                 => 'center',
 		);
 		$config = $this->config( $this->render( $values, $this->described_slides() ) );

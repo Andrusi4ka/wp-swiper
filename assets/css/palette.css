@@ -1,0 +1,52 @@
+/* WP Swiper > Settings (class-wp-swiper-palette.php, palette.js). */
+
+.wp-swiper-palette__theme {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 24px;
+	margin: 0 0 8px;
+}
+
+.wp-swiper-palette__theme li {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+}
+
+.wp-swiper-palette__swatch {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	border: 1px solid rgba(0, 0, 0, 0.2);
+	border-radius: 50%;
+}
+
+.wp-swiper-palette__own {
+	max-width: 760px;
+}
+
+.wp-swiper-palette__own[hidden] {
+	display: none;
+}
+
+.wp-swiper-palette__own td {
+	vertical-align: middle;
+}
+
+.wp-swiper-palette__own th:first-child,
+.wp-swiper-palette__own td:first-child {
+	width: 260px;
+}
+
+.wp-swiper-palette__own th:last-child,
+.wp-swiper-palette__own td:last-child {
+	width: 80px;
+	text-align: right;
+}
+
+/* The picker opens over the rows under it. */
+.wp-swiper-palette__own .wp-picker-container .wp-picker-holder {
+	position: absolute;
+	z-index: 10;
+}

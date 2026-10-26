@@ -3389,6 +3389,8 @@
 	}
 
 	window.wpSwiperInit = init;
+	// The lightbox for the Art effect (art.js), which is no slider of its own.
+	window.wpSwiperLightbox = openLightbox;
 
 	if ( document.readyState === 'loading' ) {
 		document.addEventListener( 'DOMContentLoaded', function () {

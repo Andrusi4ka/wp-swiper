@@ -390,7 +390,7 @@ class WP_Swiper_Render {
 	 * @param string $fallback The slider's field (Layout).
 	 * @return array [ 'desktop' => int, 'tablet' => int, 'mobile' => int ]
 	 */
-	private static function lightbox_radius( $settings, $key, $fallback ) {
+	public static function lightbox_radius( $settings, $key, $fallback ) {
 		$own    = WP_Swiper_Settings::responsive( $settings, $key );
 		$slider = WP_Swiper_Settings::responsive( $settings, $fallback );
 
@@ -868,9 +868,11 @@ class WP_Swiper_Render {
 				$style[] = '--wp-swiper-justify:' . $edge[ $settings['image_align_vertical'] ];
 			}
 		}
-		// Caption typography.
-		foreach ( WP_Swiper_Settings::responsive( $settings, 'caption_font_size' ) as $device => $size ) {
-			$style[] = '--wp-swiper-caption-size' . self::SUFFIX[ $device ] . ':' . (int) $size . 'px';
+		// Caption typography: its size per device if Custom (else the CSS default).
+		if ( 'custom' === $settings['caption_font'] ) {
+			foreach ( WP_Swiper_Settings::responsive( $settings, 'caption_font_size' ) as $device => $size ) {
+				$style[] = '--wp-swiper-caption-size' . self::SUFFIX[ $device ] . ':' . (int) $size . 'px';
+			}
 		}
 		$style[] = '--wp-swiper-caption-color:' . $settings['caption_color'];
 		if ( $settings['caption_bg'] ) {
@@ -962,7 +964,8 @@ class WP_Swiper_Render {
 			$config['lightbox']['text'] = $config['lightbox']['descriptions'] && 'under' === $settings['description_lightbox_place'] ? array(
 				'width' => array_map( 'intval', WP_Swiper_Settings::responsive( $settings, 'description_lightbox_width' ) ),
 				'max'   => (int) $settings['description_lightbox_max'],
-				'align' => $settings['description_align'],
+				// A slider saved with an Alignment field: its own (else left).
+				'align' => WP_Swiper_Settings::legacy_description_align( $settings ) ? WP_Swiper_Settings::legacy_description_align( $settings ) : 'left',
 			) : false;
 		}
 
@@ -1065,7 +1068,7 @@ class WP_Swiper_Render {
 	 * @param array $settings Slider settings.
 	 * @return string '' if the slider shows none.
 	 */
-	private static function descriptions( $post_id, $slides, $settings ) {
+	public static function descriptions( $post_id, $slides, $settings ) {
 		if ( ! WP_Swiper_Settings::can_describe( $settings ) ) {
 			return '';
 		}
@@ -1091,10 +1094,17 @@ class WP_Swiper_Render {
 		$style = array(
 			'--wp-swiper-speed:' . (int) $settings['speed'] . 'ms',
 			'--wp-swiper-description-offset:' . (int) $settings['description_offset'] . 'px',
-			'--wp-swiper-description-align:' . $settings['description_align'],
 		);
-		foreach ( WP_Swiper_Settings::responsive( $settings, 'description_font_size' ) as $device => $size ) {
-			$style[] = '--wp-swiper-description-size' . self::SUFFIX[ $device ] . ':' . (int) $size . 'px';
+		// Each paragraph has its own alignment; a slider saved with an Alignment
+		// field keeps it for the ones without, until it is saved again.
+		if ( WP_Swiper_Settings::legacy_description_align( $settings ) ) {
+			$style[] = '--wp-swiper-description-align:' . WP_Swiper_Settings::legacy_description_align( $settings );
+		}
+		// Its size per device if Custom (else the CSS default).
+		if ( 'custom' === $settings['description_font'] ) {
+			foreach ( WP_Swiper_Settings::responsive( $settings, 'description_font_size' ) as $device => $size ) {
+				$style[] = '--wp-swiper-description-size' . self::SUFFIX[ $device ] . ':' . (int) $size . 'px';
+			}
 		}
 		// "Text transition": the motion's animations (frontend.css).
 		$classes = array( 'wp-swiper-descriptions', 'wp-swiper-descriptions--' . $post_id, 'wp-swiper-descriptions--' . WP_Swiper_Settings::description_motion( $settings ) );

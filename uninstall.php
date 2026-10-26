@@ -27,6 +27,9 @@ function wp_swiper_uninstall_site() {
 	// "What's new": the version last run and the one updated from.
 	delete_option( 'wp_swiper_version' );
 	delete_option( 'wp_swiper_updated_from' );
+
+	// Settings: the slide text editors' own colors.
+	delete_option( 'wp_swiper_text_colors' );
 }
 
 if ( is_multisite() ) {

@@ -51,6 +51,7 @@ require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-wpbakery.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-whats-new.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-art.php';
+require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-palette.php';
 
 /**
  * Register the slider post type.
@@ -118,3 +119,4 @@ WP_Swiper_WPBakery::init();
 WP_Swiper_Preview::init();
 WP_Swiper_Whats_New::init();
 WP_Swiper_Art::init();
+WP_Swiper_Palette::init();

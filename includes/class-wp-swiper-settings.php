@@ -613,8 +613,10 @@ class WP_Swiper_Settings {
 				'max'             => 60,
 				'step'            => 1,
 			),
+			// Photo swapping: on the Controls page, with the other settings of how it moves.
 			'collage_swap'          => array(
-				'section' => 'layout',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'effects' => array( 'collage' ),
 				'label'   => __( 'Swap in the other photos', 'wp-swiper' ),
 				'type'    => 'checkbox',
@@ -622,7 +624,8 @@ class WP_Swiper_Settings {
 				'help'    => __( 'With more photos than places: every so often a place, at random, fades to a photo not shown yet. The arrangement does not change.', 'wp-swiper' ),
 			),
 			'collage_swap_delay'    => array(
-				'section' => 'layout',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'effects' => array( 'collage' ),
 				'label'   => __( 'A new photo every (ms)', 'wp-swiper' ),
 				'type'    => 'number',
@@ -633,7 +636,8 @@ class WP_Swiper_Settings {
 				'range'   => array( 1000, 10000 ),
 			),
 			'collage_swap_speed'    => array(
-				'section' => 'layout',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'effects' => array( 'collage' ),
 				'label'   => __( 'Fade (ms)', 'wp-swiper' ),
 				'type'    => 'number',
@@ -644,7 +648,8 @@ class WP_Swiper_Settings {
 				'range'   => array( 100, 2000 ),
 			),
 			'collage_pause'         => array(
-				'section' => 'layout',
+				'section' => 'advanced',
+				'panel'   => 'controls',
 				'effects' => array( 'collage' ),
 				'label'   => __( 'Pause on hover', 'wp-swiper' ),
 				'type'    => 'checkbox',
@@ -1434,9 +1439,23 @@ class WP_Swiper_Settings {
 					'h6'  => 'h6',
 				),
 			),
+			// 'Default': the plugin's size (16px); 'Custom': Size, per device.
+			'caption_font'          => array(
+				'section' => 'caption',
+				'label'   => __( 'Font size', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'default',
+				'choices' => array(
+					'default' => __( 'Default', 'wp-swiper' ),
+					'custom'  => __( 'Custom', 'wp-swiper' ),
+				),
+			),
 			'caption_font_size'     => array(
 				'section'    => 'caption',
-				'label'      => __( 'Font size (px)', 'wp-swiper' ),
+				'label'      => __( 'Size', 'wp-swiper' ),
+				// Desktop, and tablet and mobile beside it once opened (admin.php).
+				'devices'    => 'inline',
+				'suffix'     => 'px',
 				'type'       => 'number',
 				'responsive' => true,
 				'default'    => 16,
@@ -1528,9 +1547,23 @@ class WP_Swiper_Settings {
 			// Slide descriptions: under the slider, the current slide's only (see
 			// can_describe() for the sliders that show them). The page is greyed
 			// while no slide has one (admin.js).
+			// 'Default': the plugin's size (16px); 'Custom': Size, per device.
+			'description_font'      => array(
+				'section' => 'description',
+				'label'   => __( 'Font size', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'default',
+				'choices' => array(
+					'default' => __( 'Default', 'wp-swiper' ),
+					'custom'  => __( 'Custom', 'wp-swiper' ),
+				),
+			),
 			'description_font_size' => array(
 				'section'    => 'description',
-				'label'      => __( 'Font size (px)', 'wp-swiper' ),
+				'label'      => __( 'Size', 'wp-swiper' ),
+				// Desktop, and tablet and mobile beside it once opened (admin.php).
+				'devices'    => 'inline',
+				'suffix'     => 'px',
 				'type'       => 'number',
 				'responsive' => true,
 				'default'    => 16,
@@ -1556,18 +1589,8 @@ class WP_Swiper_Settings {
 					'900' => '900',
 				),
 			),
-			'description_align'     => array(
-				'section'   => 'description',
-				'label'     => __( 'Alignment', 'wp-swiper' ),
-				'type'      => 'select',
-				'segmented' => true,
-				'default'   => 'left',
-				'choices'   => array(
-					'left'   => __( 'Left', 'wp-swiper' ),
-					'center' => __( 'Center', 'wp-swiper' ),
-					'right'  => __( 'Right', 'wp-swiper' ),
-				),
-			),
+			// No Alignment field: each paragraph has its own (the editor's buttons);
+			// see legacy_description_align() for the sliders saved with one.
 			// How the text changes with the slide (see description_motion()).
 			'description_transition' => array(
 				'section' => 'description',
@@ -1783,6 +1806,19 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * The descriptions' alignment of a slider saved while it had an Alignment
+	 * field (until 2.8): center or right still apply to the paragraphs without
+	 * their own until it is saved again (the editor moves it into them, admin.js).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string center | right, or '' (left: none needed)
+	 */
+	public static function legacy_description_align( $settings ) {
+		$align = isset( $settings['description_align'] ) ? $settings['description_align'] : '';
+		return in_array( $align, array( 'center', 'right' ), true ) ? $align : '';
+	}
+
+	/**
 	 * How a description changes with its slide (frontend.css: the motion's
 	 * animations): "Text transition", where "As the slider" takes the motion
 	 * nearest to the effect's.
@@ -1815,25 +1851,30 @@ class WP_Swiper_Settings {
 			case 'coverflow':
 			case 'cards':
 				return $settings['effect'];
+			case 'art':
+				// Art does not move: one text fades into the next.
+				return 'fade';
 		}
 		return 'slide';
 	}
 
 	/**
 	 * The markup a slide description may have: paragraphs, headings, line
-	 * breaks, bold, italic, underline (a span the editor styles), links and lists.
+	 * breaks, bold, italic, underline and text color (a span the editor
+	 * styles), links and lists; paragraphs, headings and list items aligned
+	 * (their text-align only, sanitize_description()).
 	 *
 	 * @return array wp_kses() allowed tags.
 	 */
 	public static function description_tags() {
 		return array(
-			'p'      => array(),
-			'h1'     => array(),
-			'h2'     => array(),
-			'h3'     => array(),
-			'h4'     => array(),
-			'h5'     => array(),
-			'h6'     => array(),
+			'p'      => array( 'style' => true ),
+			'h1'     => array( 'style' => true ),
+			'h2'     => array( 'style' => true ),
+			'h3'     => array( 'style' => true ),
+			'h4'     => array( 'style' => true ),
+			'h5'     => array( 'style' => true ),
+			'h6'     => array( 'style' => true ),
 			'br'     => array(),
 			'strong' => array(),
 			'b'      => array(),
@@ -1848,7 +1889,7 @@ class WP_Swiper_Settings {
 			),
 			'ul'     => array(),
 			'ol'     => array(),
-			'li'     => array(),
+			'li'     => array( 'style' => true ),
 		);
 	}
 
@@ -1902,7 +1943,27 @@ class WP_Swiper_Settings {
 	 * @return string
 	 */
 	public static function sanitize_description( $html ) {
+		// Paragraphs, headings and list items keep their alignment (the editor's
+		// buttons), and no other attribute.
+		$html = preg_replace_callback(
+			'#<(p|h[1-6]|li)\b([^>]*)>#i',
+			function ( $match ) {
+				$align = self::text_align( $match[2] );
+				return '<' . $match[1] . ( '' !== $align ? ' style="text-align: ' . $align . '"' : '' ) . '>';
+			},
+			(string) $html
+		);
 		return self::sanitize_rich_text( $html, self::description_tags() );
+	}
+
+	/**
+	 * The alignment set in a tag's attributes (its style's text-align).
+	 *
+	 * @param string $attrs The tag's attributes.
+	 * @return string left | center | right, or ''
+	 */
+	private static function text_align( $attrs ) {
+		return preg_match( '/text-align\s*:\s*(left|center|right)\b/i', (string) $attrs, $match ) ? strtolower( $match[1] ) : '';
 	}
 
 	/**
@@ -1913,6 +1974,16 @@ class WP_Swiper_Settings {
 	 * @return string
 	 */
 	public static function sanitize_caption( $html ) {
+		// A line the editor aligned (it puts each line in a block of its own):
+		// a span shown as a block, with that alignment only.
+		$html = preg_replace_callback(
+			'#<(p|div|h[1-6]|li|blockquote)\b([^>]*)>(.*?)</\1>#is',
+			function ( $match ) {
+				$align = self::text_align( $match[2] );
+				return '' !== $align ? '<span style="display: block; text-align: ' . $align . '">' . $match[3] . '</span>' : $match[0];
+			},
+			(string) $html
+		);
 		// Paragraphs and other blocks (text pasted in) become lines, so their
 		// words do not run together once the blocks are gone.
 		$html = preg_replace( '#\s*</(?:p|div|h[1-6]|li|blockquote)>\s*#i', '<br>', (string) $html );
@@ -2395,6 +2466,11 @@ class WP_Swiper_Settings {
 	public static function blocks() {
 		$blocks = array(
 			'controls' => array(
+				// Collage: the only block of this page it uses (admin.js).
+				'swapping'         => array(
+					'title'  => __( 'Photo swapping', 'wp-swiper' ),
+					'fields' => array( 'collage_swap', 'collage_swap_delay', 'collage_swap_speed', 'collage_pause' ),
+				),
 				'movement'         => array(
 					'title'  => __( 'Movement', 'wp-swiper' ),
 					'fields' => array( 'speed', 'loop', 'autoplay', 'autoplay_delay', 'pause_on_hover' ),
@@ -2454,10 +2530,6 @@ class WP_Swiper_Settings {
 					'title'  => __( 'Arrangement', 'wp-swiper' ),
 					'fields' => array( 'collage_layout', 'collage_order', 'collage_count', 'collage_columns', 'collage_row_height', 'collage_row_exact', 'collage_gap' ),
 				),
-				'swapping'    => array(
-					'title'  => __( 'Photo swapping', 'wp-swiper' ),
-					'fields' => array( 'collage_swap', 'collage_swap_delay', 'collage_swap_speed', 'collage_pause' ),
-				),
 				'slides'      => array(
 					'title'  => __( 'Slides', 'wp-swiper' ),
 					'fields' => array( 'slides_per_view', 'auto_width', 'slides_per_group', 'space_between', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_direction', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),
@@ -2490,8 +2562,10 @@ class WP_Swiper_Settings {
 				),
 			),
 		);
-		// Art: its blocks first on its Layout page (class-wp-swiper-art.php).
-		$blocks['layout'] = WP_Swiper_Art::blocks() + $blocks['layout'];
+		// Art: its blocks first on its pages (class-wp-swiper-art.php).
+		foreach ( WP_Swiper_Art::blocks() as $page => $art_blocks ) {
+			$blocks[ $page ] = $art_blocks + $blocks[ $page ];
+		}
 		return $blocks;
 	}
 
@@ -2605,6 +2679,18 @@ class WP_Swiper_Settings {
 				$saved[ $key ]             = $radius;
 				$saved[ $key . '_tablet' ] = '';
 				$saved[ $key . '_mobile' ] = '';
+			}
+		}
+
+		// Font size "Default" or "Custom" (until 2.8 just a size): a slider
+		// saved with a size of its own (not 16px, or one on tablet or mobile)
+		// keeps it as Custom.
+		foreach ( array( 'caption', 'description' ) as $text ) {
+			if ( $saved && ! isset( $saved[ $text . '_font' ] ) ) {
+				$own = ( isset( $saved[ $text . '_font_size' ] ) && 16 !== (int) $saved[ $text . '_font_size' ] )
+					|| ( isset( $saved[ $text . '_font_size_tablet' ] ) && '' !== (string) $saved[ $text . '_font_size_tablet' ] )
+					|| ( isset( $saved[ $text . '_font_size_mobile' ] ) && '' !== (string) $saved[ $text . '_font_size_mobile' ] );
+				$saved[ $text . '_font' ] = $own ? 'custom' : 'default';
 			}
 		}
 
@@ -3027,10 +3113,6 @@ class WP_Swiper_Settings {
 
 				case 'order': // Photo IDs in their order, "12,7,30"; '' = none.
 					$clean[ $key ] = self::sanitize_order( null === $value ? '' : (string) $value );
-					break;
-
-				case 'line': // A line of plain text (Art's label): no markup.
-					$clean[ $key ] = mb_substr( sanitize_text_field( (string) $value ), 0, 120 );
 					break;
 
 				case 'mosaic': // Random mosaic cuts, "V0.6[0,H0.5[1,2]]"; '' = none.

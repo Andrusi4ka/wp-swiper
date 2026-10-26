@@ -497,6 +497,18 @@
 	color: #fff;
 }
 
+/* Not for this effect (Collage, Art): greyed like a disabled button, its
+   title still says why (aria-disabled, not disabled, so it shows). */
+#wp-swiper-settings .wp-swiper-preview__dev.is-unavailable,
+#wp-swiper-settings .wp-swiper-preview__dev.is-unavailable:hover,
+#wp-swiper-settings .wp-swiper-preview__dev.is-unavailable:focus {
+	border-color: #dcdcde;
+	background: #f6f7f7;
+	color: #a7aaad;
+	box-shadow: none;
+	cursor: not-allowed;
+}
+
 .wp-swiper-preview__devices {
 	background: #fff;
 }
@@ -778,6 +790,11 @@
 
 .wp-swiper-field__row .wp-swiper-devices__input[hidden] {
 	display: none;
+}
+
+/* A value its unit leaves unused on that device (Art's Size "Auto"): greyed, kept. */
+.wp-swiper-field .wp-swiper-devices__input.is-unused {
+	opacity: 0.45;
 }
 
 /* Height "Auto": only the unit select is left. */
@@ -1475,4 +1492,97 @@ body.wp-swiper-modal-open {
 .wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"]::before,
 .wp-swiper-switches .wp-swiper-field.is-unused input[type="checkbox"]::before {
 	opacity: 1;
+}
+
+/* A size per device side by side (Caption and Description Size): Desktop,
+   the button, then Tablet and Mobile once it is pressed; each a number with
+   its unit after it. */
+.wp-swiper-inline-devices {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 8px;
+}
+
+.wp-swiper-inline-devices__item {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.wp-swiper-inline-devices:not(.is-open) .wp-swiper-inline-devices__item:not([data-device="desktop"]) {
+	display: none;
+}
+
+.wp-swiper-inline-devices__item label {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: #50575e;
+}
+
+.wp-swiper-inline-devices__item .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+	color: #8c8f94;
+}
+
+.wp-swiper-inline-devices__box {
+	display: inline-flex;
+	align-items: stretch;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: #fff;
+	overflow: hidden;
+}
+
+.wp-swiper-inline-devices__box:focus-within {
+	border-color: var(--wp-swiper-accent, #2271b1);
+	box-shadow: 0 0 0 1px var(--wp-swiper-accent, #2271b1);
+}
+
+#wp-swiper-settings .wp-swiper-inline-devices__box input[type="number"] {
+	width: 48px;
+	min-height: 40px;
+	padding: 0 8px;
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	-moz-appearance: textfield;
+}
+
+.wp-swiper-inline-devices__box input[type="number"]::-webkit-inner-spin-button,
+.wp-swiper-inline-devices__box input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.wp-swiper-inline-devices__unit {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 8px;
+	border-left: 1px solid #dcdcde;
+	background: #f6f7f7;
+	color: #1d2327;
+	font-weight: 600;
+}
+
+#wp-swiper-settings .wp-swiper-inline-devices__toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 40px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #50575e;
+	cursor: pointer;
+}
+
+#wp-swiper-settings .wp-swiper-inline-devices__toggle:hover,
+#wp-swiper-settings .wp-swiper-inline-devices__toggle[aria-expanded="true"] {
+	color: var(--wp-swiper-accent, #2271b1);
 }

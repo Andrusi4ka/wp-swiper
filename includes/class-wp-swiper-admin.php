@@ -75,6 +75,13 @@ class WP_Swiper_Admin {
 					/* translators: 1: percent across the image, 2: percent down it. */
 					'positionPoint' => __( 'Kept in view: %1$s%% across, %2$s%% down.', 'wp-swiper' ),
 					'positionNone'  => __( 'Not set: the slider\'s Image position applies.', 'wp-swiper' ),
+					// A slider saved with the old Description Alignment (center, right):
+					// admin.js moves it into each description's paragraphs.
+					'legacyDescriptionAlign' => get_post() ? WP_Swiper_Settings::legacy_description_align( WP_Swiper_Settings::get( get_post()->ID ) ) : '',
+					// Developer mode with an effect that is no slider (Collage, Art).
+					'devUnavailable' => __( 'Not available for this effect: it shows the boxes of a slider\'s slides, and this effect has none.', 'wp-swiper' ),
+					// The slide text editors' "Text color" palette (TinyMCE's forecolor_map).
+					'textColors'  => WP_Swiper_Palette::tinymce_map(),
 					'singleSlide' => WP_Swiper_Settings::SINGLE_SLIDE_EFFECTS,
 					// Effects that can be their block's background ("Use as background").
 					'backgroundEffects' => WP_Swiper_Settings::BACKGROUND_EFFECTS,
@@ -160,12 +167,12 @@ class WP_Swiper_Admin {
 				<div class="wp-swiper-modal__body">
 					<div class="wp-swiper-modal__section">
 						<h3 class="wp-swiper-modal__label"><label for="wp-swiper-caption-editor"><?php esc_html_e( 'Caption', 'wp-swiper' ); ?></label></h3>
-						<p class="description"><?php esc_html_e( 'Over the image, styled on the Caption page. Bold, italic, underline; Enter starts a new line.', 'wp-swiper' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Over the image, styled on the Caption page. Bold, italic, underline, text color and the alignment of each line; Enter starts a new line.', 'wp-swiper' ); ?></p>
 						<textarea id="wp-swiper-caption-editor" rows="3"></textarea>
 					</div>
 					<div class="wp-swiper-modal__section">
 						<h3 class="wp-swiper-modal__label"><label for="wp-swiper-description-editor"><?php esc_html_e( 'Description', 'wp-swiper' ); ?></label></h3>
-						<p class="description"><?php esc_html_e( 'Shown under the slider while this slide is the current one. Headings, bold, italic, underline, links and lists.', 'wp-swiper' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Shown under the slider while this slide is the current one. Headings, bold, italic, underline, text color, alignment, links and lists.', 'wp-swiper' ); ?></p>
 						<textarea id="wp-swiper-description-editor" rows="10"></textarea>
 					</div>
 					<?php // Not for video slides (a click on one is the player's): admin.js hides it. ?>
@@ -541,7 +548,9 @@ class WP_Swiper_Admin {
 				echo $field_group ? '<div class="wp-swiper-field-group" data-group="' . esc_attr( $field_group ) . '">' : '';
 				$group = $field_group;
 			}
-			if ( ! empty( $field['responsive'] ) ) {
+			if ( ! empty( $field['responsive'] ) && isset( $field['devices'] ) && 'inline' === $field['devices'] ) {
+				self::render_inline_devices_field( $key, $field, $values );
+			} elseif ( ! empty( $field['responsive'] ) ) {
 				self::render_responsive_field( $key, $field, $values, $fields );
 			} else {
 				self::render_field( $key, $field, $values[ $key ] );
@@ -615,7 +624,7 @@ class WP_Swiper_Admin {
 				</div>
 
 				<?php // Class names or an id: a plain text input. ?>
-				<?php if ( in_array( $field['type'], array( 'text', 'id', 'line' ), true ) ) : ?>
+				<?php if ( in_array( $field['type'], array( 'text', 'id' ), true ) ) : ?>
 					<input type="text" class="regular-text" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
 						value="<?php echo esc_attr( $value ); ?>"
 						placeholder="<?php echo esc_attr( isset( $field['placeholder'] ) ? $field['placeholder'] : '' ); ?>"
@@ -700,6 +709,70 @@ class WP_Swiper_Admin {
 	 * @param array  $values Saved settings.
 	 * @param array  $fields All field definitions (for the unit select).
 	 */
+	/**
+	 * A number per device side by side ('devices' => 'inline'): Desktop, then
+	 * a button that shows Tablet and Mobile beside it (shown from the start
+	 * where either has a value of its own). Empty tablet and mobile values
+	 * inherit (admin.js shows the inherited one as their placeholder).
+	 *
+	 * @param string $key    Field name.
+	 * @param array  $field  Field definition.
+	 * @param array  $values Saved settings.
+	 */
+	private static function render_inline_devices_field( $key, $field, $values ) {
+		$devices = array_map(
+			function ( $meta ) {
+				return array( $meta[1], $meta[2] );
+			},
+			self::devices()
+		);
+		$keys    = WP_Swiper_Settings::device_keys( $key, $field );
+		$open    = '' !== (string) $values[ $keys['tablet'] ] || '' !== (string) $values[ $keys['mobile'] ];
+		$names   = array(
+			'desktop' => __( 'Desktop', 'wp-swiper' ),
+			'tablet'  => __( 'Tablet', 'wp-swiper' ),
+			'mobile'  => __( 'Mobile', 'wp-swiper' ),
+		);
+		?>
+		<div class="wp-swiper-field wp-swiper-field--responsive wp-swiper-field--inline-devices" data-field="<?php echo esc_attr( $key ); ?>"<?php self::effects_attr( $field ); ?>>
+			<div class="wp-swiper-field__head">
+				<span class="wp-swiper-field__label"><?php echo esc_html( $field['label'] ); ?></span>
+				<?php self::field_tips( $field ); ?>
+			</div>
+			<div class="wp-swiper-inline-devices<?php echo $open ? ' is-open' : ''; ?>">
+				<?php foreach ( $keys as $device => $storage_key ) : ?>
+					<div class="wp-swiper-inline-devices__item" data-device="<?php echo esc_attr( $device ); ?>">
+						<label for="wp-swiper-<?php echo esc_attr( $storage_key ); ?>" title="<?php echo esc_attr( $devices[ $device ][0] ); ?>">
+							<span class="dashicons <?php echo esc_attr( $devices[ $device ][1] ); ?>" aria-hidden="true"></span>
+							<?php echo esc_html( $names[ $device ] ); ?>
+						</label>
+						<span class="wp-swiper-inline-devices__box">
+							<input type="number"
+								id="wp-swiper-<?php echo esc_attr( $storage_key ); ?>"
+								class="wp-swiper-devices__input"
+								data-device="<?php echo esc_attr( $device ); ?>"
+								name="wp_swiper_settings[<?php echo esc_attr( $storage_key ); ?>]"
+								value="<?php echo esc_attr( $values[ $storage_key ] ); ?>"
+								min="<?php echo esc_attr( $field['min'] ); ?>"
+								max="<?php echo esc_attr( $field['max'] ); ?>"
+								step="<?php echo esc_attr( $field['step'] ); ?>"
+								aria-label="<?php echo esc_attr( $field['label'] . ' — ' . $devices[ $device ][0] ); ?>">
+							<?php if ( ! empty( $field['suffix'] ) ) : ?>
+								<span class="wp-swiper-inline-devices__unit" aria-hidden="true"><?php echo esc_html( $field['suffix'] ); ?></span>
+							<?php endif; ?>
+						</span>
+					</div>
+					<?php if ( 'desktop' === $device ) : ?>
+						<button type="button" class="wp-swiper-inline-devices__toggle" aria-expanded="<?php echo $open ? 'true' : 'false'; ?>" aria-label="<?php esc_attr_e( 'Tablet and mobile sizes', 'wp-swiper' ); ?>" title="<?php esc_attr_e( 'Tablet and mobile sizes', 'wp-swiper' ); ?>">
+							<span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+						</button>
+					<?php endif; ?>
+				<?php endforeach; ?>
+			</div>
+		</div>
+		<?php
+	}
+
 	private static function render_responsive_field( $key, $field, $values, $fields ) {
 		$devices = array_map(
 			function ( $meta ) {
@@ -813,8 +886,28 @@ class WP_Swiper_Admin {
 			<?php endif; ?>
 
 			<?php
-			// Unit select on the same row (shared by all devices).
-			if ( ! empty( $field['unit'] ) ) :
+			// Unit select on the same row: one per device (shown with its value,
+			// tablet and mobile may inherit), or one shared by all devices.
+			if ( ! empty( $field['unit'] ) && ! empty( $fields[ $field['unit'] ]['responsive'] ) ) :
+				$unit = $fields[ $field['unit'] ];
+				foreach ( WP_Swiper_Settings::device_keys( $field['unit'], $unit ) as $device => $unit_key ) :
+					?>
+					<select id="wp-swiper-<?php echo esc_attr( $unit_key ); ?>"
+						class="wp-swiper-devices__input wp-swiper-devices__unit"
+						data-device="<?php echo esc_attr( $device ); ?>"
+						name="wp_swiper_settings[<?php echo esc_attr( $unit_key ); ?>]"
+						aria-label="<?php echo esc_attr( $unit['label'] . ' — ' . $devices[ $device ][0] ); ?>"
+						<?php echo 'desktop' === $device ? '' : 'hidden'; ?>>
+						<?php if ( 'desktop' !== $device ) : ?>
+							<option value="" <?php selected( $values[ $unit_key ], '' ); ?>><?php esc_html_e( 'Inherit', 'wp-swiper' ); ?></option>
+						<?php endif; ?>
+						<?php foreach ( $unit['choices'] as $choice => $choice_label ) : ?>
+							<option value="<?php echo esc_attr( $choice ); ?>" <?php selected( $values[ $unit_key ], $choice ); ?>><?php echo esc_html( $choice_label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<?php
+				endforeach;
+			elseif ( ! empty( $field['unit'] ) ) :
 				$unit = $fields[ $field['unit'] ];
 				?>
 				<select id="wp-swiper-<?php echo esc_attr( $field['unit'] ); ?>" name="wp_swiper_settings[<?php echo esc_attr( $field['unit'] ); ?>]" aria-label="<?php echo esc_attr( $unit['label'] ); ?>">
