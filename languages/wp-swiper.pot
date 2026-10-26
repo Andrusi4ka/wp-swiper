@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Swiper 2.7.0\n"
+"Project-Id-Version: WP Swiper 2.8.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-swiper-main\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-26T11:14:05+01:00\n"
+"POT-Creation-Date: 2026-10-26T12:52:14+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-swiper\n"
@@ -42,18 +42,18 @@ msgid "https://github.com/Andrusi4ka"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:31
-#: includes/class-wp-swiper-admin.php:1047
-#: includes/class-wp-swiper-settings.php:2374
+#: includes/class-wp-swiper-admin.php:1059
+#: includes/class-wp-swiper-settings.php:2457
 msgid "Slides"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:32
-#: includes/class-wp-swiper-admin.php:373
+#: includes/class-wp-swiper-admin.php:376
 msgid "Slider settings"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:33
-#: includes/class-wp-swiper-admin.php:1049
+#: includes/class-wp-swiper-admin.php:1061
 msgid "Shortcode"
 msgstr ""
 
@@ -74,23 +74,23 @@ msgid "Use as poster"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:58
-#: includes/class-wp-swiper-admin.php:284
-#: includes/class-wp-swiper-settings.php:2292
+#: includes/class-wp-swiper-admin.php:287
+#: includes/class-wp-swiper-settings.php:2375
 msgid "Video"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:59
-#: includes/class-wp-swiper-admin.php:614
+#: includes/class-wp-swiper-admin.php:617
 msgid "Choose"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:60
-#: includes/class-wp-swiper-admin.php:614
+#: includes/class-wp-swiper-admin.php:617
 msgid "Change"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:61
-#: includes/class-wp-swiper-admin.php:615
+#: includes/class-wp-swiper-admin.php:618
 msgid "Remove"
 msgstr ""
 
@@ -109,12 +109,12 @@ msgid "Slide %d"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:68
-#: includes/class-wp-swiper-admin.php:334
+#: includes/class-wp-swiper-admin.php:337
 msgid "Add info"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:69
-#: includes/class-wp-swiper-admin.php:334
+#: includes/class-wp-swiper-admin.php:337
 msgid "Edit info"
 msgstr ""
 
@@ -126,272 +126,280 @@ msgstr ""
 msgid "The changes you made will be lost if you leave this page."
 msgstr ""
 
-#. translators: 1: percent across the image, 2: percent down it.
 #: includes/class-wp-swiper-admin.php:73
+msgid "The photos were arranged by hand on this device: Reset first to shuffle them."
+msgstr ""
+
+#: includes/class-wp-swiper-admin.php:74
+msgid "Nothing to reset: this device has no order or sizes of its own."
+msgstr ""
+
+#. translators: 1: percent across the image, 2: percent down it.
+#: includes/class-wp-swiper-admin.php:76
 #, php-format
 msgid "Kept in view: %1$s%% across, %2$s%% down."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:74
+#: includes/class-wp-swiper-admin.php:77
 msgid "Not set: the slider's Image position applies."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:83
+#: includes/class-wp-swiper-admin.php:86
 msgid "Image height"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:84
+#: includes/class-wp-swiper-admin.php:87
 msgid "Main image height"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:85
+#: includes/class-wp-swiper-admin.php:88
 msgid "Slider height"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:87
+#: includes/class-wp-swiper-admin.php:90
 msgid "Collage height"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:92
-#: includes/class-wp-swiper-settings.php:753
+#: includes/class-wp-swiper-admin.php:95
+#: includes/class-wp-swiper-settings.php:782
 msgid "Right to left"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:93
-#: includes/class-wp-swiper-settings.php:754
+#: includes/class-wp-swiper-admin.php:96
+#: includes/class-wp-swiper-settings.php:783
 msgid "Left to right"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:96
+#: includes/class-wp-swiper-admin.php:99
 msgid "Bottom to top"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:97
+#: includes/class-wp-swiper-admin.php:100
 msgid "Top to bottom"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:112
+#: includes/class-wp-swiper-admin.php:115
 msgid "Drag slides to reorder. “Add info”: a slide’s caption, description and link, all optional; a video slide has no link, its poster image is set on the Video page of the settings."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:122
+#: includes/class-wp-swiper-admin.php:125
 msgid "No slides yet."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:127
+#: includes/class-wp-swiper-admin.php:130
 msgid "Add images or videos"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:131
+#: includes/class-wp-swiper-admin.php:134
 msgid "YouTube or Vimeo link"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:132
+#: includes/class-wp-swiper-admin.php:135
 msgid "Add video link"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:134
+#: includes/class-wp-swiper-admin.php:137
 msgid "That is not a YouTube or Vimeo video link."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:154
+#: includes/class-wp-swiper-admin.php:157
 msgid "Slide info"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:155
-#: includes/class-wp-swiper-admin.php:194
+#: includes/class-wp-swiper-admin.php:158
+#: includes/class-wp-swiper-admin.php:197
 #: includes/class-wp-swiper-render.php:46
 #: includes/class-wp-swiper-whats-new.php:219
 msgid "Close"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:159
-#: includes/class-wp-swiper-admin.php:337
-#: includes/class-wp-swiper-settings.php:2288
+#: includes/class-wp-swiper-admin.php:162
+#: includes/class-wp-swiper-admin.php:340
+#: includes/class-wp-swiper-settings.php:2371
 msgid "Caption"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:160
+#: includes/class-wp-swiper-admin.php:163
 msgid "Over the image, styled on the Caption page. Bold, italic, underline; Enter starts a new line."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:164
-#: includes/class-wp-swiper-admin.php:338
-#: includes/class-wp-swiper-settings.php:2290
+#: includes/class-wp-swiper-admin.php:167
+#: includes/class-wp-swiper-admin.php:341
+#: includes/class-wp-swiper-settings.php:2373
 msgid "Description"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:165
+#: includes/class-wp-swiper-admin.php:168
 msgid "Shown under the slider while this slide is the current one. Headings, bold, italic, underline, links and lists."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:170
-#: includes/class-wp-swiper-admin.php:339
+#: includes/class-wp-swiper-admin.php:173
+#: includes/class-wp-swiper-admin.php:342
 msgid "Link"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:171
+#: includes/class-wp-swiper-admin.php:174
 msgid "A click on the image opens it. A slider with links has no lightbox."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:175
+#: includes/class-wp-swiper-admin.php:178
 msgid "Open in a new tab"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:180
-#: includes/class-wp-swiper-admin.php:214
+#: includes/class-wp-swiper-admin.php:183
+#: includes/class-wp-swiper-admin.php:217
 msgid "Cancel"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:181
-#: includes/class-wp-swiper-admin.php:215
+#: includes/class-wp-swiper-admin.php:184
+#: includes/class-wp-swiper-admin.php:218
 msgid "Apply"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:193
-#: includes/class-wp-swiper-admin.php:318
-#: includes/class-wp-swiper-settings.php:838
+#: includes/class-wp-swiper-admin.php:196
+#: includes/class-wp-swiper-admin.php:321
+#: includes/class-wp-swiper-settings.php:867
 msgid "Image position"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:197
+#: includes/class-wp-swiper-admin.php:200
 msgid "Click the part of the image to keep in view when the slider crops it (Image fit \"Cover\"). It applies on every device, over the slider's Image position."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:199
+#: includes/class-wp-swiper-admin.php:202
 msgid "Point kept in view"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:213
+#: includes/class-wp-swiper-admin.php:216
 msgid "Use the slider's position"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:321
+#: includes/class-wp-swiper-admin.php:324
 msgid "Remove slide"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:340
+#: includes/class-wp-swiper-admin.php:343
 msgid "Position"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:369
+#: includes/class-wp-swiper-admin.php:372
 msgid "Advanced"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:388
+#: includes/class-wp-swiper-admin.php:391
 msgid "Want to see more effects?"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:389
+#: includes/class-wp-swiper-admin.php:392
 msgid "Swiper demos"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:390
+#: includes/class-wp-swiper-admin.php:393
 msgid "(opens in a new tab)"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:409
+#: includes/class-wp-swiper-admin.php:412
 msgid "With the Thumbnails effect the thumbnails switch the slides: pagination and keyboard control are not used, and the arrows sit on the strip of thumbnails."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:413
+#: includes/class-wp-swiper-admin.php:416
 msgid "Add a caption to a slide to use these settings."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:418
+#: includes/class-wp-swiper-admin.php:421
 msgid "Add a description to a slide (“Add info”) to use these settings."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:419
+#: includes/class-wp-swiper-admin.php:422
 msgid "Descriptions are not shown with a vertical slider, Continuous scroll, the Collage effect or as a background."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:424
+#: includes/class-wp-swiper-admin.php:427
 msgid "Poster images"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:425
+#: includes/class-wp-swiper-admin.php:428
 msgid "Shown before a video plays and as its thumbnail. Without one: the video’s featured image in the media library, else its first frame."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:457
+#: includes/class-wp-swiper-admin.php:460
 msgid "Desktop"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:457
+#: includes/class-wp-swiper-admin.php:460
 msgid "Desktop (1025px and wider)"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:458
+#: includes/class-wp-swiper-admin.php:461
 msgid "Tablet"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:458
+#: includes/class-wp-swiper-admin.php:461
 msgid "Tablet (768–1024px)"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:459
+#: includes/class-wp-swiper-admin.php:462
 msgid "Mobile"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:459
+#: includes/class-wp-swiper-admin.php:462
 msgid "Mobile (below 768px)"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:469
-#: includes/class-wp-swiper-admin.php:699
+#: includes/class-wp-swiper-admin.php:472
+#: includes/class-wp-swiper-admin.php:702
 msgid "Device"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:625
-#: includes/class-wp-swiper-admin.php:776
+#: includes/class-wp-swiper-admin.php:628
+#: includes/class-wp-swiper-admin.php:779
 #: includes/class-wp-swiper-settings.php:505
 msgid "Shuffle"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:723
+#: includes/class-wp-swiper-admin.php:726
 msgid "Inherit"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:778
+#: includes/class-wp-swiper-admin.php:781
 msgid "Reset"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:809
+#: includes/class-wp-swiper-admin.php:821
 msgid "Save the slider to get its shortcode."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:813
+#: includes/class-wp-swiper-admin.php:825
 msgid "Paste it into any page, or use the “WP Swiper” element in WPBakery."
 msgstr ""
 
 #. translators: %s: title of the slider cloned.
-#: includes/class-wp-swiper-admin.php:928
+#: includes/class-wp-swiper-admin.php:940
 #, php-format
 msgid "%s (copy)"
 msgstr ""
 
 #. translators: %s: slider title.
-#: includes/class-wp-swiper-admin.php:979
+#: includes/class-wp-swiper-admin.php:991
 #, php-format
 msgid "Clone &#8220;%s&#8221;"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:980
+#: includes/class-wp-swiper-admin.php:992
 msgid "Clone"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:1008
+#: includes/class-wp-swiper-admin.php:1020
 msgid "Sorry, you are not allowed to clone this slider."
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:1037
+#: includes/class-wp-swiper-admin.php:1049
 msgid "Slider cloned as a draft:"
 msgstr ""
 
-#: includes/class-wp-swiper-admin.php:1048
+#: includes/class-wp-swiper-admin.php:1060
 #: includes/class-wp-swiper-settings.php:43
-#: includes/class-wp-swiper-settings.php:2342
+#: includes/class-wp-swiper-settings.php:2425
 msgid "Effect"
 msgstr ""
 
@@ -419,23 +427,27 @@ msgstr ""
 msgid "Drag a photo onto another to swap them."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:68
+#: includes/class-wp-swiper-preview.php:70
+msgid "Drag a line between photos to resize them."
+msgstr ""
+
+#: includes/class-wp-swiper-preview.php:73
 msgid "Slider preview"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:88
+#: includes/class-wp-swiper-preview.php:93
 msgid "The preview is not available any more: reload the page."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:104
+#: includes/class-wp-swiper-preview.php:109
 msgid "The block’s content"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:105
+#: includes/class-wp-swiper-preview.php:110
 msgid "Text, buttons and other elements of the row or column sit over the slider."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:106
+#: includes/class-wp-swiper-preview.php:111
 msgid "Button"
 msgstr ""
 
@@ -497,14 +509,14 @@ msgid "Go to slide %d"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:47
-#: includes/class-wp-swiper-settings.php:633
-#: includes/class-wp-swiper-settings.php:1548
+#: includes/class-wp-swiper-settings.php:662
+#: includes/class-wp-swiper-settings.php:1577
 msgid "Slide"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:48
-#: includes/class-wp-swiper-settings.php:634
-#: includes/class-wp-swiper-settings.php:1547
+#: includes/class-wp-swiper-settings.php:663
+#: includes/class-wp-swiper-settings.php:1576
 msgid "Fade"
 msgstr ""
 
@@ -529,7 +541,7 @@ msgid "Creative"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:55
-#: includes/class-wp-swiper-settings.php:2287
+#: includes/class-wp-swiper-settings.php:2370
 msgid "Thumbnails"
 msgstr ""
 
@@ -542,7 +554,7 @@ msgid "Direction"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:68
-#: includes/class-wp-swiper-settings.php:1447
+#: includes/class-wp-swiper-settings.php:1476
 msgid "Horizontal"
 msgstr ""
 
@@ -567,7 +579,7 @@ msgid "Delay between slides (ms)"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:116
-#: includes/class-wp-swiper-settings.php:617
+#: includes/class-wp-swiper-settings.php:646
 msgid "Pause on hover"
 msgstr ""
 
@@ -608,7 +620,7 @@ msgid "Under the image, as many in view as in the slider."
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:169
-#: includes/class-wp-swiper-settings.php:1337
+#: includes/class-wp-swiper-settings.php:1366
 msgid "Thumbnail border radius (px)"
 msgstr ""
 
@@ -671,9 +683,9 @@ msgstr ""
 #: includes/class-wp-swiper-settings.php:262
 #: includes/class-wp-swiper-settings.php:381
 #: includes/class-wp-swiper-settings.php:409
-#: includes/class-wp-swiper-settings.php:943
-#: includes/class-wp-swiper-settings.php:1018
-#: includes/class-wp-swiper-settings.php:1285
+#: includes/class-wp-swiper-settings.php:972
+#: includes/class-wp-swiper-settings.php:1047
+#: includes/class-wp-swiper-settings.php:1314
 msgid "Auto"
 msgstr ""
 
@@ -682,14 +694,14 @@ msgid "Auto (empty): 32px on the slider, 20px on the strip of thumbnails (Thumbn
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:268
-#: includes/class-wp-swiper-settings.php:2319
+#: includes/class-wp-swiper-settings.php:2402
 msgid "Pagination"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:272
-#: includes/class-wp-swiper-settings.php:765
-#: includes/class-wp-swiper-settings.php:1549
-#: includes/class-wp-swiper-settings.php:1719
+#: includes/class-wp-swiper-settings.php:794
+#: includes/class-wp-swiper-settings.php:1578
+#: includes/class-wp-swiper-settings.php:1748
 msgid "None"
 msgstr ""
 
@@ -707,8 +719,8 @@ msgid "Pagination position"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:284
-#: includes/class-wp-swiper-settings.php:849
-#: includes/class-wp-swiper-settings.php:926
+#: includes/class-wp-swiper-settings.php:878
+#: includes/class-wp-swiper-settings.php:955
 msgid "Bottom left"
 msgstr ""
 
@@ -717,14 +729,14 @@ msgid "Bottom center"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:286
-#: includes/class-wp-swiper-settings.php:851
-#: includes/class-wp-swiper-settings.php:928
+#: includes/class-wp-swiper-settings.php:880
+#: includes/class-wp-swiper-settings.php:957
 msgid "Bottom right"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:287
-#: includes/class-wp-swiper-settings.php:844
-#: includes/class-wp-swiper-settings.php:921
+#: includes/class-wp-swiper-settings.php:873
+#: includes/class-wp-swiper-settings.php:950
 msgid "Top left"
 msgstr ""
 
@@ -733,8 +745,8 @@ msgid "Top center"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:289
-#: includes/class-wp-swiper-settings.php:846
-#: includes/class-wp-swiper-settings.php:923
+#: includes/class-wp-swiper-settings.php:875
+#: includes/class-wp-swiper-settings.php:952
 msgid "Top right"
 msgstr ""
 
@@ -920,847 +932,855 @@ msgid "Order"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:521
-msgid "Drag a photo onto another place in the preview to swap the two. Shuffle mixes the photos at random. Both only for the device chosen (a tablet or phone without its own order takes the larger screen's); Reset goes back to it."
+msgid "Drag a photo onto another place in the preview to swap the two; with Random mosaic, drag a line between photos to resize them. Shuffle mixes the photos at random. All only for the device chosen (a tablet or phone without its own takes the larger screen's); Reset goes back to that, order and sizes."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:526
+#: includes/class-wp-swiper-settings.php:530
+msgid "Mosaic sizes"
+msgstr ""
+
+#: includes/class-wp-swiper-settings.php:543
+msgid "Arranged by hand"
+msgstr ""
+
+#: includes/class-wp-swiper-settings.php:555
 msgid "Photos on screen"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:534
+#: includes/class-wp-swiper-settings.php:563
 msgid "Grid, Justified rows, Masonry and Random mosaic; a template has its own number of places."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:539
+#: includes/class-wp-swiper-settings.php:568
 msgid "Columns"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:547
+#: includes/class-wp-swiper-settings.php:576
 msgid "Grid and Masonry."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:552
+#: includes/class-wp-swiper-settings.php:581
 msgid "Row height (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:560
+#: includes/class-wp-swiper-settings.php:589
 msgid "Justified rows: the height of a row (with Exact row height off, about it)."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:567
+#: includes/class-wp-swiper-settings.php:596
 msgid "Exact row height"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:570
+#: includes/class-wp-swiper-settings.php:599
 msgid "Every row exactly the Row height, each photo at its own proportions, nothing cropped; a row ends where the next photo would not fit, so the right ends are uneven. Off: each row is fitted to the width exactly, its height a little more or less."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:575
+#: includes/class-wp-swiper-settings.php:604
 msgid "Gap between photos (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:587
+#: includes/class-wp-swiper-settings.php:616
 msgid "Swap in the other photos"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:590
+#: includes/class-wp-swiper-settings.php:619
 msgid "With more photos than places: every so often a place, at random, fades to a photo not shown yet. The arrangement does not change."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:595
+#: includes/class-wp-swiper-settings.php:624
 msgid "A new photo every (ms)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:606
+#: includes/class-wp-swiper-settings.php:635
 msgid "Fade (ms)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:627
+#: includes/class-wp-swiper-settings.php:656
 msgid "Transition"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:639
+#: includes/class-wp-swiper-settings.php:668
 msgid "Slides per view"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:652
+#: includes/class-wp-swiper-settings.php:681
 msgid "Width from image"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:655
+#: includes/class-wp-swiper-settings.php:684
 msgid "All slides share the slider height; each one is as wide as its image’s proportions make it."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:660
+#: includes/class-wp-swiper-settings.php:689
 msgid "Slides per group"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:667
+#: includes/class-wp-swiper-settings.php:696
 msgid "How many slides one step moves (arrows, swipe, autoplay); the pagination counts the steps."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:672
+#: includes/class-wp-swiper-settings.php:701
 msgid "Space between slides (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:682
+#: includes/class-wp-swiper-settings.php:711
 msgid "Slide border radius (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:694
+#: includes/class-wp-swiper-settings.php:723
 msgid "Image border"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:701
+#: includes/class-wp-swiper-settings.php:730
 msgid "Width (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:712
-#: includes/class-wp-swiper-settings.php:1437
-#: includes/class-wp-swiper-settings.php:1572
+#: includes/class-wp-swiper-settings.php:741
+#: includes/class-wp-swiper-settings.php:1466
+#: includes/class-wp-swiper-settings.php:1601
 msgid "Color"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:720
+#: includes/class-wp-swiper-settings.php:749
 msgid "Center active slide"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:728
+#: includes/class-wp-swiper-settings.php:757
 msgid "Continuous scroll"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:731
+#: includes/class-wp-swiper-settings.php:760
 msgid "The slides move on their own without stopping, in a loop. Pause on hover applies; arrows, pagination, keyboard, dragging, autoplay and transition speed do not."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:736
+#: includes/class-wp-swiper-settings.php:765
 msgid "Scroll speed (px/s)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:749
+#: includes/class-wp-swiper-settings.php:778
 msgid "Scroll direction"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:761
+#: includes/class-wp-swiper-settings.php:790
 msgid "Separator"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:766
+#: includes/class-wp-swiper-settings.php:795
 msgid "Dot"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:767
+#: includes/class-wp-swiper-settings.php:796
 msgid "Own image"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:769
+#: includes/class-wp-swiper-settings.php:798
 msgid "Stands in the middle of the space between the slides and moves with them."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:774
+#: includes/class-wp-swiper-settings.php:803
 msgid "Separator image"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:777
+#: includes/class-wp-swiper-settings.php:806
 msgid "From the media library; PNG or SVG with a transparent background suits best."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:782
+#: includes/class-wp-swiper-settings.php:811
 msgid "Separator size (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:789
+#: includes/class-wp-swiper-settings.php:818
 msgid "The dot's diameter; an image fits in a square of this size. The space between the slides is at least as wide."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:794
+#: includes/class-wp-swiper-settings.php:823
 msgid "Dot color"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:800
+#: includes/class-wp-swiper-settings.php:829
 msgid "Image fit"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:806
+#: includes/class-wp-swiper-settings.php:835
 msgid "Cover"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:807
+#: includes/class-wp-swiper-settings.php:836
 msgid "Contain"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:809
+#: includes/class-wp-swiper-settings.php:838
 msgid "Cover: the image fills the slide, cropped where its proportions differ. Contain: the whole image is shown, with empty space beside it where its proportions differ."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:815
+#: includes/class-wp-swiper-settings.php:844
 msgid "Make the active slide wider"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:818
+#: includes/class-wp-swiper-settings.php:847
 msgid "The number of slides comes from “Slides per view”, always rounded to a whole number."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:823
+#: includes/class-wp-swiper-settings.php:852
 msgid "Active slide size (%)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:831
+#: includes/class-wp-swiper-settings.php:860
 msgid "% of the slider width (vertical sliders: of its height)."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:843
-#: includes/class-wp-swiper-settings.php:864
-#: includes/class-wp-swiper-settings.php:875
-#: includes/class-wp-swiper-settings.php:920
-#: includes/class-wp-swiper-settings.php:1240
-#: includes/class-wp-swiper-settings.php:1535
+#: includes/class-wp-swiper-settings.php:872
+#: includes/class-wp-swiper-settings.php:893
+#: includes/class-wp-swiper-settings.php:904
+#: includes/class-wp-swiper-settings.php:949
+#: includes/class-wp-swiper-settings.php:1269
+#: includes/class-wp-swiper-settings.php:1564
 msgid "Center"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:845
-#: includes/class-wp-swiper-settings.php:863
-#: includes/class-wp-swiper-settings.php:922
+#: includes/class-wp-swiper-settings.php:874
+#: includes/class-wp-swiper-settings.php:892
+#: includes/class-wp-swiper-settings.php:951
 msgid "Top"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:847
-#: includes/class-wp-swiper-settings.php:874
-#: includes/class-wp-swiper-settings.php:924
-#: includes/class-wp-swiper-settings.php:1534
+#: includes/class-wp-swiper-settings.php:876
+#: includes/class-wp-swiper-settings.php:903
+#: includes/class-wp-swiper-settings.php:953
+#: includes/class-wp-swiper-settings.php:1563
 msgid "Left"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:848
-#: includes/class-wp-swiper-settings.php:876
-#: includes/class-wp-swiper-settings.php:925
-#: includes/class-wp-swiper-settings.php:1536
+#: includes/class-wp-swiper-settings.php:877
+#: includes/class-wp-swiper-settings.php:905
+#: includes/class-wp-swiper-settings.php:954
+#: includes/class-wp-swiper-settings.php:1565
 msgid "Right"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:850
-#: includes/class-wp-swiper-settings.php:865
-#: includes/class-wp-swiper-settings.php:927
+#: includes/class-wp-swiper-settings.php:879
+#: includes/class-wp-swiper-settings.php:894
+#: includes/class-wp-swiper-settings.php:956
 msgid "Bottom"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:853
+#: includes/class-wp-swiper-settings.php:882
 msgid "The part of the image kept in view where it is cropped to fill its slide. Not for YouTube / Vimeo videos."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:859
-#: includes/class-wp-swiper-settings.php:870
+#: includes/class-wp-swiper-settings.php:888
+#: includes/class-wp-swiper-settings.php:899
 msgid "Image alignment"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:884
+#: includes/class-wp-swiper-settings.php:913
 msgid "Zoom the main image"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:887
+#: includes/class-wp-swiper-settings.php:916
 msgid "The image of the slide in view slowly zooms in or out while it is shown. Slide effect: with one slide in view (Slides per view 1 on every device) or the wider active slide. Not for video slides."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:892
+#: includes/class-wp-swiper-settings.php:921
 msgid "Zoom direction"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:897
+#: includes/class-wp-swiper-settings.php:926
 msgid "Zoom in"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:898
+#: includes/class-wp-swiper-settings.php:927
 msgid "Zoom out"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:904
+#: includes/class-wp-swiper-settings.php:933
 msgid "Zoom (%)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:911
+#: includes/class-wp-swiper-settings.php:940
 msgid "How much larger the image gets: 15 = 115% of its size."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:916
+#: includes/class-wp-swiper-settings.php:945
 msgid "Zoom towards"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:930
+#: includes/class-wp-swiper-settings.php:959
 msgid "The point of the image that stays in place: the rest grows away from it (zoom in) or towards it (zoom out)."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:936
+#: includes/class-wp-swiper-settings.php:965
 msgid "Zoom duration (ms)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:944
+#: includes/class-wp-swiper-settings.php:973
 msgid "Auto (empty): as long as a slide is shown with Autoplay (its delay plus the transition speed); without Autoplay, 6000."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:948
+#: includes/class-wp-swiper-settings.php:977
 msgid "Height"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:956
+#: includes/class-wp-swiper-settings.php:985
 msgid "0 = 500px. Auto: fills the free height of the parent column; where there is none, follows the first image’s proportions."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:958
+#: includes/class-wp-swiper-settings.php:987
 msgid "0 = 500px. Auto: fills the free height of the parent column. If the height is greater than that of the images that fit in a row, it is ignored: the slider is as tall as the tallest of them."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:965
+#: includes/class-wp-swiper-settings.php:994
 msgid "Image proportions"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:970
+#: includes/class-wp-swiper-settings.php:999
 msgid "Off"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:978
-#: includes/class-wp-swiper-settings.php:1315
-#: includes/class-wp-swiper-settings.php:2294
+#: includes/class-wp-swiper-settings.php:1007
+#: includes/class-wp-swiper-settings.php:1344
+#: includes/class-wp-swiper-settings.php:2377
 msgid "Custom"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:980
+#: includes/class-wp-swiper-settings.php:1009
 msgid "Every image is as tall as the Height and as wide as these proportions make it; Slides per view of them share the row and the free width goes around them (Distribution). Space between slides is the least space left; where they do not fit with it, they get smaller. Off: the images fill the row."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:986
-#: includes/class-wp-swiper-settings.php:1325
+#: includes/class-wp-swiper-settings.php:1015
+#: includes/class-wp-swiper-settings.php:1354
 msgid "Custom proportions"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:991
-#: includes/class-wp-swiper-settings.php:1330
+#: includes/class-wp-swiper-settings.php:1020
+#: includes/class-wp-swiper-settings.php:1359
 msgid "Width x height, for example 4x3 or 2.35x1."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:997
+#: includes/class-wp-swiper-settings.php:1026
 msgid "Distribution"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1002
+#: includes/class-wp-swiper-settings.php:1031
 msgid "Space between"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1003
+#: includes/class-wp-swiper-settings.php:1032
 msgid "Space around"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1005
+#: includes/class-wp-swiper-settings.php:1034
 msgid "Space between: the outer images at the row's edges, the free width between them. Space around: each image in the middle of its equal share, so half a space at the edges."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1010
+#: includes/class-wp-swiper-settings.php:1039
 msgid "Height unit"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1026
+#: includes/class-wp-swiper-settings.php:1055
 msgid "Visible neighbours"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1032
+#: includes/class-wp-swiper-settings.php:1061
 msgid "Slides in view on each side of the middle one."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1037
+#: includes/class-wp-swiper-settings.php:1066
 msgid "Neighbour offset (%)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1043
+#: includes/class-wp-swiper-settings.php:1072
 msgid "How far each neighbour sits from the one before it, in % of the middle slide’s width: below 100 they overlap."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1048
+#: includes/class-wp-swiper-settings.php:1077
 msgid "Neighbour scale"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1054
+#: includes/class-wp-swiper-settings.php:1083
 msgid "Size of the first neighbour; each further one shrinks as much again."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1059
+#: includes/class-wp-swiper-settings.php:1088
 msgid "Neighbour opacity (%)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1065
+#: includes/class-wp-swiper-settings.php:1094
 msgid "Of the first neighbour; each further one fades as much again."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1073
+#: includes/class-wp-swiper-settings.php:1102
 msgid "Effect shadows"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1076
+#: includes/class-wp-swiper-settings.php:1105
 msgid "Shades the slides as they turn. Not with Image fit “Contain”."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1083
+#: includes/class-wp-swiper-settings.php:1112
 msgid "Rotate (°)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1090
+#: includes/class-wp-swiper-settings.php:1119
 msgid "How far the side slides turn: above 0 towards the middle one, below 0 away from it (outwards)."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1095
+#: includes/class-wp-swiper-settings.php:1124
 msgid "Depth (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1101
+#: includes/class-wp-swiper-settings.php:1130
 msgid "How far back the side slides sit: the more, the smaller they look."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1106
+#: includes/class-wp-swiper-settings.php:1135
 msgid "Stretch (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1112
+#: includes/class-wp-swiper-settings.php:1141
 msgid "Above 0 the side slides move in under the active one; below 0 they move apart."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1117
+#: includes/class-wp-swiper-settings.php:1146
 msgid "Side slides scale"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1123
+#: includes/class-wp-swiper-settings.php:1152
 msgid "1 = the size of the active slide; 0.8 = smaller."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1130
+#: includes/class-wp-swiper-settings.php:1159
 msgid "Shadow under the cube"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1137
+#: includes/class-wp-swiper-settings.php:1166
 msgid "Shadow offset (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1143
+#: includes/class-wp-swiper-settings.php:1172
 msgid "How far below the cube the shadow falls."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1148
+#: includes/class-wp-swiper-settings.php:1177
 msgid "Shadow scale"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1154
+#: includes/class-wp-swiper-settings.php:1183
 msgid "Size of the shadow: 1 = as wide as the cube."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1159
+#: includes/class-wp-swiper-settings.php:1188
 msgid "Shadow opacity (%)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1165
+#: includes/class-wp-swiper-settings.php:1194
 msgid "The shadow is black: lower values make it a lighter grey."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1170
+#: includes/class-wp-swiper-settings.php:1199
 msgid "Darken side faces"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1173
+#: includes/class-wp-swiper-settings.php:1202
 msgid "Shades the faces as they turn away. Not with Image fit “Contain”."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1182
+#: includes/class-wp-swiper-settings.php:1211
 msgid "Stack offset (%)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1188
+#: includes/class-wp-swiper-settings.php:1217
 msgid "How far each card of the stack peeks out from under the one above it, in % of the card width. Three cards show on each side; what reaches past the block is cut off."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1195
+#: includes/class-wp-swiper-settings.php:1224
 msgid "Rotate cards"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1198
+#: includes/class-wp-swiper-settings.php:1227
 msgid "Tilts the cards of the stack and, while it moves, the card being turned."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1203
+#: includes/class-wp-swiper-settings.php:1232
 msgid "Stack rotation (°)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1209
+#: includes/class-wp-swiper-settings.php:1238
 msgid "Tilt of each card of the stack. 0 = straight."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1220
+#: includes/class-wp-swiper-settings.php:1249
 msgid "Thumbnails position"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1225
+#: includes/class-wp-swiper-settings.php:1254
 msgid "Below the slider"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1226
+#: includes/class-wp-swiper-settings.php:1255
 msgid "Above the slider"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1227
+#: includes/class-wp-swiper-settings.php:1256
 msgid "Left of the slider"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1228
+#: includes/class-wp-swiper-settings.php:1257
 msgid "Right of the slider"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1230
+#: includes/class-wp-swiper-settings.php:1259
 msgid "Left or right: a column as tall as the slider; its width follows from the thumbnail size."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1236
+#: includes/class-wp-swiper-settings.php:1265
 msgid "Thumbnails alignment"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1241
+#: includes/class-wp-swiper-settings.php:1270
 msgid "Start (left; top in a column)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1243
+#: includes/class-wp-swiper-settings.php:1272
 msgid "Where the thumbnails sit while there are too few to fill the strip."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1249
-#: includes/class-wp-swiper-settings.php:1555
+#: includes/class-wp-swiper-settings.php:1278
+#: includes/class-wp-swiper-settings.php:1584
 msgid "Gap to the slider (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1261
+#: includes/class-wp-swiper-settings.php:1290
 msgid "Thumbnails per view"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1269
+#: includes/class-wp-swiper-settings.php:1298
 msgid "Sets the thumbnail size: this many fill the strip. With more slides the strip scrolls."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1277
+#: includes/class-wp-swiper-settings.php:1306
 msgid "Thumbnail height (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1286
+#: includes/class-wp-swiper-settings.php:1315
 msgid "Auto (empty or 0): the size comes from Thumbnails per view and the proportions. Set: thumbnails this tall, frame included; their width follows from the proportions and as many show as fit, the rest scroll."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1292
+#: includes/class-wp-swiper-settings.php:1321
 msgid "Space between thumbnails (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1305
+#: includes/class-wp-swiper-settings.php:1334
 msgid "Thumbnail proportions"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1310
+#: includes/class-wp-swiper-settings.php:1339
 msgid "Square (1:1)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1317
+#: includes/class-wp-swiper-settings.php:1346
 msgid "The images are cropped or shown whole per “Image fit”."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1351
+#: includes/class-wp-swiper-settings.php:1380
 msgid "Frame width (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1363
+#: includes/class-wp-swiper-settings.php:1392
 msgid "Frame color"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1372
+#: includes/class-wp-swiper-settings.php:1401
 msgid "Active frame color"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1380
+#: includes/class-wp-swiper-settings.php:1409
 msgid "Inactive thumbnail opacity (%)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1391
+#: includes/class-wp-swiper-settings.php:1420
 msgid "Tag"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1407
-#: includes/class-wp-swiper-settings.php:1501
+#: includes/class-wp-swiper-settings.php:1436
+#: includes/class-wp-swiper-settings.php:1530
 msgid "Font size (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1418
-#: includes/class-wp-swiper-settings.php:1511
+#: includes/class-wp-swiper-settings.php:1447
+#: includes/class-wp-swiper-settings.php:1540
 msgid "Font weight"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1422
+#: includes/class-wp-swiper-settings.php:1451
 msgid "Default (of the tag)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1426
-#: includes/class-wp-swiper-settings.php:1519
+#: includes/class-wp-swiper-settings.php:1455
+#: includes/class-wp-swiper-settings.php:1548
 msgid "400 (normal)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1429
-#: includes/class-wp-swiper-settings.php:1522
+#: includes/class-wp-swiper-settings.php:1458
+#: includes/class-wp-swiper-settings.php:1551
 msgid "700 (bold)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1443
+#: includes/class-wp-swiper-settings.php:1472
 msgid "Text direction"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1448
+#: includes/class-wp-swiper-settings.php:1477
 msgid "Vertical, top to bottom"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1449
+#: includes/class-wp-swiper-settings.php:1478
 msgid "Vertical, bottom to top"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1451
+#: includes/class-wp-swiper-settings.php:1480
 msgid "Vertical text runs along the left edge of the image."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1455
-#: includes/class-wp-swiper-settings.php:2296
+#: includes/class-wp-swiper-settings.php:1484
+#: includes/class-wp-swiper-settings.php:2379
 msgid "Background"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1461
+#: includes/class-wp-swiper-settings.php:1490
 msgid "Background style"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1465
+#: includes/class-wp-swiper-settings.php:1494
 msgid "Gradient (fades out)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1466
+#: includes/class-wp-swiper-settings.php:1495
 msgid "Solid"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1468
+#: includes/class-wp-swiper-settings.php:1497
 msgid "The gradient runs from the image edge where the text is."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1474
+#: includes/class-wp-swiper-settings.php:1503
 msgid "Background opacity (%)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1484
+#: includes/class-wp-swiper-settings.php:1513
 msgid "Background color"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1490
+#: includes/class-wp-swiper-settings.php:1519
 msgid "Text shadow"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1493
+#: includes/class-wp-swiper-settings.php:1522
 msgid "Keeps the text readable on light images, e.g. without a background."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1515
+#: includes/class-wp-swiper-settings.php:1544
 msgid "Default (of the page)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1529
+#: includes/class-wp-swiper-settings.php:1558
 msgid "Alignment"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1542
+#: includes/class-wp-swiper-settings.php:1571
 msgid "Text transition"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1546
+#: includes/class-wp-swiper-settings.php:1575
 msgid "As the slider"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1551
+#: includes/class-wp-swiper-settings.php:1580
 msgid "As the slider: the text moves the way the slides do (slides, turns with a cube, flips...), at the same speed, once a slide is let go."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1561
+#: includes/class-wp-swiper-settings.php:1590
 msgid "Under the slider and its pagination, if that is outside."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1565
+#: includes/class-wp-swiper-settings.php:1594
 msgid "Own text color"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1568
+#: includes/class-wp-swiper-settings.php:1597
 msgid "Off: the colour of the page’s text."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1583
+#: includes/class-wp-swiper-settings.php:1612
 msgid "Play automatically"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1586
+#: includes/class-wp-swiper-settings.php:1615
 msgid "When its slide is shown. Browsers only start a video by themselves without sound, so a video with sound starts muted."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1591
+#: includes/class-wp-swiper-settings.php:1620
 msgid "Muted"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1594
+#: includes/class-wp-swiper-settings.php:1623
 msgid "Without sound at first; with Show controls the visitor can turn it on."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1599
+#: includes/class-wp-swiper-settings.php:1628
 msgid "Loop"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1602
+#: includes/class-wp-swiper-settings.php:1631
 msgid "Starts over at the end while its slide is shown."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1607
+#: includes/class-wp-swiper-settings.php:1636
 msgid "Show controls"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1610
+#: includes/class-wp-swiper-settings.php:1639
 msgid "Play, sound and progress. Always on without Play automatically: the visitor starts the video."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1615
+#: includes/class-wp-swiper-settings.php:1644
 msgid "Pause when the slide is left"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1618
+#: includes/class-wp-swiper-settings.php:1647
 msgid "Off: it plays on unseen (sound too) and carries on from there when its slide is back."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1623
+#: includes/class-wp-swiper-settings.php:1652
 msgid "Next slide when the video ends"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1626
+#: includes/class-wp-swiper-settings.php:1655
 msgid "With Autoplay (Controls) and Play automatically: on a video slide the slider waits for the end of the video instead of the delay. The video then plays once."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1631
+#: includes/class-wp-swiper-settings.php:1660
 msgid "Preload the next video"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1635
+#: includes/class-wp-swiper-settings.php:1664
 msgid "No: only when it plays"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1636
+#: includes/class-wp-swiper-settings.php:1665
 msgid "Its first frame (light)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1637
+#: includes/class-wp-swiper-settings.php:1666
 msgid "The video itself (heavy)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1639
+#: includes/class-wp-swiper-settings.php:1668
 msgid "For the video of the next slide only; the others load when their slide comes up."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1646
+#: includes/class-wp-swiper-settings.php:1675
 msgid "CSS class"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1650
+#: includes/class-wp-swiper-settings.php:1679
 msgid "One or more, separated by spaces. Added to the slider’s outer block, with those given where it is placed."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1655
+#: includes/class-wp-swiper-settings.php:1684
 msgid "ID"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1659
+#: includes/class-wp-swiper-settings.php:1688
 msgid "The id of the slider’s outer block: letters, digits, - and _. An id must be unique on a page, so do not place this slider twice on one page."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1668
+#: includes/class-wp-swiper-settings.php:1697
 msgid "Use as background"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1671
+#: includes/class-wp-swiper-settings.php:1700
 msgid "The slider fills the block with the class below, behind its content, and plays on its own: Autoplay and Infinite loop are on; arrows, pagination, keyboard, slide links, the lightbox and Height are not used, the images are cropped to fill."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1677
+#: includes/class-wp-swiper-settings.php:1706
 msgid "Parent block class"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1681
+#: includes/class-wp-swiper-settings.php:1710
 msgid "Give this class to the row or column the slider is in (WPBakery: “Extra class name”) and enter it here. The nearest block around the slider with it is used; without one, the slider shows as usual."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1689
+#: includes/class-wp-swiper-settings.php:1718
 msgid "Overlay opacity (%)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1695
+#: includes/class-wp-swiper-settings.php:1724
 msgid "A color over the slides, so that the content on them reads well. 0 = none."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1702
+#: includes/class-wp-swiper-settings.php:1731
 msgid "Overlay color"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1711
+#: includes/class-wp-swiper-settings.php:1740
 msgid "Minimum block height (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:1720
+#: includes/class-wp-swiper-settings.php:1749
 msgid "The block is as tall as its content (or as the page builder makes it); this keeps it at least this tall. Empty: no minimum."
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2283
+#: includes/class-wp-swiper-settings.php:2366
 msgid "Lightbox"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2284
+#: includes/class-wp-swiper-settings.php:2367
 msgid "Controls"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2285
+#: includes/class-wp-swiper-settings.php:2368
 msgid "Layout"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2311
+#: includes/class-wp-swiper-settings.php:2394
 msgid "Movement"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2315
+#: includes/class-wp-swiper-settings.php:2398
 msgid "Arrows and keyboard"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2323
+#: includes/class-wp-swiper-settings.php:2406
 msgid "Pagination style"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2366
+#: includes/class-wp-swiper-settings.php:2449
 msgid "Arrangement"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2370
+#: includes/class-wp-swiper-settings.php:2453
 msgid "Photo swapping"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2378
+#: includes/class-wp-swiper-settings.php:2461
 msgid "Size and fit"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2382
-#: includes/class-wp-swiper-settings.php:2400
+#: includes/class-wp-swiper-settings.php:2465
+#: includes/class-wp-swiper-settings.php:2483
 msgid "Look"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2386
+#: includes/class-wp-swiper-settings.php:2469
 msgid "Zoom"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2392
+#: includes/class-wp-swiper-settings.php:2475
 msgid "Placement"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:2396
+#: includes/class-wp-swiper-settings.php:2479
 msgid "Size"
 msgstr ""
 
