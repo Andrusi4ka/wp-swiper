@@ -1219,13 +1219,26 @@ body.wp-swiper-modal-open {
 	gap: 12px;
 }
 
+/* Red, like WordPress's own Remove / Delete links (it clears what was set). */
 .wp-swiper-field .wp-swiper-order-reset {
 	padding: 0;
 	border: 0;
 	background: none;
-	color: #2271b1;
+	color: #b32d2e;
 	text-decoration: underline;
 	cursor: pointer;
+}
+
+.wp-swiper-field .wp-swiper-order-reset:hover,
+.wp-swiper-field .wp-swiper-order-reset:focus {
+	color: #8a2424;
+}
+
+/* Nothing to reset on this device: grey, as a link that does nothing. */
+.wp-swiper-field .wp-swiper-order-reset:disabled {
+	color: #a7aaad;
+	text-decoration: none;
+	cursor: default;
 }
 
 .wp-swiper-field__row input[type="number"],

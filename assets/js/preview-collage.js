@@ -200,6 +200,120 @@
 		end();
 	} );
 
+	/*
+	 * Random mosaic: each cut's line between its two parts is a handle; dragged
+	 * along, the photos on either side grow and shrink (frontend.js collage()
+	 * mosaic.setShare()), each part at least MIN_PART of the cut's size. On the
+	 * release the mosaic as it is now is kept for the device in view and the
+	 * editor stores it (admin.js: a message with the cuts).
+	 */
+	var HANDLE = 12; // The handle's thickness, px (at least the gap).
+	var MIN_SHARE = 0.08;
+	var MIN_PART = 40; // px.
+	var resize = null;
+
+	function drawHandles( block, api ) {
+		var grid = block.querySelector( '.wp-swiper-collage__grid' );
+		[].forEach.call( grid.querySelectorAll( ':scope > .wp-swiper-collage__line' ), function ( node ) {
+			node.parentNode.removeChild( node );
+		} );
+		api.mosaic.lines().forEach( function ( line ) {
+			var thick = Math.max( HANDLE, line.gap );
+			var handle = document.createElement( 'div' );
+			handle.className = 'wp-swiper-collage__line wp-swiper-collage__line--' + ( line.vertical ? 'vertical' : 'horizontal' );
+			if ( line.vertical ) {
+				handle.style.left = ( line.at + line.gap / 2 - thick / 2 ) + 'px';
+				handle.style.top = line.top + 'px';
+				handle.style.width = thick + 'px';
+				handle.style.height = line.height + 'px';
+			} else {
+				handle.style.left = line.left + 'px';
+				handle.style.top = ( line.at + line.gap / 2 - thick / 2 ) + 'px';
+				handle.style.width = line.width + 'px';
+				handle.style.height = thick + 'px';
+			}
+			handle.wpLine = line;
+			handle.wpApi = api;
+			grid.appendChild( handle );
+		} );
+	}
+
+	function setup() {
+		[].forEach.call( document.querySelectorAll( '.wp-swiper-collage' ), function ( block ) {
+			var api = block.wpSwiperCollage;
+			if ( ! api || ! api.mosaic || block.wpSwiperHandles ) {
+				return;
+			}
+			block.wpSwiperHandles = true;
+			api.onPlace( function () {
+				drawHandles( block, api );
+			} );
+			drawHandles( block, api );
+		} );
+	}
+
+	document.addEventListener( 'pointerdown', function ( e ) {
+		var handle = e.button === 0 && e.target.closest( '.wp-swiper-collage__line' );
+		if ( ! handle ) {
+			return;
+		}
+		e.preventDefault();
+		var line = handle.wpLine;
+		resize = {
+			api: handle.wpApi,
+			grid: handle.parentNode,
+			node: line.node,
+			line: line,
+			device: handle.wpApi.places().device
+		};
+		resize.api.hold( true );
+		handle.classList.add( 'is-active' );
+		document.documentElement.classList.add( 'wp-swiper-collage-resizing', 'wp-swiper-collage-resizing--' + ( line.vertical ? 'vertical' : 'horizontal' ) );
+	} );
+
+	document.addEventListener( 'pointermove', function ( e ) {
+		if ( ! resize ) {
+			return;
+		}
+		var line = resize.line;
+		var rect = resize.grid.getBoundingClientRect();
+		var size = ( line.vertical ? line.width : line.height ) - line.gap;
+		if ( size <= 0 ) {
+			return;
+		}
+		var pointer = line.vertical ? e.clientX - rect.left - line.left : e.clientY - rect.top - line.top;
+		var min = Math.min( 0.45, Math.max( MIN_SHARE, MIN_PART / size ) );
+		var share = Math.max( min, Math.min( 1 - min, ( pointer - line.gap / 2 ) / size ) );
+		resize.api.mosaic.setShare( resize.node, share );
+	} );
+
+	document.addEventListener( 'pointerup', function () {
+		if ( ! resize ) {
+			return;
+		}
+		var api = resize.api;
+		var device = resize.device;
+		resize = null;
+		document.documentElement.classList.remove( 'wp-swiper-collage-resizing', 'wp-swiper-collage-resizing--vertical', 'wp-swiper-collage-resizing--horizontal' );
+		api.hold( false );
+		// Kept as it is now: rebuilt (another order, a resize) it stays.
+		var text = api.mosaic.serialize();
+		api.mosaic.set( text );
+		if ( text && window.parent && window.parent !== window ) {
+			window.parent.postMessage( { wpSwiper: 'collage-mosaic', device: device, mosaic: text }, window.location.origin );
+		}
+	} );
+
+	// The collages are set up by frontend.js once the page is there.
+	if ( document.readyState === 'complete' ) {
+		setup();
+	} else {
+		window.addEventListener( 'load', setup );
+	}
+	document.addEventListener( 'DOMContentLoaded', function () {
+		setTimeout( setup );
+	} );
+
 	document.addEventListener( 'pointercancel', end );
 	// Escape: the drag given up, everything as it was.
 	document.addEventListener( 'keydown', function ( e ) {

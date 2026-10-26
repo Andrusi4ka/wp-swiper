@@ -69,6 +69,63 @@
 	object-fit: cover;
 }
 
+/* Random mosaic (preview-collage.js): the line between two parts is a
+   handle; on hover and while dragged a white bar shows where it is. */
+.wp-swiper-collage__line {
+	position: absolute;
+	z-index: 6;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	touch-action: none;
+}
+
+.wp-swiper-collage__line--vertical,
+.wp-swiper-collage-resizing--vertical,
+.wp-swiper-collage-resizing--vertical * {
+	cursor: col-resize !important;
+}
+
+.wp-swiper-collage__line--horizontal,
+.wp-swiper-collage-resizing--horizontal,
+.wp-swiper-collage-resizing--horizontal * {
+	cursor: row-resize !important;
+}
+
+.wp-swiper-collage__line::after {
+	content: "";
+	border-radius: 2px;
+	background: #fff;
+	box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.3);
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+
+.wp-swiper-collage__line--vertical::after {
+	width: 4px;
+	height: min(60px, 50%);
+}
+
+.wp-swiper-collage__line--horizontal::after {
+	width: min(60px, 50%);
+	height: 4px;
+}
+
+.wp-swiper-collage__line:hover::after,
+.wp-swiper-collage__line.is-active::after {
+	opacity: 1;
+}
+
+/* While a line is dragged nothing is picked up or selected (the photos let
+   the pointer through to the block, which has the resize cursor). */
+.wp-swiper-collage-resizing {
+	user-select: none;
+}
+
+.wp-swiper-collage-resizing .wp-swiper-collage__cell {
+	pointer-events: none;
+}
+
 /* Developer mode of the preview (preview-dev.js): over the slider, clipped
    by it; it never takes clicks. */
 .wp-swiper-dev {

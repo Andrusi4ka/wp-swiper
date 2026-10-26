@@ -281,6 +281,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__devices' ), $button );
 		// The collage's hint, hidden until admin.js sees that effect.
 		$this->assertStringContainsString( '<p class="description wp-swiper-preview__hint" data-effect="collage" hidden>', $html );
+		$this->assertStringContainsString( '<p class="description wp-swiper-preview__hint" data-effect="mosaic" hidden>', $html );
 	}
 
 	public function test_collage_order_field_per_device_with_shuffle_and_reset() {
@@ -300,6 +301,25 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		// The shuffle number is kept inside it, not as a field of its own.
 		$this->assertStringContainsString( '<input type="hidden" id="wp-swiper-collage_seed" name="wp_swiper_settings[collage_seed]" value="77">', $html );
 		$this->assertStringNotContainsString( 'data-field="collage_seed"', $html );
+
+		// The mosaic sizes: kept inside the Order field (its Reset clears them
+		// too), one value per device, no field of their own.
+		$this->assertStringNotContainsString( 'data-field="collage_mosaic"', $html );
+		foreach ( array( 'collage_mosaic' => 'desktop', 'collage_mosaic_tablet' => 'tablet', 'collage_mosaic_mobile' => 'mobile' ) as $key => $device ) {
+			$this->assertStringContainsString( '<input type="hidden" id="wp-swiper-' . $key . '" name="wp_swiper_settings[' . $key . ']" value="" class="wp-swiper-devices__input" data-device="' . $device . '">', $field, $key );
+		}
+		// Whether a device's order or sizes were set by hand (admin.js greys Shuffle then).
+		foreach ( array( 'collage_manual', 'collage_manual_tablet', 'collage_manual_mobile' ) as $key ) {
+			$this->assertStringContainsString( 'id="wp-swiper-' . $key . '" name="wp_swiper_settings[' . $key . ']"', $field, $key );
+		}
+		$this->assertStringNotContainsString( 'data-field="collage_manual"', $html );
+	}
+
+	public function test_collage_manual_is_saved_per_device() {
+		$clean = WP_Swiper_Settings::sanitize( array( 'collage_manual' => '1', 'collage_manual_tablet' => '', 'collage_manual_mobile' => '7' ) );
+		$this->assertSame( 1, $clean['collage_manual'] );
+		$this->assertSame( '', $clean['collage_manual_tablet'] );
+		$this->assertSame( 1, $clean['collage_manual_mobile'] );
 	}
 
 	public function test_preview_refuses_a_bad_nonce() {

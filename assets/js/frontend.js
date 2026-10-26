@@ -2546,6 +2546,62 @@
 	}
 
 	/**
+	 * Random mosaic cuts as stored (WP_Swiper_Settings::sanitize_mosaic()):
+	 * "V0.6[0,H0.5[1,2]]" to a tree as mosaicTree() makes, and back.
+	 *
+	 * @param {string} text The cuts.
+	 * @return {Object|null} The tree; null when it is not one.
+	 */
+	function parseMosaic( text ) {
+		var at = 0;
+		text = String( text || '' );
+		function node() {
+			var leaf = /^\d+/.exec( text.slice( at ) );
+			if ( leaf ) {
+				at += leaf[ 0 ].length;
+				return { leaf: Number( leaf[ 0 ] ) };
+			}
+			var cut = /^([VH])(\d*\.?\d+)\[/.exec( text.slice( at ) );
+			if ( ! cut ) {
+				return null;
+			}
+			at += cut[ 0 ].length;
+			var a = node();
+			if ( ! a || text.charAt( at ) !== ',' ) {
+				return null;
+			}
+			at++;
+			var b = node();
+			if ( ! b || text.charAt( at ) !== ']' ) {
+				return null;
+			}
+			at++;
+			return { vertical: cut[ 1 ] === 'V', share: Number( cut[ 2 ] ), a: a, b: b };
+		}
+		var tree = text ? node() : null;
+		return tree && at === text.length ? tree : null;
+	}
+
+	function serializeMosaic( node ) {
+		if ( undefined !== node.leaf ) {
+			return String( node.leaf );
+		}
+		return ( node.vertical ? 'V' : 'H' ) + Math.round( node.share * 10000 ) / 10000 + '[' + serializeMosaic( node.a ) + ',' + serializeMosaic( node.b ) + ']';
+	}
+
+	// The places of a mosaic, each once: its leaves, sorted.
+	function mosaicLeaves( node, list ) {
+		list = list || [];
+		if ( undefined !== node.leaf ) {
+			list.push( node.leaf );
+		} else {
+			mosaicLeaves( node.a, list );
+			mosaicLeaves( node.b, list );
+		}
+		return list;
+	}
+
+	/**
 	 * @param {Element} el     The .wp-swiper-collage block.
 	 * @param {Object}  config { layout, count, columns, rowHeight, gap: per
 	 *                         device; seed; swap: false or { delay, pause };
@@ -2570,6 +2626,10 @@
 		// slider (fillHeight()); not a background (it fills its block anyway).
 		var stretchy = !! config.fill && ! root.classList.contains( 'wp-swiper--background' );
 		var stretched = false;
+		// Random mosaic: its cuts as last laid out (place()), for the preview.
+		var mosaicLines = [];
+		// Called once the places are laid out (the preview draws the lines then).
+		var placed = [];
 
 		if ( ! slides.length ) {
 			return;
@@ -2601,6 +2661,20 @@
 		// Random mosaic: its cuts for the block's proportions, from the shuffle
 		// too (and the number of places).
 		function cut() {
+			// The cuts set in the preview for this device, while they have a
+			// place for every place shown (each once); else worked out.
+			var stored = config.mosaic && config.mosaic[ current ] ? parseMosaic( config.mosaic[ current ] ) : null;
+			if ( stored ) {
+				var leaves = mosaicLeaves( stored ).sort( function ( x, y ) {
+					return x - y;
+				} );
+				if ( leaves.length === cells.length && leaves.every( function ( leaf, i ) {
+					return leaf === i;
+				} ) ) {
+					tree = stored;
+					return;
+				}
+			}
 			var aspect = grid.clientWidth / ( grid.clientHeight || 1 ) || 1.5;
 			tree = mosaicTree( cells.map( function ( cell ) {
 				return cell.wpRatio;
@@ -2731,6 +2805,8 @@
 
 			if ( layout === 'random' ) {
 				// The block keeps its Height; the cuts are laid over it, gaps between.
+				// Each cut kept with its part and the line between its two (mosaicLines).
+				mosaicLines = [];
 				var apply = function ( node, left, top, w, h ) {
 					if ( undefined !== node.leaf ) {
 						set( cells[ node.leaf ], left, top, w, h );
@@ -2738,10 +2814,12 @@
 					}
 					if ( node.vertical ) {
 						var first = Math.max( 0, ( w - gap ) * node.share );
+						mosaicLines.push( { node: node, vertical: true, left: left, top: top, width: w, height: h, at: left + first, gap: gap } );
 						apply( node.a, left, top, first, h );
 						apply( node.b, left + first + gap, top, Math.max( 0, w - first - gap ), h );
 					} else {
 						var upper = Math.max( 0, ( h - gap ) * node.share );
+						mosaicLines.push( { node: node, vertical: false, left: left, top: top, width: w, height: h, at: top + upper, gap: gap } );
 						apply( node.a, left, top, w, upper );
 						apply( node.b, left, top + upper + gap, w, Math.max( 0, h - upper - gap ) );
 					}
@@ -2828,6 +2906,9 @@
 				fillLines( lines, grid.clientHeight, gap, layout !== 'masonry' );
 			}
 			cells.forEach( sizeImages );
+			placed.forEach( function ( callback ) {
+				callback();
+			} );
 		}
 
 		// The places for this device's layout, the photos in shuffle order.
@@ -3061,6 +3142,30 @@
 			ids: config.ids || [],
 			hold: function ( on ) {
 				paused = !! on;
+			},
+			// Random mosaic: its cuts' lines as laid out now (grid px), a cut's new
+			// share laid out at once, the cuts as stored, and new ones (or none:
+			// worked out again) for this device.
+			mosaic: {
+				lines: function () {
+					return config.layout[ current ] === 'random' && tree ? mosaicLines.slice() : [];
+				},
+				setShare: function ( node, share ) {
+					node.share = share;
+					place();
+				},
+				serialize: function () {
+					return tree ? serializeMosaic( tree ) : '';
+				},
+				set: function ( text ) {
+					config.mosaic = config.mosaic || {};
+					config.mosaic[ current ] = text || '';
+					cut();
+					place();
+				}
+			},
+			onPlace: function ( callback ) {
+				placed.push( callback );
 			}
 		};
 	}

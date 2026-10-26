@@ -1139,6 +1139,9 @@ class WP_Swiper_Render {
 			// Indexes as frontend.js counts them: the slides in the pool, in turn.
 			'order'     => WP_Swiper_Settings::collage_orders( $settings, array_values( $slides ) ),
 			'ids'       => array_map( 'intval', array_values( wp_list_pluck( $slides, 'id' ) ) ),
+			// Random mosaic cuts set in the preview, per device ('' : worked out;
+			// frontend.js uses them while their places match the places shown).
+			'mosaic'    => array_map( array( 'WP_Swiper_Settings', 'sanitize_mosaic' ), WP_Swiper_Settings::responsive( $settings, 'collage_mosaic' ) ),
 			'swap'      => $settings['collage_swap'] ? array(
 				'delay' => (int) $settings['collage_swap_delay'],
 				'pause' => (bool) $settings['collage_pause'],

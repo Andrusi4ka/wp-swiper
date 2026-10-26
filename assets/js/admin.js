@@ -1147,6 +1147,7 @@
 			};
 			// Which photo is in which place: every style (its own per device).
 			field( 'collage_order' ).toggle( collage );
+			$( '.wp-swiper-preview__hint[data-effect="mosaic"]' ).prop( 'hidden', ! collageUses( [ 'random' ] ) );
 			// The preview says its photos swap by dragging.
 			$( '.wp-swiper-preview__hint[data-effect="collage"]' ).prop( 'hidden', ! collage );
 			// The collage's Height: not for the styles as tall as their photos make them.
@@ -1335,6 +1336,9 @@
 		function syncResponsive( $field ) {
 			var $inputs = $field.find( '.wp-swiper-devices__input' );
 			var inherited = '';
+			// Devices with a value of their own (a field may keep more than one
+			// value per device: the collage Order its order and mosaic sizes).
+			var owns = {};
 
 			// Empty tablet/mobile inputs show the value they inherit.
 			$inputs.each( function () {
@@ -1347,14 +1351,20 @@
 					if ( ! $input.is( 'select' ) ) {
 						$input.attr( 'placeholder', inherited );
 					}
-					// A dot on the icon: this device has a value of its own.
-					$field.find( '.wp-swiper-devices__btn[data-device="' + device + '"]' ).toggleClass( 'has-value', own );
+					owns[ device ] = owns[ device ] || own;
 				}
 				if ( own ) {
 					inherited = $input.val();
 				} else if ( device === 'desktop' ) {
 					// An empty desktop value says what it means ("As the slides").
 					inherited = $input.attr( 'placeholder' ) || '';
+				}
+			} );
+			// A dot on the icon: this device has a value of its own.
+			$field.find( '.wp-swiper-devices__btn' ).each( function () {
+				var device = $( this ).data( 'device' );
+				if ( device !== 'desktop' ) {
+					$( this ).toggleClass( 'has-value', !! owns[ device ] );
 				}
 			} );
 		}
@@ -1505,13 +1515,57 @@
 			var orderDevice = function () {
 				return $order.find( '.wp-swiper-devices__btn.is-active' ).data( 'device' ) || currentDevice;
 			};
+			// The field keeps three values per device: the order, the mosaic sizes
+			// and whether either was set by hand in the preview ("1").
+			var input = function ( name, device ) {
+				return $( '#wp-swiper-' + name + ( device === 'desktop' ? '' : '_' + device ) );
+			};
+			var $shuffle = $order.find( '.wp-swiper-shuffle' );
+			var $reset = $order.find( '.wp-swiper-order-reset' );
+
+			/*
+			 * For the device the field shows: Reset only while it has an order or
+			 * sizes of its own (there is something to go back from); Shuffle not
+			 * while they were set by hand (it would undo that without a word).
+			 */
+			var syncOrderButtons = function () {
+				var device = orderDevice();
+				var own = input( 'collage_order', device ).val() !== '' || input( 'collage_mosaic', device ).val() !== '';
+				var byHand = own && input( 'collage_manual', device ).val() === '1';
+				$shuffle.prop( 'disabled', byHand ).attr( 'title', byHand ? i18n.shuffleLocked || '' : '' );
+				$reset.prop( 'disabled', ! own ).attr( 'title', own ? '' : i18n.resetNothing || '' );
+			};
 			var setOrder = function ( device, ids ) {
-				$order.find( '.wp-swiper-devices__input[data-device="' + device + '"]' ).val( ids.join( ',' ) );
+				input( 'collage_order', device ).val( ids.join( ',' ) );
 				syncResponsive( $order );
+				syncOrderButtons();
+			};
+			var setMosaic = function ( device, text ) {
+				input( 'collage_mosaic', device ).val( text );
+				syncResponsive( $order );
+				syncOrderButtons();
+			};
+			var setByHand = function ( device, on ) {
+				input( 'collage_manual', device ).val( on ? '1' : '' );
+				syncResponsive( $order );
+				syncOrderButtons();
 			};
 
+			// Another device shown in the field (its own icons): its buttons, once
+			// the field has switched. The field follows the preview's device, so
+			// the buttons are those of the collage in view.
+			var showOrderDevice = function ( device ) {
+				$order.find( '.wp-swiper-devices__btn[data-device="' + device + '"]' ).trigger( 'click' );
+			};
+			$order.on( 'click', '.wp-swiper-devices__btn', function () {
+				setTimeout( syncOrderButtons );
+			} );
+			deviceListeners.push( showOrderDevice );
+			showOrderDevice( currentDevice );
+			syncOrderButtons();
+
 			$order.on( 'click', '.wp-swiper-shuffle', function () {
-				var $input = $order.find( '.wp-swiper-devices__input[data-device="' + orderDevice() + '"]' );
+				var $input = input( 'collage_order', orderDevice() );
 				var ids = $list.find( 'input[name="wp_swiper_slides[id][]"]' ).map( function () {
 					return Number( this.value ) || 0;
 				} ).get().filter( function ( id ) {
@@ -1532,21 +1586,32 @@
 				updatePreview();
 			} );
 
+			// Reset: the order and the mosaic sizes both, and that they were set by hand.
 			$order.on( 'click', '.wp-swiper-order-reset', function () {
 				setOrder( orderDevice(), [] );
+				setMosaic( orderDevice(), '' );
+				setByHand( orderDevice(), false );
 				updatePreview();
 			} );
 
-			// From the preview's frame only: the order a drag made there, for the
-			// device it shows. The frame shows it already: no update needed.
+			// From the preview's frame only: the order a photo dragged there made,
+			// or the mosaic a line dragged there made, for the device it shows. The
+			// frame shows it already: no update needed.
 			window.addEventListener( 'message', function ( e ) {
 				var data = e.data || {};
-				if ( e.source !== previewFrame.contentWindow || data.wpSwiper !== 'collage-order' || DEVICES.indexOf( data.device ) === -1 || ! Array.isArray( data.ids ) ) {
+				if ( e.source !== previewFrame.contentWindow || DEVICES.indexOf( data.device ) === -1 ) {
 					return;
 				}
-				setOrder( data.device, data.ids.map( Number ).filter( function ( id ) {
-					return id > 0;
-				} ) );
+				if ( data.wpSwiper === 'collage-order' && Array.isArray( data.ids ) ) {
+					setOrder( data.device, data.ids.map( Number ).filter( function ( id ) {
+						return id > 0;
+					} ) );
+					setByHand( data.device, true );
+				} else if ( data.wpSwiper === 'collage-mosaic' && typeof data.mosaic === 'string' && /^[VH0-9.,[\]]{1,4000}$/.test( data.mosaic ) ) {
+					// Checked again when saved (WP_Swiper_Settings::sanitize_mosaic()).
+					setMosaic( data.device, data.mosaic );
+					setByHand( data.device, true );
+				}
 			} );
 
 			// Changes since the last update: the button says so.

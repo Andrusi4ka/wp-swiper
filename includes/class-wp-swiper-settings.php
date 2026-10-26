@@ -518,7 +518,36 @@ class WP_Swiper_Settings {
 				'type'       => 'order',
 				'responsive' => true,
 				'default'    => '',
-				'help'       => __( 'Drag a photo onto another place in the preview to swap the two. Shuffle mixes the photos at random. Both only for the device chosen (a tablet or phone without its own order takes the larger screen\'s); Reset goes back to it.', 'wp-swiper' ),
+				'help'       => __( 'Drag a photo onto another place in the preview to swap the two; with Random mosaic, drag a line between photos to resize them. Shuffle mixes the photos at random. All only for the device chosen (a tablet or phone without its own takes the larger screen\'s); Reset goes back to that, order and sizes.', 'wp-swiper' ),
+			),
+			// Random mosaic: its cuts as set by dragging the lines between the
+			// photos in the preview, per device (see sanitize_mosaic()); '' on
+			// desktop: worked out from the photos; on tablet and mobile: the
+			// larger screen's. Kept inside the Order field, whose Reset clears it too.
+			'collage_mosaic'        => array(
+				'section'    => 'layout',
+				'effects'    => array( 'collage' ),
+				'label'      => __( 'Mosaic sizes', 'wp-swiper' ),
+				'type'       => 'mosaic',
+				'responsive' => true,
+				'inline_in'  => 'collage_order',
+				'default'    => '',
+			),
+			// Whether the order or the mosaic sizes of a device were set by hand in
+			// the preview (1) rather than by Shuffle: Shuffle is then unavailable
+			// there until Reset (admin.js). Kept inside the Order field; the slider
+			// itself does not use it.
+			'collage_manual'        => array(
+				'section'    => 'layout',
+				'effects'    => array( 'collage' ),
+				'label'      => __( 'Arranged by hand', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'inline_in'  => 'collage_order',
+				'default'    => 0,
+				'min'        => 0,
+				'max'        => 1,
+				'step'       => 1,
 			),
 			'collage_count'         => array(
 				'section'         => 'layout',
@@ -2146,6 +2175,60 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * Random mosaic cuts as stored: a place's number (0 for the first place),
+	 * or a cut, "V" (side by side) or "H" (one over the other), the share of
+	 * the first part (0.05–0.95) and the two parts in brackets:
+	 * "V0.6[0,H0.5[1,2]]". Every place once, numbered from 0 with none left
+	 * out; at most 100 places.
+	 *
+	 * @param string $value Raw input.
+	 * @return string The cuts as above, shares to four decimals; '' when it is not one.
+	 */
+	public static function sanitize_mosaic( $value ) {
+		$value = preg_replace( '/\s+/', '', (string) $value );
+		if ( '' === $value || strlen( $value ) > 4000 ) {
+			return '';
+		}
+		$at     = 0;
+		$leaves = array();
+		$parse  = function () use ( &$parse, &$at, &$leaves, $value ) {
+			if ( preg_match( '/\G(\d{1,3})/', $value, $match, 0, $at ) ) {
+				$at      += strlen( $match[1] );
+				$leaves[] = (int) $match[1];
+				return $match[1] === (string) (int) $match[1] ? (string) (int) $match[1] : null;
+			}
+			if ( ! preg_match( '/\G([VH])(\d*\.?\d+)\[/', $value, $match, 0, $at ) ) {
+				return null;
+			}
+			$at   += strlen( $match[0] );
+			$share = (float) $match[2];
+			if ( $share < 0.05 || $share > 0.95 ) {
+				return null;
+			}
+			$a = $parse();
+			if ( null === $a || ',' !== substr( $value, $at, 1 ) ) {
+				return null;
+			}
+			++$at;
+			$b = $parse();
+			if ( null === $b || ']' !== substr( $value, $at, 1 ) ) {
+				return null;
+			}
+			++$at;
+			// A dot whatever the locale; no trailing zeros.
+			$share = rtrim( rtrim( sprintf( '%.4F', $share ), '0' ), '.' );
+			return $match[1] . $share . '[' . $a . ',' . $b . ']';
+		};
+		$tree = $parse();
+		if ( null === $tree || strlen( $value ) !== $at || count( $leaves ) > 100 ) {
+			return '';
+		}
+		$sorted = $leaves;
+		sort( $sorted );
+		return range( 0, count( $leaves ) - 1 ) === $sorted ? $tree : '';
+	}
+
+	/**
 	 * The collage's order on each device as slide indexes: the photos of the
 	 * order set, by ID, in its order (a photo twice in the slides: its first
 	 * slide); false where none is set (the shuffle). Photos not in it come
@@ -2876,6 +2959,8 @@ class WP_Swiper_Settings {
 					$value = self::normalize_ratio( $value );
 				} elseif ( 'order' === $field['type'] ) {
 					$value = self::sanitize_order( $value );
+				} elseif ( 'mosaic' === $field['type'] ) {
+					$value = self::sanitize_mosaic( $value );
 				} elseif ( '' !== $value ) {
 					$value = 'float' === $field['type'] ? round( (float) $value, 2 ) : (int) $value;
 					$value = max( $field['min'], min( $field['max'], $value ) );
@@ -2934,6 +3019,10 @@ class WP_Swiper_Settings {
 
 				case 'order': // Photo IDs in their order, "12,7,30"; '' = none.
 					$clean[ $key ] = self::sanitize_order( null === $value ? '' : (string) $value );
+					break;
+
+				case 'mosaic': // Random mosaic cuts, "V0.6[0,H0.5[1,2]]"; '' = none.
+					$clean[ $key ] = self::sanitize_mosaic( null === $value ? '' : (string) $value );
 					break;
 
 				case 'image': // An image of the media library (its ID); 0 = none.

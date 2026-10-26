@@ -659,6 +659,11 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertSame( array( 1, 2 ), $config['order']['mobile'] );
 	}
 
+	public function test_collage_config_has_the_mosaic_per_device() {
+		$config = $this->config( $this->render( array( 'effect' => 'collage', 'collage_layout' => 'random', 'collage_mosaic_tablet' => 'H0.3[1,0]' ) ), 'data-wp-swiper-collage' );
+		$this->assertSame( array( 'desktop' => '', 'tablet' => 'H0.3[1,0]', 'mobile' => 'H0.3[1,0]' ), $config['mosaic'] );
+	}
+
 	public function test_collage_ids_follow_the_slides_shown() {
 		$slides = $this->slides( 3 );
 		// A slide whose photo is gone is skipped: the indexes stay those of the pool.

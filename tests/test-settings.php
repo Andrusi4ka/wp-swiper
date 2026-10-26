@@ -494,6 +494,38 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( array( 0, 1 ), WP_Swiper_Settings::collage_orders( $this->settings( array( 'collage_order' => $ids[0] . ',' . $ids[1] ) ), $twice )['desktop'] );
 	}
 
+	/**
+	 * @dataProvider mosaics
+	 */
+	public function test_sanitize_mosaic( $input, $expected ) {
+		$this->assertSame( $expected, WP_Swiper_Settings::sanitize_mosaic( $input ) );
+	}
+
+	public function mosaics() {
+		return array(
+			'kept'              => array( 'V0.6[0,H0.5[1,2]]', 'V0.6[0,H0.5[1,2]]' ),
+			'spaces, zeros'     => array( ' V0.60000[ 0 , H.5[1,2] ]', 'V0.6[0,H0.5[1,2]]' ),
+			'four decimals'     => array( 'H0.3333333[1,0]', 'H0.3333[1,0]' ),
+			'one place'         => array( '0', '0' ),
+			'a place twice'     => array( 'V0.6[0,0]', '' ),
+			'a place missing'   => array( 'V0.6[0,2]', '' ),
+			'share too big'     => array( 'V0.99[0,1]', '' ),
+			'share too small'   => array( 'V0.01[0,1]', '' ),
+			'unknown cut'       => array( 'X0.5[0,1]', '' ),
+			'trailing text'     => array( 'V0.5[0,1]x', '' ),
+			'leading zero'      => array( 'V0.5[01,1]', '' ),
+			'markup'            => array( 'V0.5[0,<b>1</b>]', '' ),
+			'empty'             => array( '', '' ),
+		);
+	}
+
+	public function test_sanitize_keeps_a_mosaic_per_device() {
+		$clean = WP_Swiper_Settings::sanitize( array( 'collage_mosaic' => 'V0.5[0,1]', 'collage_mosaic_tablet' => '', 'collage_mosaic_mobile' => 'bad' ) );
+		$this->assertSame( 'V0.5[0,1]', $clean['collage_mosaic'] );
+		$this->assertSame( '', $clean['collage_mosaic_tablet'] );
+		$this->assertSame( '', $clean['collage_mosaic_mobile'] );
+	}
+
 	/* Continuous scroll separator ------------------------------------ */
 
 	public function test_sanitize_keeps_only_an_image_for_an_image_field() {

@@ -69,6 +69,9 @@ class WP_Swiper_Admin {
 					'infoEdit'     => __( 'Edit info', 'wp-swiper' ),
 					'copied'      => __( 'Copied!', 'wp-swiper' ),
 					'unsaved'     => __( 'The changes you made will be lost if you leave this page.', 'wp-swiper' ),
+					// Collage Order: Shuffle while the photos were arranged by hand.
+					'shuffleLocked' => __( 'The photos were arranged by hand on this device: Reset first to shuffle them.', 'wp-swiper' ),
+					'resetNothing'  => __( 'Nothing to reset: this device has no order or sizes of its own.', 'wp-swiper' ),
 					/* translators: 1: percent across the image, 2: percent down it. */
 					'positionPoint' => __( 'Kept in view: %1$s%% across, %2$s%% down.', 'wp-swiper' ),
 					'positionNone'  => __( 'Not set: the slider\'s Image position applies.', 'wp-swiper' ),
@@ -770,17 +773,26 @@ class WP_Swiper_Admin {
 			<?php endforeach; ?>
 
 			<?php if ( 'order' === $field['type'] ) : ?>
-				<?php // For the device shown: a new order at random, or back to the larger screen's (desktop: the shuffle). ?>
+				<?php // For the device shown: a new order at random; back to the larger screen's order and mosaic sizes (desktop: the shuffle, sizes worked out). ?>
 				<button type="button" class="button wp-swiper-shuffle">
 					<span class="dashicons dashicons-randomize" aria-hidden="true"></span>
 					<?php esc_html_e( 'Shuffle', 'wp-swiper' ); ?>
 				</button>
 				<button type="button" class="button-link wp-swiper-order-reset"><?php esc_html_e( 'Reset', 'wp-swiper' ); ?></button>
 				<?php
-				// Fields kept inside this one (the shuffle number of the order without one set).
+				// Fields kept inside this one: the shuffle number of the order without
+				// one set; the mosaic sizes per device (devices__input: their dot too).
 				foreach ( $fields as $inline_key => $inline ) {
-					if ( isset( $inline['inline_in'] ) && $key === $inline['inline_in'] ) {
-						printf( '<input type="hidden" id="wp-swiper-%1$s" name="wp_swiper_settings[%1$s]" value="%2$s">', esc_attr( $inline_key ), esc_attr( $values[ $inline_key ] ) );
+					if ( ! isset( $inline['inline_in'] ) || $key !== $inline['inline_in'] ) {
+						continue;
+					}
+					foreach ( WP_Swiper_Settings::device_keys( $inline_key, $inline ) as $inline_device => $inline_storage ) {
+						printf(
+							'<input type="hidden" id="wp-swiper-%1$s" name="wp_swiper_settings[%1$s]" value="%2$s"%3$s>',
+							esc_attr( $inline_storage ),
+							esc_attr( $values[ $inline_storage ] ),
+							empty( $inline['responsive'] ) ? '' : ' class="wp-swiper-devices__input" data-device="' . esc_attr( $inline_device ) . '"'
+						);
 					}
 				}
 				?>

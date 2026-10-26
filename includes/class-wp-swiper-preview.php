@@ -64,6 +64,11 @@ class WP_Swiper_Preview {
 					<span class="dashicons dashicons-move" aria-hidden="true"></span>
 					<?php esc_html_e( 'Drag a photo onto another to swap them.', 'wp-swiper' ); ?>
 				</p>
+				<?php // Random mosaic only (admin.js): the lines between its photos resize them. ?>
+				<p class="description wp-swiper-preview__hint" data-effect="mosaic" hidden>
+					<span class="dashicons dashicons-leftright" aria-hidden="true"></span>
+					<?php esc_html_e( 'Drag a line between photos to resize them.', 'wp-swiper' ); ?>
+				</p>
 				<div class="wp-swiper-preview__stage">
 					<iframe class="wp-swiper-preview__frame" name="wp-swiper-preview-<?php echo (int) $post->ID; ?>" title="<?php esc_attr_e( 'Slider preview', 'wp-swiper' ); ?>" src="about:blank"></iframe>
 				</div>
