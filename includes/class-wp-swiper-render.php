@@ -126,6 +126,11 @@ class WP_Swiper_Render {
 				: '';
 		}
 
+		// Art: drawn by its own class, with its own settings and assets only.
+		if ( WP_Swiper_Art::EFFECT === $settings['effect'] ) {
+			return WP_Swiper_Art::render( $post_id, $slides, $settings, $class );
+		}
+
 		wp_enqueue_style( 'wp-swiper' );
 		wp_enqueue_script( 'wp-swiper' );
 

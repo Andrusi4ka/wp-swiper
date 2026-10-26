@@ -1177,6 +1177,32 @@
 			// A class of its own, over the toggles above (which keep their say for the other effects).
 			$( '#wp-swiper-page-controls .wp-swiper-field' ).toggleClass( 'is-not-applicable', collage );
 
+			// Art: the preview says its photos swap by dragging.
+			$( '.wp-swiper-preview__hint[data-effect="art"]' ).prop( 'hidden', effect !== 'art' );
+			// Art (class-wp-swiper-art.php): its own fields only, those of its Style
+			// (data-styles); of the rest just the Effect and the slider's class and id.
+			// Last, over the toggles above: none of them applies to it.
+			if ( effect === 'art' ) {
+				var artStyle = $( '#wp-swiper-art_style' ).val();
+				$( '.wp-swiper-field' ).each( function () {
+					var $field = $( this );
+					if ( String( $field.data( 'effects' ) || '' ).split( ' ' ).indexOf( 'art' ) === -1 ) {
+						if ( [ 'effect', 'css_class', 'css_id' ].indexOf( $field.data( 'field' ) ) === -1 ) {
+							$field.hide();
+						}
+						return;
+					}
+					var styles = $field.data( 'styles' );
+					$field.toggle( ! styles || String( styles ).split( ' ' ).indexOf( artStyle ) !== -1 );
+				} );
+				// Ring: the label only with an opening it fits in (photos all around: none).
+				if ( artStyle === 'ring' && ( Number( $( '#wp-swiper-art_ring_opening' ).val() ) || 0 ) < 20 ) {
+					[ 'art_label_image', 'art_label_title', 'art_label_subtitle', 'art_label_color' ].forEach( function ( name ) {
+						field( name ).hide();
+					} );
+				}
+			}
+
 			// Shown: not hidden by a toggle, nor as not applicable (above).
 			var shown = function () {
 				return this.style.display !== 'none' && ! $( this ).hasClass( 'is-not-applicable' );
@@ -1611,6 +1637,26 @@
 					// Checked again when saved (WP_Swiper_Settings::sanitize_mosaic()).
 					setMosaic( data.device, data.mosaic );
 					setByHand( data.device, true );
+				}
+			} );
+
+			// Art (apart from the collage above): the order a photo dragged onto
+			// another piece in the preview made, for the device it shows, kept in
+			// the hidden art_order values (class-wp-swiper-art.php). No update needed.
+			// And the Ring's middle circle size its edge dragged there made (art_ring_center).
+			window.addEventListener( 'message', function ( e ) {
+				var data = e.data || {};
+				if ( e.source !== previewFrame.contentWindow || DEVICES.indexOf( data.device ) === -1 ) {
+					return;
+				}
+				var suffix = data.device === 'desktop' ? '' : '_' + data.device;
+				if ( data.wpSwiper === 'art-order' && Array.isArray( data.ids ) ) {
+					$( '#wp-swiper-art_order' + suffix ).val( data.ids.map( Number ).filter( function ( id ) {
+						return id > 0;
+					} ).join( ',' ) );
+				} else if ( data.wpSwiper === 'art-center' && isFinite( data.center ) ) {
+					// Checked again when saved (20–75).
+					$( '#wp-swiper-art_ring_center' + suffix ).val( Math.round( Math.max( 20, Math.min( 75, Number( data.center ) ) ) * 10 ) / 10 );
 				}
 			} );
 

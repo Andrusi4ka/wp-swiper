@@ -37,7 +37,7 @@ class WP_Swiper_Settings {
 	 * @return array
 	 */
 	public static function fields() {
-		return array(
+		$fields = array(
 			'effect'                => array(
 				'section' => 'advanced',
 				'label'   => __( 'Effect', 'wp-swiper' ),
@@ -55,6 +55,9 @@ class WP_Swiper_Settings {
 					'thumbs'    => __( 'Thumbnails', 'wp-swiper' ),
 					// Not a slider: the photos placed together, the others swapped in.
 					'collage'   => __( 'Collage', 'wp-swiper' ),
+					// Not a slider either: photos in a shape of its own (its Style),
+					// all of it in class-wp-swiper-art.php, art.js and art.css.
+					'art'       => __( 'Art', 'wp-swiper' ),
 				),
 			),
 			'direction'             => array(
@@ -1749,6 +1752,8 @@ class WP_Swiper_Settings {
 				'help'        => __( 'The block is as tall as its content (or as the page builder makes it); this keeps it at least this tall. Empty: no minimum.', 'wp-swiper' ),
 			),
 		);
+		// Art: its own settings, kept apart (class-wp-swiper-art.php).
+		return $fields + WP_Swiper_Art::fields();
 	}
 
 	/**
@@ -2388,7 +2393,7 @@ class WP_Swiper_Settings {
 	 * @return array page => [ block => [ 'title' => string, 'fields' => string[] ] ]
 	 */
 	public static function blocks() {
-		return array(
+		$blocks = array(
 			'controls' => array(
 				'movement'         => array(
 					'title'  => __( 'Movement', 'wp-swiper' ),
@@ -2485,6 +2490,9 @@ class WP_Swiper_Settings {
 				),
 			),
 		);
+		// Art: its blocks first on its Layout page (class-wp-swiper-art.php).
+		$blocks['layout'] = WP_Swiper_Art::blocks() + $blocks['layout'];
+		return $blocks;
 	}
 
 	/**
@@ -3019,6 +3027,10 @@ class WP_Swiper_Settings {
 
 				case 'order': // Photo IDs in their order, "12,7,30"; '' = none.
 					$clean[ $key ] = self::sanitize_order( null === $value ? '' : (string) $value );
+					break;
+
+				case 'line': // A line of plain text (Art's label): no markup.
+					$clean[ $key ] = mb_substr( sanitize_text_field( (string) $value ), 0, 120 );
 					break;
 
 				case 'mosaic': // Random mosaic cuts, "V0.6[0,H0.5[1,2]]"; '' = none.

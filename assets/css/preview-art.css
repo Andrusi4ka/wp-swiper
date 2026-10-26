@@ -1,0 +1,123 @@
+/* The Art effect in the preview's frame only (preview-art.js), apart from
+   the collage's: a photo dragged onto another piece swaps with it. The
+   pieces are cut to their shapes, so all of this takes the shape too. */
+
+.wp-swiper-art__piece,
+.wp-swiper-art .wp-swiper-art__piece *,
+.wp-swiper-art-dragging,
+.wp-swiper-art-dragging * {
+	cursor: move !important;
+}
+
+.wp-swiper-art__piece {
+	touch-action: none;
+	user-select: none;
+}
+
+/* While dragging, no zoom under the pointer. */
+.wp-swiper-art-dragging .wp-swiper-art__piece:hover .wp-swiper-art__image {
+	transform: none;
+}
+
+/* The piece the photo was taken from: its own photo hidden; an empty shape
+   until the pointer is over another piece, then the photo that would come. */
+.wp-swiper-art__piece.is-source > :not(.wp-swiper-art__shown) {
+	visibility: hidden;
+}
+
+.wp-swiper-art__piece.is-dragged {
+	background: #f0f6fc;
+}
+
+.wp-swiper-art__piece.is-dragged::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: repeating-linear-gradient(45deg, rgba(34, 113, 177, 0.25) 0 6px, rgba(34, 113, 177, 0.08) 6px 12px);
+}
+
+/* A photo shown for the drag, over the piece's own. */
+.wp-swiper-art__shown {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+}
+
+.wp-swiper-art__shown > *,
+.wp-swiper-art__shown .wp-swiper-art__link {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* The piece under the pointer: the dragged photo shown in it, tinted. */
+.wp-swiper-art__piece.is-drop-target > .wp-swiper-art__shown {
+	opacity: 0.85;
+}
+
+.wp-swiper-art__piece.is-drop-target::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	background: rgba(34, 113, 177, 0.25);
+	pointer-events: none;
+}
+
+/* Ring: the middle circle's edge as a handle (preview-art.js): a white line
+   round it on hover and while dragged, and a resize cursor pointing away
+   from the middle, over the photos' move cursor. */
+.wp-swiper-art__edge {
+	position: absolute;
+	z-index: 5;
+	box-sizing: border-box;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 6px rgba(0, 0, 0, 0.35);
+	opacity: 0;
+	transition: opacity 0.15s;
+	pointer-events: none;
+}
+
+.wp-swiper-art__edge.is-shown {
+	opacity: 1;
+}
+
+:root.wp-swiper-art-edge,
+:root.wp-swiper-art-edge .wp-swiper-art *,
+:root.wp-swiper-art-resizing,
+:root.wp-swiper-art-resizing * {
+	cursor: var(--wp-swiper-art-edge-cursor, ew-resize) !important;
+}
+
+/* While resizing, nothing is selected and the photos do not zoom. */
+.wp-swiper-art-resizing {
+	user-select: none;
+}
+
+.wp-swiper-art-resizing .wp-swiper-art__piece:hover .wp-swiper-art__image {
+	transform: none;
+}
+
+/* The small copy of the dragged photo under the pointer, in a white frame. */
+.wp-swiper-art-ghost {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 100000;
+	overflow: hidden;
+	box-sizing: border-box;
+	border: 3px solid #fff;
+	border-radius: 4px;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+	opacity: 0.9;
+	pointer-events: none;
+}
+
+.wp-swiper-art-ghost img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	object-fit: cover;
+}

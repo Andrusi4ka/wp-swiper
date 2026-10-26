@@ -546,6 +546,16 @@ class WP_Swiper_Admin {
 			} else {
 				self::render_field( $key, $field, $values[ $key ] );
 			}
+			// Values kept with this field and set by script only (inline_hidden):
+			// hidden inputs, one per device, after it.
+			foreach ( $fields as $inline_key => $inline ) {
+				if ( empty( $inline['inline_hidden'] ) || ! isset( $inline['inline_in'] ) || $key !== $inline['inline_in'] ) {
+					continue;
+				}
+				foreach ( WP_Swiper_Settings::device_keys( $inline_key, $inline ) as $storage_key ) {
+					printf( '<input type="hidden" id="wp-swiper-%1$s" name="wp_swiper_settings[%1$s]" value="%2$s">', esc_attr( $storage_key ), esc_attr( $values[ $storage_key ] ) );
+				}
+			}
 		}
 		echo $group ? '</div>' : '';
 	}
@@ -559,6 +569,10 @@ class WP_Swiper_Admin {
 	private static function effects_attr( $field ) {
 		if ( ! empty( $field['effects'] ) ) {
 			echo ' data-effects="' . esc_attr( implode( ' ', $field['effects'] ) ) . '"';
+		}
+		// Art: the Styles a field belongs to (admin.js hides it for the others).
+		if ( ! empty( $field['styles'] ) ) {
+			echo ' data-styles="' . esc_attr( implode( ' ', $field['styles'] ) ) . '"';
 		}
 	}
 
@@ -601,7 +615,7 @@ class WP_Swiper_Admin {
 				</div>
 
 				<?php // Class names or an id: a plain text input. ?>
-				<?php if ( in_array( $field['type'], array( 'text', 'id' ), true ) ) : ?>
+				<?php if ( in_array( $field['type'], array( 'text', 'id', 'line' ), true ) ) : ?>
 					<input type="text" class="regular-text" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
 						value="<?php echo esc_attr( $value ); ?>"
 						placeholder="<?php echo esc_attr( isset( $field['placeholder'] ) ? $field['placeholder'] : '' ); ?>"

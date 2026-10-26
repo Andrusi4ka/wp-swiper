@@ -1,0 +1,118 @@
+/* WP Swiper, the Art effect (class-wp-swiper-art.php, art.js): its own
+   styles, apart from frontend.css. A square stage as wide as the column up
+   to its Size per device; art.js places the pieces in it. */
+
+.wp-swiper-art {
+	--wp-swiper-art-scale: 1;
+	width: 100%;
+}
+
+.wp-swiper-art__stage {
+	position: relative;
+	width: min(100%, var(--wp-swiper-art-size, 560px));
+	margin: 0 auto;
+	aspect-ratio: 1;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper-art__stage {
+		width: min(100%, var(--wp-swiper-art-size-tablet, var(--wp-swiper-art-size, 560px)));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-art__stage {
+		width: min(100%, var(--wp-swiper-art-size-mobile, var(--wp-swiper-art-size-tablet, var(--wp-swiper-art-size, 560px))));
+	}
+}
+
+/* A photo's piece: its box (art.js), cut to its shape; hidden until placed. */
+.wp-swiper-art__piece {
+	position: absolute;
+	overflow: hidden;
+	opacity: 0;
+	transition: opacity 0.4s ease;
+}
+
+.wp-swiper-art.is-ready .wp-swiper-art__piece {
+	opacity: 1;
+}
+
+.wp-swiper-art__piece[hidden] {
+	display: none;
+}
+
+.wp-swiper-art__piece--circle {
+	border-radius: 50%;
+}
+
+.wp-swiper-art__link {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.wp-swiper-art .wp-swiper-art__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	object-fit: cover;
+	transition: transform 0.6s ease;
+}
+
+/* A gentle zoom of the photo under the pointer. */
+.wp-swiper-art__piece:hover .wp-swiper-art__image {
+	transform: scale(1.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wp-swiper-art__piece,
+	.wp-swiper-art .wp-swiper-art__image {
+		transition: none;
+	}
+
+	.wp-swiper-art__piece:hover .wp-swiper-art__image {
+		transform: none;
+	}
+}
+
+/* Ring: the label in the opening (logo, title, subtitle), centred there. */
+.wp-swiper-art__label {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: calc(6px * var(--wp-swiper-art-scale));
+	box-sizing: border-box;
+	color: var(--wp-swiper-art-label-color, #fff);
+	text-align: center;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+}
+
+.wp-swiper-art__label[hidden] {
+	display: none;
+}
+
+.wp-swiper-art .wp-swiper-art__logo {
+	display: block;
+	width: auto;
+	max-width: 100%;
+	height: calc(40px * var(--wp-swiper-art-scale));
+	object-fit: contain;
+}
+
+.wp-swiper-art__title {
+	font-size: calc(26px * var(--wp-swiper-art-scale));
+	line-height: 1.1;
+	letter-spacing: 0.04em;
+}
+
+.wp-swiper-art__subtitle {
+	font-size: calc(9px * var(--wp-swiper-art-scale));
+	line-height: 1.2;
+	letter-spacing: 0.3em;
+	text-transform: uppercase;
+	opacity: 0.85;
+}

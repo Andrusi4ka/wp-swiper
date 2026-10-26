@@ -64,6 +64,16 @@ class WP_Swiper_Preview {
 					<span class="dashicons dashicons-move" aria-hidden="true"></span>
 					<?php esc_html_e( 'Drag a photo onto another to swap them.', 'wp-swiper' ); ?>
 				</p>
+				<?php // Art only (admin.js): its photos swap places by dragging here (preview-art.js). ?>
+				<p class="description wp-swiper-preview__hint" data-effect="art" hidden>
+					<span class="dashicons dashicons-move" aria-hidden="true"></span>
+					<?php esc_html_e( 'Drag a photo onto another to swap them.', 'wp-swiper' ); ?>
+				</p>
+				<?php // Art only too: the middle circle's edge resizes it (preview-art.js). ?>
+				<p class="description wp-swiper-preview__hint" data-effect="art" hidden>
+					<span class="dashicons dashicons-image-filter" aria-hidden="true"></span>
+					<?php esc_html_e( 'Drag the edge of the middle circle to resize it.', 'wp-swiper' ); ?>
+				</p>
 				<?php // Random mosaic only (admin.js): the lines between its photos resize them. ?>
 				<p class="description wp-swiper-preview__hint" data-effect="mosaic" hidden>
 					<span class="dashicons dashicons-leftright" aria-hidden="true"></span>
@@ -98,6 +108,7 @@ class WP_Swiper_Preview {
 		$settings = wp_parse_args( WP_Swiper_Settings::sanitize( $input ), WP_Swiper_Settings::defaults() );
 
 		WP_Swiper_Render::register_assets();
+		WP_Swiper_Art::register_assets();
 		$slider = WP_Swiper_Render::render_slider( $post_id, WP_Swiper_Admin::posted_slides(), $settings );
 
 		// Background: in a block with its class and some content over it, as on
@@ -124,9 +135,10 @@ class WP_Swiper_Preview {
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="noindex, nofollow">
 	<title><?php echo esc_html( $post->post_title ); ?></title>
-	<?php wp_print_styles( array( 'wp-swiper' ) ); ?>
+	<?php wp_print_styles( array( 'wp-swiper', 'wp-swiper-art' ) ); ?>
 	<?php // Developer mode (the button by "Preview"; admin.js turns it on in here). ?>
 	<link rel="stylesheet" href="<?php echo esc_url( WP_SWIPER_URL . 'assets/css/preview-dev.css?ver=' . wp_swiper_asset_version( 'assets/css/preview-dev.css' ) ); ?>">
+	<link rel="stylesheet" href="<?php echo esc_url( WP_SWIPER_URL . 'assets/css/preview-art.css?ver=' . wp_swiper_asset_version( 'assets/css/preview-art.css' ) ); ?>">
 	<style>
 		html, body { margin: 0; background: #fff; }
 		body { font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -149,10 +161,12 @@ class WP_Swiper_Preview {
 	<div class="wp-swiper-preview-page">
 		<?php echo $slider; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the slider's markup, escaped where it is built. ?>
 	</div>
-	<?php wp_print_scripts( array( 'wp-swiper' ) ); ?>
+	<?php wp_print_scripts( array( 'wp-swiper', 'wp-swiper-art' ) ); ?>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-dev.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-dev.js' ) ); ?>"></script>
 	<?php // Collage: a photo dragged onto another place swaps with it (the editor stores the order). ?>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-collage.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-collage.js' ) ); ?>"></script>
+	<?php // Art: the same for its pieces, its own script (the editor stores its order apart). ?>
+	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-art.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-art.js' ) ); ?>"></script>
 </body>
 </html>
 		<?php
