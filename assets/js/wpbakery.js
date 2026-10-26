@@ -25,6 +25,8 @@
 		} else {
 			$link.attr( 'href', '#' ).prop( 'hidden', true );
 		}
+		// "Opens in a new tab", with the button.
+		$box.find( '.wp-swiper-vc-edit__note' ).prop( 'hidden', ! ( id > 0 ) );
 	}
 
 	function syncAll() {

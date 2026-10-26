@@ -80,8 +80,9 @@ class WP_Swiper_WPBakery {
 
 	/**
 	 * The "Edit slider" button: a link to post.php for the slider chosen in
-	 * the Slider list (wpbakery.js sets it and hides it while none is). Its
-	 * field is empty, so WPBakery adds nothing to the shortcode.
+	 * the Slider list, with a note that it opens in a new tab (wpbakery.js
+	 * sets it and hides both while none is). Its field is empty, so
+	 * WPBakery adds nothing to the shortcode.
 	 *
 	 * @param array  $settings The param's settings.
 	 * @param string $value    Its value (always empty).
@@ -91,11 +92,12 @@ class WP_Swiper_WPBakery {
 		unset( $value );
 		$name = isset( $settings['param_name'] ) ? $settings['param_name'] : self::EDIT_PARAM;
 		return sprintf(
-			'<div class="wp-swiper-vc-edit" data-url="%1$s"><a class="button wp-swiper-vc-edit__link" href="#" target="_blank" rel="noopener" hidden><span class="dashicons dashicons-edit" aria-hidden="true" style="vertical-align:text-bottom"></span> %2$s</a><input type="hidden" name="%3$s" class="wpb_vc_param_value %3$s %4$s" value=""></div>',
+			'<div class="wp-swiper-vc-edit" data-url="%1$s"><a class="button wp-swiper-vc-edit__link" href="#" target="_blank" rel="noopener" hidden>%2$s</a><p class="description wp-swiper-vc-edit__note" style="margin:6px 0 0" hidden>%5$s</p><input type="hidden" name="%3$s" class="wpb_vc_param_value %3$s %4$s" value=""></div>',
 			esc_url( admin_url( 'post.php?action=edit&post=' ) ),
 			esc_html__( 'Edit slider', 'wp-swiper' ),
 			esc_attr( $name ),
-			esc_attr( self::EDIT_PARAM )
+			esc_attr( self::EDIT_PARAM ),
+			esc_html__( 'Opens in a new tab.', 'wp-swiper' )
 		);
 	}
 
