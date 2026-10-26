@@ -454,6 +454,46 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( 'around', WP_Swiper_Settings::sanitize( array( 'slide_distribution' => 'around' ) )['slide_distribution'] );
 	}
 
+	/* Collage order -------------------------------------------------- */
+
+	public function test_sanitize_order() {
+		$this->assertSame( '12,7,30', WP_Swiper_Settings::sanitize_order( ' 12, 7,30 ' ) );
+		$this->assertSame( '12,7', WP_Swiper_Settings::sanitize_order( '12,x,-7,0,12,7' ) );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_order( 'abc' ) );
+		$this->assertSame( 500, count( explode( ',', WP_Swiper_Settings::sanitize_order( implode( ',', range( 1, 600 ) ) ) ) ) );
+
+		$clean = WP_Swiper_Settings::sanitize( array( 'collage_order' => '3, 2,1', 'collage_order_tablet' => '', 'collage_order_mobile' => '5;x' ) );
+		$this->assertSame( '3,2,1', $clean['collage_order'] );
+		$this->assertSame( '', $clean['collage_order_tablet'] );
+		$this->assertSame( '5', $clean['collage_order_mobile'] );
+	}
+
+	public function test_collage_orders_per_device_by_photo() {
+		$slides = $this->slides( 4 );
+		$ids    = wp_list_pluck( $slides, 'id' );
+
+		$this->assertSame( array( 'desktop' => false, 'tablet' => false, 'mobile' => false ), WP_Swiper_Settings::collage_orders( $this->settings(), $slides ) );
+
+		$orders = WP_Swiper_Settings::collage_orders(
+			$this->settings(
+				array(
+					// A photo no longer in the slider is left out.
+					'collage_order'        => $ids[2] . ',' . $ids[0] . ',999999',
+					'collage_order_mobile' => $ids[3] . ',' . $ids[1],
+				)
+			),
+			$slides
+		);
+		$this->assertSame( array( 2, 0 ), $orders['desktop'] );
+		// Tablet: the desktop's.
+		$this->assertSame( array( 2, 0 ), $orders['tablet'] );
+		$this->assertSame( array( 3, 1 ), $orders['mobile'] );
+
+		// The same photo twice in the slides: its first slide.
+		$twice = array( $slides[0], $slides[1], $slides[0] );
+		$this->assertSame( array( 0, 1 ), WP_Swiper_Settings::collage_orders( $this->settings( array( 'collage_order' => $ids[0] . ',' . $ids[1] ) ), $twice )['desktop'] );
+	}
+
 	/* Continuous scroll separator ------------------------------------ */
 
 	public function test_sanitize_keeps_only_an_image_for_an_image_field() {

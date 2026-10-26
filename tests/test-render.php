@@ -644,6 +644,32 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '--wp-swiper-height:240px', $style );
 	}
 
+	/* Collage order -------------------------------------------------- */
+
+	public function test_collage_config_has_the_order_and_the_photo_ids() {
+		$slides = $this->slides( 3 );
+		$ids    = array_map( 'intval', wp_list_pluck( $slides, 'id' ) );
+		$html   = $this->render( array( 'effect' => 'collage', 'collage_order_tablet' => $ids[1] . ',' . $ids[2] ), $slides );
+		$config = $this->config( $html, 'data-wp-swiper-collage' );
+
+		$this->assertSame( $ids, $config['ids'] );
+		$this->assertFalse( $config['order']['desktop'] );
+		$this->assertSame( array( 1, 2 ), $config['order']['tablet'] );
+		// Mobile: the tablet's.
+		$this->assertSame( array( 1, 2 ), $config['order']['mobile'] );
+	}
+
+	public function test_collage_ids_follow_the_slides_shown() {
+		$slides = $this->slides( 3 );
+		// A slide whose photo is gone is skipped: the indexes stay those of the pool.
+		$slides[1]['id'] = 999999;
+		$ids             = array_map( 'intval', wp_list_pluck( $slides, 'id' ) );
+		$config          = $this->config( $this->render( array( 'effect' => 'collage', 'collage_order' => $ids[2] . ',' . $ids[0] ), $slides ), 'data-wp-swiper-collage' );
+
+		$this->assertSame( array( $ids[0], $ids[2] ), $config['ids'] );
+		$this->assertSame( array( 1, 0 ), $config['order']['desktop'] );
+	}
+
 	/* Continuous scroll separator ------------------------------------ */
 
 	public function test_marquee_separator_dot_after_every_slide() {

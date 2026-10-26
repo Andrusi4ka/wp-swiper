@@ -279,6 +279,27 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		// Before the device switch and Update.
 		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__update' ), $button );
 		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__devices' ), $button );
+		// The collage's hint, hidden until admin.js sees that effect.
+		$this->assertStringContainsString( '<p class="description wp-swiper-preview__hint" data-effect="collage" hidden>', $html );
+	}
+
+	public function test_collage_order_field_per_device_with_shuffle_and_reset() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( null, array( 'effect' => 'collage', 'collage_order' => '5,4', 'collage_seed' => 77 ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		$this->assertSame( 1, preg_match( '#<div class="wp-swiper-field wp-swiper-field--responsive" data-field="collage_order".*?wp-swiper-order-reset.*?</div>#s', $html, $match ) );
+		$field = $match[0];
+		foreach ( array( 'collage_order' => '5,4', 'collage_order_tablet' => '', 'collage_order_mobile' => '' ) as $key => $value ) {
+			$this->assertMatchesRegularExpression( '#type="hidden"[^>]*name="wp_swiper_settings\[' . $key . '\]"\s+value="' . preg_quote( $value, '#' ) . '"#', $field, $key );
+		}
+		$this->assertStringContainsString( 'wp-swiper-shuffle', $field );
+		// The shuffle number is kept inside it, not as a field of its own.
+		$this->assertStringContainsString( '<input type="hidden" id="wp-swiper-collage_seed" name="wp_swiper_settings[collage_seed]" value="77">', $html );
+		$this->assertStringNotContainsString( 'data-field="collage_seed"', $html );
 	}
 
 	public function test_preview_refuses_a_bad_nonce() {

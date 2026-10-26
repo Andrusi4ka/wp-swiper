@@ -1,3 +1,74 @@
+/* The preview's frame only. Collage (preview-collage.js): a photo dragged
+   onto another place swaps with it. */
+/* The "move" cursor, as over the Slides box's cards; over the photo too
+   (with a lightbox it would be zoom-in) and for the whole drag. */
+.wp-swiper-collage__cell,
+.wp-swiper .wp-swiper-collage__cell .wp-swiper-collage__item,
+.wp-swiper-collage-dragging,
+.wp-swiper-collage-dragging * {
+	cursor: move !important;
+}
+
+.wp-swiper-collage__cell {
+	touch-action: none;
+	user-select: none;
+}
+
+/* The place the photo was taken from: its own photo hidden; an empty frame
+   (as the Slides box's placeholder) until the pointer is over another
+   place, then the photo that would come here. */
+.wp-swiper-collage__cell.is-source > .wp-swiper-collage__item:not(.wp-swiper-collage__shown) {
+	visibility: hidden;
+}
+
+.wp-swiper-collage__cell.is-dragged::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	box-sizing: border-box;
+	border: 2px dashed #2271b1;
+	border-radius: inherit;
+	background: #f0f6fc;
+}
+
+/* The place under the pointer: the dragged photo shown in it, framed. */
+.wp-swiper-collage__cell.is-drop-target {
+	outline: 3px solid #2271b1;
+	outline-offset: -3px;
+}
+
+.wp-swiper .wp-swiper-collage__cell > .wp-swiper-collage__item.wp-swiper-collage__shown {
+	z-index: 1;
+	transition: none;
+}
+
+.wp-swiper .wp-swiper-collage__cell.is-drop-target > .wp-swiper-collage__item.wp-swiper-collage__shown {
+	opacity: 0.85;
+}
+
+/* The small copy of the dragged photo under the pointer. */
+.wp-swiper-collage-ghost {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 100000;
+	overflow: hidden;
+	box-sizing: border-box;
+	border: 3px solid #fff;
+	border-radius: 4px;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+	opacity: 0.9;
+	pointer-events: none;
+}
+
+.wp-swiper-collage-ghost img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	object-fit: cover;
+}
+
 /* Developer mode of the preview (preview-dev.js): over the slider, clipped
    by it; it never takes clicks. */
 .wp-swiper-dev {

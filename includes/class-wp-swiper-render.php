@@ -1134,6 +1134,11 @@ class WP_Swiper_Render {
 			'rowExact'  => (bool) $settings['collage_row_exact'],
 			'gap'       => $per_device( 'collage_gap' ),
 			'seed'      => (int) $settings['collage_seed'],
+			// The order set per device (slide indexes, false: the shuffle), and
+			// each slide's photo ID, for the preview to tell a new order by.
+			// Indexes as frontend.js counts them: the slides in the pool, in turn.
+			'order'     => WP_Swiper_Settings::collage_orders( $settings, array_values( $slides ) ),
+			'ids'       => array_map( 'intval', array_values( wp_list_pluck( $slides, 'id' ) ) ),
 			'swap'      => $settings['collage_swap'] ? array(
 				'delay' => (int) $settings['collage_swap_delay'],
 				'pause' => (bool) $settings['collage_pause'],

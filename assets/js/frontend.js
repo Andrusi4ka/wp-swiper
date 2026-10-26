@@ -2424,7 +2424,8 @@
 	 *
 	 * Not a slider: the photos sit together in places of a template, of a
 	 * grid, or arranged by their proportions (Justified rows, Masonry). The
-	 * order comes from the saved shuffle (the same number, the same order),
+	 * order is the one set for the device (dragged in the preview, or
+	 * shuffled), else the saved shuffle (the same number, the same order),
 	 * so the arrangement does not change from visit to visit. With more
 	 * photos than places, every so often a place at random fades to a photo
 	 * not shown yet; the places keep their size, the photo is cropped to fit.
@@ -2554,7 +2555,7 @@
 		var grid = el.querySelector( '.wp-swiper-collage__grid' );
 		var pool = el.querySelector( 'template.wp-swiper-collage__pool' );
 		var slides = pool ? [].slice.call( pool.content.children ) : [];
-		var order = seededOrder( slides.length, config.seed || 1 );
+		var order = [];
 		var cells = [];
 		var queue = [];
 		var tree = null;
@@ -2608,6 +2609,32 @@
 
 		function ratioOf( slide ) {
 			return Number( slide.style.getPropertyValue( '--wp-swiper-img-ratio' ) ) || 1;
+		}
+
+		/**
+		 * The photos in their order on a device: the order set there (slide
+		 * indexes, the first ones in the first places), then the photos not in
+		 * it in shuffle order; without one, the shuffle.
+		 *
+		 * @param {string} name Device.
+		 * @return {number[]}
+		 */
+		function orderFor( name ) {
+			var shuffled = seededOrder( slides.length, config.seed || 1 );
+			var set = config.order && config.order[ name ];
+			if ( ! set || ! set.length ) {
+				return shuffled;
+			}
+			var seen = {};
+			var out = [];
+			set.concat( shuffled ).forEach( function ( real ) {
+				real = Number( real );
+				if ( real >= 0 && real < slides.length && ! seen[ real ] ) {
+					seen[ real ] = true;
+					out.push( real );
+				}
+			} );
+			return out;
 		}
 
 		// A copy of slide `real` to put in a place.
@@ -2806,6 +2833,7 @@
 		// The places for this device's layout, the photos in shuffle order.
 		function build() {
 			current = device();
+			order = orderFor( current );
 			var layout = config.layout[ current ] || 'grid';
 			var template = COLLAGE_TEMPLATES[ layout ];
 			// Places positioned by the script; Random mosaic keeps the block's Height.
@@ -3014,7 +3042,27 @@
 			watchNeighbours( root, refit );
 		}
 
-		return { rebuild: build };
+		return {
+			rebuild: build,
+			// For the preview (preview-collage.js): the photos as placed now on this
+			// device (the places in turn, then those waiting), a new order for it,
+			// each slide's photo ID, and the photo swapping held while dragging.
+			places: function () {
+				return { device: current, count: cells.length, order: cells.map( function ( cell ) {
+					return cell.wpReal;
+				} ).concat( queue ) };
+			},
+			setOrder: function ( list ) {
+				config.order = config.order || {};
+				config.order[ current ] = list;
+				build();
+				schedule();
+			},
+			ids: config.ids || [],
+			hold: function ( on ) {
+				paused = !! on;
+			}
+		};
 	}
 
 	/* ------------------------------------------------------------------ *

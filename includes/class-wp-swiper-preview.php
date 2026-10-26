@@ -59,6 +59,11 @@ class WP_Swiper_Preview {
 					</button>
 				</div>
 				<p class="description wp-swiper-preview__note"><?php esc_html_e( 'The settings as they are now, saved or not. Press Update after changes.', 'wp-swiper' ); ?></p>
+				<?php // Collage only (admin.js): its photos swap places by dragging here (preview-collage.js). ?>
+				<p class="description wp-swiper-preview__hint" data-effect="collage" hidden>
+					<span class="dashicons dashicons-move" aria-hidden="true"></span>
+					<?php esc_html_e( 'Drag a photo onto another to swap them.', 'wp-swiper' ); ?>
+				</p>
 				<div class="wp-swiper-preview__stage">
 					<iframe class="wp-swiper-preview__frame" name="wp-swiper-preview-<?php echo (int) $post->ID; ?>" title="<?php esc_attr_e( 'Slider preview', 'wp-swiper' ); ?>" src="about:blank"></iframe>
 				</div>
@@ -141,6 +146,8 @@ class WP_Swiper_Preview {
 	</div>
 	<?php wp_print_scripts( array( 'wp-swiper' ) ); ?>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-dev.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-dev.js' ) ); ?>"></script>
+	<?php // Collage: a photo dragged onto another place swaps with it (the editor stores the order). ?>
+	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-collage.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-collage.js' ) ); ?>"></script>
 </body>
 </html>
 		<?php

@@ -495,15 +495,30 @@ class WP_Swiper_Settings {
 				),
 				'help'            => __( 'Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them; as a background, as tall as the block (the places stretched or shrunk to it).', 'wp-swiper' ),
 			),
-			// Which photos come first and where they sit: a number the Shuffle
-			// button draws (admin.js); the same number, the same arrangement.
+			// The order of the photos without one set (collage_order): the shuffle
+			// of this number (the same number, the same arrangement). Kept inside
+			// the Order field; Shuffle no longer changes it (a shuffle is an order
+			// of its own now).
 			'collage_seed'          => array(
-				'section' => 'layout',
-				'effects' => array( 'collage' ),
-				'label'   => __( 'Order', 'wp-swiper' ),
-				'type'    => 'seed',
-				'default' => 1,
-				'help'    => __( 'Masonry and Random mosaic: Shuffle mixes the photos, which ones show first and where, and with them the arrangement. It then stays as it is until you shuffle again.', 'wp-swiper' ),
+				'section'   => 'layout',
+				'effects'   => array( 'collage' ),
+				'label'     => __( 'Shuffle', 'wp-swiper' ),
+				'type'      => 'seed',
+				'inline_in' => 'collage_order',
+				'default'   => 1,
+			),
+			// Which photo is in which place, per device: the photos' IDs, the
+			// first ones in the first places ('' on desktop: the shuffle above;
+			// on tablet and mobile: the larger screen's). Set by dragging a photo
+			// onto another place in the preview, or by Shuffle.
+			'collage_order'         => array(
+				'section'    => 'layout',
+				'effects'    => array( 'collage' ),
+				'label'      => __( 'Order', 'wp-swiper' ),
+				'type'       => 'order',
+				'responsive' => true,
+				'default'    => '',
+				'help'       => __( 'Drag a photo onto another place in the preview to swap the two. Shuffle mixes the photos at random. Both only for the device chosen (a tablet or phone without its own order takes the larger screen\'s); Reset goes back to it.', 'wp-swiper' ),
 			),
 			'collage_count'         => array(
 				'section'         => 'layout',
@@ -2119,6 +2134,52 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * A collage order as stored: photo IDs, positive whole numbers, comma
+	 * separated, each once, at most 500.
+	 *
+	 * @param string $value Raw input, e.g. "12, 7,30".
+	 * @return string "12,7,30"; '' for none.
+	 */
+	public static function sanitize_order( $value ) {
+		$ids = array_filter( array_map( 'absint', preg_split( '/[\s,]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY ) ) );
+		return implode( ',', array_slice( array_values( array_unique( $ids ) ), 0, 500 ) );
+	}
+
+	/**
+	 * The collage's order on each device as slide indexes: the photos of the
+	 * order set, by ID, in its order (a photo twice in the slides: its first
+	 * slide); false where none is set (the shuffle). Photos not in it come
+	 * after them (frontend.js), so do new ones.
+	 *
+	 * @param array $settings Slider settings.
+	 * @param array $slides   The slides shown.
+	 * @return array device => int[] | false
+	 */
+	public static function collage_orders( $settings, $slides ) {
+		$orders = array();
+		foreach ( self::responsive( $settings, 'collage_order' ) as $device => $value ) {
+			$value = self::sanitize_order( $value );
+			if ( '' === $value ) {
+				$orders[ $device ] = false;
+				continue;
+			}
+			$used    = array();
+			$indexes = array();
+			foreach ( explode( ',', $value ) as $id ) {
+				foreach ( $slides as $index => $slide ) {
+					if ( (int) $slide['id'] === (int) $id && ! isset( $used[ $index ] ) ) {
+						$used[ $index ] = true;
+						$indexes[]      = $index;
+						break;
+					}
+				}
+			}
+			$orders[ $device ] = $indexes ? $indexes : false;
+		}
+		return $orders;
+	}
+
+	/**
 	 * Slide effect with "Continuous scroll".
 	 *
 	 * @param array $settings Slider settings.
@@ -2303,7 +2364,7 @@ class WP_Swiper_Settings {
 				),
 				'arrangement' => array(
 					'title'  => __( 'Arrangement', 'wp-swiper' ),
-					'fields' => array( 'collage_layout', 'collage_seed', 'collage_count', 'collage_columns', 'collage_row_height', 'collage_row_exact', 'collage_gap' ),
+					'fields' => array( 'collage_layout', 'collage_order', 'collage_count', 'collage_columns', 'collage_row_height', 'collage_row_exact', 'collage_gap' ),
 				),
 				'swapping'    => array(
 					'title'  => __( 'Photo swapping', 'wp-swiper' ),
@@ -2813,6 +2874,8 @@ class WP_Swiper_Settings {
 					$value = array_key_exists( $value, $field['choices'] ) ? $value : '';
 				} elseif ( 'ratio' === $field['type'] ) {
 					$value = self::normalize_ratio( $value );
+				} elseif ( 'order' === $field['type'] ) {
+					$value = self::sanitize_order( $value );
 				} elseif ( '' !== $value ) {
 					$value = 'float' === $field['type'] ? round( (float) $value, 2 ) : (int) $value;
 					$value = max( $field['min'], min( $field['max'], $value ) );
@@ -2867,6 +2930,10 @@ class WP_Swiper_Settings {
 
 				case 'seed': // The Collage's shuffle: a whole number from 1.
 					$clean[ $key ] = null === $value ? $field['default'] : max( 1, min( 999999, absint( $value ) ) );
+					break;
+
+				case 'order': // Photo IDs in their order, "12,7,30"; '' = none.
+					$clean[ $key ] = self::sanitize_order( null === $value ? '' : (string) $value );
 					break;
 
 				case 'image': // An image of the media library (its ID); 0 = none.

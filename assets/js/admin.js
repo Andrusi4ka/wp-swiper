@@ -1145,10 +1145,10 @@
 			var collageUses = function ( names ) {
 				return collage && names.indexOf( collageStyle ) !== -1;
 			};
-			// Shuffle where it changes the arrangement itself: the photos' proportions
-			// stack it in columns (Masonry) or it is cut at random (Random mosaic).
-			// Templates, the grid and the rows keep their places: no button there.
-			field( 'collage_seed' ).toggle( collageUses( [ 'masonry', 'random' ] ) );
+			// Which photo is in which place: every style (its own per device).
+			field( 'collage_order' ).toggle( collage );
+			// The preview says its photos swap by dragging.
+			$( '.wp-swiper-preview__hint[data-effect="collage"]' ).prop( 'hidden', ! collage );
 			// The collage's Height: not for the styles as tall as their photos make them.
 			field( 'height' ).toggle( ! collage || ! collageUses( [ 'justified', 'masonry' ] ) );
 			// Image proportions (Slide effect, data-effects): a horizontal row of slides
@@ -1494,15 +1494,59 @@
 			$( previewFrame ).on( 'load', applyDev );
 			applyDev();
 
-			// Collage: Shuffle draws a new order and shows it right away.
-			$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-shuffle', function () {
-				var $seed = $( this ).siblings( 'input[type="hidden"]' );
-				var seed;
+			/*
+			 * Collage order (the Order field): the photos' IDs per device, the first
+			 * ones in the first places. For the device the field shows: Shuffle sets
+			 * one at random, Reset clears it (back to the larger screen's; desktop:
+			 * the shuffle number's), and a photo dragged onto another place in the
+			 * preview (preview-collage.js) sends the order it made. Shown right away.
+			 */
+			var $order = field( 'collage_order' );
+			var orderDevice = function () {
+				return $order.find( '.wp-swiper-devices__btn.is-active' ).data( 'device' ) || currentDevice;
+			};
+			var setOrder = function ( device, ids ) {
+				$order.find( '.wp-swiper-devices__input[data-device="' + device + '"]' ).val( ids.join( ',' ) );
+				syncResponsive( $order );
+			};
+
+			$order.on( 'click', '.wp-swiper-shuffle', function () {
+				var $input = $order.find( '.wp-swiper-devices__input[data-device="' + orderDevice() + '"]' );
+				var ids = $list.find( 'input[name="wp_swiper_slides[id][]"]' ).map( function () {
+					return Number( this.value ) || 0;
+				} ).get().filter( function ( id ) {
+					return id > 0;
+				} );
+				var shuffled;
+				var tries = 0;
 				do {
-					seed = 1 + Math.floor( Math.random() * 999999 );
-				} while ( String( seed ) === $seed.val() );
-				$seed.val( seed ).trigger( 'change' );
+					shuffled = ids.slice();
+					for ( var i = shuffled.length - 1; i > 0; i-- ) {
+						var j = Math.floor( Math.random() * ( i + 1 ) );
+						var swap = shuffled[ i ];
+						shuffled[ i ] = shuffled[ j ];
+						shuffled[ j ] = swap;
+					}
+				} while ( shuffled.length > 1 && shuffled.join( ',' ) === $input.val() && ++tries < 10 );
+				setOrder( orderDevice(), shuffled );
 				updatePreview();
+			} );
+
+			$order.on( 'click', '.wp-swiper-order-reset', function () {
+				setOrder( orderDevice(), [] );
+				updatePreview();
+			} );
+
+			// From the preview's frame only: the order a drag made there, for the
+			// device it shows. The frame shows it already: no update needed.
+			window.addEventListener( 'message', function ( e ) {
+				var data = e.data || {};
+				if ( e.source !== previewFrame.contentWindow || data.wpSwiper !== 'collage-order' || DEVICES.indexOf( data.device ) === -1 || ! Array.isArray( data.ids ) ) {
+					return;
+				}
+				setOrder( data.device, data.ids.map( Number ).filter( function ( id ) {
+					return id > 0;
+				} ) );
 			} );
 
 			// Changes since the last update: the button says so.

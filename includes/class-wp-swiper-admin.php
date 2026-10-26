@@ -728,6 +728,16 @@ class WP_Swiper_Admin {
 					</select>
 					<?php continue; ?>
 				<?php endif; ?>
+				<?php if ( 'order' === $field['type'] ) : ?>
+					<?php // The collage's order: photo IDs, set from the preview or by Shuffle (admin.js). ?>
+					<input type="hidden"
+						id="wp-swiper-<?php echo esc_attr( $storage_key ); ?>"
+						class="wp-swiper-devices__input"
+						data-device="<?php echo esc_attr( $device ); ?>"
+						name="wp_swiper_settings[<?php echo esc_attr( $storage_key ); ?>]"
+						value="<?php echo esc_attr( $values[ $storage_key ] ); ?>">
+					<?php continue; ?>
+				<?php endif; ?>
 				<?php if ( 'ratio' === $field['type'] ) : ?>
 					<?php // Proportions typed as "4x3"; admin.js shows the inherited one as the placeholder. ?>
 					<input type="text"
@@ -758,6 +768,23 @@ class WP_Swiper_Admin {
 					aria-label="<?php echo esc_attr( $field['label'] . ' — ' . $devices[ $device ][0] ); ?>"
 						<?php echo 'desktop' === $device ? '' : 'hidden'; ?>>
 			<?php endforeach; ?>
+
+			<?php if ( 'order' === $field['type'] ) : ?>
+				<?php // For the device shown: a new order at random, or back to the larger screen's (desktop: the shuffle). ?>
+				<button type="button" class="button wp-swiper-shuffle">
+					<span class="dashicons dashicons-randomize" aria-hidden="true"></span>
+					<?php esc_html_e( 'Shuffle', 'wp-swiper' ); ?>
+				</button>
+				<button type="button" class="button-link wp-swiper-order-reset"><?php esc_html_e( 'Reset', 'wp-swiper' ); ?></button>
+				<?php
+				// Fields kept inside this one (the shuffle number of the order without one set).
+				foreach ( $fields as $inline_key => $inline ) {
+					if ( isset( $inline['inline_in'] ) && $key === $inline['inline_in'] ) {
+						printf( '<input type="hidden" id="wp-swiper-%1$s" name="wp_swiper_settings[%1$s]" value="%2$s">', esc_attr( $inline_key ), esc_attr( $values[ $inline_key ] ) );
+					}
+				}
+				?>
+			<?php endif; ?>
 
 			<?php
 			// Unit select on the same row (shared by all devices).
