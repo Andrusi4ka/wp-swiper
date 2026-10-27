@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.8.0
+Stable tag: 2.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,12 +14,13 @@ Image sliders powered by Swiper: build a slider from the media library, pick an 
 
 WP Swiper adds a "WP Swiper" menu where you build image sliders from the media library and show them anywhere with `[wp_swiper id="123"]` or the "WP Swiper" WPBakery element.
 
-* Nine effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles), Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions) and Collage (the photos placed together by a template, a grid, justified rows, masonry or a random mosaic, the others swapped in).
+* Ten effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles), Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions), Collage (the photos placed together by a template, a grid, justified rows, masonry, a random mosaic or scattered around a photo in the middle, the others swapped in) and Art (the photos in shapes of their own: a ring around a circle, with an image or text in its opening).
+* Image shadow, with its offsets, blur, spread and a colour with opacity, where the photos stand apart.
 * A slider can be the background of the row or column it is in, with an overlay; the main image can zoom slowly in or out (Ken Burns).
 * Each effect keeps its own Layout settings, so switching effects never loses what you set.
 * Slides per view, space between slides, border radius and height per device (desktop, tablet, mobile).
 * Slide effect extras: wider active slide, slides as wide as their images, slides per group, continuous scroll (marquee).
-* Image fit Cover or Contain, height in px / vh / % or Auto (fills the parent column).
+* Image fit Cover or Contain, height in px / vh / % or Auto (fills the parent column), its unit per device too.
 * Arrows (with their own colour), bullets or fraction pagination in six positions over or outside the slider, with their own size, shape, spacing and colours and a "pill" current bullet, keyboard control, autoplay, infinite loop.
 * Lightbox with zoom (and, with Thumbnails, the strip of thumbnails in it), per-slide links (optionally in a new tab), captions (bold, italic, underline, line breaks) with their own typography and background, all of a slide edited in one window.
 * Slide descriptions written in WordPress's editor (headings, bold, italic, underline, links, lists), shown under the slider for the current slide and changing with it the way the slides move (sliding, turning with the cube, flipping...); in the lightbox too, over or under the image.
@@ -58,6 +59,20 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.9.0 =
+* New effect, Art: the photos in shapes of their own, the first Style a Ring — a circle in the middle and the others around it, with an even gap, rounded corners and, if set, an opening at the bottom. Its size, alignment, number of photos and opening per device; the middle circle resized by dragging its edge in the preview, the photos swapped by dragging one onto another. Captions, descriptions under it, the lightbox, an image border, photo swapping.
+* Art, Ring: captions on the middle photo only (Caption page); photo swapping can change the middle photo instead, in turn through all the photos (What changes); an image or text with links (WordPress's editor) in the opening, its size and its gap from the photos per device.
+* Collage: a new Style, Scattered — a photo in the middle and the others around it in uneven arms, shaped after their photos, the gap between neighbours always the same and the corners left empty. Its number of photos per device; drag a photo's outer edge in the preview to resize it.
+* Collage: the Style is chosen from icons; the four templates are resized by dragging the lines between their photos, as the Random mosaic.
+* Image shadow (Layout, Look): its horizontal and vertical offset, blur, spread and a colour with opacity, for several slides in view, Coverflow, Cards, the Creative carousel, Collage and Art (along each shape). Room is kept around the photos for it.
+* Height: its unit (px, vh, %, Auto) per device.
+* The slide window (Edit): each slide's caption and description have their own font size per device, weight and colour with opacity; a caption is paragraphs or headings (Format). Replace photo in the window, Clone on each slide. The button on a slide now reads Edit.
+* Every colour setting has an arrow back to its default colour. The editors' Text color offers the theme's colours.
+* A slider as a background shows no captions or descriptions (their pages say so).
+* WPBakery element: an Add slider button; back on the page builder's tab, the slider published there is in the list, chosen.
+* Faster pages: Collage and Art no longer load Swiper (their lightbox loads it when it opens); the first slider's first image is fetched first; the styles of a slider shown outside the page's content come in the page's head from the next visit; the plugin's scripts and stylesheets are minified.
+* Captions keep the alignment of their lines on WordPress 6.0 too.
 
 = 2.8.0 =
 * Collage, Random mosaic: drag a line between photos in the preview to resize them — the photos on either side grow and shrink, each part at least 40px. The sizes are kept per device (tablet and phone take the larger screen's until they get their own) and stay when photos are swapped or the window is resized; with another number of photos the mosaic is worked out again. A hint under the preview says so.
