@@ -23,6 +23,128 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertTrue( wp_style_is( 'wp-swiper', 'enqueued' ) );
 	}
 
+	// Fresh script and style queues, the plugin's files registered again.
+	private function fresh_assets() {
+		$GLOBALS['wp_scripts'] = null;
+		$GLOBALS['wp_styles']  = null;
+		WP_Swiper_Render::register_assets();
+	}
+
+	public function test_swiper_only_where_a_slider_needs_it() {
+		// A Collage: frontend.js and .css only; its lightbox loads Swiper when it opens.
+		$this->fresh_assets();
+		do_shortcode( '[wp_swiper id="' . $this->slider( null, array( 'effect' => 'collage', 'lightbox' => true ) ) . '"]' );
+		$this->assertTrue( wp_script_is( 'wp-swiper', 'enqueued' ) );
+		$this->assertFalse( wp_script_is( 'swiper', 'enqueued' ) );
+		$this->assertFalse( wp_style_is( 'swiper', 'enqueued' ) );
+		$this->assertSame( array(), wp_scripts()->query( 'wp-swiper' )->deps );
+		$i18n = wp_scripts()->get_data( 'wp-swiper', 'data' );
+		$this->assertStringContainsString( 'swiper-bundle.min.js?ver=' . WP_SWIPER_SWIPER_VERSION, wp_unslash( $i18n ) );
+		$this->assertStringContainsString( 'swiper-bundle.min.css?ver=' . WP_SWIPER_SWIPER_VERSION, wp_unslash( $i18n ) );
+
+		// A slider on the same page: Swiper too, before frontend.js.
+		do_shortcode( '[wp_swiper id="' . $this->slider() . '"]' );
+		$this->assertSame( array( 'swiper' ), wp_scripts()->query( 'wp-swiper' )->deps );
+		$this->assertSame( array( 'swiper' ), wp_styles()->query( 'wp-swiper' )->deps );
+		// Printed in this order.
+		wp_scripts()->all_deps( wp_scripts()->queue );
+		$this->assertSame( array( 'swiper', 'wp-swiper' ), array_values( array_intersect( wp_scripts()->to_do, array( 'swiper', 'wp-swiper' ) ) ) );
+	}
+
+	public function test_first_image_of_the_page_fetched_first() {
+		// A new page: no image has it yet.
+		$flag = new ReflectionProperty( 'WP_Swiper_Render', 'priority' );
+		$flag->setAccessible( true );
+		$flag->setValue( null, false );
+
+		$first  = $this->render();
+		$second = $this->render();
+		// The first slider's first image only (eager); the others lazy, without it.
+		$this->assertSame( 1, substr_count( $first, 'fetchpriority="high"' ) );
+		$this->assertMatchesRegularExpression( '/<img[^>]*loading="eager"[^>]*fetchpriority="high"|<img[^>]*fetchpriority="high"[^>]*loading="eager"/', $first );
+		$this->assertStringNotContainsString( 'fetchpriority="high"', $second );
+	}
+
+	public function test_styles_needed_after_head_are_in_head_next_time() {
+		delete_option( WP_Swiper_Render::LATE_OPTION );
+		$page = self::factory()->post->create( array( 'post_type' => 'page' ) );
+		$this->go_to( get_permalink( $page ) );
+
+		// A slider in, say, the footer: <head> is out when it shows.
+		$this->fresh_assets();
+		$GLOBALS['wp_actions']['wp_head'] = 1;
+		do_shortcode( '[wp_swiper id="' . $this->slider() . '"]' );
+		WP_Swiper_Render::remember_late_styles();
+		$this->assertSame( array( 'p' . $page => array( 'swiper', 'wp-swiper' ) ), get_option( WP_Swiper_Render::LATE_OPTION ) );
+
+		// The next visit: in <head> (enqueued as the page starts).
+		unset( $GLOBALS['wp_actions']['wp_head'] );
+		$this->fresh_assets();
+		$this->assertTrue( wp_style_is( 'wp-swiper', 'enqueued' ) );
+		$this->assertTrue( wp_style_is( 'swiper', 'enqueued' ) );
+
+		// Another page: not there.
+		$this->go_to( get_permalink( self::factory()->post->create( array( 'post_type' => 'page' ) ) ) );
+		$this->fresh_assets();
+		$this->assertFalse( wp_style_is( 'wp-swiper', 'enqueued' ) );
+	}
+
+	public function test_styles_printed_in_head_are_not_late() {
+		delete_option( WP_Swiper_Render::LATE_OPTION );
+		$this->go_to( get_permalink( self::factory()->post->create( array( 'post_type' => 'page' ) ) ) );
+		$this->fresh_assets();
+		// <head> printed them (the content has the slider), then the content shows it.
+		wp_styles()->done = array( 'swiper', 'wp-swiper' );
+		$GLOBALS['wp_actions']['wp_head'] = 1;
+		do_shortcode( '[wp_swiper id="' . $this->slider() . '"]' );
+		WP_Swiper_Render::remember_late_styles();
+		unset( $GLOBALS['wp_actions']['wp_head'] );
+		$this->assertFalse( get_option( WP_Swiper_Render::LATE_OPTION ) );
+	}
+
+	public function test_styles_needed_on_many_pages_are_on_every_page() {
+		$map = array();
+		for ( $i = 1; $i <= WP_Swiper_Render::LATE_PAGES; $i++ ) {
+			$map[ 'p' . $i ] = array( 'wp-swiper' );
+		}
+		update_option( WP_Swiper_Render::LATE_OPTION, $map );
+
+		// One page more (an Art): from now on every page has them.
+		$page = self::factory()->post->create( array( 'post_type' => 'page' ) );
+		$this->go_to( get_permalink( $page ) );
+		$this->fresh_assets();
+		$GLOBALS['wp_actions']['wp_head'] = 1;
+		do_shortcode( '[wp_swiper id="' . $this->slider( null, array( 'effect' => 'art' ) ) . '"]' );
+		WP_Swiper_Render::remember_late_styles();
+		unset( $GLOBALS['wp_actions']['wp_head'] );
+		$this->assertSame( array( '*' => array( 'wp-swiper', 'wp-swiper-art' ) ), get_option( WP_Swiper_Render::LATE_OPTION ) );
+
+		$this->go_to( home_url( '/?s=nothing' ) );
+		$this->assertSame( array( 'wp-swiper', 'wp-swiper-art' ), WP_Swiper_Render::late_styles() );
+	}
+
+	public function test_styles_in_head_when_the_content_has_a_slider() {
+		$art  = $this->slider( null, array( 'effect' => 'art' ) );
+		$page = self::factory()->post->create( array( 'post_type' => 'page', 'post_content' => '[wp_swiper id="' . $art . '"]' ) );
+		$this->go_to( get_permalink( $page ) );
+		$this->fresh_assets();
+		// Art: its own stylesheet, no Swiper.
+		$this->assertTrue( wp_style_is( 'wp-swiper-art', 'enqueued' ) );
+		$this->assertFalse( wp_style_is( 'swiper', 'enqueued' ) );
+	}
+
+	public function test_content_needs_swiper() {
+		$slider  = $this->slider();
+		$collage = $this->slider( null, array( 'effect' => 'collage' ) );
+		$art     = $this->slider( null, array( 'effect' => 'art' ) );
+
+		$this->assertFalse( WP_Swiper_Render::content_needs_swiper( 'No slider here.' ) );
+		$this->assertFalse( WP_Swiper_Render::content_needs_swiper( '[wp_swiper id="' . $collage . '"] [wp_swiper id="' . $art . '"]' ) );
+		$this->assertTrue( WP_Swiper_Render::content_needs_swiper( '[wp_swiper id="' . $collage . '"][vc_row][wp_swiper id="' . $slider . '" class="x"][/vc_row]' ) );
+		// An ID that cannot be told: Swiper, to be safe.
+		$this->assertTrue( WP_Swiper_Render::content_needs_swiper( '[wp_swiper]' ) );
+	}
+
 	public function test_shortcode_hides_what_cannot_show_from_visitors() {
 		$draft = $this->slider( null, array(), array( 'post_status' => 'draft' ) );
 		$post  = self::factory()->post->create();

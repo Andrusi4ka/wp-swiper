@@ -490,7 +490,7 @@ class WP_Swiper_Art {
 				: '';
 		}
 
-		wp_enqueue_style( 'wp-swiper-art' );
+		WP_Swiper_Render::style( 'wp-swiper-art' );
 		wp_enqueue_script( 'wp-swiper-art' );
 
 		// A click opens either links or the lightbox, never a mix (as in a
@@ -600,7 +600,7 @@ class WP_Swiper_Art {
 		$settings['direction'] = 'horizontal';
 		$descriptions          = WP_Swiper_Render::descriptions( $post_id, $slides, $settings );
 		if ( '' !== $descriptions ) {
-			wp_enqueue_style( 'wp-swiper' );
+			WP_Swiper_Render::style( 'wp-swiper' );
 		}
 
 		// The lightbox: a slider's own (frontend.js openLightbox(), with its
@@ -609,8 +609,8 @@ class WP_Swiper_Art {
 		// descriptions over or under the image, as set.
 		$config['lightbox'] = false;
 		if ( $settings['lightbox'] ) {
-			wp_enqueue_style( 'wp-swiper' );
-			wp_enqueue_script( 'wp-swiper' );
+			// frontend.js, without Swiper: the lightbox loads it when it first opens.
+			WP_Swiper_Render::enqueue( false );
 			$texts              = '' !== $descriptions && $settings['description_lightbox'];
 			$config['lightbox'] = array(
 				'radius'       => WP_Swiper_Render::lightbox_radius( $settings, 'lightbox_radius', 'art_radius' ),

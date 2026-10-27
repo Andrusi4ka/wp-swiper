@@ -100,6 +100,22 @@
     повертати. Палітра «Text color» = кольори теми + чорний/білий/сірі
     (`WP_Swiper_Palette`), `palette.js`/`palette.css` видалено;
     `uninstall.php` досі видаляє старий `wp_swiper_text_colors`.
+  - коміт «швидкість» (2026-10-27, вдома):
+    - Swiper лише для слайдерів: `WP_Swiper_Render::enqueue( $swiper )`,
+      `needs_swiper()` (не Collage/Art); `wp-swiper` без залежностей, `swiper`
+      додається в deps, коли треба. Лайтбокс Collage/Art довантажує Swiper
+      при першому відкритті (`frontend.js withSwiper()`, `wpSwiperI18n.swiper`).
+    - `fetchpriority="high"` першому фото першого слайдера сторінки.
+    - Стилі в `<head>`: з вмісту сторінки (`content_effects()`, і Art теж);
+      а показані після `<head>` (HTML-блок, шапка) запам'ятовуються
+      (`style()`, `remember_late_styles()`, опція `wp_swiper_late_styles`,
+      понад `LATE_PAGES` сторінок → `'*'`, на всіх).
+    - Мінімізація при релізі (`release.yml`): у копії для zip наші
+      `assets/js/*.js` — terser@5.31.6, `assets/css/*.css` —
+      lightningcss-cli@1.25.1, ті самі імена; у репозиторії файли як є.
+      Перевірено: стиснуті файли працюють так само (лайтбокс, адмінка,
+      знімки сторінок). frontend.js gzip 38.7 → 16.6 КБ, frontend.css
+      13.8 → 6.5 КБ.
 
 ## Що далі / відкладено
 
@@ -117,8 +133,8 @@
     кольорів). План: свій на Iris, зберігати структуру, а не CSS;
   - безпека: `span style` у підписах/описах пропускає будь-який CSS, який
     дозволяє WordPress. Обмежити до кольору й підкреслення;
-  - оптимізація: не вантажити Swiper для Collage/Art, мінімізувати JS/CSS
-    при релізі, розбити `frontend.js` за функціями;
+  - оптимізація: ~~не вантажити Swiper для Collage/Art~~, ~~мінімізувати JS/CSS
+    при релізі~~ (зроблено), розбити `frontend.js` за функціями;
   - тести в браузері (Playwright).
 - **Відхилено, не пропонувати знову:**
   - «Proportions» слайдів (варіанти «висота+пропорція» і

@@ -31,9 +31,30 @@ jobs:
             exit 1
           fi
 
-      # git archive leaves out what .gitattributes marks export-ignore (dev files).
+      # For the minifiers below (npx, versions pinned).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # git archive leaves out what .gitattributes marks export-ignore (dev
+      # files). The plugin's own scripts and stylesheets then minified in the
+      # copy that goes into the zip, under the same names (the repository
+      # keeps them as written, comments and all); Swiper's are minified already.
       - name: Build wp-swiper.zip
-        run: git archive --format=zip --prefix=wp-swiper/ -o wp-swiper.zip HEAD
+        run: |
+          mkdir build
+          git archive --format=tar --prefix=wp-swiper/ HEAD | tar -x -C build
+          cd build/wp-swiper
+          for f in assets/js/*.js; do
+            npx --yes terser@5.31.6 "$f" --compress --mangle --comments false -o "$f.min"
+            mv "$f.min" "$f"
+          done
+          for f in assets/css/*.css; do
+            npx --yes lightningcss-cli@1.25.1 --minify "$f" -o "$f.min"
+            mv "$f.min" "$f"
+          done
+          cd ..
+          zip -qr ../wp-swiper.zip wp-swiper
 
       - uses: softprops/action-gh-release@v2
         with:

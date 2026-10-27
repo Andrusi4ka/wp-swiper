@@ -27,17 +27,139 @@ class WP_Swiper_Render {
 		'mobile'  => '-mobile',
 	);
 
+	/**
+	 * Whether the page's first image got fetchpriority="high" (render_slide()).
+	 *
+	 * @var bool
+	 */
+	private static $priority = false;
+
+	/*
+	 * Stylesheets a slider needed once <head> was out (a Woodmart HTML block,
+	 * the header or footer, a widget): printed in the footer, the images show
+	 * unstyled for a moment. Remembered per page (late_key()) in this option,
+	 * the next visit has them in <head>; once more pages than LATE_PAGES need
+	 * them, every page has them ('*': a slider shown site-wide).
+	 */
+	const LATE_OPTION = 'wp_swiper_late_styles';
+	const LATE_PAGES  = 12;
+
+	/**
+	 * This page's stylesheets enqueued late (style()): handle => true.
+	 *
+	 * @var array
+	 */
+	private static $late = array();
+
 	public static function init() {
 		add_shortcode( self::SHORTCODE, array( __CLASS__, 'shortcode' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
+		add_action( 'wp_footer', array( __CLASS__, 'remember_late_styles' ), 99 );
+	}
+
+	/**
+	 * A stylesheet of the plugin's, enqueued; if <head> is out already,
+	 * remembered for this page (remember_late_styles()).
+	 *
+	 * @param string $handle swiper | wp-swiper | wp-swiper-art.
+	 */
+	public static function style( $handle ) {
+		// Printed in <head> already (the page's content has the slider): not late.
+		$printed = wp_style_is( $handle, 'done' );
+		wp_enqueue_style( $handle );
+		if ( ! $printed && did_action( 'wp_head' ) ) {
+			self::$late[ $handle ] = true;
+		}
+	}
+
+	/**
+	 * The page as remembered for its late stylesheets: a post, the front or
+	 * blog page, a term's archive, a post type's; null for the rest (search,
+	 * 404, dates...).
+	 *
+	 * @return string|null
+	 */
+	public static function late_key() {
+		if ( is_singular() ) {
+			return 'p' . get_queried_object_id();
+		}
+		if ( is_front_page() || is_home() ) {
+			return 'home';
+		}
+		$object = get_queried_object();
+		if ( $object instanceof WP_Term ) {
+			return 't' . $object->term_id;
+		}
+		if ( is_post_type_archive() ) {
+			$type = get_query_var( 'post_type' );
+			return 'a' . sanitize_key( is_array( $type ) ? reset( $type ) : $type );
+		}
+		return null;
+	}
+
+	/**
+	 * After the page (wp_footer): its late stylesheets kept for its next
+	 * visits, written only when there is something new.
+	 */
+	public static function remember_late_styles() {
+		$key  = self::late_key();
+		$late = array_keys( self::$late );
+		// Taken: the next page (or test) starts with none.
+		self::$late = array();
+		if ( ! $late || null === $key ) {
+			return;
+		}
+		$map  = get_option( self::LATE_OPTION, array() );
+		$map  = is_array( $map ) ? $map : array();
+		$all  = isset( $map['*'] ) ? (array) $map['*'] : array();
+		$own  = isset( $map[ $key ] ) ? (array) $map[ $key ] : array();
+		$new  = array_diff( $late, $all, $own );
+		if ( ! $new ) {
+			return;
+		}
+		$map[ $key ] = array_values( array_unique( array_merge( $own, $new ) ) );
+		// Many pages: a slider every page shows; then for all of them.
+		$pages = array_diff_key( $map, array( '*' => true ) );
+		if ( count( $pages ) > self::LATE_PAGES ) {
+			$handles = $all;
+			foreach ( $pages as $list ) {
+				$handles = array_merge( $handles, (array) $list );
+			}
+			$map = array( '*' => array_values( array_unique( $handles ) ) );
+		}
+		update_option( self::LATE_OPTION, $map, true );
+	}
+
+	/**
+	 * The stylesheets remembered for this page (and for every page), for <head>.
+	 *
+	 * @return string[]
+	 */
+	public static function late_styles() {
+		$map = get_option( self::LATE_OPTION, array() );
+		if ( ! is_array( $map ) || ! $map ) {
+			return array();
+		}
+		$key     = self::late_key();
+		$handles = isset( $map['*'] ) ? (array) $map['*'] : array();
+		if ( null !== $key && isset( $map[ $key ] ) ) {
+			$handles = array_merge( $handles, (array) $map[ $key ] );
+		}
+		return array_values( array_intersect( array_unique( $handles ), array( 'swiper', 'wp-swiper', 'wp-swiper-art' ) ) );
 	}
 
 	public static function register_assets() {
+		// Art's stylesheet first: enqueued below for a page that has Art (one
+		// not registered yet would be left out).
+		WP_Swiper_Art::register_assets();
+
+		// Swiper on its own: only the sliders need it (enqueue()); a Collage or
+		// Art loads it for its lightbox, when that first opens (frontend.js).
 		wp_register_style( 'swiper', WP_SWIPER_URL . 'assets/vendor/swiper/swiper-bundle.min.css', array(), WP_SWIPER_SWIPER_VERSION );
-		wp_register_style( 'wp-swiper', WP_SWIPER_URL . 'assets/css/frontend.css', array( 'swiper' ), wp_swiper_asset_version( 'assets/css/frontend.css' ) );
+		wp_register_style( 'wp-swiper', WP_SWIPER_URL . 'assets/css/frontend.css', array(), wp_swiper_asset_version( 'assets/css/frontend.css' ) );
 
 		wp_register_script( 'swiper', WP_SWIPER_URL . 'assets/vendor/swiper/swiper-bundle.min.js', array(), WP_SWIPER_SWIPER_VERSION, true );
-		wp_register_script( 'wp-swiper', WP_SWIPER_URL . 'assets/js/frontend.js', array( 'swiper' ), wp_swiper_asset_version( 'assets/js/frontend.js' ), true );
+		wp_register_script( 'wp-swiper', WP_SWIPER_URL . 'assets/js/frontend.js', array(), wp_swiper_asset_version( 'assets/js/frontend.js' ), true );
 		wp_localize_script(
 			'wp-swiper',
 			'wpSwiperI18n',
@@ -46,16 +168,99 @@ class WP_Swiper_Render {
 				'close'  => __( 'Close', 'wp-swiper' ),
 				'prev'   => __( 'Previous image', 'wp-swiper' ),
 				'next'   => __( 'Next image', 'wp-swiper' ),
+				// Swiper's files, for a lightbox opened where no slider loaded them.
+				'swiper' => array(
+					'js'  => add_query_arg( 'ver', WP_SWIPER_SWIPER_VERSION, WP_SWIPER_URL . 'assets/vendor/swiper/swiper-bundle.min.js' ),
+					'css' => add_query_arg( 'ver', WP_SWIPER_SWIPER_VERSION, WP_SWIPER_URL . 'assets/vendor/swiper/swiper-bundle.min.css' ),
+				),
 			)
 		);
 
 		// Load the CSS in <head> when we already know the page uses a slider,
-		// so there is no flash of unstyled images. Otherwise the shortcode
-		// enqueues it on demand.
+		// so there is no flash of unstyled images (Swiper's too, unless all of
+		// them are Collages or Art). Otherwise the shortcode enqueues it on demand.
 		$post = get_post();
 		if ( is_singular() && $post && has_shortcode( $post->post_content, self::SHORTCODE ) ) {
 			wp_enqueue_style( 'wp-swiper' );
+			if ( self::content_needs_swiper( $post->post_content ) ) {
+				wp_enqueue_style( 'swiper' );
+			}
+			// Art's own stylesheet too (registered by WP_Swiper_Art, also on this hook).
+			if ( in_array( WP_Swiper_Art::EFFECT, self::content_effects( $post->post_content ), true ) ) {
+				wp_enqueue_style( 'wp-swiper-art' );
+			}
 		}
+		// Those a slider of this page needed after <head> before (remember_late_styles()).
+		foreach ( self::late_styles() as $handle ) {
+			wp_enqueue_style( $handle );
+		}
+	}
+
+	/**
+	 * Whether the sliders of some content need Swiper: one at least that is
+	 * no Collage or Art (or one whose ID cannot be told).
+	 *
+	 * @param string $content Post content.
+	 * @return bool
+	 */
+	public static function content_needs_swiper( $content ) {
+		foreach ( self::content_effects( $content ) as $effect ) {
+			if ( null === $effect || self::needs_swiper( array( 'effect' => $effect ) ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The effects of the sliders in some content (its shortcodes), each once;
+	 * null for one whose ID cannot be told.
+	 *
+	 * @param string $content Post content.
+	 * @return array
+	 */
+	public static function content_effects( $content ) {
+		if ( ! preg_match_all( '/\[' . self::SHORTCODE . '\b([^\]]*)\]/', (string) $content, $matches ) ) {
+			return array();
+		}
+		$effects = array();
+		foreach ( $matches[1] as $attrs ) {
+			$atts      = shortcode_parse_atts( $attrs );
+			$id        = is_array( $atts ) && isset( $atts['id'] ) ? absint( $atts['id'] ) : 0;
+			$effects[] = $id ? WP_Swiper_Settings::get( $id )['effect'] : null;
+		}
+		return array_values( array_unique( $effects, SORT_REGULAR ) );
+	}
+
+	/**
+	 * Whether a slider needs Swiper on the page: all but a Collage and Art
+	 * (their lightbox loads it when it opens).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function needs_swiper( $settings ) {
+		return ! in_array( $settings['effect'], array( 'collage', WP_Swiper_Art::EFFECT ), true );
+	}
+
+	/**
+	 * The front end's files for a slider: frontend.js and .css, and Swiper's
+	 * before them where it needs it (they wait for it then).
+	 *
+	 * @param bool $swiper With Swiper.
+	 */
+	public static function enqueue( $swiper ) {
+		if ( $swiper ) {
+			foreach ( array( wp_styles(), wp_scripts() ) as $assets ) {
+				$file = $assets->query( 'wp-swiper', 'registered' );
+				if ( $file && ! in_array( 'swiper', $file->deps, true ) ) {
+					$file->deps[] = 'swiper';
+				}
+			}
+			self::style( 'swiper' );
+		}
+		self::style( 'wp-swiper' );
+		wp_enqueue_script( 'wp-swiper' );
 	}
 
 	/**
@@ -131,8 +336,7 @@ class WP_Swiper_Render {
 			return WP_Swiper_Art::render( $post_id, $slides, $settings, $class );
 		}
 
-		wp_enqueue_style( 'wp-swiper' );
-		wp_enqueue_script( 'wp-swiper' );
+		self::enqueue( self::needs_swiper( $settings ) );
 
 		// Fading slides (the Fade effect, Thumbnails with the Fade transition) have no
 		// direction of their own: always horizontal (Direction is locked in the editor).
@@ -1289,16 +1493,19 @@ class WP_Swiper_Render {
 			$image = self::video( $slide, $size, $settings );
 		} else {
 			// Full size with its srcset: the browser picks the file that fits the slide.
-			$image = wp_get_attachment_image(
-				$slide['id'],
-				'full',
-				false,
-				array(
-					'class'    => 'wp-swiper__image',
-					'loading'  => $eager ? 'eager' : 'lazy',
-					'decoding' => 'async',
-				)
+			$attrs = array(
+				'class'    => 'wp-swiper__image',
+				'loading'  => $eager ? 'eager' : 'lazy',
+				'decoding' => 'async',
 			);
+			// The first slider's first image, often the page's largest one in view
+			// (what Google measures as LCP): fetched before the others. Once a
+			// page (WordPress then gives no other image the same, from 6.3).
+			if ( $eager && ! self::$priority ) {
+				self::$priority        = true;
+				$attrs['fetchpriority'] = 'high';
+			}
+			$image = wp_get_attachment_image( $slide['id'], 'full', false, $attrs );
 		}
 		?>
 		<div class="swiper-slide<?php echo $slide['video'] ? ' wp-swiper-slide--video' : ''; ?>" data-wp-swiper-index="<?php echo (int) $index; ?>" style="<?php echo esc_attr( $style ); ?>"

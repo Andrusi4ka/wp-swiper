@@ -1037,6 +1037,61 @@
 	 *                           { width, max, align } to have them under it.
 	 */
 	function openLightbox( items, index, onClose, options ) {
+		withSwiper( function () {
+			showLightbox( items, index, onClose, options );
+		} );
+	}
+
+	/*
+	 * Swiper where it is not loaded yet: a Collage or Art loads only this
+	 * file (render.php needs_swiper()), its lightbox loads Swiper's files the
+	 * first time it opens (wpSwiperI18n.swiper), then goes on.
+	 */
+	var swiperWaiting = null;
+	function withSwiper( done ) {
+		if ( window.Swiper ) {
+			done();
+			return;
+		}
+		if ( ! i18n.swiper ) {
+			return;
+		}
+		if ( swiperWaiting ) {
+			swiperWaiting.push( done );
+			return;
+		}
+		swiperWaiting = [ done ];
+		var pending = 1;
+		var ready = function () {
+			pending--;
+			if ( ! pending && window.Swiper ) {
+				var waiting = swiperWaiting;
+				swiperWaiting = null;
+				waiting.forEach( function ( fn ) {
+					fn();
+				} );
+			}
+		};
+		// Its stylesheet, unless the page has it already (WordPress's id for it).
+		if ( ! document.getElementById( 'swiper-css' ) ) {
+			pending++;
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.id = 'swiper-css';
+			link.href = i18n.swiper.css;
+			link.onload = link.onerror = ready;
+			document.head.appendChild( link );
+		}
+		var script = document.createElement( 'script' );
+		script.src = i18n.swiper.js;
+		script.onload = ready;
+		script.onerror = function () {
+			swiperWaiting = null;
+		};
+		document.head.appendChild( script );
+	}
+
+	function showLightbox( items, index, onClose, options ) {
 		var opener = document.activeElement;
 		var root = document.createElement( 'div' );
 		var strip = options.thumbs && items.length > 1 ? options.thumbs : null;

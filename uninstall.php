@@ -30,6 +30,9 @@ function wp_swiper_uninstall_site() {
 
 	// The slide text editors' own colors, from the Settings page there was until 2.9.
 	delete_option( 'wp_swiper_text_colors' );
+
+	// The stylesheets remembered for <head> per page (WP_Swiper_Render::remember_late_styles()).
+	delete_option( 'wp_swiper_late_styles' );
 }
 
 if ( is_multisite() ) {
