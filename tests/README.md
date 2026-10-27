@@ -2,7 +2,7 @@
 
 PHPUnit tests with the WordPress test suite ([wp-phpunit](https://github.com/wp-phpunit/wp-phpunit)): the settings schema and sanitizing, the migrations of older saved sliders, the markup and config of every effect and mode, saving and the preview's checks.
 
-GitHub Actions runs them on every push to `main` and pull request (`.github/workflows/tests.yml`: PHP 7.4 with WordPress 6.0 and 7.1, PHP 8.3 with WordPress 7.1), and before every release: a tag whose tests fail gets no release.
+GitHub Actions runs them on every push to `main` or `art-effect` and pull request (`.github/workflows/tests.yml`: PHP 7.4 with WordPress 6.0 and 7.1, PHP 8.3 with WordPress 7.1), and before every release: a tag whose tests fail gets no release.
 
 ## Running them locally
 

@@ -181,5 +181,9 @@
 `wp_swiper_tests`, лише для тестів. Потім:
 `composer install`, `wp core download --path=<core>`,
 `WP_CORE_DIR=<core> WP_TESTS_DB_HOST=<host> tests/vendor/bin/phpunit`.
-Станом на цей коміт: 242 тести, усі зелені. CI (`tests.yml`) ганяє їх на
-PHP 7.4 / 8.3.
+Станом на цей коміт: 271 тест, усі зелені. CI (`tests.yml`) ганяє їх на
+PHP 7.4 / 8.3 при push у `main` і `art-effect` та на PR.
+
+Вдома (OSPanel): PHP у PATH немає — `C:/OSPanel/modules/PHP-8.3/PHP/php.exe
+tests/vendor/bin/phpunit`; база — `WP_TESTS_DB_HOST=127.127.126.4`
+(на `localhost` MySQL не слухає). WP-CLI вдома теж немає.

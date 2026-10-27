@@ -1,12 +1,14 @@
 # The PHP tests (tests/, PHPUnit with the WordPress test suite) and a
-# syntax check of every file: on every push to main and pull request, and
-# before a release (release.yml calls this workflow and waits for it).
+# syntax check of every file: on every push to main or the work branch
+# (art-effect) and pull request, and before a release (release.yml calls
+# this workflow and waits for it).
 name: Tests
 
 on:
   push:
     branches:
       - main
+      - art-effect
   pull_request:
   workflow_call:
 
