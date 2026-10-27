@@ -13,6 +13,8 @@
 	var TEMPLATES = i18n.collageTemplates || [];
 	// Effects with a main image that can zoom (WP_Swiper_Settings::ZOOM_EFFECTS).
 	var ZOOM_EFFECTS = i18n.zoomEffects || [];
+	// Effects whose photos can have a shadow (Image shadow).
+	var SHADOW_EFFECTS = i18n.shadowEffects || [];
 
 	$( function () {
 		var $list = $( '#wp-swiper-slide-list' );
@@ -488,9 +490,12 @@
 		 * Custom shows a swatch that opens a picker (Iris, WordPress's: the color,
 		 * a palette) with an Opacity slider; the arrow beside it goes back to the
 		 * default color. Each row (.wp-swiper-modal__color) keeps what is chosen
-		 * as its data: hex and alpha (0–100).
+		 * as its data: hex and alpha (0–100). A setting of a color with its
+		 * opacity (.wp-swiper-alpha-color: Image shadow's) has the same picker,
+		 * always shown, and keeps what is chosen in its hidden input too.
 		 */
 		var COLOR_PROPS = [ 'caption_color', 'description_color' ];
+		var COLOR_CONTROL = '.wp-swiper-modal__color, .wp-swiper-alpha-color';
 
 		function colorControl( prop ) {
 			return $( '.wp-swiper-modal__color[data-prop="' + prop + '"]' );
@@ -547,9 +552,17 @@
 			paintColor( $control );
 		}
 
+		// A setting's picker: what is chosen into its input (the preview and
+		// the "unsaved" warning take it as any other change).
+		function colorPicked( $control ) {
+			if ( $control.hasClass( 'wp-swiper-alpha-color' ) ) {
+				$control.find( '.wp-swiper-alpha-color__value' ).val( colorValue( $control.data( 'hex' ), $control.data( 'alpha' ) ) ).trigger( 'change' );
+			}
+		}
+
 		function closeColorPickers() {
-			$modal.find( '.wp-swiper-color-pick__pop' ).prop( 'hidden', true );
-			$modal.find( '.wp-swiper-color-pick__swatch' ).attr( 'aria-expanded', 'false' );
+			$( '.wp-swiper-color-pick__pop' ).prop( 'hidden', true );
+			$( '.wp-swiper-color-pick__swatch' ).attr( 'aria-expanded', 'false' );
 		}
 
 		function showColor( prop, value ) {
@@ -575,8 +588,8 @@
 			$( this ).closest( '.wp-swiper-modal__color' ).find( '.wp-swiper-color-pick' ).prop( 'hidden', $( this ).val() !== 'custom' );
 			closeColorPickers();
 		} );
-		$modal.on( 'click', '.wp-swiper-color-pick__swatch', function () {
-			var $control = $( this ).closest( '.wp-swiper-modal__color' );
+		$( document ).on( 'click', '.wp-swiper-color-pick__swatch', function () {
+			var $control = $( this ).closest( COLOR_CONTROL );
 			var $pop = $control.find( '.wp-swiper-color-pick__pop' );
 			var open = $pop.prop( 'hidden' );
 			closeColorPickers();
@@ -595,23 +608,37 @@
 					change: function ( event, ui ) {
 						$control.data( 'hex', ui.color.toString() );
 						paintColor( $control );
+						colorPicked( $control );
 					}
 				} );
 				$control.data( 'iris', true );
 			}
 		} );
-		$modal.on( 'input change', '.wp-swiper-color-pick__opacity input', function () {
-			var $control = $( this ).closest( '.wp-swiper-modal__color' );
+		$( document ).on( 'input change', '.wp-swiper-color-pick__opacity input', function () {
+			var $control = $( this ).closest( COLOR_CONTROL );
 			$control.data( 'alpha', Math.max( 0, Math.min( 100, parseInt( this.value, 10 ) || 0 ) ) );
 			paintColor( $control );
+			colorPicked( $control );
 		} );
 		// A color typed in that is none: the field shows the chosen one again.
-		$modal.on( 'change', '.wp-swiper-color-pick__hex', function () {
-			$( this ).val( $( this ).closest( '.wp-swiper-modal__color' ).data( 'hex' ) );
+		$( document ).on( 'change', '.wp-swiper-color-pick__hex', function () {
+			$( this ).val( $( this ).closest( COLOR_CONTROL ).data( 'hex' ) );
 		} );
-		$modal.on( 'click', '.wp-swiper-color-pick__reset', function () {
-			var $control = $( this ).closest( '.wp-swiper-modal__color' );
+		$( document ).on( 'click', '.wp-swiper-color-pick__reset', function () {
+			var $control = $( this ).closest( COLOR_CONTROL );
+			if ( $control.hasClass( 'wp-swiper-alpha-color' ) ) {
+				var color = parseColor( $control.attr( 'data-default' ) ) || { hex: '#000000', alpha: 100 };
+				setColor( $control, color.hex, color.alpha );
+				colorPicked( $control );
+				return;
+			}
 			setColor( $control, defaultColor( $control.attr( 'data-prop' ) ), 100 );
+		} );
+		// The settings' pickers show their saved color.
+		$( '.wp-swiper-alpha-color' ).each( function () {
+			var $control = $( this );
+			var color = parseColor( $control.find( '.wp-swiper-alpha-color__value' ).val() ) || parseColor( $control.attr( 'data-default' ) ) || { hex: '#000000', alpha: 100 };
+			setColor( $control, color.hex, color.alpha );
 		} );
 		// A click anywhere else closes the picker.
 		$( document ).on( 'mousedown', function ( e ) {
@@ -1537,6 +1564,19 @@
 			var border = $( '#wp-swiper-image_border' ).is( ':checked' );
 			field( 'image_border_width' ).toggle( border );
 			field( 'image_border_color' ).toggle( border );
+			// Image shadow: where the photos stand apart (WP_Swiper_Settings::shadow()
+			// checks the same): not a background; Creative: the carousel; Slide:
+			// more than one slide in view, of their own widths or a continuous
+			// scroll. Its settings once on; Art has no spread (drop-shadow).
+			var canShadow = SHADOW_EFFECTS.indexOf( effect ) !== -1 && ! background
+				&& ( effect !== 'creative' || carousel )
+				&& ( ! slide || marquee || autoWidth || expand || maxPerView() > 1 );
+			var shadowOn = canShadow && $( '#wp-swiper-image_shadow' ).is( ':checked' );
+			field( 'image_shadow' ).toggle( canShadow );
+			[ 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_color' ].forEach( function ( name ) {
+				field( name ).toggle( shadowOn );
+			} );
+			field( 'image_shadow_spread' ).toggle( shadowOn && effect !== 'art' );
 			// Continuous scroll: the delay shown greyed (locked above), the pause
 			// applies (frontend.js stops the strip where it is).
 			field( 'autoplay_delay' ).toggle( autoplay || marquee );

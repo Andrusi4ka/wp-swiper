@@ -892,6 +892,22 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertSame( array( 'desktop' => 'scatter:1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8', 'tablet' => 'scatter:1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8', 'mobile' => '' ), $config['cuts'] );
 	}
 
+	public function test_image_shadow_and_its_room() {
+		$on    = array( 'image_shadow' => true, 'image_shadow_x' => 0, 'image_shadow_y' => 8, 'image_shadow_blur' => 20, 'image_shadow_spread' => 0, 'image_shadow_color' => 'rgba(0,0,0,0.3)' );
+		$html  = $this->render( $on + array( 'effect' => 'collage' ) );
+		$style = $this->root_style( $html );
+
+		$this->assertContains( 'wp-swiper--shadow', $this->root_classes( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-shadow:0px 8px 20px 0px rgba(0,0,0,0.3)', $style );
+		$this->assertStringContainsString( '--wp-swiper-shadow-room:12px 20px 28px 20px', $style );
+
+		$this->assertContains( 'wp-swiper--shadow', $this->root_classes( $this->render( $on + array( 'effect' => 'coverflow' ) ) ) );
+		// None where it does not apply: one slide in view.
+		$single = $this->render( $on + array( 'effect' => 'slide', 'slides_per_view' => 1, 'slides_per_view_tablet' => '', 'slides_per_view_mobile' => '' ) );
+		$this->assertNotContains( 'wp-swiper--shadow', $this->root_classes( $single ) );
+		$this->assertStringNotContainsString( '--wp-swiper-shadow', $this->root_style( $single ) );
+	}
+
 	public function test_collage_height_auto_per_device() {
 		$html   = $this->render( array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'height_unit' => 'px', 'height_unit_tablet' => 'auto', 'height_unit_mobile' => 'px' ) );
 		$config = $this->config( $html, 'data-wp-swiper-collage' );

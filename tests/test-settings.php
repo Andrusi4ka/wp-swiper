@@ -594,6 +594,46 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( '', $clean['collage_cuts_mobile'] );
 	}
 
+	public function test_shadow_where_the_photos_stand_apart() {
+		$on = array( 'image_shadow' => true, 'image_shadow_x' => 4, 'image_shadow_y' => 10, 'image_shadow_blur' => 20, 'image_shadow_spread' => 2, 'image_shadow_color' => 'rgba(0,0,0,0.4)' );
+
+		$shadow = WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'collage' ) ) );
+		$this->assertSame( array( 'x' => 4, 'y' => 10, 'blur' => 20, 'spread' => 2, 'color' => 'rgba(0,0,0,0.4)' ), array_diff_key( $shadow, array( 'room' => 1 ) ) );
+		// Blur + spread, less or more the offset on each side.
+		$this->assertSame( array( 'top' => 12, 'right' => 26, 'bottom' => 32, 'left' => 18 ), $shadow['room'] );
+
+		// Off; not a background; not for an effect with one photo in view.
+		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( array( 'effect' => 'collage' ) ) ) );
+		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'collage', 'background' => true, 'background_class' => 'hero' ) ) ) );
+		foreach ( array( 'fade', 'cube', 'flip', 'thumbs' ) as $effect ) {
+			$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => $effect ) ) ), $effect );
+		}
+		foreach ( array( 'coverflow', 'cards', 'art' ) as $effect ) {
+			$this->assertNotFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => $effect ) ) ), $effect );
+		}
+		// Creative: the carousel only.
+		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'creative', 'creative_style' => 'push' ) ) ) );
+		$this->assertNotFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'creative', 'creative_style' => 'carousel' ) ) ) );
+		// Slide: more than one slide in view on some device, or a continuous scroll.
+		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'slide', 'slides_per_view' => 1, 'slides_per_view_tablet' => '', 'slides_per_view_mobile' => '' ) ) ) );
+		$this->assertNotFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'slide', 'slides_per_view' => 3 ) ) ) );
+		$this->assertNotFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'slide', 'slides_per_view' => 1, 'slides_per_view_tablet' => '', 'slides_per_view_mobile' => '', 'marquee' => true ) ) ) );
+		// Art: no spread (its shadow follows each shape).
+		$art = WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'art' ) ) );
+		$this->assertSame( 0, $art['spread'] );
+		$this->assertSame( array( 'top' => 10, 'right' => 24, 'bottom' => 30, 'left' => 16 ), $art['room'] );
+	}
+
+	public function test_sanitize_shadow_color_keeps_its_opacity() {
+		$this->assertSame( 'alpha_color', WP_Swiper_Settings::fields()['image_shadow_color']['type'] );
+		$this->assertSame( 'rgba(10,20,30,0.5)', WP_Swiper_Settings::sanitize( array( 'image_shadow_color' => 'rgba(10, 20, 30, .5)' ) )['image_shadow_color'] );
+		$this->assertSame( '#0a141e', WP_Swiper_Settings::sanitize( array( 'image_shadow_color' => 'rgba(10,20,30,1)' ) )['image_shadow_color'] );
+		$this->assertSame( 'rgba(0,0,0,0.3)', WP_Swiper_Settings::sanitize( array( 'image_shadow_color' => 'red; background:url(x)' ) )['image_shadow_color'] );
+		$clean = WP_Swiper_Settings::sanitize( array( 'image_shadow_x' => -500, 'image_shadow_blur' => -5 ) );
+		$this->assertSame( -100, $clean['image_shadow_x'] );
+		$this->assertSame( 0, $clean['image_shadow_blur'] );
+	}
+
 	public function test_sanitize_scatter() {
 		$this->assertSame( 'scatter', WP_Swiper_Settings::COLLAGE_SCATTER );
 		$this->assertArrayHasKey( 'scatter', WP_Swiper_Settings::fields()['collage_layout']['choices'] );

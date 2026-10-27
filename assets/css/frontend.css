@@ -487,6 +487,31 @@
 	}
 }
 
+/* Image shadow (WP_Swiper_Settings::shadow()): under each slide, or with
+   "Contain" under its image box (the slide then lets it out); in a collage
+   under each place. The slider or collage keeps room for it inside its own
+   size (--wp-swiper-shadow-room: top right bottom left), so it is not cut
+   off at the edges; Swiper lays the slides out inside that padding. */
+.wp-swiper--shadow > .swiper,
+.wp-swiper--shadow > .wp-swiper-collage {
+	box-sizing: border-box;
+	padding: var(--wp-swiper-shadow-room, 0px);
+}
+
+.wp-swiper--shadow .swiper-slide,
+.wp-swiper--shadow .wp-swiper-collage__cell {
+	box-shadow: var(--wp-swiper-shadow, none);
+}
+
+.wp-swiper--shadow.wp-swiper--fit-contain .swiper-slide {
+	overflow: visible;
+	box-shadow: none;
+}
+
+.wp-swiper--shadow.wp-swiper--fit-contain .wp-swiper__media {
+	box-shadow: var(--wp-swiper-shadow, none);
+}
+
 /* Caption */
 .wp-swiper__caption {
 	position: absolute;

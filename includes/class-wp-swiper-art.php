@@ -449,6 +449,7 @@ class WP_Swiper_Art {
 			) : false,
 		);
 
+		$shadow  = WP_Swiper_Settings::shadow( $settings );
 		$classes = array_filter(
 			array_merge(
 				array(
@@ -460,6 +461,8 @@ class WP_Swiper_Art {
 				array( $settings['lightbox'] ? 'wp-swiper-art--lightbox' : '' ),
 				// Image border: art.js draws it along each shape.
 				array( $settings['art_border'] ? 'wp-swiper-art--border' : '' ),
+				// Image shadow (art.css): along each shape, room kept around the stage for it.
+				array( $shadow ? 'wp-swiper-art--shadow' : '' ),
 				array( WP_Swiper_Settings::sanitize_classes( $settings['css_class'] . ' ' . $extra_class ) )
 			)
 		);
@@ -476,7 +479,11 @@ class WP_Swiper_Art {
 				'--wp-swiper-art-speed:' . max( 100, min( 3000, (int) $settings['art_swap_speed'] ) ) . 'ms',
 			),
 			self::caption_style( $settings ),
-			self::border_style( $settings )
+			self::border_style( $settings ),
+			$shadow ? array(
+				'--wp-swiper-art-shadow:drop-shadow(' . $shadow['x'] . 'px ' . $shadow['y'] . 'px ' . $shadow['blur'] . 'px ' . $shadow['color'] . ')',
+				'--wp-swiper-shadow-room:' . implode( 'px ', $shadow['room'] ) . 'px',
+			) : array()
 		);
 
 		// The slides' descriptions under it, as under a slider (the same block,

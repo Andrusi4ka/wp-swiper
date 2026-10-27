@@ -89,6 +89,8 @@ class WP_Swiper_Admin {
 					'backgroundEffects' => WP_Swiper_Settings::BACKGROUND_EFFECTS,
 					// Effects with a main image that can zoom ("Zoom the main image").
 					'zoomEffects' => WP_Swiper_Settings::ZOOM_EFFECTS,
+					// Effects whose photos can have a shadow ("Image shadow").
+					'shadowEffects' => WP_Swiper_Settings::SHADOW_EFFECTS,
 					// The collage's template Styles: their sizes kept apart (collage_cuts).
 					'collageTemplates' => WP_Swiper_Settings::COLLAGE_TEMPLATES,
 					// What Height measures (admin.js): each slide across a horizontal
@@ -345,6 +347,37 @@ class WP_Swiper_Admin {
 	}
 
 	/**
+	 * A color picker with its opacity, as a swatch that opens it (Iris: the
+	 * color and a palette, then an Opacity slider), and an arrow back to the
+	 * default color (admin.js). In the Slide info window (color_control())
+	 * and for a setting of type alpha_color.
+	 *
+	 * @param bool   $hidden Hidden at first (the window's Default).
+	 * @param string $id     The swatch's id (a setting's label points to it); '': none.
+	 */
+	private static function color_pick( $hidden, $id = '' ) {
+		?>
+		<span class="wp-swiper-color-pick"<?php echo $hidden ? ' hidden' : ''; ?>>
+			<button type="button" class="wp-swiper-color-pick__swatch"<?php echo $id ? ' id="' . esc_attr( $id ) . '"' : ''; ?> aria-expanded="false" aria-label="<?php esc_attr_e( 'Choose a color', 'wp-swiper' ); ?>">
+				<span class="wp-swiper-color-pick__chip" aria-hidden="true"></span>
+				<span class="dashicons dashicons-color-picker" aria-hidden="true"></span>
+			</button>
+			<button type="button" class="wp-swiper-color-pick__reset" title="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>">
+				<span class="dashicons dashicons-image-rotate" aria-hidden="true"></span>
+			</button>
+			<span class="wp-swiper-color-pick__pop" hidden>
+				<?php // Iris goes right after this field (admin.js). ?>
+				<input type="text" class="wp-swiper-color-pick__hex" spellcheck="false" aria-label="<?php esc_attr_e( 'Hex color', 'wp-swiper' ); ?>">
+				<label class="wp-swiper-color-pick__opacity">
+					<span><?php esc_html_e( 'Opacity', 'wp-swiper' ); ?>: <output>100%</output></span>
+					<input type="range" min="0" max="100" step="1" value="100">
+				</label>
+			</span>
+		</span>
+		<?php
+	}
+
+	/**
 	 * In the Slide info window, under a text's editor (after its font rows):
 	 * its color, Default (the Caption page's; the Description page's or the
 	 * page's text) or Custom: a swatch that opens a picker under it (Iris: the
@@ -366,23 +399,7 @@ class WP_Swiper_Admin {
 					<option value=""><?php esc_html_e( 'Default', 'wp-swiper' ); ?></option>
 					<option value="custom"><?php esc_html_e( 'Custom', 'wp-swiper' ); ?></option>
 				</select>
-				<span class="wp-swiper-color-pick" hidden>
-					<button type="button" class="wp-swiper-color-pick__swatch" aria-expanded="false" aria-label="<?php esc_attr_e( 'Choose a color', 'wp-swiper' ); ?>">
-						<span class="wp-swiper-color-pick__chip" aria-hidden="true"></span>
-						<span class="dashicons dashicons-color-picker" aria-hidden="true"></span>
-					</button>
-					<button type="button" class="wp-swiper-color-pick__reset" title="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>">
-						<span class="dashicons dashicons-image-rotate" aria-hidden="true"></span>
-					</button>
-					<span class="wp-swiper-color-pick__pop" hidden>
-						<?php // Iris goes right after this field (admin.js). ?>
-						<input type="text" class="wp-swiper-color-pick__hex" spellcheck="false" aria-label="<?php esc_attr_e( 'Hex color', 'wp-swiper' ); ?>">
-						<label class="wp-swiper-color-pick__opacity">
-							<span><?php esc_html_e( 'Opacity', 'wp-swiper' ); ?>: <output>100%</output></span>
-							<input type="range" min="0" max="100" step="1" value="100">
-						</label>
-					</span>
-				</span>
+				<?php self::color_pick( true ); ?>
 			</span>
 		</div>
 		<?php
@@ -845,6 +862,12 @@ class WP_Swiper_Admin {
 						<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
 							value="<?php echo esc_attr( $value ); ?>">
 						<?php self::color_reset( $field ); ?>
+					</span>
+				<?php elseif ( 'alpha_color' === $field['type'] ) : ?>
+					<?php // A color with its opacity, as in the Slide info window: the value kept, the picker (admin.js). ?>
+					<span class="wp-swiper-alpha-color" data-default="<?php echo esc_attr( $field['default'] ); ?>">
+						<input type="hidden" class="wp-swiper-alpha-color__value" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
+						<?php self::color_pick( false, $id ); ?>
 					</span>
 				<?php elseif ( 'seed' === $field['type'] ) : ?>
 					<?php // The number is the value kept; the button draws a new one (admin.js). ?>

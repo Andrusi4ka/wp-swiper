@@ -664,6 +664,7 @@ class WP_Swiper_Render {
 		$background = WP_Swiper_Settings::is_background( $settings );
 		$zoom       = WP_Swiper_Settings::is_zoom( $settings );
 		$expand     = WP_Swiper_Settings::is_expand( $settings );
+		$shadow     = WP_Swiper_Settings::shadow( $settings );
 		$videos     = in_array( true, wp_list_pluck( $slides, 'video' ), true );
 		// Per device: a Height in % of the parent block (the whole chain must stretch).
 		$percent = array_map(
@@ -697,6 +698,8 @@ class WP_Swiper_Render {
 			// A click on a video slide opens the lightbox (its play button says so).
 			$videos && $settings['lightbox'] && ! empty( $settings['lightbox_videos'] ) ? 'wp-swiper--lightbox-videos' : '',
 			$settings['image_border'] ? 'wp-swiper--border' : '',
+			// Image shadow (frontend.css), with room kept around the photos for it.
+			$shadow ? 'wp-swiper--shadow' : '',
 			// Caption: a weight saved for the whole slider (until 2.8) overrides the
 			// tag's own (each slide's is on its caption, render_slide()); vertical text.
 			'' !== WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ) ? 'wp-swiper--caption-weight' : '',
@@ -917,6 +920,12 @@ class WP_Swiper_Render {
 				$style[] = '--wp-swiper-border-width' . self::SUFFIX[ $device ] . ':' . (int) $width . 'px';
 			}
 			$style[] = '--wp-swiper-border-color:' . $settings['image_border_color'];
+		}
+		// Image shadow: as CSS box-shadow, and the room on each side (top,
+		// right, bottom, left) kept around the photos for it.
+		if ( $shadow ) {
+			$style[] = '--wp-swiper-shadow:' . $shadow['x'] . 'px ' . $shadow['y'] . 'px ' . $shadow['blur'] . 'px ' . $shadow['spread'] . 'px ' . $shadow['color'];
+			$style[] = '--wp-swiper-shadow-room:' . implode( 'px ', $shadow['room'] ) . 'px';
 		}
 		if ( $expand ) {
 			foreach ( WP_Swiper_Settings::responsive( $settings, 'active_width' ) as $device => $width ) {

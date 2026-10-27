@@ -65,6 +65,15 @@
     - Кнопка на мініатюрі слайду завжди «Edit» (була «Add info» / «Edit info»).
     - Біля кожного кольору в налаштуваннях — стрілка назад до кольору за
       замовчуванням (`color_reset()`, як у вікні Slide info).
+  - наступний коміт (2026-10-27, вдома):
+    - **Image shadow** (блок Look): `image_shadow` + `_x`, `_y`, `_blur`,
+      `_spread`, `_color` (тип `alpha_color`: той самий вибір кольору з
+      прозорістю, що у Slide info, `color_pick()`). Одна на всі екрани.
+      Де діє — `WP_Swiper_Settings::shadow()`: `SHADOW_EFFECTS` (slide з
+      >1 слайдом / marquee / auto width / expand, coverflow, cards,
+      creative carousel, collage, art), не фон. Swiper і колаж: box-shadow
+      + padding під тінь (`--wp-swiper-shadow-room`); Contain — тінь на
+      `.wp-swiper__media`. Art: `filter: drop-shadow` на сцені, без spread.
 
 ## Що далі / відкладено
 

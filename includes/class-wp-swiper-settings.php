@@ -45,6 +45,12 @@ class WP_Swiper_Settings {
 	const COLLAGE_SCATTER = 'scatter';
 
 	/**
+	 * Effects whose photos can have a shadow (Image shadow): those where they
+	 * stand apart (see shadow() for the rest of the conditions).
+	 */
+	const SHADOW_EFFECTS = array( 'slide', 'coverflow', 'cards', 'creative', 'collage', 'art' );
+
+	/**
 	 * Field definitions grouped into sections. `effects`: the effects a field
 	 * applies to (the editor hides it for the others); none = all effects.
 	 *
@@ -781,6 +787,69 @@ class WP_Swiper_Settings {
 				'label'   => __( 'Color', 'wp-swiper' ),
 				'type'    => 'color',
 				'default' => '#ffffff',
+			),
+			// Image shadow: one for every screen, where the photos stand apart
+			// (see shadow() for when it applies). Its offsets, blur and spread
+			// in one row, its color (with opacity) under them.
+			'image_shadow'          => array(
+				'section' => 'layout',
+				'effects' => self::SHADOW_EFFECTS,
+				'label'   => __( 'Image shadow', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'A shadow under each photo where they stand apart: several slides in view, Coverflow, Cards, the Creative carousel, Collage and Art (where it follows each shape, with no spread). Not for a background. Room is kept around the photos for it, so they get a little smaller.', 'wp-swiper' ),
+			),
+			'image_shadow_x'        => array(
+				'section' => 'layout',
+				'effects' => self::SHADOW_EFFECTS,
+				'group'   => 'image_shadow',
+				'label'   => __( 'Horizontal (px)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 0,
+				'min'     => -100,
+				'max'     => 100,
+				'step'    => 1,
+			),
+			'image_shadow_y'        => array(
+				'section' => 'layout',
+				'effects' => self::SHADOW_EFFECTS,
+				'group'   => 'image_shadow',
+				'label'   => __( 'Vertical (px)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 8,
+				'min'     => -100,
+				'max'     => 100,
+				'step'    => 1,
+			),
+			'image_shadow_blur'     => array(
+				'section' => 'layout',
+				'effects' => self::SHADOW_EFFECTS,
+				'group'   => 'image_shadow',
+				'label'   => __( 'Blur radius (px)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 20,
+				'min'     => 0,
+				'max'     => 100,
+				'step'    => 1,
+			),
+			'image_shadow_spread'   => array(
+				'section' => 'layout',
+				'effects' => self::SHADOW_EFFECTS,
+				'group'   => 'image_shadow',
+				'label'   => __( 'Spread radius (px)', 'wp-swiper' ),
+				'type'    => 'number',
+				'default' => 0,
+				'min'     => -50,
+				'max'     => 50,
+				'step'    => 1,
+			),
+			// "#rrggbb" or "rgba(r,g,b,a)" (sanitize_slide_color()).
+			'image_shadow_color'    => array(
+				'section' => 'layout',
+				'effects' => self::SHADOW_EFFECTS,
+				'label'   => __( 'Color', 'wp-swiper' ),
+				'type'    => 'alpha_color',
+				'default' => 'rgba(0,0,0,0.3)',
 			),
 			'centered_slides'       => array(
 				'section' => 'layout',
@@ -2141,6 +2210,55 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * Image shadow, where it applies: on, with an effect whose photos stand
+	 * apart (SHADOW_EFFECTS; Creative: the carousel; Slide: more than one
+	 * slide in view, a continuous scroll, Width from image or the wider active
+	 * slide), not as a background. Art has no spread (its shadow follows each
+	 * shape: CSS drop-shadow).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array|false { x, y, blur, spread, color, room: { top, right, bottom, left } } (px).
+	 */
+	public static function shadow( $settings ) {
+		$effect = $settings['effect'];
+		if ( empty( $settings['image_shadow'] ) || ! in_array( $effect, self::SHADOW_EFFECTS, true ) || self::is_background( $settings ) ) {
+			return false;
+		}
+		// Creative: only the carousel has photos side by side.
+		if ( 'creative' === $effect && ! self::is_carousel( $settings ) ) {
+			return false;
+		}
+		// Slide: only with more than one slide in view (or of their own widths).
+		if ( 'slide' === $effect && ! self::is_marquee( $settings ) && ! self::is_auto_width( $settings ) && ! self::is_expand( $settings )
+			&& max( self::responsive( $settings, 'slides_per_view' ) ) <= 1 ) {
+			return false;
+		}
+
+		$x      = (int) $settings['image_shadow_x'];
+		$y      = (int) $settings['image_shadow_y'];
+		$blur   = max( 0, (int) $settings['image_shadow_blur'] );
+		$spread = 'art' === $effect ? 0 : (int) $settings['image_shadow_spread'];
+		$color  = self::sanitize_slide_color( $settings['image_shadow_color'] );
+		$color  = '' === $color ? 'rgba(0,0,0,0.3)' : $color;
+		$reach  = $blur + $spread;
+
+		return array(
+			'x'      => $x,
+			'y'      => $y,
+			'blur'   => $blur,
+			'spread' => $spread,
+			'color'  => $color,
+			// Room on each side for it to show (not cut off at the block's edges).
+			'room'   => array(
+				'top'    => max( 0, $reach - $y ),
+				'right'  => max( 0, $reach + $x ),
+				'bottom' => max( 0, $reach + $y ),
+				'left'   => max( 0, $reach - $x ),
+			),
+		);
+	}
+
+	/**
 	 * "Zoom the main image": on, with an effect that shows one main image
 	 * (Slide: one slide in view on every device, or the wider active slide).
 	 *
@@ -2767,7 +2885,7 @@ class WP_Swiper_Settings {
 				),
 				'look'        => array(
 					'title'  => __( 'Look', 'wp-swiper' ),
-					'fields' => array( 'border_radius', 'image_border', 'image_border_width', 'image_border_color' ),
+					'fields' => array( 'border_radius', 'image_border', 'image_border_width', 'image_border_color', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
 				),
 				'zoom'        => array(
 					'title'  => __( 'Zoom', 'wp-swiper' ),
@@ -3364,6 +3482,11 @@ class WP_Swiper_Settings {
 				case 'color':
 					$color         = sanitize_hex_color( (string) $value );
 					$clean[ $key ] = $color ? $color : $field['default'];
+					break;
+
+				case 'alpha_color': // A color with its opacity: "#rrggbb" or "rgba(r,g,b,a)".
+					$color         = self::sanitize_slide_color( (string) $value );
+					$clean[ $key ] = '' !== $color ? $color : $field['default'];
 					break;
 
 				case 'ratio': // Proportions, "4x3".

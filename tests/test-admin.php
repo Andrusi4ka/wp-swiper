@@ -700,6 +700,19 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( count( $colors ), substr_count( $html, 'wp-swiper-color-reset"' ) );
 	}
 
+	public function test_shadow_color_has_a_picker_with_opacity() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 1 ), array( 'image_shadow_color' => 'rgba(0,0,0,0.5)' ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// The value kept in a hidden input; the picker as in the Slide info window (shown), its label on the swatch.
+		$this->assertMatchesRegularExpression( '#<span class="wp-swiper-alpha-color" data-default="rgba\(0,0,0,0.3\)">\s*<input type="hidden" class="wp-swiper-alpha-color__value" name="wp_swiper_settings\[image_shadow_color\]" value="rgba\(0,0,0,0.5\)">\s*<span class="wp-swiper-color-pick">\s*<button type="button" class="wp-swiper-color-pick__swatch" id="wp-swiper-image_shadow_color"#', $html );
+		$this->assertStringContainsString( '<label for="wp-swiper-image_shadow_color">Color</label>', $html );
+	}
+
 	public function test_collage_style_is_chosen_from_icons() {
 		$this->as_role( 'editor' );
 		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'collage', 'collage_layout' => 'grid' ) );

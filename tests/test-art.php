@@ -30,9 +30,9 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 			}
 			$this->assertSame( $field, $fields[ $key ], $key );
 		}
-		// No other field is Art's.
+		// No other field is Art's, but the Image shadow, shared with the effects whose photos stand apart.
 		foreach ( $fields as $key => $field ) {
-			if ( 0 !== strpos( $key, 'art_' ) && ! empty( $field['effects'] ) ) {
+			if ( 0 !== strpos( $key, 'art_' ) && 0 !== strpos( $key, 'image_shadow' ) && ! empty( $field['effects'] ) ) {
 				$this->assertNotContains( 'art', $field['effects'], $key );
 			}
 		}
@@ -41,6 +41,16 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertSame( 'art', array_keys( $blocks['layout'] )[0] );
 		$this->assertSame( 'art_swap', array_keys( $blocks['controls'] )[0] );
 		$this->assertArrayNotHasKey( 'art_swap', $blocks['layout'] );
+	}
+
+	public function test_art_shadow_follows_the_shapes() {
+		$html = $this->render( array( 'effect' => 'art', 'image_shadow' => true, 'image_shadow_x' => 2, 'image_shadow_y' => 6, 'image_shadow_blur' => 12, 'image_shadow_spread' => 9, 'image_shadow_color' => '#112233' ), $this->slides( 3 ) );
+		$this->assertStringContainsString( 'wp-swiper-art--shadow', $html );
+		// drop-shadow: no spread.
+		$this->assertStringContainsString( '--wp-swiper-art-shadow:drop-shadow(2px 6px 12px #112233)', $html );
+		$this->assertStringContainsString( '--wp-swiper-shadow-room:6px 14px 18px 10px', $html );
+
+		$this->assertStringNotContainsString( 'wp-swiper-art--shadow', $this->render( array( 'effect' => 'art' ), $this->slides( 3 ) ) );
 	}
 
 	public function test_ring_markup() {

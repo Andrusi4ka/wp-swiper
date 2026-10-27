@@ -216,3 +216,15 @@
 		stroke-width: calc(var(--wp-swiper-art-border-width-mobile, var(--wp-swiper-art-border-width-tablet, var(--wp-swiper-art-border-width, 0px))) * 2);
 	}
 }
+
+/* Image shadow (WP_Swiper_Settings::shadow()): on the stage, so it follows
+   each piece's shape (CSS drop-shadow, no spread); room kept around the
+   stage for it (--wp-swiper-shadow-room: top right bottom left). */
+.wp-swiper-art--shadow {
+	box-sizing: border-box;
+	padding: var(--wp-swiper-shadow-room, 0px);
+}
+
+.wp-swiper-art--shadow .wp-swiper-art__stage {
+	filter: var(--wp-swiper-art-shadow, none);
+}

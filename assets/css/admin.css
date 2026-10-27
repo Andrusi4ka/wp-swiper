@@ -1630,6 +1630,22 @@ body.wp-swiper-modal-open {
 	min-width: 0;
 }
 
+/* Image shadow: its four numbers in equal columns, their inputs level even
+   where a label takes two lines. */
+.wp-swiper-field-group[data-group="image_shadow"] {
+	align-items: flex-end;
+}
+
+.wp-swiper-field-group[data-group="image_shadow"] > .wp-swiper-field {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.wp-swiper-field-group[data-group="image_shadow"] input[type="number"] {
+	width: 100%;
+	min-width: 0;
+}
+
 /* A compact field (no label above) sits right after the one before it, on its line. */
 .wp-swiper-field-group:has(> .wp-swiper-field--compact) {
 	align-items: center;
