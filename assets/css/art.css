@@ -228,3 +228,84 @@
 .wp-swiper-art--shadow .wp-swiper-art__stage {
 	filter: var(--wp-swiper-art-shadow, none);
 }
+
+/* Captions on the middle photo only: the ring's pieces show none. */
+.wp-swiper-art--caption-middle .wp-swiper-art__piece:not([data-piece="0"]) .wp-swiper-art__caption {
+	display: none;
+}
+
+/* Ring: an image or text in the opening (class-wp-swiper-art.php opening()):
+   art.js gives it the free space there (a gap from the photos), its
+   content in the middle of it. Beside the stage, over the block. */
+.wp-swiper-art {
+	position: relative;
+}
+
+.wp-swiper-art__opening {
+	position: absolute;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-width: 0;
+	min-height: 0;
+}
+
+.wp-swiper-art__opening[hidden] {
+	display: none;
+}
+
+/* The image: its proportions kept, at most its Image size (% of the space). */
+.wp-swiper-art .wp-swiper-art__opening-image {
+	display: block;
+	width: auto;
+	height: auto;
+	max-width: var(--wp-swiper-art-opening-size, 100%);
+	max-height: var(--wp-swiper-art-opening-size, 100%);
+	object-fit: contain;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper-art .wp-swiper-art__opening-image {
+		max-width: var(--wp-swiper-art-opening-size-tablet, var(--wp-swiper-art-opening-size, 100%));
+		max-height: var(--wp-swiper-art-opening-size-tablet, var(--wp-swiper-art-opening-size, 100%));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-art .wp-swiper-art__opening-image {
+		max-width: var(--wp-swiper-art-opening-size-mobile, var(--wp-swiper-art-opening-size-tablet, var(--wp-swiper-art-opening-size, 100%)));
+		max-height: var(--wp-swiper-art-opening-size-mobile, var(--wp-swiper-art-opening-size-tablet, var(--wp-swiper-art-opening-size, 100%)));
+	}
+}
+
+/* The text: the editor's (paragraphs, headings, links...), centred unless
+   aligned there, at its Font size per device. */
+.wp-swiper-art__opening-text {
+	max-width: 100%;
+	font-size: var(--wp-swiper-art-opening-font, 16px);
+	line-height: 1.3;
+	text-align: center;
+	overflow-wrap: break-word;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper-art__opening-text {
+		font-size: var(--wp-swiper-art-opening-font-tablet, var(--wp-swiper-art-opening-font, 16px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-art__opening-text {
+		font-size: var(--wp-swiper-art-opening-font-mobile, var(--wp-swiper-art-opening-font-tablet, var(--wp-swiper-art-opening-font, 16px)));
+	}
+}
+
+.wp-swiper-art .wp-swiper-art__opening-text > :is(p, h1, h2, h3, h4, h5, h6, ul, ol) {
+	margin: 0 0 0.4em;
+}
+
+.wp-swiper-art .wp-swiper-art__opening-text > :last-child {
+	margin-bottom: 0;
+}

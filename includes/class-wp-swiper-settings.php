@@ -3489,6 +3489,10 @@ class WP_Swiper_Settings {
 					$clean[ $key ] = '' !== $color ? $color : $field['default'];
 					break;
 
+				case 'editor': // Text from WordPress's editor: a description's markup (links too).
+					$clean[ $key ] = self::sanitize_description( (string) $value );
+					break;
+
 				case 'ratio': // Proportions, "4x3".
 					$ratio         = self::normalize_ratio( (string) $value );
 					$clean[ $key ] = '' !== $ratio ? $ratio : $field['default'];

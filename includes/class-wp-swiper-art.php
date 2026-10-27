@@ -211,6 +211,86 @@ class WP_Swiper_Art {
 				'type'    => 'color',
 				'default' => '#ffffff',
 			),
+			// Ring: what sits in the opening at the bottom (art.js places it in
+			// the free space there, a gap from the photos): nothing, an image,
+			// or text from the editor (with links).
+			'art_opening_content' => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'ring' ),
+				'label'   => __( 'In the opening', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'none',
+				'choices' => array(
+					'none'  => __( 'Nothing', 'wp-swiper' ),
+					'image' => __( 'Image', 'wp-swiper' ),
+					'text'  => __( 'Text', 'wp-swiper' ),
+				),
+				'help'    => __( 'Placed in the middle of the free space in the opening, as large as it allows; not shown on a device whose Opening is 0.', 'wp-swiper' ),
+			),
+			'art_opening_image'  => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'ring' ),
+				'label'   => __( 'Image', 'wp-swiper' ),
+				'type'    => 'image',
+				'default' => 0,
+			),
+			'art_opening_image_size' => array(
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'ring' ),
+				'label'      => __( 'Image size (%)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 100,
+				'min'        => 10,
+				'max'        => 100,
+				'step'       => 5,
+				'help'       => __( 'Of the free space in the opening; the image keeps its proportions.', 'wp-swiper' ),
+			),
+			'art_opening_text'   => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'ring' ),
+				'label'   => __( 'Text', 'wp-swiper' ),
+				'type'    => 'editor',
+				'default' => '',
+			),
+			'art_opening_font_size' => array(
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'ring' ),
+				'label'      => __( 'Font size (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 16,
+				'min'        => 8,
+				'max'        => 120,
+				'step'       => 1,
+			),
+			'art_opening_gap'    => array(
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'ring' ),
+				'label'      => __( 'Gap from the photos (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 12,
+				'min'        => 0,
+				'max'        => 200,
+				'step'       => 1,
+			),
+			// Captions on the middle photo only (the Caption page): the ring's
+			// photos without, the middle one's showing as it changes.
+			'art_caption_middle' => array(
+				'section' => 'caption',
+				'effects' => $art,
+				'label'   => __( 'Only on the middle photo', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'Art: the photos around it show none.', 'wp-swiper' ),
+			),
 			// Photo swapping, as the Collage's: with more photos than pieces, the
 			// ones not shown fade in now and then (art.js). On the Controls page,
 			// with the other settings of how it moves.
@@ -221,7 +301,23 @@ class WP_Swiper_Art {
 				'label'   => __( 'Swap in the other photos', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => true,
-				'help'    => __( 'With more photos than pieces: every so often a piece, at random, fades to a photo not shown yet. The shape does not change.', 'wp-swiper' ),
+				'help'    => __( 'Every so often a photo fades to another one (What changes). The shape does not change.', 'wp-swiper' ),
+			),
+			// Which piece gets a new photo: one at random (with more photos than
+			// pieces: those not shown), or the middle one, in turn through all
+			// the photos (the ring stays as it is).
+			'art_swap_target'    => array(
+				'section' => 'advanced',
+				'panel'   => 'controls',
+				'effects' => $art,
+				'label'   => __( 'What changes', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'any',
+				'choices' => array(
+					'any'    => __( 'Any piece at random', 'wp-swiper' ),
+					'middle' => __( 'The middle photo', 'wp-swiper' ),
+				),
+				'help'    => __( 'Any piece at random: only with more photos than pieces, those not shown come in. The middle photo: it goes through all the photos in turn, the ring stays as it is.', 'wp-swiper' ),
 			),
 			'art_swap_delay'     => array(
 				'section' => 'advanced',
@@ -269,14 +365,14 @@ class WP_Swiper_Art {
 			'layout'   => array(
 				'art' => array(
 					'title'  => __( 'Art', 'wp-swiper' ),
-					'fields' => array( 'art_style', 'art_size', 'art_align', 'art_ring_count', 'art_ring_opening', 'art_gap', 'art_radius', 'art_border', 'art_border_width', 'art_border_color' ),
+					'fields' => array( 'art_style', 'art_size', 'art_align', 'art_ring_count', 'art_ring_opening', 'art_gap', 'art_radius', 'art_border', 'art_border_width', 'art_border_color', 'art_opening_content', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
 				),
 			),
 			// As the Collage's own (the same block and fields).
 			'controls' => array(
 				'art_swap' => array(
 					'title'  => __( 'Photo swapping', 'wp-swiper' ),
-					'fields' => array( 'art_swap', 'art_swap_delay', 'art_swap_speed', 'art_pause' ),
+					'fields' => array( 'art_swap', 'art_swap_target', 'art_swap_delay', 'art_swap_speed', 'art_pause' ),
 				),
 			),
 		);
@@ -444,12 +540,20 @@ class WP_Swiper_Art {
 			),
 			// Photo swapping (art.js): how often, and whether the pointer over it pauses it.
 			'swap'    => $settings['art_swap'] ? array(
-				'delay' => max( 1000, min( 30000, (int) $settings['art_swap_delay'] ) ),
-				'pause' => (bool) $settings['art_pause'],
+				'delay'  => max( 1000, min( 30000, (int) $settings['art_swap_delay'] ) ),
+				// Any piece at random, or the middle one through all the photos.
+				'target' => 'middle' === $settings['art_swap_target'] ? 'middle' : 'any',
+				'pause'  => (bool) $settings['art_pause'],
 			) : false,
 		);
 
 		$shadow  = WP_Swiper_Settings::shadow( $settings );
+		// Ring: an image or text in its opening (art.js places it, a gap from the photos).
+		$opening = 'ring' === $style ? self::opening( $settings ) : '';
+		if ( '' !== $opening ) {
+			$config['openingGap'] = self::per_device( $settings, 'art_opening_gap', 0, 200 );
+		}
+
 		$classes = array_filter(
 			array_merge(
 				array(
@@ -461,6 +565,8 @@ class WP_Swiper_Art {
 				array( $settings['lightbox'] ? 'wp-swiper-art--lightbox' : '' ),
 				// Image border: art.js draws it along each shape.
 				array( $settings['art_border'] ? 'wp-swiper-art--border' : '' ),
+				// Captions on the middle photo only (art.css).
+				array( $settings['art_caption_middle'] ? 'wp-swiper-art--caption-middle' : '' ),
 				// Image shadow (art.css): along each shape, room kept around the stage for it.
 				array( $shadow ? 'wp-swiper-art--shadow' : '' ),
 				array( WP_Swiper_Settings::sanitize_classes( $settings['css_class'] . ' ' . $extra_class ) )
@@ -478,6 +584,7 @@ class WP_Swiper_Art {
 				// Photo swapping: how long a photo fades in.
 				'--wp-swiper-art-speed:' . max( 100, min( 3000, (int) $settings['art_swap_speed'] ) ) . 'ms',
 			),
+			self::opening_style( $opening, $settings ),
 			self::caption_style( $settings ),
 			self::border_style( $settings ),
 			$shadow ? array(
@@ -527,6 +634,7 @@ class WP_Swiper_Art {
 				}
 				?>
 			</div>
+			<?php echo $opening; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?>
 			<template class="wp-swiper-art__pool">
 				<?php
 				foreach ( $slides as $index => $slide ) {
@@ -575,6 +683,57 @@ class WP_Swiper_Art {
 			$orders[ $device ] = $used ? $list : false;
 		}
 		return $orders;
+	}
+
+	/**
+	 * Ring: what sits in its opening (art_opening_content), hidden until
+	 * art.js places it (beside the stage, not in it: the photos' shadow is
+	 * not for it). An image (the size that fits the largest Art) or the
+	 * editor's text; '' for none, or an image or text not there.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string Markup.
+	 */
+	public static function opening( $settings ) {
+		$content = $settings['art_opening_content'];
+		if ( 'image' === $content ) {
+			$image = wp_get_attachment_image( (int) $settings['art_opening_image'], 'large', false, array( 'class' => 'wp-swiper-art__opening-image', 'loading' => 'lazy' ) );
+			return '' === $image ? '' : '<div class="wp-swiper-art__opening wp-swiper-art__opening--image" hidden>' . $image . '</div>';
+		}
+		if ( 'text' === $content ) {
+			$text = WP_Swiper_Settings::sanitize_description( $settings['art_opening_text'] );
+			return '' === $text ? '' : '<div class="wp-swiper-art__opening wp-swiper-art__opening--text" hidden><div class="wp-swiper-art__opening-text">' . $text . '</div></div>';
+		}
+		return '';
+	}
+
+	/**
+	 * The opening's CSS variables per device: the image's size (% of the free
+	 * space) or the text's font size; none without content.
+	 *
+	 * @param string $opening  The markup (opening()).
+	 * @param array  $settings Slider settings.
+	 * @return string[]
+	 */
+	private static function opening_style( $opening, $settings ) {
+		if ( '' === $opening ) {
+			return array();
+		}
+		$style = array();
+		$image = 'image' === $settings['art_opening_content'];
+		$key   = $image ? 'art_opening_image_size' : 'art_opening_font_size';
+		$name  = $image ? '--wp-swiper-art-opening-size' : '--wp-swiper-art-opening-font';
+		$unit  = $image ? '%' : 'px';
+		$range = $image ? array( 10, 100 ) : array( 8, 120 );
+		$suffix = array(
+			'desktop' => '',
+			'tablet'  => '-tablet',
+			'mobile'  => '-mobile',
+		);
+		foreach ( self::per_device( $settings, $key, $range[0], $range[1] ) as $device => $value ) {
+			$style[] = $name . $suffix[ $device ] . ':' . $value . $unit;
+		}
+		return $style;
 	}
 
 	/**

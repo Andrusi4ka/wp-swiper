@@ -713,6 +713,18 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '<label for="wp-swiper-image_shadow_color">Color</label>', $html );
 	}
 
+	public function test_art_opening_text_has_an_editor() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'art', 'art_opening_text' => '<p>Hi <a href="https://example.com">there</a></p>' ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// A textarea admin.js starts WordPress's editor on.
+		$this->assertStringContainsString( '<textarea class="wp-swiper-settings-editor" id="wp-swiper-art_opening_text" name="wp_swiper_settings[art_opening_text]" rows="6">&lt;p&gt;Hi &lt;a href=&quot;https://example.com&quot;&gt;there&lt;/a&gt;&lt;/p&gt;</textarea>', $html );
+	}
+
 	public function test_collage_style_is_chosen_from_icons() {
 		$this->as_role( 'editor' );
 		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'collage', 'collage_layout' => 'grid' ) );

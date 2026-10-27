@@ -869,6 +869,9 @@ class WP_Swiper_Admin {
 						<input type="hidden" class="wp-swiper-alpha-color__value" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
 						<?php self::color_pick( false, $id ); ?>
 					</span>
+				<?php elseif ( 'editor' === $field['type'] ) : ?>
+					<?php // WordPress's editor (admin.js starts it once the field is in view), as a slide's description's. ?>
+					<textarea class="wp-swiper-settings-editor" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" rows="6"><?php echo esc_textarea( $value ); ?></textarea>
 				<?php elseif ( 'seed' === $field['type'] ) : ?>
 					<?php // The number is the value kept; the button draws a new one (admin.js). ?>
 					<input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">

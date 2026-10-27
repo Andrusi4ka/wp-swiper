@@ -179,6 +179,9 @@
 		// For the preview (preview-art.js): where the middle circle's edge is.
 		block.wpSwiperArtRing = { cx: cx, cy: cy, outer: outer, middle: middle, gap: gap };
 
+		// The image or text in the opening.
+		openingContent( block, stage, config, { cx: cx, cy: cy, outer: outer, middle: middle, gap: gap, opening: opening } );
+
 		// The middle circle.
 		place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
 		pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
@@ -202,6 +205,50 @@
 			captionAt( piece, shape.caption );
 			outline( block, piece, shape.path );
 		}
+	}
+
+	/**
+	 * Ring: the image or text in its opening (class-wp-swiper-art.php
+	 * opening()), in the largest box that fits the free space there: under
+	 * the middle circle, between the ring's two ends, down to the bottom of
+	 * the stage, its Gap from the photos. The opening widens downwards, so
+	 * the box starts where its width and height give it the most room.
+	 * Hidden where there is no opening, or no room.
+	 *
+	 * @param {Element} block  The Art block (the content is placed in it, beside the stage).
+	 * @param {Element} stage  The stage.
+	 * @param {Object}  config Art config.
+	 * @param {Object}  ring   { cx, cy, outer, middle, gap, opening (radians) } in stage px.
+	 */
+	function openingContent( block, stage, config, ring ) {
+		var box = block.querySelector( ':scope > .wp-swiper-art__opening' );
+		if ( ! box ) {
+			return;
+		}
+		var space = Number( forDevice( config.openingGap ) ) || 0;
+		var half = Math.min( ring.opening / 2, Math.PI / 2 - 0.001 );
+		if ( half <= 0 ) {
+			box.hidden = true;
+			return;
+		}
+		// At a depth t under the middle its half-width is t * k - c: the ring's
+		// ends keep half the gap from the opening's sides, the content its own
+		// gap from them (both square to the sides).
+		var k = Math.tan( half );
+		var c = ( ring.gap / 2 + space ) / Math.cos( half );
+		var bottom = ring.outer;
+		var top = Math.max( ring.middle + ring.gap + space, ( bottom + c / k ) / 2 );
+		var halfWidth = Math.min( ring.outer, top * k - c );
+		var height = bottom - top;
+		if ( halfWidth < 8 || height < 8 ) {
+			box.hidden = true;
+			return;
+		}
+		box.hidden = false;
+		box.style.left = ( stage.offsetLeft + ring.cx - halfWidth ) + 'px';
+		box.style.top = ( stage.offsetTop + ring.cy + top ) + 'px';
+		box.style.width = ( halfWidth * 2 ) + 'px';
+		box.style.height = height + 'px';
 	}
 
 	var STYLES = { ring: ring };
@@ -415,6 +462,9 @@
 		var current = null;
 		// Photo swapping: the photos not in a piece, in the order they come in.
 		var queue = [];
+		// "The middle photo": the device's order, and where in it the middle one is.
+		var sequence = [];
+		var middleAt = 0;
 
 		// How many pieces this device shows (Ring: the ring's and the middle one).
 		function shownCount() {
@@ -454,6 +504,8 @@
 			} );
 			var shown = shownCount();
 			queue = order.length > shown ? order.slice( shown ) : [];
+			sequence = order;
+			middleAt = 0;
 			// The middle photo may be another one now.
 			if ( describe ) {
 				describe.rest();
@@ -470,18 +522,30 @@
 		var lastSwapped = -1;
 		function swap() {
 			var shown = shownCount();
-			if ( ! queue.length ) {
-				return;
-			}
 			var index;
-			do {
-				index = Math.floor( Math.random() * shown );
-			} while ( shown > 1 && index === lastSwapped );
-			lastSwapped = index;
+			var real;
+			if ( config.swap.target === 'middle' ) {
+				// The middle photo: the next of all the photos in turn (the ring as
+				// it is: a photo may be in both for a while).
+				if ( sequence.length < 2 ) {
+					return;
+				}
+				middleAt = ( middleAt + 1 ) % sequence.length;
+				index = 0;
+				real = sequence[ middleAt ];
+			} else {
+				if ( ! queue.length ) {
+					return;
+				}
+				do {
+					index = Math.floor( Math.random() * shown );
+				} while ( shown > 1 && index === lastSwapped );
+				lastSwapped = index;
+				real = queue.shift();
+				queue.push( pieces[ index ].wpReal );
+			}
 
 			var piece = pieces[ index ];
-			var real = queue.shift();
-			queue.push( piece.wpReal );
 			piece.wpReal = real;
 
 			var fresh = photos[ real ].cloneNode( true );

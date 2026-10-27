@@ -74,6 +74,17 @@
       creative carousel, collage, art), не фон. Swiper і колаж: box-shadow
       + padding під тінь (`--wp-swiper-shadow-room`); Contain — тінь на
       `.wp-swiper__media`. Art: `filter: drop-shadow` на сцені, без spread.
+  - коміт після `2287e82` (2026-10-27, вдома), Art Ring:
+    - `art_caption_middle` (сторінка Caption): підписи лише на центральному
+      фото (`.wp-swiper-art--caption-middle`, CSS).
+    - `art_swap_target` (Controls): `any` — як було; `middle` — центр по
+      черзі проходить усі фото, кільце стоїть (`art.js swap()`, `sequence`).
+    - Вміст вирізу (Opening): `art_opening_content` none/image/text,
+      `art_opening_image` + `_image_size` (%), `art_opening_text` (новий тип
+      поля `editor`: textarea + wp.editor у налаштуваннях, старт коли видно,
+      `sanitize_description()`), `art_opening_font_size`, `art_opening_gap`
+      (px, для кожного екрана). Блок поруч зі сценою (не під тінню),
+      `art.js openingContent()` рахує найбільший прямокутник у вирізі.
 
 ## Що далі / відкладено
 

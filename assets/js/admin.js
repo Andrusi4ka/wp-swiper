@@ -1328,7 +1328,7 @@
 		var layoutEffect = $( '#wp-swiper-effect' ).val();
 
 		function layoutInputs() {
-			return $( 'fieldset[data-section="layout"]' ).find( 'input[name^="wp_swiper_settings["], select[name^="wp_swiper_settings["]' );
+			return $( 'fieldset[data-section="layout"]' ).find( 'input[name^="wp_swiper_settings["], select[name^="wp_swiper_settings["], textarea[name^="wp_swiper_settings["]' );
 		}
 
 		// "wp_swiper_settings[height_tablet]" -> "height_tablet".
@@ -1338,6 +1338,7 @@
 
 		function readLayout() {
 			var values = {};
+			saveSettingsEditors();
 			layoutInputs().each( function () {
 				values[ storageKey( this ) ] = this.type === 'checkbox' ? this.checked : $( this ).val();
 			} );
@@ -1357,6 +1358,11 @@
 					$( this ).triggerHandler( 'input' );
 				} else {
 					$( this ).val( null === values[ key ] ? '' : String( values[ key ] ) );
+					// A settings editor already started shows it too.
+					var instance = this.tagName === 'TEXTAREA' && window.tinymce ? window.tinymce.get( this.id ) : null;
+					if ( instance ) {
+						instance.setContent( $( this ).val() );
+					}
 				}
 			} );
 			$( '.wp-swiper-field--responsive' ).each( function () {
@@ -1737,8 +1743,13 @@
 						}
 						return;
 					}
+					// Not of this Style: hidden. The others stay as the toggles above
+					// left them (data-effects showed them; Image shadow's own fields,
+					// for one, only while it is on).
 					var styles = $field.data( 'styles' );
-					$field.toggle( ! styles || String( styles ).split( ' ' ).indexOf( artStyle ) !== -1 );
+					if ( styles && String( styles ).split( ' ' ).indexOf( artStyle ) === -1 ) {
+						$field.hide();
+					}
 				} );
 				// Image border: its width and color only while it is on (as a slider's).
 				if ( ! $( '#wp-swiper-art_border' ).is( ':checked' ) ) {
@@ -1747,9 +1758,22 @@
 				}
 				// Photo swapping's own settings only while it is on (as the Collage's).
 				if ( ! $( '#wp-swiper-art_swap' ).is( ':checked' ) ) {
-					[ 'art_swap_delay', 'art_swap_speed', 'art_pause' ].forEach( function ( name ) {
+					[ 'art_swap_target', 'art_swap_delay', 'art_swap_speed', 'art_pause' ].forEach( function ( name ) {
 						field( name ).hide();
 					} );
+				}
+				// Ring: what is in the opening, its own settings (image or text) and the gap.
+				var opening = $( '#wp-swiper-art_opening_content' ).val();
+				if ( opening !== 'image' ) {
+					field( 'art_opening_image' ).hide();
+					field( 'art_opening_image_size' ).hide();
+				}
+				if ( opening !== 'text' ) {
+					field( 'art_opening_text' ).hide();
+					field( 'art_opening_font_size' ).hide();
+				}
+				if ( opening === 'none' ) {
+					field( 'art_opening_gap' ).hide();
 				}
 				// Size "Auto" on a device (its unit, else the larger screen's): its
 				// number does not apply there (greyed, kept).
@@ -1864,8 +1888,51 @@
 			}
 		} catch ( e ) {}
 
+		/*
+		 * A setting edited in WordPress's editor (type "editor": Art's text in the
+		 * opening): started the first time it is in view (an editor started out of
+		 * view is drawn wrong), as a slide description's (links, lists...). Its
+		 * text goes into its textarea before the form is read.
+		 */
+		function startSettingsEditors() {
+			$( '.wp-swiper-settings-editor' ).each( function () {
+				if ( this.wpSwiperStarted || ! $( this ).is( ':visible' ) ) {
+					return;
+				}
+				this.wpSwiperStarted = true;
+				startEditor( this.id, {
+					toolbar1: 'formatselect,bold,italic,underline,forecolor,alignleft,aligncenter,alignright,bullist,numlist,link,unlink,removeformat,undo,redo',
+					toolbar2: '',
+					block_formats: 'Paragraph=p;Heading 1=h1;Heading 2=h2;Heading 3=h3;Heading 4=h4;Heading 5=h5;Heading 6=h6',
+					height: 160,
+					// A change marks the form changed, as any other setting.
+					setup: function ( instance ) {
+						instance.on( 'change keyup', function () {
+							instance.save();
+							$( '#' + instance.id ).trigger( 'change' );
+						} );
+					}
+				}, 'strong,em,link,ul,ol,li' );
+			} );
+		}
+
+		function saveSettingsEditors() {
+			if ( window.tinymce ) {
+				$( '.wp-swiper-settings-editor' ).each( function () {
+					var instance = window.tinymce.get( this.id );
+					if ( instance ) {
+						instance.save();
+					}
+				} );
+			}
+		}
+		beforeSend( saveSettingsEditors );
+
 		$( '#wp-swiper-settings' ).on( 'change input', 'select, input', syncFields );
 		syncFields();
+		startSettingsEditors();
+		$( '#wp-swiper-settings' ).on( 'change', 'select, input', startSettingsEditors );
+		$menu.on( 'click', startSettingsEditors );
 
 		// Caption settings only apply once a slide has a caption, and while the
 		// slider shows captions (not as a background, syncFields): the whole box

@@ -22,9 +22,11 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		foreach ( WP_Swiper_Art::fields() as $key => $field ) {
 			$this->assertStringStartsWith( 'art_', $key );
 			$this->assertSame( array( 'art' ), $field['effects'], $key );
-			// On the Layout page; Photo swapping on the Controls page.
+			// On the Layout page; Photo swapping on the Controls page; captions on the middle photo only on the Caption page.
 			if ( 0 === strpos( $key, 'art_swap' ) || 'art_pause' === $key ) {
 				$this->assertSame( array( 'advanced', 'controls' ), array( $field['section'], $field['panel'] ), $key );
+			} elseif ( 'art_caption_middle' === $key ) {
+				$this->assertSame( 'caption', $field['section'], $key );
 			} else {
 				$this->assertSame( 'layout', $field['section'], $key );
 			}
@@ -53,6 +55,61 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertStringNotContainsString( 'wp-swiper-art--shadow', $this->render( array( 'effect' => 'art' ), $this->slides( 3 ) ) );
 	}
 
+	public function test_captions_on_the_middle_photo_only() {
+		$slides = $this->slides( 3, array( 'caption' => '<p>Hi</p>' ) );
+		$this->assertStringContainsString( 'wp-swiper-art--caption-middle', $this->render( array( 'effect' => 'art', 'art_caption_middle' => true ), $slides ) );
+		$this->assertStringNotContainsString( 'wp-swiper-art--caption-middle', $this->render( array( 'effect' => 'art' ), $slides ) );
+		$this->assertSame( 'caption', WP_Swiper_Settings::fields()['art_caption_middle']['section'] );
+	}
+
+	public function test_swapping_the_middle_photo() {
+		$config = $this->config( $this->render( array( 'effect' => 'art', 'art_swap_target' => 'middle', 'art_swap_delay' => 2000 ) ), 'data-wp-swiper-art' );
+		$this->assertSame( array( 'delay' => 2000, 'target' => 'middle', 'pause' => true ), $config['swap'] );
+		$this->assertSame( 'any', WP_Swiper_Settings::sanitize( array( 'art_swap_target' => 'nope' ) )['art_swap_target'] );
+	}
+
+	public function test_an_image_in_the_opening() {
+		$image  = $this->image( 400, 200 );
+		$values = array(
+			'effect'                        => 'art',
+			'art_ring_opening'              => 60,
+			'art_opening_content'           => 'image',
+			'art_opening_image'             => $image,
+			'art_opening_image_size'        => 80,
+			'art_opening_image_size_mobile' => 50,
+			'art_opening_gap'               => 16,
+			'art_opening_gap_mobile'        => 6,
+		);
+		$html   = $this->render( $values, $this->slides( 3 ) );
+
+		// Beside the stage (the photos' shadow is not for it), hidden until art.js places it.
+		$this->assertMatchesRegularExpression( '#</div>\s*<div class="wp-swiper-art__opening wp-swiper-art__opening--image" hidden><img[^>]*class="wp-swiper-art__opening-image"#', $html );
+		$this->assertStringContainsString( '--wp-swiper-art-opening-size:80%', $html );
+		$this->assertStringContainsString( '--wp-swiper-art-opening-size-mobile:50%', $html );
+		$this->assertSame( array( 'desktop' => 16, 'tablet' => 16, 'mobile' => 6 ), $this->config( $html, 'data-wp-swiper-art' )['openingGap'] );
+
+		// No image chosen, or nothing in it: none, no gap.
+		foreach ( array( array( 'art_opening_image' => 0 ), array( 'art_opening_content' => 'none' ) ) as $other ) {
+			$html = $this->render( $other + $values, $this->slides( 3 ) );
+			$this->assertStringNotContainsString( 'wp-swiper-art__opening', $html );
+			$this->assertArrayNotHasKey( 'openingGap', $this->config( $html, 'data-wp-swiper-art' ) );
+		}
+	}
+
+	public function test_text_in_the_opening() {
+		$text = '<h3>Our <a href="https://example.com/shop">shop</a></h3><script>alert(1)</script><p>Open daily</p>';
+		$html = $this->render( array( 'effect' => 'art', 'art_opening_content' => 'text', 'art_opening_text' => $text, 'art_opening_font_size' => 22 ), $this->slides( 3 ) );
+
+		$this->assertStringContainsString( '<div class="wp-swiper-art__opening wp-swiper-art__opening--text" hidden><div class="wp-swiper-art__opening-text"><h3>Our <a href="https://example.com/shop">shop</a></h3>', $html );
+		$this->assertStringNotContainsString( '<script', $html );
+		$this->assertStringContainsString( '--wp-swiper-art-opening-font:22px', $html );
+
+		// Saved as a description is (its markup, links too).
+		$this->assertSame( 'editor', WP_Swiper_Settings::fields()['art_opening_text']['type'] );
+		$this->assertSame( '<h3>Our <a href="https://example.com/shop">shop</a></h3>alert(1)<p>Open daily</p>', WP_Swiper_Settings::sanitize( array( 'art_opening_text' => $text ) )['art_opening_text'] );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize( array( 'art_opening_text' => '<p>&nbsp;</p>' ) )['art_opening_text'] );
+	}
+
 	public function test_ring_markup() {
 		$slides = $this->slides( 3 );
 		$html   = $this->render( array( 'effect' => 'art', 'art_ring_count' => 5, 'art_ring_opening' => 72, 'css_class' => 'my-art', 'css_id' => 'hero' ), $slides );
@@ -76,7 +133,11 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 				'order'    => array( 'desktop' => false, 'tablet' => false, 'mobile' => false ),
 				'ids'      => array_map( 'intval', wp_list_pluck( $slides, 'id' ) ),
 				'auto'     => array( 'desktop' => false, 'tablet' => false, 'mobile' => false ),
-				'swap'     => array( 'delay' => 3000, 'pause' => true ),
+				'swap'     => array(
+					'delay'  => 3000,
+					'target' => 'any',
+					'pause'  => true,
+				),
 				'lightbox' => false,
 			),
 			$config
@@ -200,7 +261,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 
 	public function test_photo_swapping() {
 		$html = $this->render( array( 'effect' => 'art', 'art_swap_delay' => 4500, 'art_swap_speed' => 650, 'art_pause' => false ) );
-		$this->assertSame( array( 'delay' => 4500, 'pause' => false ), $this->config( $html, 'data-wp-swiper-art' )['swap'] );
+		$this->assertSame( array( 'delay' => 4500, 'target' => 'any', 'pause' => false ), $this->config( $html, 'data-wp-swiper-art' )['swap'] );
 		$this->assertStringContainsString( '--wp-swiper-art-speed:650ms', $html );
 
 		// Off: nothing swaps.
