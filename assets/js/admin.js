@@ -693,8 +693,8 @@
 		}
 
 		// The "Text color" button's palette (class-wp-swiper-palette.php): the
-		// theme's colors, the user's (WP Swiper > Settings), black, white and
-		// greys, as many rows as they take; "Custom..." under them for any other.
+		// theme's colors, black, white and greys, as many rows as they take;
+		// "Custom..." under them for any other.
 		function textColors() {
 			var map = $.isArray( i18n.textColors ) ? i18n.textColors : [];
 			if ( ! map.length ) {

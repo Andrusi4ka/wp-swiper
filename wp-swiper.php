@@ -119,4 +119,3 @@ WP_Swiper_WPBakery::init();
 WP_Swiper_Preview::init();
 WP_Swiper_Whats_New::init();
 WP_Swiper_Art::init();
-WP_Swiper_Palette::init();

@@ -28,7 +28,7 @@ function wp_swiper_uninstall_site() {
 	delete_option( 'wp_swiper_version' );
 	delete_option( 'wp_swiper_updated_from' );
 
-	// Settings: the slide text editors' own colors.
+	// The slide text editors' own colors, from the Settings page there was until 2.9.
 	delete_option( 'wp_swiper_text_colors' );
 }
 

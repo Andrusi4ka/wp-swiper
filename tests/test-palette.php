@@ -1,7 +1,7 @@
 <?php
 /**
  * WP_Swiper_Palette: the "Text color" palette of the slide text editors —
- * the theme's colors, the user's own (Settings), black, white and greys.
+ * the theme's colors, then black, white and greys.
  */
 
 class Test_WP_Swiper_Palette extends WP_Swiper_TestCase {
@@ -16,49 +16,27 @@ class Test_WP_Swiper_Palette extends WP_Swiper_TestCase {
 		}
 	}
 
-	public function test_sanitize_own_colors() {
-		$clean = WP_Swiper_Palette::sanitize(
-			array(
-				array( 'color' => '#ABC', 'name' => '<b>Brand</b>' ),
-				array( 'color' => 'red', 'name' => 'Not a color' ),
-				array( 'color' => '#aabbcc', 'name' => 'Same again' ),
-				array( 'color' => '#123456', 'name' => str_repeat( 'a', 60 ) ),
-				'nonsense',
-			)
-		);
-		$this->assertSame(
-			array(
-				array( 'color' => '#aabbcc', 'name' => 'Brand' ),
-				array( 'color' => '#123456', 'name' => str_repeat( 'a', 40 ) ),
-			),
-			$clean
-		);
-		$this->assertSame( array(), WP_Swiper_Palette::sanitize( '' ) );
-
-		$many = array();
-		for ( $i = 0; $i < 40; $i++ ) {
-			$many[] = array( 'color' => sprintf( '#%06x', $i ) );
-		}
-		$this->assertCount( WP_Swiper_Palette::MAX, WP_Swiper_Palette::sanitize( $many ) );
-	}
-
-	public function test_palette_order_and_tinymce_map() {
-		update_option( WP_Swiper_Palette::OPTION, array( array( 'color' => '#2a6fdb', 'name' => 'Brand blue' ), array( 'color' => '#ffffff', 'name' => 'Paper' ), array( 'color' => '#1b9e77', 'name' => '' ) ) );
+	public function test_palette_and_tinymce_map() {
+		// Colors saved by the Settings page there was until 2.9: not offered any more.
+		update_option( 'wp_swiper_text_colors', array( array( 'color' => '#2a6fdb', 'name' => 'Brand blue' ) ) );
 
 		$colors = wp_list_pluck( WP_Swiper_Palette::colors(), 'name', 'color' );
-		// The user's, each color once (its first name), a nameless one by its value; then the basic ones.
-		$this->assertSame( 'Brand blue', $colors['#2a6fdb'] );
-		$this->assertSame( 'Paper', $colors['#ffffff'] );
-		$this->assertSame( '#1b9e77', $colors['#1b9e77'] );
+		$this->assertArrayNotHasKey( '#2a6fdb', $colors );
+		// The basic ones, after the theme's (none in the tests' theme).
+		$this->assertSame( array( '#000000', '#444444', '#888888', '#cccccc', '#ffffff' ), array_slice( array_keys( $colors ), -5 ) );
 		$this->assertSame( 'Black', $colors['#000000'] );
-		$keys = array_keys( $colors );
-		$this->assertLessThan( array_search( '#000000', $keys, true ), array_search( '#2a6fdb', $keys, true ) );
 
 		$map = WP_Swiper_Palette::tinymce_map();
 		$this->assertSame( count( $colors ) * 2, count( $map ) );
-		$at = array_search( '2A6FDB', $map, true );
+		$at = array_search( '000000', $map, true );
 		$this->assertNotFalse( $at );
-		$this->assertSame( 'Brand blue', $map[ $at + 1 ] );
+		$this->assertSame( 'Black', $map[ $at + 1 ] );
+	}
+
+	public function test_no_settings_page() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		do_action( 'admin_menu' );
+		$this->assertEmpty( menu_page_url( 'wp-swiper-settings', false ) );
 	}
 
 	public function test_editor_gets_the_palette() {

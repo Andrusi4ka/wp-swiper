@@ -95,6 +95,11 @@
       повернення у вкладку `wpbakery.js` бере список заново
       (AJAX `wp_swiper_vc_sliders`, `WP_Swiper_WPBakery::sliders()`,
       лише опубліковані) і вибирає щойно доданий.
+  - коміт після злиття (2026-10-27, вдома): сторінку **WP Swiper → Settings**
+    (власні кольори палітри) прибрано на прохання користувача — не
+    повертати. Палітра «Text color» = кольори теми + чорний/білий/сірі
+    (`WP_Swiper_Palette`), `palette.js`/`palette.css` видалено;
+    `uninstall.php` досі видаляє старий `wp_swiper_text_colors`.
 
 ## Що далі / відкладено
 
