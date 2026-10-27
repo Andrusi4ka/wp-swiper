@@ -1372,6 +1372,10 @@
 			$( '.wp-swiper-field--image input[type="hidden"]' ).each( function () {
 				syncPicker( $( this ) );
 			} );
+			// The fields shown as icons (a Style) mark the value they got.
+			$( '.wp-swiper-field--tiles' ).each( function () {
+				syncTiles( $( this ) );
+			} );
 		}
 
 		// Bound on the select itself: runs before syncFields, which then shows,
@@ -2059,14 +2063,20 @@
 			} );
 
 		/*
-		 * A select shown as icons (a field's "tiles": the collage's Style): the
-		 * choice of the device shown is marked; on tablet and mobile the Inherit
-		 * tile too, and while it inherits, the larger screen's choice (dashed).
-		 * A click puts the tile's value into that device's select, hidden.
+		 * A select shown as icons (a field's "tiles": the Collage's and Art's
+		 * Style): the choice of the device shown is marked; on tablet and mobile
+		 * the Inherit tile too, and while it inherits, the larger screen's choice
+		 * (dashed). A click puts the tile's value into that device's select,
+		 * hidden; a field with one value for every screen (Art's) has one select.
 		 */
+		function tilesSelect( $field, device ) {
+			var $one = $field.find( 'select.wp-swiper-tiles__select' );
+			return $one.length ? $one : $field.find( '.wp-swiper-devices__input[data-device="' + device + '"]' );
+		}
+
 		function syncTiles( $field ) {
 			var device = $field.find( '.wp-swiper-devices__btn.is-active' ).data( 'device' ) || 'desktop';
-			var value = '';
+			var value = $field.find( 'select.wp-swiper-tiles__select' ).val() || '';
 			var inherited = '';
 			$field.find( '.wp-swiper-devices__input' ).each( function () {
 				if ( $( this ).data( 'device' ) === device ) {
@@ -2097,13 +2107,13 @@
 			.on( 'click', '.wp-swiper-tiles__tile', function () {
 				var $field = $( this ).closest( '.wp-swiper-field' );
 				var device = $field.find( '.wp-swiper-devices__btn.is-active' ).data( 'device' ) || 'desktop';
-				$field.find( '.wp-swiper-devices__input[data-device="' + device + '"]' ).val( $( this ).attr( 'data-value' ) ).trigger( 'change' );
+				tilesSelect( $field, device ).val( $( this ).attr( 'data-value' ) ).trigger( 'change' );
 			} )
 			// After the field's own handlers (bound above): its device, its value.
 			.on( 'click', '.wp-swiper-field--tiles .wp-swiper-devices__btn', function () {
 				syncTiles( $( this ).closest( '.wp-swiper-field' ) );
 			} )
-			.on( 'change', '.wp-swiper-field--tiles .wp-swiper-devices__input', function () {
+			.on( 'change', '.wp-swiper-field--tiles .wp-swiper-devices__input, .wp-swiper-field--tiles select.wp-swiper-tiles__select', function () {
 				syncTiles( $( this ).closest( '.wp-swiper-field' ) );
 			} );
 

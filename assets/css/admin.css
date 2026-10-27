@@ -828,7 +828,8 @@
    behind them; as many in a row as fit, evenly (the rest in the next row),
    the chosen one in the accent color, the one a tablet / mobile Inherit
    takes dashed. */
-.wp-swiper-field--tiles .wp-swiper-devices__input {
+.wp-swiper-field--tiles .wp-swiper-devices__input,
+.wp-swiper-field--tiles .wp-swiper-tiles__select {
 	display: none !important;
 }
 

@@ -777,8 +777,28 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 			$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/collage/' . $style . '.svg', $style );
 			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="[^"]+" aria-label="[^"]+">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
 		}
-		$this->assertSame( 9, substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
+		// The Collage's nine, and Art's Style (below).
+		$this->assertSame( 9 + count( WP_Swiper_Art::styles() ), substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
 		$this->assertStringContainsString( 'class="wp-swiper-tiles__tile wp-swiper-tiles__tile--inherit" data-value="" role="radio" aria-checked="false" hidden>Inherit</button>', $html );
+	}
+
+	public function test_art_style_is_chosen_from_icons() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'art' ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// One value for every screen: its select (hidden) and the icons, no Inherit.
+		$this->assertMatchesRegularExpression( '#<div class="wp-swiper-field wp-swiper-field--select wp-swiper-field--tiles" data-field="art_style"#', $html );
+		$this->assertMatchesRegularExpression( '#<select id="wp-swiper-art_style" name="wp_swiper_settings\[art_style\]" class="wp-swiper-tiles__select" hidden>\s*<option value="ring"\s+selected=\'selected\'>Ring</option>#', $html );
+		foreach ( array_keys( WP_Swiper_Art::styles() ) as $style ) {
+			$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/art/' . $style . '.svg', $style );
+			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="Ring" aria-label="Ring">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
+		}
+		$this->assertSame( 1, preg_match_all( '#data-field="art_style".*?</div>\s*</div>#s', $html, $match ) );
+		$this->assertStringNotContainsString( 'tiles__tile--inherit', $match[0][0] );
 	}
 
 	public function test_each_slide_has_a_clone_button_right_of_the_position_one() {

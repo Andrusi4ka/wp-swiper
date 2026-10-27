@@ -55,6 +55,8 @@ class WP_Swiper_Art {
 				'effects' => $art,
 				'label'   => __( 'Style', 'wp-swiper' ),
 				'type'    => 'select',
+				// Shown as icons, assets/images/art/{style}.svg (as the Collage's Style).
+				'tiles'   => 'art',
 				'default' => 'ring',
 				'choices' => self::styles(),
 				'help'    => __( 'The shape the photos make. The slides fill it in their order (they repeat when there are fewer).', 'wp-swiper' ),

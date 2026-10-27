@@ -799,11 +799,33 @@ class WP_Swiper_Admin {
 		}
 	}
 
+	/**
+	 * A select's choices as icons (a field's "tiles": assets/images/{tiles}/{choice}.svg),
+	 * the select behind them (hidden) keeping the value (admin.js).
+	 *
+	 * @param array $field   The field.
+	 * @param bool  $inherit With an Inherit tile (a responsive field's tablet and mobile).
+	 */
+	private static function tiles( $field, $inherit ) {
+		?>
+		<div class="wp-swiper-tiles" role="radiogroup" aria-label="<?php echo esc_attr( $field['label'] ); ?>">
+			<?php if ( $inherit ) : ?>
+				<button type="button" class="wp-swiper-tiles__tile wp-swiper-tiles__tile--inherit" data-value="" role="radio" aria-checked="false" hidden><?php esc_html_e( 'Inherit', 'wp-swiper' ); ?></button>
+			<?php endif; ?>
+			<?php foreach ( $field['choices'] as $choice => $choice_label ) : ?>
+				<button type="button" class="wp-swiper-tiles__tile" data-value="<?php echo esc_attr( $choice ); ?>" role="radio" aria-checked="false" title="<?php echo esc_attr( $choice_label ); ?>" aria-label="<?php echo esc_attr( $choice_label ); ?>">
+					<?php echo self::svg_icon( $field['tiles'] . '/' . $choice . '.svg', 'wp-swiper-tiles__icon', 'dashicons-format-gallery' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
+				</button>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
+
 	private static function render_field( $key, $field, $value ) {
 		$id   = 'wp-swiper-' . $key;
 		$name = 'wp_swiper_settings[' . $key . ']';
 		?>
-		<div class="wp-swiper-field wp-swiper-field--<?php echo esc_attr( $field['type'] ); ?><?php echo empty( $field['compact'] ) ? '' : ' wp-swiper-field--compact'; ?><?php echo empty( $field['segmented'] ) ? '' : ' wp-swiper-field--segmented'; ?>" data-field="<?php echo esc_attr( $key ); ?>"<?php self::effects_attr( $field ); ?>>
+		<div class="wp-swiper-field wp-swiper-field--<?php echo esc_attr( $field['type'] ); ?><?php echo empty( $field['compact'] ) ? '' : ' wp-swiper-field--compact'; ?><?php echo empty( $field['segmented'] ) ? '' : ' wp-swiper-field--segmented'; ?><?php echo empty( $field['tiles'] ) ? '' : ' wp-swiper-field--tiles'; ?>" data-field="<?php echo esc_attr( $key ); ?>"<?php self::effects_attr( $field ); ?>>
 			<?php if ( ! empty( $field['segmented'] ) && 'select' === $field['type'] ) : ?>
 				<?php // The select stays the field (locks, saving); the buttons only set it (admin.js). ?>
 				<div class="wp-swiper-field__head">
@@ -880,11 +902,17 @@ class WP_Swiper_Admin {
 						<?php esc_html_e( 'Shuffle', 'wp-swiper' ); ?>
 					</button>
 				<?php elseif ( 'select' === $field['type'] ) : ?>
-					<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>">
+					<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"<?php echo empty( $field['tiles'] ) ? '' : ' class="wp-swiper-tiles__select" hidden'; ?>>
 						<?php foreach ( $field['choices'] as $choice => $choice_label ) : ?>
 							<option value="<?php echo esc_attr( $choice ); ?>" <?php selected( $value, $choice ); ?>><?php echo esc_html( $choice_label ); ?></option>
 						<?php endforeach; ?>
 					</select>
+					<?php
+					// One value for every screen: its choices as icons (no Inherit).
+					if ( ! empty( $field['tiles'] ) ) {
+						self::tiles( $field, false );
+					}
+					?>
 				<?php elseif ( ! empty( $field['range'] ) ) : ?>
 					<?php // The slider has no name: the number is the value sent; admin.js keeps the two in step. ?>
 					<div class="wp-swiper-field__row wp-swiper-field__row--range">
@@ -1088,21 +1116,14 @@ class WP_Swiper_Admin {
 						<?php echo 'desktop' === $device ? '' : 'hidden'; ?>>
 			<?php endforeach; ?>
 
-			<?php if ( ! empty( $field['tiles'] ) ) : ?>
-				<?php
-				// The choices as icons (assets/images/{tiles}/{choice}.svg) for the
-				// device shown; its select (hidden) keeps the value (admin.js).
-				// Tablet and mobile: Inherit first, the larger screen's choice marked.
-				?>
-				<div class="wp-swiper-tiles" role="radiogroup" aria-label="<?php echo esc_attr( $field['label'] ); ?>">
-					<button type="button" class="wp-swiper-tiles__tile wp-swiper-tiles__tile--inherit" data-value="" role="radio" aria-checked="false" hidden><?php esc_html_e( 'Inherit', 'wp-swiper' ); ?></button>
-					<?php foreach ( $field['choices'] as $choice => $choice_label ) : ?>
-						<button type="button" class="wp-swiper-tiles__tile" data-value="<?php echo esc_attr( $choice ); ?>" role="radio" aria-checked="false" title="<?php echo esc_attr( $choice_label ); ?>" aria-label="<?php echo esc_attr( $choice_label ); ?>">
-							<?php echo self::svg_icon( $field['tiles'] . '/' . $choice . '.svg', 'wp-swiper-tiles__icon', 'dashicons-format-gallery' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
-						</button>
-					<?php endforeach; ?>
-				</div>
-			<?php endif; ?>
+			<?php
+			// The choices as icons for the device shown; its select (hidden) keeps
+			// the value (admin.js). Tablet and mobile: Inherit first, the larger
+			// screen's choice marked.
+			if ( ! empty( $field['tiles'] ) ) {
+				self::tiles( $field, true );
+			}
+			?>
 
 			<?php if ( 'order' === $field['type'] ) : ?>
 				<?php // For the device shown: a new order at random; back to the larger screen's order and mosaic sizes (desktop: the shuffle, sizes worked out). ?>
