@@ -30,8 +30,54 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		WP_Swiper_Render::register_assets();
 	}
 
+	public function test_collage_files_only_where_a_collage_is_shown() {
+		// A slider: no collage files.
+		$this->fresh_assets();
+		do_shortcode( '[wp_swiper id="' . $this->slider() . '"]' );
+		$this->assertFalse( wp_script_is( 'wp-swiper-collage', 'enqueued' ) );
+		$this->assertFalse( wp_style_is( 'wp-swiper-collage', 'enqueued' ) );
+
+		// A Collage: its own files, after frontend's.
+		$this->fresh_assets();
+		do_shortcode( '[wp_swiper id="' . $this->slider( null, array( 'effect' => 'collage' ) ) . '"]' );
+		$this->assertTrue( wp_script_is( 'wp-swiper-collage', 'enqueued' ) );
+		$this->assertTrue( wp_style_is( 'wp-swiper-collage', 'enqueued' ) );
+		$this->assertTrue( wp_style_is( 'wp-swiper', 'enqueued' ) );
+		$this->assertSame( array( 'wp-swiper' ), wp_scripts()->query( 'wp-swiper-collage' )->deps );
+		$this->assertSame( array( 'wp-swiper' ), wp_styles()->query( 'wp-swiper-collage' )->deps );
+		wp_scripts()->all_deps( wp_scripts()->queue );
+		$this->assertSame( array( 'wp-swiper', 'wp-swiper-collage' ), array_values( array_intersect( wp_scripts()->to_do, array( 'wp-swiper', 'wp-swiper-collage' ) ) ) );
+
+		// The files exist where they are registered.
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/js/collage.js' );
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/css/collage.css' );
+	}
+
+	public function test_collage_styles_in_head_and_remembered_when_late() {
+		$collage = $this->slider( null, array( 'effect' => 'collage' ) );
+
+		// In the page's content: in <head>, without Swiper.
+		$page = self::factory()->post->create( array( 'post_type' => 'page', 'post_content' => '[wp_swiper id="' . $collage . '"]' ) );
+		$this->go_to( get_permalink( $page ) );
+		$this->fresh_assets();
+		$this->assertTrue( wp_style_is( 'wp-swiper-collage', 'enqueued' ) );
+		$this->assertFalse( wp_style_is( 'swiper', 'enqueued' ) );
+
+		// Shown after <head> (say in the footer): in <head> next time.
+		delete_option( WP_Swiper_Render::LATE_OPTION );
+		$other = self::factory()->post->create( array( 'post_type' => 'page' ) );
+		$this->go_to( get_permalink( $other ) );
+		$this->fresh_assets();
+		$GLOBALS['wp_actions']['wp_head'] = 1;
+		do_shortcode( '[wp_swiper id="' . $collage . '"]' );
+		WP_Swiper_Render::remember_late_styles();
+		unset( $GLOBALS['wp_actions']['wp_head'] );
+		$this->assertSame( array( 'p' . $other => array( 'wp-swiper', 'wp-swiper-collage' ) ), get_option( WP_Swiper_Render::LATE_OPTION ) );
+		$this->assertSame( array( 'wp-swiper', 'wp-swiper-collage' ), WP_Swiper_Render::late_styles() );
+	}
+
 	public function test_swiper_only_where_a_slider_needs_it() {
-		// A Collage: frontend.js and .css only; its lightbox loads Swiper when it opens.
+		// A Collage: no Swiper; its lightbox loads it when it opens.
 		$this->fresh_assets();
 		do_shortcode( '[wp_swiper id="' . $this->slider( null, array( 'effect' => 'collage', 'lightbox' => true ) ) . '"]' );
 		$this->assertTrue( wp_script_is( 'wp-swiper', 'enqueued' ) );

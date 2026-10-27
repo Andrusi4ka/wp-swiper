@@ -61,7 +61,7 @@ class WP_Swiper_Render {
 	 * A stylesheet of the plugin's, enqueued; if <head> is out already,
 	 * remembered for this page (remember_late_styles()).
 	 *
-	 * @param string $handle swiper | wp-swiper | wp-swiper-art.
+	 * @param string $handle swiper | wp-swiper | wp-swiper-collage | wp-swiper-art.
 	 */
 	public static function style( $handle ) {
 		// Printed in <head> already (the page's content has the slider): not late.
@@ -145,7 +145,7 @@ class WP_Swiper_Render {
 		if ( null !== $key && isset( $map[ $key ] ) ) {
 			$handles = array_merge( $handles, (array) $map[ $key ] );
 		}
-		return array_values( array_intersect( array_unique( $handles ), array( 'swiper', 'wp-swiper', 'wp-swiper-art' ) ) );
+		return array_values( array_intersect( array_unique( $handles ), array( 'swiper', 'wp-swiper', 'wp-swiper-collage', 'wp-swiper-art' ) ) );
 	}
 
 	public static function register_assets() {
@@ -157,9 +157,12 @@ class WP_Swiper_Render {
 		// Art loads it for its lightbox, when that first opens (frontend.js).
 		wp_register_style( 'swiper', WP_SWIPER_URL . 'assets/vendor/swiper/swiper-bundle.min.css', array(), WP_SWIPER_SWIPER_VERSION );
 		wp_register_style( 'wp-swiper', WP_SWIPER_URL . 'assets/css/frontend.css', array(), wp_swiper_asset_version( 'assets/css/frontend.css' ) );
+		// The Collage effect's own files, after frontend's (enqueue_collage()).
+		wp_register_style( 'wp-swiper-collage', WP_SWIPER_URL . 'assets/css/collage.css', array( 'wp-swiper' ), wp_swiper_asset_version( 'assets/css/collage.css' ) );
 
 		wp_register_script( 'swiper', WP_SWIPER_URL . 'assets/vendor/swiper/swiper-bundle.min.js', array(), WP_SWIPER_SWIPER_VERSION, true );
 		wp_register_script( 'wp-swiper', WP_SWIPER_URL . 'assets/js/frontend.js', array(), wp_swiper_asset_version( 'assets/js/frontend.js' ), true );
+		wp_register_script( 'wp-swiper-collage', WP_SWIPER_URL . 'assets/js/collage.js', array( 'wp-swiper' ), wp_swiper_asset_version( 'assets/js/collage.js' ), true );
 		wp_localize_script(
 			'wp-swiper',
 			'wpSwiperI18n',
@@ -185,8 +188,13 @@ class WP_Swiper_Render {
 			if ( self::content_needs_swiper( $post->post_content ) ) {
 				wp_enqueue_style( 'swiper' );
 			}
-			// Art's own stylesheet too (registered by WP_Swiper_Art, also on this hook).
-			if ( in_array( WP_Swiper_Art::EFFECT, self::content_effects( $post->post_content ), true ) ) {
+			// The Collage's and Art's own stylesheets too (Art's registered by
+			// WP_Swiper_Art, also on this hook).
+			$effects = self::content_effects( $post->post_content );
+			if ( in_array( 'collage', $effects, true ) ) {
+				wp_enqueue_style( 'wp-swiper-collage' );
+			}
+			if ( in_array( WP_Swiper_Art::EFFECT, $effects, true ) ) {
 				wp_enqueue_style( 'wp-swiper-art' );
 			}
 		}
@@ -264,6 +272,16 @@ class WP_Swiper_Render {
 	}
 
 	/**
+	 * The Collage effect's own files (collage.js and .css), after
+	 * frontend's: a slider page does without them.
+	 */
+	public static function enqueue_collage() {
+		self::enqueue( false );
+		self::style( 'wp-swiper-collage' );
+		wp_enqueue_script( 'wp-swiper-collage' );
+	}
+
+	/**
 	 * @param array $atts Shortcode attributes.
 	 * @return string
 	 */
@@ -336,7 +354,11 @@ class WP_Swiper_Render {
 			return WP_Swiper_Art::render( $post_id, $slides, $settings, $class );
 		}
 
-		self::enqueue( self::needs_swiper( $settings ) );
+		if ( WP_Swiper_Settings::is_collage( $settings ) ) {
+			self::enqueue_collage();
+		} else {
+			self::enqueue( self::needs_swiper( $settings ) );
+		}
 
 		// Fading slides (the Fade effect, Thumbnails with the Fade transition) have no
 		// direction of their own: always horizontal (Direction is locked in the editor).
@@ -1367,7 +1389,7 @@ class WP_Swiper_Render {
 
 	/**
 	 * Collage effect: the outer block (the slider's classes and style), an
-	 * empty grid and every slide in a <template>. frontend.js collage() puts
+	 * empty grid and every slide in a <template>. collage.js collage() puts
 	 * the slides in the grid's places in the order of the shuffle, and swaps
 	 * the ones left over in; until then nothing of them loads.
 	 *
@@ -1397,13 +1419,13 @@ class WP_Swiper_Render {
 			// frontend.js uses them while their places match the places shown).
 			'mosaic'    => array_map( array( 'WP_Swiper_Settings', 'sanitize_mosaic' ), WP_Swiper_Settings::responsive( $settings, 'collage_mosaic' ) ),
 			// A template's sizes set there, per device ("feature-left:V0.7[...]";
-			// frontend.js uses them while the device's Style is that template).
+			// collage.js uses them while the device's Style is that template).
 			'cuts'      => array_map( array( 'WP_Swiper_Settings', 'sanitize_template_cuts' ), WP_Swiper_Settings::responsive( $settings, 'collage_cuts' ) ),
 			'swap'      => $settings['collage_swap'] ? array(
 				'delay' => (int) $settings['collage_swap_delay'],
 				'pause' => (bool) $settings['collage_pause'],
 			) : false,
-			// Height "Auto": the collage fills the free height of its column (frontend.js
+			// Height "Auto": the collage fills the free height of its column (collage.js
 			// collage() stretch()); where there is none, the grid takes fixed
 			// proportions. Per device (false: none).
 			'fill'      => WP_Swiper_Settings::fill_config( $settings ),

@@ -489,17 +489,15 @@
 
 /* Image shadow (WP_Swiper_Settings::shadow()): under each slide, or with
    "Contain" under its image box (the slide then lets it out); in a collage
-   under each place. The slider or collage keeps room for it inside its own
+   under each place (collage.css). The slider or collage keeps room for it inside its own
    size (--wp-swiper-shadow-room: top right bottom left), so it is not cut
    off at the edges; Swiper lays the slides out inside that padding. */
-.wp-swiper--shadow > .swiper,
-.wp-swiper--shadow > .wp-swiper-collage {
+.wp-swiper--shadow > .swiper {
 	box-sizing: border-box;
 	padding: var(--wp-swiper-shadow-room, 0px);
 }
 
-.wp-swiper--shadow .swiper-slide,
-.wp-swiper--shadow .wp-swiper-collage__cell {
+.wp-swiper--shadow .swiper-slide {
 	box-shadow: var(--wp-swiper-shadow, none);
 }
 
@@ -2075,112 +2073,6 @@ html.wp-swiper-lightbox-open {
 	backface-visibility: hidden;
 }
 
-/* Collage effect (frontend.js collage()): the places in a grid (templates,
-   Grid) as tall as the Height, or absolutely positioned by their photos'
-   proportions (Justified rows, Masonry: --free, the height set by the
-   script). A place holds its photo, and while one is swapped in also the
-   one before, under it; the new one fades in over it. */
-.wp-swiper-collage {
-	position: relative;
-	width: 100%;
-}
-
-.wp-swiper-collage__grid {
-	position: relative;
-	display: grid;
-	width: 100%;
-	height: var(--wp-swiper-height, 500px);
-}
-
-@media (max-width: 1024px) {
-	.wp-swiper-collage__grid {
-		height: var(--wp-swiper-height-tablet, var(--wp-swiper-height, 500px));
-	}
-}
-
-@media (max-width: 767px) {
-	.wp-swiper-collage__grid {
-		height: var(--wp-swiper-height-mobile, var(--wp-swiper-height-tablet, var(--wp-swiper-height, 500px)));
-	}
-}
-
-/* Height "Auto": templates and the grid take these proportions instead. */
-.wp-swiper-collage__grid.wp-swiper-collage__grid--ratio {
-	height: auto;
-	aspect-ratio: 3 / 2;
-}
-
-.wp-swiper-collage__grid.wp-swiper-collage__grid--free {
-	display: block;
-	aspect-ratio: auto;
-}
-
-/* Random mosaic and the templates (laid out by cuts): positioned by the
-   script too, but in the block's Height (or, with Height "Auto", its
-   proportions). */
-.wp-swiper-collage__grid.wp-swiper-collage__grid--cuts.wp-swiper-collage__grid--ratio {
-	aspect-ratio: 3 / 2;
-}
-
-/* Height "Auto" in a column: the script makes .wp-swiper as tall as the
-   column's free height (frontend.js collage() stretch()), the grid takes all
-   of it instead of the proportions above. */
-.wp-swiper-collage.wp-swiper-collage--stretch,
-.wp-swiper-collage__grid.wp-swiper-collage__grid--ratio.wp-swiper-collage__grid--stretch {
-	height: 100%;
-	aspect-ratio: auto;
-}
-
-.wp-swiper-collage__cell {
-	position: relative;
-	min-width: 0;
-	min-height: 0;
-	overflow: hidden;
-	border-radius: var(--wp-swiper-radius, 0px);
-}
-
-@media (max-width: 1024px) {
-	.wp-swiper-collage__cell {
-		border-radius: var(--wp-swiper-radius-tablet, var(--wp-swiper-radius, 0px));
-	}
-}
-
-@media (max-width: 767px) {
-	.wp-swiper-collage__cell {
-		border-radius: var(--wp-swiper-radius-mobile, var(--wp-swiper-radius-tablet, var(--wp-swiper-radius, 0px)));
-	}
-}
-
-.wp-swiper-collage__grid--free .wp-swiper-collage__cell {
-	position: absolute;
-}
-
-/* The photo fills its place, whatever its own proportions (cropped). */
-.wp-swiper .wp-swiper-collage__cell > .wp-swiper-collage__item {
-	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
-	aspect-ratio: auto;
-	border-radius: inherit;
-	opacity: 1;
-	transition: opacity var(--wp-swiper-collage-speed, 800ms) ease;
-}
-
-.wp-swiper .wp-swiper-collage__cell > .wp-swiper-collage__item.is-entering {
-	opacity: 0;
-}
-
-.wp-swiper--lightbox .wp-swiper-collage__item[data-wp-swiper-full] {
-	cursor: zoom-in;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.wp-swiper .wp-swiper-collage__cell > .wp-swiper-collage__item {
-		transition: none;
-	}
-}
-
 /* Background ("Use as background", frontend.js background()): the slider is
    the first child of the block with the class it was given and fills it,
    behind the block's content. isolation: its own stacking context, so the
@@ -2224,11 +2116,8 @@ html.wp-swiper-lightbox-open {
 	pointer-events: none;
 }
 
-/* The block's height, not the Height (collages arranged by their photos'
-   proportions are fitted to it by the script, frontend.js fillLines()). */
-.wp-swiper.wp-swiper--background .swiper,
-.wp-swiper.wp-swiper--background .wp-swiper-collage,
-.wp-swiper.wp-swiper--background .wp-swiper-collage__grid {
+/* The block's height, not the Height (a collage's: collage.css). */
+.wp-swiper.wp-swiper--background .swiper {
 	height: 100%;
 }
 

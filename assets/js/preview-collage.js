@@ -4,7 +4,7 @@
  * the photo follows the pointer and its place is an empty frame; over
  * another place, the two show the swap before it is made (each with the
  * other's photo), back as they were once the pointer leaves. On the drop
- * the collage takes the new order for the device in view (frontend.js
+ * the collage takes the new order for the device in view (collage.js
  * collage() setOrder()) and the editor stores it (admin.js: a message with
  * the photos' IDs).
  */
@@ -214,7 +214,7 @@
 	/*
 	 * Random mosaic and the templates: each cut's line between its two parts
 	 * is a handle; dragged
-	 * along, the photos on either side grow and shrink (frontend.js collage()
+	 * along, the photos on either side grow and shrink (collage.js collage()
 	 * mosaic.setShare()), each part at least MIN_PART of the cut's size. On the
 	 * release the mosaic as it is now is kept for the device in view and the
 	 * editor stores it (admin.js: a message with the cuts).
@@ -346,7 +346,7 @@
 	/*
 	 * Scattered: a photo's outer edge is a handle; dragged, the photo grows or
 	 * shrinks on that side (its other edges stay), at least MIN_PART, and the
-	 * photos beyond it move along, a gap away as always (frontend.js
+	 * photos beyond it move along, a gap away as always (collage.js
 	 * collage() scatter.resize()). Meanwhile the collage stays at its scale
 	 * and spot (it may run over the block's edges); on the release it is
 	 * fitted to the block again, kept for the device in view and the editor
@@ -416,7 +416,7 @@
 	document.addEventListener( 'pointerup', endEdge );
 	document.addEventListener( 'pointercancel', endEdge );
 
-	// The collages are set up by frontend.js once the page is there.
+	// The collages are set up by frontend.js (with collage.js) once the page is there.
 	if ( document.readyState === 'complete' ) {
 		setup();
 	} else {

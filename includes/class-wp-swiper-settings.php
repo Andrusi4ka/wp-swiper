@@ -31,7 +31,7 @@ class WP_Swiper_Settings {
 	const ZOOM_EFFECTS = array( 'slide', 'fade', 'cube', 'flip', 'creative', 'cards', 'thumbs' );
 
 	/**
-	 * The collage's template Styles: places of fixed proportions (frontend.js
+	 * The collage's template Styles: places of fixed proportions (collage.js
 	 * COLLAGE_TEMPLATES), resized in the preview by dragging the lines between
 	 * them (collage_cuts).
 	 */
@@ -39,7 +39,7 @@ class WP_Swiper_Settings {
 
 	/**
 	 * The collage's Scattered Style: a photo in the middle and arms of photos
-	 * around it (frontend.js scatterLayout()), resized in the preview by
+	 * around it (collage.js scatterLayout()), resized in the preview by
 	 * dragging the photos' outer edges; its sizes kept in collage_cuts too.
 	 */
 	const COLLAGE_SCATTER = 'scatter';
@@ -497,7 +497,7 @@ class WP_Swiper_Settings {
 
 			// Collage effect: first in its Layout. The photos are placed by a
 			// template or arranged by their proportions; with more photos than
-			// places, the others are swapped in one at a time (frontend.js collage()).
+			// places, the others are swapped in one at a time (collage.js collage()).
 			'collage_layout'        => array(
 				'section'         => 'layout',
 				'effects'         => array( 'collage' ),
@@ -2513,7 +2513,7 @@ class WP_Swiper_Settings {
 	/**
 	 * A collage template's sizes as stored: the template (one of
 	 * COLLAGE_TEMPLATES), a colon and its cuts as a mosaic's
-	 * (sanitize_mosaic()), "feature-left:V0.7[0,H0.5[1,2]]". frontend.js uses
+	 * (sanitize_mosaic()), "feature-left:V0.7[0,H0.5[1,2]]". collage.js uses
 	 * them while they have the template's places. Or Scattered's, "scatter:"
 	 * and its places (sanitize_scatter()).
 	 *
@@ -2535,7 +2535,7 @@ class WP_Swiper_Settings {
 	}
 
 	/**
-	 * Scattered places as stored (frontend.js scatterLayout()): the middle
+	 * Scattered places as stored (collage.js scatterLayout()): the middle
 	 * photo's width x height, then the arms that have photos, each once and
 	 * in this order: T (above it), R (right), B (below), L (left), each its
 	 * first photo's size and the next ones', each after the way it steps from

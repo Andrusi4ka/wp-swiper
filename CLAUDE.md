@@ -129,6 +129,12 @@
 - Після 2.9.1 (2026-10-27, вдома, в `art-effect`):
   - `650521c`: CI (`tests.yml`) ганяє тести й при push у `art-effect`.
   - `.pot` перегенеровано під 2.9.1 (491 рядок, +69 нових, −15 прибраних).
+  - Колаж винесено з `frontend.js`/`.css` в `collage.js`/`.css` (див. «Як
+    влаштований код»). Сторінки зі слайдерами: frontend.js gzip 38.6 → 26.9
+    КБ. Перевірено headless Chrome на `creativity.local/slider/` (Scattered):
+    розкладка й знімок такі самі, як до змін; клік по фото відкриває
+    лайтбокс (Swiper довантажується), помилок у консолі немає. Прев'ю в
+    адмінці не перевіряли (потрібен вхід).
 
 ## Що далі / відкладено
 
@@ -147,7 +153,9 @@
   - безпека: `span style` у підписах/описах пропускає будь-який CSS, який
     дозволяє WordPress. Обмежити до кольору й підкреслення;
   - оптимізація: ~~не вантажити Swiper для Collage/Art~~, ~~мінімізувати JS/CSS
-    при релізі~~ (зроблено), розбити `frontend.js` за функціями;
+    при релізі~~, ~~колаж в окремий `collage.js`/`.css`~~ (зроблено). Далі
+    можна: слайдер+відео окремо від `frontend.js`; `fields()` з
+    `class-wp-swiper-settings.php` в окремий файл (лише для читабельності);
   - тести в браузері (Playwright).
 - **Відхилено, не пропонувати знову:**
   - «Proportions» слайдів (варіанти «висота+пропорція» і
@@ -169,8 +177,15 @@
   `posted_slides()`. Іконки вставляються інлайн через `svg_icon()`.
 - `includes/class-wp-swiper-render.php`: розмітка й `data-*` конфіг. Art
   окремо: `class-wp-swiper-art.php`, `art.js`, `art.css`.
-- `assets/js/frontend.js`: Swiper, lightbox, колаж (`collage()`: шаблони й
-  Random mosaic через дерева розрізів `parseMosaic` / `serializeMosaic`).
+- `assets/js/frontend.js`: Swiper, lightbox, відео, фон, `init()`.
+- `assets/js/collage.js` + `assets/css/collage.css`: колаж (`collage()`:
+  шаблони й Random mosaic через дерева розрізів `parseMosaic` /
+  `serializeMosaic`, Scattered). Вантажаться лише там, де є колаж
+  (`WP_Swiper_Render::enqueue_collage()`), після `frontend.js` / `.css`.
+  Спільне з `frontend.js` бере з `window.wpSwiperShared` (device, fills,
+  fillHeight, watchNeighbours, lightboxItem, openLightbox, posterFallbacks,
+  LIGHTBOX_SHOWN); `init()` викликає `window.wpSwiperCollage`. Нова
+  спільна функція для колажу = додати її в `wpSwiperShared`.
 - Прев'ю — iframe:
   - `preview-collage.js`: обмін фото, лінії-ручки;
   - `preview-art.js`;
@@ -184,7 +199,7 @@
 `wp_swiper_tests`, лише для тестів. Потім:
 `composer install`, `wp core download --path=<core>`,
 `WP_CORE_DIR=<core> WP_TESTS_DB_HOST=<host> tests/vendor/bin/phpunit`.
-Станом на цей коміт: 271 тест, усі зелені. CI (`tests.yml`) ганяє їх на
+Станом на цей коміт: 273 тести, усі зелені. CI (`tests.yml`) ганяє їх на
 PHP 7.4 / 8.3 при push у `main` і `art-effect` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає — `C:/OSPanel/modules/PHP-8.3/PHP/php.exe
