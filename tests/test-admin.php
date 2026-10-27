@@ -526,6 +526,41 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'value=""', $html );
 	}
 
+	public function test_wpbakery_add_button_for_those_who_may_add() {
+		// No one logged in: no Add button.
+		$html = WP_Swiper_WPBakery::edit_param( array( 'param_name' => WP_Swiper_WPBakery::EDIT_PARAM ), '' );
+		$this->assertStringNotContainsString( 'wp-swiper-vc-edit__add', $html );
+
+		$this->as_role( 'editor' );
+		$html = WP_Swiper_WPBakery::edit_param( array( 'param_name' => WP_Swiper_WPBakery::EDIT_PARAM ), '' );
+		// The new slider screen, in a new tab; the note under the buttons shown.
+		$this->assertStringContainsString( '<a class="button wp-swiper-vc-edit__add" href="' . esc_url( admin_url( 'post-new.php?post_type=wp_swiper' ) ) . '" target="_blank" rel="noopener">Add slider</a>', $html );
+		$this->assertStringContainsString( '<p class="description wp-swiper-vc-edit__note" style="margin:6px 0 0">', $html );
+		// Where wpbakery.js asks for the list again: admin-ajax.php, its action and nonce.
+		$this->assertSame( 1, preg_match( '/data-list="([^"]+)"/', $html, $match ) );
+		$url = html_entity_decode( $match[1] );
+		$this->assertStringStartsWith( admin_url( 'admin-ajax.php' ), $url );
+		parse_str( (string) wp_parse_url( $url, PHP_URL_QUERY ), $query );
+		$this->assertSame( WP_Swiper_WPBakery::LIST_ACTION, $query['action'] );
+		$this->assertSame( 1, wp_verify_nonce( $query['_wpnonce'], WP_Swiper_WPBakery::LIST_ACTION ) );
+	}
+
+	public function test_wpbakery_sliders_list() {
+		$b     = $this->slider( null, array(), array( 'post_title' => 'Banner' ) );
+		$a     = $this->slider( null, array(), array( 'post_title' => 'About' ) );
+		$draft = $this->slider( null, array(), array( 'post_title' => 'Draft', 'post_status' => 'draft' ) );
+
+		// Published only, by title, as the list shows them.
+		$this->assertSame(
+			array(
+				array( 'id' => $a, 'label' => 'About (#' . $a . ')' ),
+				array( 'id' => $b, 'label' => 'Banner (#' . $b . ')' ),
+			),
+			WP_Swiper_WPBakery::sliders()
+		);
+		$this->assertNotContains( $draft, wp_list_pluck( WP_Swiper_WPBakery::sliders(), 'id' ) );
+	}
+
 	public function test_wpbakery_element_keeps_a_class_given_before() {
 		$id = $this->slider();
 		$this->assertContains( 'old-class', $this->root_classes( do_shortcode( '[wp_swiper id="' . $id . '" class="old-class"]' ) ) );

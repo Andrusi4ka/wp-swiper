@@ -2161,7 +2161,14 @@ class WP_Swiper_Settings {
 			$html
 		);
 		$html = preg_replace( '#\s*</(?:div|li|blockquote)>\s*#i', '<br>', $html );
+		// Those spans keep their display: WordPress allows it in a style from 6.1
+		// only (safe_style_css); here on older ones too, for this caption only.
+		$display = function ( $styles ) {
+			return array_merge( (array) $styles, array( 'display' ) );
+		};
+		add_filter( 'safe_style_css', $display );
 		$html = self::sanitize_rich_text( $html, self::caption_tags() );
+		remove_filter( 'safe_style_css', $display );
 		return preg_replace( '#^(?:\s*<br\s*/?>)+|(?:<br\s*/?>\s*)+$#i', '', $html );
 	}
 

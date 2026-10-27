@@ -85,6 +85,12 @@
       `sanitize_description()`), `art_opening_font_size`, `art_opening_gap`
       (px, для кожного екрана). Блок поруч зі сценою (не під тінню),
       `art.js openingContent()` рахує найбільший прямокутник у вирізі.
+  - коміт перед злиттям у main (2026-10-27, вдома), елемент WPBakery:
+    - кнопка «Add slider» (нова вкладка, `post-new.php`) поруч з «Edit
+      slider», лише для тих, хто може створювати слайдери. Після
+      повернення у вкладку `wpbakery.js` бере список заново
+      (AJAX `wp_swiper_vc_sliders`, `WP_Swiper_WPBakery::sliders()`,
+      лише опубліковані) і вибирає щойно доданий.
 
 ## Що далі / відкладено
 
