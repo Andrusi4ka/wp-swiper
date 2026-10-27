@@ -517,7 +517,8 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		);
 		// Its motion: the Slide effect's by default.
 		$this->assertStringContainsString( 'class="wp-swiper-descriptions wp-swiper-descriptions--1 wp-swiper-descriptions--slide"', $block );
-		foreach ( array( '--wp-swiper-speed:400ms', '--wp-swiper-description-offset:24px', '--wp-swiper-description-align:center', '--wp-swiper-description-size:18px', '--wp-swiper-description-size-tablet:18px', '--wp-swiper-description-size-mobile:14px' ) as $value ) {
+		// A size saved for the whole slider (until 2.8): still applies; tablet takes desktop's (CSS).
+		foreach ( array( '--wp-swiper-speed:400ms', '--wp-swiper-description-offset:24px', '--wp-swiper-description-align:center', '--wp-swiper-description-size:18px', '--wp-swiper-description-size-mobile:14px' ) as $value ) {
 			$this->assertStringContainsString( $value, $block );
 		}
 		// The page's own weight and colour unless set.
@@ -588,14 +589,116 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertFalse( $config['lightbox']['text'] );
 	}
 
-	public function test_font_size_default_or_custom() {
-		// Default: no size of its own (the CSS's 16px), whatever Size holds.
-		$html = $this->render( array( 'caption_font_size' => 30, 'description_font_size' => 30 ), $this->described_slides() );
-		$this->assertStringNotContainsString( '--wp-swiper-caption-size', $html );
-		$this->assertStringNotContainsString( '--wp-swiper-description-size', $html );
-		// Custom: Size per device.
+	public function test_font_size_per_slide() {
+		// No field of the slider's any more: each slide's caption and description has its own.
+		$this->assertArrayNotHasKey( 'caption_font_size', WP_Swiper_Settings::fields() );
+		$this->assertArrayNotHasKey( 'description_font', WP_Swiper_Settings::fields() );
+
+		$slides                        = $this->described_slides();
+		$slides[0]['caption']          = 'Big';
+		$slides[0]['caption_size']     = '28,,18';
+		$slides[0]['description_size'] = '20,17,';
+		$slides[1]['caption']          = 'Plain';
+		$html = $this->render( array(), $slides );
+
+		// The first slide's caption and description: their sizes on themselves.
+		$this->assertStringContainsString( '<div class="wp-swiper__caption" style="--wp-swiper-caption-size:28px;--wp-swiper-caption-size-mobile:18px">', $html );
+		$this->assertStringContainsString( '<div class="wp-swiper-descriptions__item is-active" data-wp-swiper-index="0" style="--wp-swiper-description-size:20px;--wp-swiper-description-size-tablet:17px">', $html );
+		// The second: the plugin's size (none of its own), nor one of the slider's.
+		$this->assertStringContainsString( '<div class="wp-swiper__caption"><div class="wp-swiper__caption-text">Plain', $html );
+		$this->assertStringContainsString( '<div class="wp-swiper-descriptions__item" data-wp-swiper-index="2">', $html );
+		$this->assertStringNotContainsString( 'wp-swiper-caption-size:', $this->root_style( $html ) );
+	}
+
+	public function test_font_weight_per_slide() {
+		$this->assertArrayNotHasKey( 'caption_weight', WP_Swiper_Settings::fields() );
+		$this->assertArrayNotHasKey( 'description_weight', WP_Swiper_Settings::fields() );
+
+		$slides                          = $this->described_slides();
+		$slides[0]['caption']            = 'Bold';
+		$slides[0]['caption_weight']     = '700,,400';
+		$slides[0]['description_weight'] = '300,,';
+		$slides[0]['description_size']   = '18,,';
+		$slides[1]['caption']            = 'As the tag';
+		$html = $this->render( array(), $slides );
+
+		// A class (none keeps the tag's / page's own) and one weight for every
+		// screen (an old per-device value: its desktop one).
+		$this->assertStringContainsString( '<div class="wp-swiper__caption wp-swiper__caption--weight" style="--wp-swiper-caption-weight:700">', $html );
+		$this->assertStringNotContainsString( 'weight-mobile', $html );
+		$this->assertStringContainsString( '<div class="wp-swiper-descriptions__item is-active wp-swiper-descriptions__item--weight" data-wp-swiper-index="0" style="--wp-swiper-description-size:18px;--wp-swiper-description-weight:300">', $html );
+		$this->assertStringContainsString( '<div class="wp-swiper__caption"><div class="wp-swiper__caption-text">As the tag', $html );
+		$this->assertNotContains( 'wp-swiper--caption-weight', $this->root_classes( $html ) );
+
+		// A weight saved for the whole slider (until 2.8): still applies to the others.
+		$html = $this->render( array( 'caption_weight' => '800' ), $slides );
+		$this->assertContains( 'wp-swiper--caption-weight', $this->root_classes( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-caption-weight:800', $this->root_style( $html ) );
+	}
+
+	public function test_color_per_slide() {
+		$slides                         = $this->described_slides();
+		$slides[0]['caption']           = 'Red';
+		$slides[0]['caption_color']     = '#ff0000';
+		$slides[0]['description_color'] = 'rgba(0,0,255,0.5)';
+		$slides[1]['caption']           = 'As the page';
+		$html = $this->render( array( 'caption_color' => '#eeeeee' ), $slides );
+
+		// On the caption itself, over the Caption page's on the slider.
+		$this->assertStringContainsString( '<div class="wp-swiper__caption" style="--wp-swiper-caption-color:#ff0000">', $html );
+		$this->assertStringContainsString( '--wp-swiper-caption-color:#eeeeee', $this->root_style( $html ) );
+		$this->assertStringContainsString( '<div class="wp-swiper__caption"><div class="wp-swiper__caption-text">As the page', $html );
+		// A description's: a class (none keeps the page's) and its color.
+		$this->assertStringContainsString( '<div class="wp-swiper-descriptions__item is-active wp-swiper-descriptions__item--color" data-wp-swiper-index="0" style="--wp-swiper-description-color:rgba(0,0,255,0.5)">', $html );
+		$this->assertStringContainsString( '<div class="wp-swiper-descriptions__item" data-wp-swiper-index="2">', $html );
+
+		// Saved before or posted by the preview: checked again.
+		$slides[0]['caption_color'] = 'red;position:fixed';
+		$this->assertStringNotContainsString( 'position:fixed', $this->render( array(), $slides ) );
+	}
+
+	public function test_sanitize_slide_color() {
+		$this->assertSame( '#ff0000', WP_Swiper_Settings::sanitize_slide_color( '#FF0000' ) );
+		$this->assertSame( '#abc', WP_Swiper_Settings::sanitize_slide_color( '#abc' ) );
+		$this->assertSame( 'rgba(255,0,0,0.5)', WP_Swiper_Settings::sanitize_slide_color( 'rgba(255, 0, 0, .5)' ) );
+		$this->assertSame( 'rgba(255,0,0,0.25)', WP_Swiper_Settings::sanitize_slide_color( 'rgba(300,0,0,0.25)' ) );
+		$this->assertSame( 'rgba(1,2,3,0)', WP_Swiper_Settings::sanitize_slide_color( 'rgba(1,2,3,0)' ) );
+		// Full opacity: its hex.
+		$this->assertSame( '#010203', WP_Swiper_Settings::sanitize_slide_color( 'rgba(1,2,3,1)' ) );
+		foreach ( array( '', 'red', 'rgba(1,2,3,2)', 'rgb(1,2,3)', '#12345', 'rgba(1,2,3,0.5);x:y', 'expression(alert(1))' ) as $bad ) {
+			$this->assertSame( '', WP_Swiper_Settings::sanitize_slide_color( $bad ), $bad );
+		}
+	}
+
+	public function test_sanitize_font_weights() {
+		$this->assertSame( '600', WP_Swiper_Settings::sanitize_font_weights( '600' ) );
+		$this->assertSame( '700', WP_Swiper_Settings::sanitize_font_weights( '700,,400' ) );
+		$this->assertSame( '100', WP_Swiper_Settings::sanitize_font_weights( array( '100', '650', 'bold' ) ) );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_font_weights( '650' ) );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_font_weights( ',700,' ) );
+		$this->assertSame( '300', WP_Swiper_Settings::legacy_font_weights( array( 'caption_weight' => '300' ), 'caption' ) );
+		$this->assertSame( '', WP_Swiper_Settings::legacy_font_weights( array( 'caption_weight' => '' ), 'caption' ) );
+		$this->assertSame( '', WP_Swiper_Settings::legacy_font_weights( array(), 'description' ) );
+	}
+
+	public function test_sanitize_font_sizes() {
+		$this->assertSame( '20,16,', WP_Swiper_Settings::sanitize_font_sizes( '20,16,' ) );
+		$this->assertSame( '200,8,', WP_Swiper_Settings::sanitize_font_sizes( array( 999, 2, 'x' ) ) );
+		// Without a desktop size: the plugin's there, the others kept.
+		$this->assertSame( ',14,12', WP_Swiper_Settings::sanitize_font_sizes( ',14,12' ) );
+		$this->assertSame( array( '--x-tablet:14px', '--x-mobile:12px' ), WP_Swiper_Settings::font_size_vars( ',14,12', 'x' ) );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_font_sizes( ',,' ) );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_font_sizes( '' ) );
+	}
+
+	public function test_font_size_saved_for_the_whole_slider() {
+		// Until 2.8 a slider had one size: it still applies to the slides without their own.
 		$html = $this->render( array( 'caption_font' => 'custom', 'caption_font_size' => 22, 'caption_font_size_mobile' => '12' ), $this->described_slides() );
-		$this->assertStringContainsString( '--wp-swiper-caption-size:22px;--wp-swiper-caption-size-tablet:22px;--wp-swiper-caption-size-mobile:12px', $html );
+		$this->assertStringContainsString( '--wp-swiper-caption-size:22px;--wp-swiper-caption-size-mobile:12px', $this->root_style( $html ) );
+		$this->assertSame( '22,,12', WP_Swiper_Settings::legacy_font_sizes( array( 'caption_font' => 'custom', 'caption_font_size' => 22, 'caption_font_size_tablet' => '', 'caption_font_size_mobile' => '12' ), 'caption' ) );
+		$this->assertSame( '', WP_Swiper_Settings::legacy_font_sizes( array( 'caption_font' => 'default', 'caption_font_size' => 30 ), 'caption' ) );
+		// One saved since has no such keys.
+		$this->assertArrayNotHasKey( 'caption_font', WP_Swiper_Settings::get( $this->slider( null, array( '_version' => 6, 'height' => 300 ) ) ) );
 
 		// Saved before it had the choice (until 2.8): a size of its own stays Custom.
 		$this->assertSame( 'default', WP_Swiper_Settings::get( $this->slider( null, array( '_version' => 6, 'caption_font_size' => 16 ) ) )['caption_font'] );

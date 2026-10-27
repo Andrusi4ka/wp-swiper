@@ -149,6 +149,139 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( '', WP_Swiper_Admin::posted_slides()[0]['description'] );
 	}
 
+	public function test_posted_slides_keep_their_font_sizes() {
+		$image = $this->image();
+		$_POST = array(
+			'wp_swiper_slides' => $this->one_slide( $image ) + array(
+				'caption_size'     => array( '24,,16' ),
+				'description_size' => array( ',18,' ),
+			),
+		);
+		$slide = WP_Swiper_Admin::posted_slides()[0];
+		$this->assertSame( '24,,16', $slide['caption_size'] );
+		// No desktop size: the plugin's there, the tablet one kept.
+		$this->assertSame( ',18,', $slide['description_size'] );
+
+		// Forms from before: none.
+		$_POST = array( 'wp_swiper_slides' => $this->one_slide( $image ) );
+		$this->assertSame( '', WP_Swiper_Admin::posted_slides()[0]['caption_size'] );
+		$this->assertSame( '', WP_Swiper_Admin::posted_slides()[0]['caption_weight'] );
+	}
+
+	public function test_posted_slides_keep_their_font_weights() {
+		$_POST = array(
+			'wp_swiper_slides' => $this->one_slide( $this->image() ) + array(
+				'caption_weight'     => array( '700,,400' ),
+				'description_weight' => array( '650,300,' ),
+			),
+		);
+		$slide = WP_Swiper_Admin::posted_slides()[0];
+		// One weight for every screen: an old per-device one keeps its desktop weight.
+		$this->assertSame( '700', $slide['caption_weight'] );
+		// Not a weight: none.
+		$this->assertSame( '', $slide['description_weight'] );
+	}
+
+	public function test_posted_slides_keep_their_colors() {
+		$_POST = array(
+			'wp_swiper_slides' => $this->one_slide( $this->image() ) + array(
+				'caption_color'     => array( 'rgba(0, 0, 0, 0.5)' ),
+				'description_color' => array( 'red;position:fixed' ),
+			),
+		);
+		$slide = WP_Swiper_Admin::posted_slides()[0];
+		$this->assertSame( 'rgba(0,0,0,0.5)', $slide['caption_color'] );
+		// Not a color: none (the Description page's).
+		$this->assertSame( '', $slide['description_color'] );
+
+		// Forms from before: none.
+		$_POST = array( 'wp_swiper_slides' => $this->one_slide( $this->image() ) );
+		$this->assertSame( '', WP_Swiper_Admin::posted_slides()[0]['caption_color'] );
+	}
+
+	public function test_slide_info_window_has_a_color_under_each_editor() {
+		$this->as_role( 'editor' );
+		$slides                     = $this->slides( 1 );
+		$slides[0]['caption_color'] = 'rgba(255,0,0,0.25)';
+		$id                         = $this->slider( $slides );
+
+		ob_start();
+		WP_Swiper_Admin::render_slides_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// After each editor's font rows: Default / Custom, a swatch, the picker.
+		$caption     = strpos( $html, 'data-prop="caption_weight"' );
+		$description = strpos( $html, 'id="wp-swiper-description-editor"' );
+		$this->assertGreaterThan( $caption, strpos( $html, 'data-prop="caption_color"' ) );
+		$this->assertLessThan( $description, strpos( $html, 'data-prop="caption_color"' ) );
+		$this->assertGreaterThan( strpos( $html, 'data-prop="description_weight"' ), strpos( $html, 'data-prop="description_color"' ) );
+		$this->assertSame( 2, substr_count( $html, 'class="wp-swiper-modal__color-mode"' ) );
+		$this->assertSame( 2, substr_count( $html, 'class="wp-swiper-color-pick__hex"' ) );
+		$this->assertSame( 2, substr_count( $html, '<input type="range" min="0" max="100" step="1" value="100">' ) );
+		// The slide's own values kept with it.
+		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[caption_color][]" value="rgba(255,0,0,0.25)">', $html );
+		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[description_color][]" value="">', $html );
+	}
+
+	public function test_slide_info_window_text_settings_in_a_row_and_a_replace_button() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 1 ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_slides_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// Size, weight and color side by side under each editor, a label over each field.
+		$this->assertSame( 2, preg_match_all( '#<div class="wp-swiper-modal__text-style">\s*<div class="wp-swiper-modal__size wp-swiper-modal__size--devices" data-prop="(caption|description)_size">#', $html ) );
+		$this->assertSame( 6, substr_count( $html, '<div class="wp-swiper-modal__size-head">' ) );
+		// No explanations under the headings.
+		$this->assertStringNotContainsString( 'Over the image, styled on the Caption page', $html );
+		$this->assertStringNotContainsString( 'Shown under the slider while this slide is the current one', $html );
+		// The thumbnail: just the picture (no icon on hover, no click).
+		$this->assertStringContainsString( '<span class="wp-swiper-modal__thumb" aria-hidden="true"><span class="wp-swiper-modal__thumb-media"></span></span>', $html );
+		$this->assertStringNotContainsString( 'wp-swiper-modal__thumb-replace', $html );
+		// The Replace photo button under the title replaces the media.
+		$this->assertMatchesRegularExpression( '#<button type="button" class="button button-small wp-swiper-modal__replace">\s*<span class="dashicons dashicons-update" aria-hidden="true"></span>\s*Replace photo\s*</button>#', $html );
+	}
+
+	public function test_slide_info_window_has_a_font_size_and_weight_under_each_editor() {
+		$this->as_role( 'editor' );
+		$slides                      = $this->slides( 1 );
+		$slides[0]['caption_size']   = '22,,14';
+		$slides[0]['caption_weight'] = '600,,';
+		$id                          = $this->slider( $slides, array( 'description_font' => 'custom', 'description_font_size' => 19, 'caption_weight' => '300' ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_slides_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// After each editor, its two rows; for each device a value.
+		$caption     = strpos( $html, 'id="wp-swiper-caption-editor"' );
+		$description = strpos( $html, 'id="wp-swiper-description-editor"' );
+		foreach ( array( 'caption_size', 'caption_weight' ) as $prop ) {
+			$this->assertGreaterThan( $caption, strpos( $html, 'data-prop="' . $prop . '"' ), $prop );
+			$this->assertLessThan( $description, strpos( $html, 'data-prop="' . $prop . '"' ), $prop );
+		}
+		foreach ( array( 'description_size', 'description_weight' ) as $prop ) {
+			$this->assertGreaterThan( $description, strpos( $html, 'data-prop="' . $prop . '"' ), $prop );
+		}
+		// Sizes per device; weights one plain list each (Default, 100–900), no devices.
+		$this->assertSame( 6, substr_count( $html, 'data-device=' ) - substr_count( $html, 'wp-swiper-devices__' ) );
+		$this->assertSame( 2, substr_count( $html, 'class="wp-swiper-modal__weight"' ) );
+		// A size: device icons switching one field (tablet and mobile hidden at first).
+		$this->assertSame( 2, substr_count( $html, 'class="wp-swiper-modal__size wp-swiper-modal__size--devices"' ) );
+		$this->assertSame( 6, substr_count( $html, '<button type="button" class="wp-swiper-devices__btn' ) - substr_count( $html, 'wp-swiper-field--responsive' ) * 3 );
+		$this->assertSame( 4, preg_match_all( '#class="wp-swiper-modal__size-input" data-device="(tablet|mobile)"\s+hidden#', $html ) );
+		$this->assertStringNotContainsString( 'wp-swiper-modal__size-mode', $html );
+		$this->assertSame( 0, substr_count( $html, '<option value="">Inherit</option>' ) );
+		// The slide's own values kept with it.
+		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[caption_size][]" value="22,,14">', $html );
+		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[description_size][]" value="">', $html );
+		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[caption_weight][]" value="600">', $html );
+		// The slider's own size and weight from before (admin.js moves them into the slides without theirs).
+		$this->assertStringContainsString( 'data-legacy-caption-size="" data-legacy-description-size="19,," data-legacy-caption-weight="300" data-legacy-description-weight=""', $html );
+	}
+
 	public function test_slides_box_keeps_each_slide_in_hidden_fields_and_one_window() {
 		$this->as_role( 'editor' );
 		$slides                   = $this->slides( 2 );
@@ -525,5 +658,21 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( 1, substr_count( $html, 'data-mark="position">' ) );
 		// The larger image for the window.
 		$this->assertStringContainsString( 'data-full="' . esc_attr( wp_get_attachment_image_url( $slides[0]['id'], 'large' ) ) . '"', $html );
+	}
+
+	public function test_each_slide_has_a_clone_button_right_of_the_position_one() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 2 ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_slides_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// Two slides and the template: the position button, then Clone, top left.
+		$this->assertSame( 3, preg_match_all( '#<span class="wp-swiper-slide__tools">\s*(<\?php.*?\?>\s*)?<button type="button" class="wp-swiper-slide__position[^"]*"[^>]*>.*?</button>\s*<button type="button" class="wp-swiper-slide__clone" title="Clone slide" aria-label="Clone slide">#s', $html ) );
+		// Its icon inline from assets/images (it takes the button's color).
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/clone-icon.svg' );
+		$this->assertSame( 3, substr_count( $html, '<svg class="wp-swiper-slide__clone-icon" aria-hidden="true" focusable="false"' ) );
+		$this->assertStringNotContainsString( 'stroke="#000"', $html );
 	}
 }

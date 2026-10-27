@@ -513,7 +513,11 @@
 	line-height: inherit;
 }
 
-.wp-swiper--caption-weight .wp-swiper__caption .wp-swiper__caption-text {
+/* A weight overrides the tag's own: a slide's caption's (one for every
+   screen), else the one saved for the whole slider (until 2.8). Classes, as
+   with none the tag keeps its own. */
+.wp-swiper--caption-weight .wp-swiper__caption .wp-swiper__caption-text,
+.wp-swiper .wp-swiper__caption--weight .wp-swiper__caption-text {
 	font-weight: var(--wp-swiper-caption-weight);
 }
 
@@ -594,17 +598,40 @@
 	}
 }
 
-.wp-swiper-descriptions--weight {
+/* Each description its own size (the slide's, render.php), else the block's. */
+.wp-swiper-descriptions__item {
+	font-size: var(--wp-swiper-description-size, 16px);
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper-descriptions__item {
+		font-size: var(--wp-swiper-description-size-tablet, var(--wp-swiper-description-size, 16px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-descriptions__item {
+		font-size: var(--wp-swiper-description-size-mobile, var(--wp-swiper-description-size-tablet, var(--wp-swiper-description-size, 16px)));
+	}
+}
+
+/* A description's own weight, one for every screen (else the page's), or
+   the one saved for the whole slider (until 2.8). */
+.wp-swiper-descriptions--weight,
+.wp-swiper-descriptions__item--weight {
 	font-weight: var(--wp-swiper-description-weight);
 }
 
-.wp-swiper-descriptions--color {
+/* "Own text color", or a description's own color (the Slide info window). */
+.wp-swiper-descriptions--color,
+.wp-swiper-descriptions__item--color {
 	color: var(--wp-swiper-description-color);
 }
 
-/* Headings keep the theme's sizes and font, but take "Own text color" too
+/* Headings keep the theme's sizes and font, but take that color too
    (themes give headings a colour of their own). */
-.wp-swiper-descriptions--color :is(h1, h2, h3, h4, h5, h6) {
+.wp-swiper-descriptions--color :is(h1, h2, h3, h4, h5, h6),
+.wp-swiper-descriptions__item--color :is(h1, h2, h3, h4, h5, h6) {
 	color: inherit;
 }
 

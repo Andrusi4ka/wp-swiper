@@ -685,8 +685,9 @@ class WP_Swiper_Render {
 			// A click on a video slide opens the lightbox (its play button says so).
 			$videos && $settings['lightbox'] && ! empty( $settings['lightbox_videos'] ) ? 'wp-swiper--lightbox-videos' : '',
 			$settings['image_border'] ? 'wp-swiper--border' : '',
-			// Caption: a set weight overrides the tag's own; vertical text.
-			'' !== $settings['caption_weight'] ? 'wp-swiper--caption-weight' : '',
+			// Caption: a weight saved for the whole slider (until 2.8) overrides the
+			// tag's own (each slide's is on its caption, render_slide()); vertical text.
+			'' !== WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ) ? 'wp-swiper--caption-weight' : '',
 			'horizontal' !== $settings['caption_orientation'] ? 'wp-swiper--caption-' . $settings['caption_orientation'] : '',
 			// Caption background: none, or solid instead of the default gradient; text shadow.
 			! $settings['caption_bg'] ? 'wp-swiper--caption-nobg' : ( 'solid' === $settings['caption_bg_style'] ? 'wp-swiper--caption-solid' : '' ),
@@ -868,12 +869,9 @@ class WP_Swiper_Render {
 				$style[] = '--wp-swiper-justify:' . $edge[ $settings['image_align_vertical'] ];
 			}
 		}
-		// Caption typography: its size per device if Custom (else the CSS default).
-		if ( 'custom' === $settings['caption_font'] ) {
-			foreach ( WP_Swiper_Settings::responsive( $settings, 'caption_font_size' ) as $device => $size ) {
-				$style[] = '--wp-swiper-caption-size' . self::SUFFIX[ $device ] . ':' . (int) $size . 'px';
-			}
-		}
+		// Caption typography: each slide sets its own size (render_slide()); a
+		// slider saved with one of its own keeps it for the others until saved again.
+		$style = array_merge( $style, WP_Swiper_Settings::font_size_vars( WP_Swiper_Settings::legacy_font_sizes( $settings, 'caption' ), 'wp-swiper-caption-size' ) );
 		$style[] = '--wp-swiper-caption-color:' . $settings['caption_color'];
 		if ( $settings['caption_bg'] ) {
 			// The background color at its opacity, and fully transparent for the
@@ -883,9 +881,7 @@ class WP_Swiper_Render {
 			$style[]            = sprintf( '--wp-swiper-caption-bg-from:rgba(%d,%d,%d,%s)', $r, $g, $b, $alpha );
 			$style[]            = sprintf( '--wp-swiper-caption-bg-to:rgba(%d,%d,%d,0)', $r, $g, $b );
 		}
-		if ( '' !== $settings['caption_weight'] ) {
-			$style[] = '--wp-swiper-caption-weight:' . (int) $settings['caption_weight'];
-		}
+		$style = array_merge( $style, WP_Swiper_Settings::font_weight_vars( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ), 'wp-swiper-caption-weight' ) );
 		// Desktop 0 needs no variable (the CSS falls back to 0); tablet/mobile
 		// are set whenever given (0 included), empty inherits.
 		if ( $settings['border_radius'] ) {
@@ -1077,13 +1073,24 @@ class WP_Swiper_Render {
 			// Sanitized again: saved before, or posted by the preview.
 			$text = empty( $slide['description'] ) ? '' : WP_Swiper_Settings::sanitize_description( $slide['description'] );
 			if ( '' !== $text ) {
+				// Its own font size (the Slide info window), per device.
+				$size   = WP_Swiper_Settings::font_size_vars( isset( $slide['description_size'] ) ? $slide['description_size'] : '', 'wp-swiper-description-size' );
+				// And its own font weight (a class: none keeps the page's).
+				$weight = WP_Swiper_Settings::font_weight_vars( isset( $slide['description_weight'] ) ? $slide['description_weight'] : '', 'wp-swiper-description-weight' );
+				$size   = array_merge( $size, $weight );
+				// And its own color (a class: none keeps the Description page's or the page's).
+				$color = isset( $slide['description_color'] ) ? WP_Swiper_Settings::sanitize_slide_color( $slide['description_color'] ) : '';
+				if ( '' !== $color ) {
+					$size[] = '--wp-swiper-description-color:' . $color;
+				}
 				$items .= sprintf(
-					'<div class="wp-swiper-descriptions__item%1$s" data-wp-swiper-index="%2$d">%3$s</div>',
+					'<div class="wp-swiper-descriptions__item%1$s" data-wp-swiper-index="%2$d"%4$s>%3$s</div>',
 					// The first slide's until frontend.js takes over.
-					0 === $index ? ' is-active' : '',
+					( 0 === $index ? ' is-active' : '' ) . ( $weight ? ' wp-swiper-descriptions__item--weight' : '' ) . ( '' !== $color ? ' wp-swiper-descriptions__item--color' : '' ),
 					(int) $index,
 					// Paragraphs for text typed in the editor's code view (only <p> and <br> are added).
-					wpautop( $text )
+					wpautop( $text ),
+					$size ? ' style="' . esc_attr( implode( ';', $size ) ) . '"' : ''
 				);
 			}
 		}
@@ -1100,17 +1107,17 @@ class WP_Swiper_Render {
 		if ( WP_Swiper_Settings::legacy_description_align( $settings ) ) {
 			$style[] = '--wp-swiper-description-align:' . WP_Swiper_Settings::legacy_description_align( $settings );
 		}
-		// Its size per device if Custom (else the CSS default).
-		if ( 'custom' === $settings['description_font'] ) {
-			foreach ( WP_Swiper_Settings::responsive( $settings, 'description_font_size' ) as $device => $size ) {
-				$style[] = '--wp-swiper-description-size' . self::SUFFIX[ $device ] . ':' . (int) $size . 'px';
-			}
-		}
+		// Each description has its own size (on its item, above); a slider saved
+		// with one of its own keeps it for the others until saved again.
+		$style = array_merge( $style, WP_Swiper_Settings::font_size_vars( WP_Swiper_Settings::legacy_font_sizes( $settings, 'description' ), 'wp-swiper-description-size' ) );
 		// "Text transition": the motion's animations (frontend.css).
 		$classes = array( 'wp-swiper-descriptions', 'wp-swiper-descriptions--' . $post_id, 'wp-swiper-descriptions--' . WP_Swiper_Settings::description_motion( $settings ) );
-		if ( '' !== $settings['description_weight'] ) {
+		// A weight saved for the whole slider (until 2.8), for the descriptions
+		// without their own (each one's is on its item, above).
+		$weight = WP_Swiper_Settings::font_weight_vars( WP_Swiper_Settings::legacy_font_weights( $settings, 'description' ), 'wp-swiper-description-weight' );
+		if ( $weight ) {
 			$classes[] = 'wp-swiper-descriptions--weight';
-			$style[]   = '--wp-swiper-description-weight:' . (int) $settings['description_weight'];
+			$style     = array_merge( $style, $weight );
 		}
 		// Off: the page's text colour.
 		if ( $settings['description_own_color'] ) {
@@ -1286,7 +1293,19 @@ class WP_Swiper_Render {
 				// Outer block: position and background; inner tag: semantics and typography.
 				$tag = in_array( $settings['caption_tag'], array( 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ), true ) ? $settings['caption_tag'] : 'div';
 				?>
-				<div class="wp-swiper__caption"><<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?> class="wp-swiper__caption-text"><?php echo $caption; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized above (caption_tags()). ?></<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?>></div>
+				<?php // Its own font size (the Slide info window), per device. ?>
+				<?php
+				$caption_size   = WP_Swiper_Settings::font_size_vars( isset( $slide['caption_size'] ) ? $slide['caption_size'] : '', 'wp-swiper-caption-size' );
+				// And its own font weight (a class: none keeps the tag's).
+				$caption_weight = WP_Swiper_Settings::font_weight_vars( isset( $slide['caption_weight'] ) ? $slide['caption_weight'] : '', 'wp-swiper-caption-weight' );
+				$caption_size   = array_merge( $caption_size, $caption_weight );
+				// And its own color (none: the Caption page's).
+				$caption_color  = isset( $slide['caption_color'] ) ? WP_Swiper_Settings::sanitize_slide_color( $slide['caption_color'] ) : '';
+				if ( '' !== $caption_color ) {
+					$caption_size[] = '--wp-swiper-caption-color:' . $caption_color;
+				}
+				?>
+				<div class="wp-swiper__caption<?php echo $caption_weight ? ' wp-swiper__caption--weight' : ''; ?>"<?php echo $caption_size ? ' style="' . esc_attr( implode( ';', $caption_size ) ) . '"' : ''; ?>><<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?> class="wp-swiper__caption-text"><?php echo $caption; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized above (caption_tags()). ?></<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?>></div>
 			<?php endif; ?>
 			</div>
 			<?php echo $separator; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built in separator(). ?>

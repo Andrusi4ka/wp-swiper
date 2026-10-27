@@ -580,7 +580,8 @@ class WP_Swiper_Art {
 	 */
 	private static function caption_classes( $settings ) {
 		return array(
-			'' !== $settings['caption_weight'] ? 'wp-swiper-art--caption-weight' : '',
+			// A weight saved for the whole slider (until 2.8); each caption's on itself (photo()).
+			'' !== WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ) ? 'wp-swiper-art--caption-weight' : '',
 			! $settings['caption_bg'] ? 'wp-swiper-art--caption-nobg' : ( 'solid' === $settings['caption_bg_style'] ? 'wp-swiper-art--caption-solid' : '' ),
 			$settings['caption_shadow'] ? 'wp-swiper-art--caption-shadow' : '',
 		);
@@ -595,12 +596,9 @@ class WP_Swiper_Art {
 	 */
 	private static function caption_style( $settings ) {
 		$style = array();
-		// Its size per device if Custom (else the CSS default).
-		if ( 'custom' === $settings['caption_font'] ) {
-			foreach ( WP_Swiper_Settings::responsive( $settings, 'caption_font_size' ) as $device => $size ) {
-				$style[] = '--wp-swiper-caption-size' . WP_Swiper_Render::SUFFIX[ $device ] . ':' . (int) $size . 'px';
-			}
-		}
+		// Each photo's caption sets its own size (photo()); a slider saved with
+		// one of its own keeps it for the others until saved again.
+		$style = array_merge( $style, WP_Swiper_Settings::font_size_vars( WP_Swiper_Settings::legacy_font_sizes( $settings, 'caption' ), 'wp-swiper-caption-size' ) );
 		$style[] = '--wp-swiper-caption-color:' . $settings['caption_color'];
 		if ( $settings['caption_bg'] ) {
 			list( $r, $g, $b ) = sscanf( $settings['caption_bg_color'], '#%02x%02x%02x' );
@@ -608,9 +606,7 @@ class WP_Swiper_Art {
 			$style[]            = sprintf( '--wp-swiper-caption-bg-from:rgba(%d,%d,%d,%s)', $r, $g, $b, $alpha );
 			$style[]            = sprintf( '--wp-swiper-caption-bg-to:rgba(%d,%d,%d,0)', $r, $g, $b );
 		}
-		if ( '' !== $settings['caption_weight'] ) {
-			$style[] = '--wp-swiper-caption-weight:' . (int) $settings['caption_weight'];
-		}
+		$style = array_merge( $style, WP_Swiper_Settings::font_weight_vars( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ), 'wp-swiper-caption-weight' ) );
 		return $style;
 	}
 
@@ -666,7 +662,17 @@ class WP_Swiper_Art {
 		if ( '' !== $caption ) {
 			// Outer block: the background over the photo; inner tag: semantics and typography.
 			$tag     = in_array( $settings['caption_tag'], array( 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ), true ) ? $settings['caption_tag'] : 'div';
-			$caption = sprintf( '<div class="wp-swiper-art__caption"><%1$s class="wp-swiper-art__caption-text">%2$s</%1$s></div>', $tag, $caption );
+			// Its own font size (the Slide info window), per device.
+			$size    = WP_Swiper_Settings::font_size_vars( isset( $slide['caption_size'] ) ? $slide['caption_size'] : '', 'wp-swiper-caption-size' );
+			// And its own font weight (a class: none keeps the tag's).
+			$weight  = WP_Swiper_Settings::font_weight_vars( isset( $slide['caption_weight'] ) ? $slide['caption_weight'] : '', 'wp-swiper-caption-weight' );
+			$size    = array_merge( $size, $weight );
+			// And its own color (none: the Caption page's).
+			$color   = isset( $slide['caption_color'] ) ? WP_Swiper_Settings::sanitize_slide_color( $slide['caption_color'] ) : '';
+			if ( '' !== $color ) {
+				$size[] = '--wp-swiper-caption-color:' . $color;
+			}
+			$caption = sprintf( '<div class="wp-swiper-art__caption%4$s"%3$s><%1$s class="wp-swiper-art__caption-text">%2$s</%1$s></div>', $tag, $caption, $size ? ' style="' . esc_attr( implode( ';', $size ) ) . '"' : '', $weight ? ' wp-swiper-art__caption--weight' : '' );
 		}
 		printf(
 			'<div class="wp-swiper-art__photo" data-real="%d"%s>%s%s</div>',

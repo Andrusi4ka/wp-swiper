@@ -162,7 +162,10 @@
 	transform: translate(-50%, -50%);
 }
 
-.wp-swiper-art--caption-weight .wp-swiper-art__caption .wp-swiper-art__caption-text {
+/* A caption's own weight (one for every screen), else the one saved for the
+   whole slider (until 2.8); none: the tag's own. */
+.wp-swiper-art--caption-weight .wp-swiper-art__caption .wp-swiper-art__caption-text,
+.wp-swiper-art .wp-swiper-art__caption--weight .wp-swiper-art__caption-text {
 	font-weight: var(--wp-swiper-caption-weight);
 }
 

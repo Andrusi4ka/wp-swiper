@@ -45,7 +45,9 @@ class WP_Swiper_Admin {
 			wp_enqueue_media();
 			// The slide descriptions' editor (admin.js starts it in its window, wp.editor).
 			wp_enqueue_editor();
-			wp_enqueue_script( 'wp-swiper-admin', WP_SWIPER_URL . 'assets/js/admin.js', array( 'jquery', 'jquery-ui-sortable' ), wp_swiper_asset_version( 'assets/js/admin.js' ), true );
+			// Iris: the color picker of a slide's text color (Slide info window).
+			wp_enqueue_style( 'wp-color-picker' );
+			wp_enqueue_script( 'wp-swiper-admin', WP_SWIPER_URL . 'assets/js/admin.js', array( 'jquery', 'jquery-ui-sortable', 'iris' ), wp_swiper_asset_version( 'assets/js/admin.js' ), true );
 			wp_localize_script(
 				'wp-swiper-admin',
 				'wpSwiperAdmin',
@@ -58,6 +60,9 @@ class WP_Swiper_Admin {
 					'videoBadge'   => __( 'Video', 'wp-swiper' ),
 					'posterChoose' => __( 'Choose', 'wp-swiper' ),
 					'posterChange' => __( 'Change', 'wp-swiper' ),
+					// The Slide info window's thumbnail: another image or video for the slide.
+					'replaceTitle'  => __( 'Replace the slide\'s image or video', 'wp-swiper' ),
+					'replaceButton' => __( 'Replace', 'wp-swiper' ),
 					'posterRemove' => __( 'Remove', 'wp-swiper' ),
 					// An image setting (the continuous scroll's separator).
 					'imageTitle'   => __( 'Choose an image', 'wp-swiper' ),
@@ -121,7 +126,12 @@ class WP_Swiper_Admin {
 		<?php // Only useful once there are slides; admin.js toggles it with the list. ?>
 		<p class="description wp-swiper-hint"<?php echo $shown ? '' : ' hidden'; ?>><?php esc_html_e( 'Drag slides to reorder. “Add info”: a slide’s caption, description and link, all optional; a video slide has no link, its poster image is set on the Video page of the settings.', 'wp-swiper' ); ?></p>
 
-		<ul class="wp-swiper-slides" id="wp-swiper-slide-list">
+		<?php
+		// A slider saved with a font size of its own (until 2.8): admin.js moves
+		// it into the slides without theirs, so saving keeps it per slide.
+		$settings = WP_Swiper_Settings::get( $post->ID );
+		?>
+		<ul class="wp-swiper-slides" id="wp-swiper-slide-list" data-legacy-caption-size="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_sizes( $settings, 'caption' ) ); ?>" data-legacy-description-size="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_sizes( $settings, 'description' ) ); ?>" data-legacy-caption-weight="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ) ); ?>" data-legacy-description-weight="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_weights( $settings, 'description' ) ); ?>">
 			<?php
 			foreach ( $slides as $slide ) {
 				self::render_slide_item( $slide );
@@ -160,20 +170,36 @@ class WP_Swiper_Admin {
 			<div class="wp-swiper-modal__box">
 				<div class="wp-swiper-modal__head">
 					<?php // The slide's thumbnail (admin.js puts it in: its image or poster, else a video icon). ?>
-					<span class="wp-swiper-modal__thumb" aria-hidden="true"></span>
-					<h2 class="wp-swiper-modal__title" id="wp-swiper-slide-modal-title"><?php esc_html_e( 'Slide info', 'wp-swiper' ); ?> <span class="wp-swiper-modal__slide"></span></h2>
+					<span class="wp-swiper-modal__thumb" aria-hidden="true"><span class="wp-swiper-modal__thumb-media"></span></span>
+					<div class="wp-swiper-modal__heading">
+						<h2 class="wp-swiper-modal__title" id="wp-swiper-slide-modal-title"><?php esc_html_e( 'Slide info', 'wp-swiper' ); ?> <span class="wp-swiper-modal__slide"></span></h2>
+						<?php // Another image or video for the slide (admin.js). ?>
+						<button type="button" class="button button-small wp-swiper-modal__replace">
+							<span class="dashicons dashicons-update" aria-hidden="true"></span>
+							<?php esc_html_e( 'Replace photo', 'wp-swiper' ); ?>
+						</button>
+					</div>
 					<button type="button" class="wp-swiper-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-swiper' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button>
 				</div>
 				<div class="wp-swiper-modal__body">
 					<div class="wp-swiper-modal__section">
 						<h3 class="wp-swiper-modal__label"><label for="wp-swiper-caption-editor"><?php esc_html_e( 'Caption', 'wp-swiper' ); ?></label></h3>
-						<p class="description"><?php esc_html_e( 'Over the image, styled on the Caption page. Bold, italic, underline, text color and the alignment of each line; Enter starts a new line.', 'wp-swiper' ); ?></p>
 						<textarea id="wp-swiper-caption-editor" rows="3"></textarea>
+						<?php // Its font size, weight and color side by side. ?>
+						<div class="wp-swiper-modal__text-style">
+							<?php self::font_control( 'caption_size' ); ?>
+							<?php self::font_control( 'caption_weight' ); ?>
+							<?php self::color_control( 'caption_color' ); ?>
+						</div>
 					</div>
 					<div class="wp-swiper-modal__section">
 						<h3 class="wp-swiper-modal__label"><label for="wp-swiper-description-editor"><?php esc_html_e( 'Description', 'wp-swiper' ); ?></label></h3>
-						<p class="description"><?php esc_html_e( 'Shown under the slider while this slide is the current one. Headings, bold, italic, underline, text color, alignment, links and lists.', 'wp-swiper' ); ?></p>
 						<textarea id="wp-swiper-description-editor" rows="10"></textarea>
+						<div class="wp-swiper-modal__text-style">
+							<?php self::font_control( 'description_size' ); ?>
+							<?php self::font_control( 'description_weight' ); ?>
+							<?php self::color_control( 'description_color' ); ?>
+						</div>
 					</div>
 					<?php // Not for video slides (a click on one is the player's): admin.js hides it. ?>
 					<div class="wp-swiper-modal__section wp-swiper-modal__link">
@@ -230,23 +256,164 @@ class WP_Swiper_Admin {
 	}
 
 	/**
+	 * In the Slide info window, under a text's editor: its font size, one
+	 * field with the desktop / tablet / mobile icons that pick which device's
+	 * value it shows (as a responsive setting does; empty: the plugin's 16px
+	 * on desktop, the larger screen's on tablet and mobile); or its font
+	 * weight, one list for every screen (Default: the tag's or the page's).
+	 * No names: admin.js puts what is applied into the slide's own hidden
+	 * value of the same name.
+	 *
+	 * @param string $prop caption_size | caption_weight | description_size | description_weight.
+	 */
+	private static function font_control( $prop ) {
+		$weight  = ( false !== strpos( $prop, '_weight' ) );
+		$label   = $weight ? __( 'Font weight', 'wp-swiper' ) : __( 'Font size', 'wp-swiper' );
+		$devices = array(
+			'desktop' => array( __( 'Desktop', 'wp-swiper' ), 'dashicons-desktop' ),
+			'tablet'  => array( __( 'Tablet', 'wp-swiper' ), 'dashicons-tablet' ),
+			'mobile'  => array( __( 'Mobile', 'wp-swiper' ), 'dashicons-smartphone' ),
+		);
+		$weights = array(
+			'100' => '100',
+			'200' => '200',
+			'300' => '300',
+			'400' => __( '400 (normal)', 'wp-swiper' ),
+			'500' => '500',
+			'600' => '600',
+			'700' => __( '700 (bold)', 'wp-swiper' ),
+			'800' => '800',
+			'900' => '900',
+		);
+		$id      = 'wp-swiper-' . str_replace( '_', '-', $prop ) . '-mode';
+		if ( $weight ) {
+			?>
+			<div class="wp-swiper-modal__size" data-prop="<?php echo esc_attr( $prop ); ?>">
+				<div class="wp-swiper-modal__size-head">
+					<label class="wp-swiper-modal__size-label" for="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $label ); ?></label>
+				</div>
+				<select id="<?php echo esc_attr( $id ); ?>" class="wp-swiper-modal__weight">
+					<option value=""><?php esc_html_e( 'Default', 'wp-swiper' ); ?></option>
+					<?php foreach ( $weights as $value => $name ) : ?>
+						<option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $name ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+			<?php
+			return;
+		}
+		?>
+		<div class="wp-swiper-modal__size wp-swiper-modal__size--devices" data-prop="<?php echo esc_attr( $prop ); ?>">
+			<?php // The device icons at the end of the label's line, as over a responsive setting. ?>
+			<div class="wp-swiper-modal__size-head">
+				<label class="wp-swiper-modal__size-label" for="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $label ); ?></label>
+				<span class="wp-swiper-devices" role="group" aria-label="<?php esc_attr_e( 'Device', 'wp-swiper' ); ?>">
+					<?php foreach ( $devices as $device => $meta ) : ?>
+						<button type="button" class="wp-swiper-devices__btn<?php echo 'desktop' === $device ? ' is-active' : ''; ?>"
+							data-device="<?php echo esc_attr( $device ); ?>"
+							aria-pressed="<?php echo 'desktop' === $device ? 'true' : 'false'; ?>"
+							title="<?php echo esc_attr( $meta[0] ); ?>">
+							<span class="dashicons <?php echo esc_attr( $meta[1] ); ?>" aria-hidden="true"></span>
+						</button>
+					<?php endforeach; ?>
+				</span>
+			</div>
+			<span class="wp-swiper-modal__size-field">
+				<?php foreach ( $devices as $device => $meta ) : ?>
+					<?php // Desktop's id: the label's. Empty desktop: the plugin's 16px (admin.js puts the inherited one into the others). ?>
+					<input type="number" min="8" max="200" step="1" class="wp-swiper-modal__size-input" data-device="<?php echo esc_attr( $device ); ?>"
+						<?php echo 'desktop' === $device ? 'id="' . esc_attr( $id ) . '" placeholder="16"' : 'hidden'; ?>
+						aria-label="<?php echo esc_attr( $label . ' — ' . $meta[0] ); ?>">
+				<?php endforeach; ?>
+				<span class="wp-swiper-modal__size-unit">px</span>
+			</span>
+		</div>
+		<?php
+	}
+
+	/**
+	 * In the Slide info window, under a text's editor (after its font rows):
+	 * its color, Default (the Caption page's; the Description page's or the
+	 * page's text) or Custom: a swatch that opens a picker under it (Iris: the
+	 * color and a palette, then an Opacity slider) and an arrow back to the
+	 * default color. No names: admin.js puts what is applied into the slide's
+	 * own hidden value of the same name ("#rrggbb" or "rgba(r,g,b,a)").
+	 *
+	 * @param string $prop caption_color | description_color.
+	 */
+	private static function color_control( $prop ) {
+		$id = 'wp-swiper-' . str_replace( '_', '-', $prop ) . '-mode';
+		?>
+		<div class="wp-swiper-modal__size wp-swiper-modal__color" data-prop="<?php echo esc_attr( $prop ); ?>">
+			<div class="wp-swiper-modal__size-head">
+				<label class="wp-swiper-modal__size-label" for="<?php echo esc_attr( $id ); ?>"><?php esc_html_e( 'Color', 'wp-swiper' ); ?></label>
+			</div>
+			<span class="wp-swiper-modal__color-row">
+				<select id="<?php echo esc_attr( $id ); ?>" class="wp-swiper-modal__color-mode">
+					<option value=""><?php esc_html_e( 'Default', 'wp-swiper' ); ?></option>
+					<option value="custom"><?php esc_html_e( 'Custom', 'wp-swiper' ); ?></option>
+				</select>
+				<span class="wp-swiper-color-pick" hidden>
+					<button type="button" class="wp-swiper-color-pick__swatch" aria-expanded="false" aria-label="<?php esc_attr_e( 'Choose a color', 'wp-swiper' ); ?>">
+						<span class="wp-swiper-color-pick__chip" aria-hidden="true"></span>
+						<span class="dashicons dashicons-color-picker" aria-hidden="true"></span>
+					</button>
+					<button type="button" class="wp-swiper-color-pick__reset" title="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>">
+						<span class="dashicons dashicons-image-rotate" aria-hidden="true"></span>
+					</button>
+					<span class="wp-swiper-color-pick__pop" hidden>
+						<?php // Iris goes right after this field (admin.js). ?>
+						<input type="text" class="wp-swiper-color-pick__hex" spellcheck="false" aria-label="<?php esc_attr_e( 'Hex color', 'wp-swiper' ); ?>">
+						<label class="wp-swiper-color-pick__opacity">
+							<span><?php esc_html_e( 'Opacity', 'wp-swiper' ); ?>: <output>100%</output></span>
+							<input type="range" min="0" max="100" step="1" value="100">
+						</label>
+					</span>
+				</span>
+			</span>
+		</div>
+		<?php
+	}
+
+	/**
 	 * The Image position button's icon (assets/images/position-icon.svg, from
 	 * iconoir, MIT): inline, so it takes the button's color (currentColor).
-	 * Read once; its comments left out.
 	 *
 	 * @return string SVG markup, or a dashicon without the file.
 	 */
 	private static function position_icon() {
-		static $svg = null;
-		if ( null === $svg ) {
-			$file = WP_SWIPER_DIR . 'assets/images/position-icon.svg';
+		return self::svg_icon( 'position-icon.svg', 'wp-swiper-slide__position-icon', 'dashicons-location' );
+	}
+
+	/**
+	 * The Clone slide button's icon (assets/images/clone-icon.svg), inline too.
+	 *
+	 * @return string SVG markup, or a dashicon without the file.
+	 */
+	private static function clone_icon() {
+		return self::svg_icon( 'clone-icon.svg', 'wp-swiper-slide__clone-icon', 'dashicons-admin-page' );
+	}
+
+	/**
+	 * One of the plugin's SVG icons (assets/images) inline, so it takes its
+	 * button's color (currentColor). Read once; its comments left out.
+	 *
+	 * @param string $file     File name in assets/images.
+	 * @param string $class    The svg's class.
+	 * @param string $fallback A dashicon without the file.
+	 * @return string
+	 */
+	private static function svg_icon( $file, $class, $fallback ) {
+		static $icons = array();
+		if ( ! isset( $icons[ $file ] ) ) {
+			$path = WP_SWIPER_DIR . 'assets/images/' . $file;
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local plugin file.
-			$svg = is_readable( $file ) ? trim( preg_replace( '/<!--.*?-->/s', '', (string) file_get_contents( $file ) ) ) : '';
-			$svg = '' !== $svg
-				? preg_replace( '/^<svg\b/', '<svg class="wp-swiper-slide__position-icon" aria-hidden="true" focusable="false"', $svg )
-				: '<span class="dashicons dashicons-location" aria-hidden="true"></span>';
+			$svg            = is_readable( $path ) ? trim( preg_replace( '/<!--.*?-->/s', '', (string) file_get_contents( $path ) ) ) : '';
+			$icons[ $file ] = '' !== $svg
+				? preg_replace( '/^<svg\b/', '<svg class="' . esc_attr( $class ) . '" aria-hidden="true" focusable="false"', $svg )
+				: '<span class="dashicons ' . esc_attr( $fallback ) . '" aria-hidden="true"></span>';
 		}
-		return $svg;
+		return $icons[ $file ];
 	}
 
 	/**
@@ -324,10 +491,16 @@ class WP_Swiper_Admin {
 				<img src="<?php echo esc_attr( $thumb ); ?>" alt=""<?php echo $thumb ? '' : ' hidden'; ?>>
 				<span class="dashicons dashicons-video-alt3 wp-swiper-slide__video-icon" aria-hidden="true"></span>
 				<span class="wp-swiper-slide__badge"><?php echo esc_html( $badge ); ?></span>
-				<?php // An image's own position ("Cover"): its window (admin.js). Shown while the slider crops (.wp-swiper-slides--positions). ?>
-				<button type="button" class="wp-swiper-slide__position<?php echo '' !== $position ? ' is-set' : ''; ?>" title="<?php esc_attr_e( 'Image position', 'wp-swiper' ); ?>">
-					<?php echo self::position_icon(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
-				</button>
+				<span class="wp-swiper-slide__tools">
+					<?php // An image's own position ("Cover"): its window (admin.js). Shown while the slider crops (.wp-swiper-slides--positions). ?>
+					<button type="button" class="wp-swiper-slide__position<?php echo '' !== $position ? ' is-set' : ''; ?>" title="<?php esc_attr_e( 'Image position', 'wp-swiper' ); ?>">
+						<?php echo self::position_icon(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
+					</button>
+					<?php // A copy of the slide, everything of it, right after it (admin.js). ?>
+					<button type="button" class="wp-swiper-slide__clone" title="<?php esc_attr_e( 'Clone slide', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Clone slide', 'wp-swiper' ); ?>">
+						<?php echo self::clone_icon(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
+					</button>
+				</span>
 				<button type="button" class="wp-swiper-slide__remove" title="<?php esc_attr_e( 'Remove slide', 'wp-swiper' ); ?>">
 					<span class="dashicons dashicons-no-alt"></span>
 				</button>
@@ -338,6 +511,15 @@ class WP_Swiper_Admin {
 			<?php // Caption and description (HTML), link and "new tab" ("1" / "0"): edited in the slide's window (admin.js). ?>
 			<textarea name="wp_swiper_slides[caption][]" hidden><?php echo esc_textarea( $caption ); ?></textarea>
 			<textarea name="wp_swiper_slides[description][]" hidden><?php echo esc_textarea( $description ); ?></textarea>
+			<?php // Their own font sizes per device ("20,16,"; empty: the plugin's), set in the Slide info window. ?>
+			<input type="hidden" name="wp_swiper_slides[caption_size][]" value="<?php echo esc_attr( isset( $slide['caption_size'] ) ? WP_Swiper_Settings::sanitize_font_sizes( $slide['caption_size'] ) : '' ); ?>">
+			<input type="hidden" name="wp_swiper_slides[description_size][]" value="<?php echo esc_attr( isset( $slide['description_size'] ) ? WP_Swiper_Settings::sanitize_font_sizes( $slide['description_size'] ) : '' ); ?>">
+			<?php // And font weights ("700"; empty: the tag's or the page's). ?>
+			<input type="hidden" name="wp_swiper_slides[caption_weight][]" value="<?php echo esc_attr( isset( $slide['caption_weight'] ) ? WP_Swiper_Settings::sanitize_font_weights( $slide['caption_weight'] ) : '' ); ?>">
+			<input type="hidden" name="wp_swiper_slides[description_weight][]" value="<?php echo esc_attr( isset( $slide['description_weight'] ) ? WP_Swiper_Settings::sanitize_font_weights( $slide['description_weight'] ) : '' ); ?>">
+			<?php // And colors ("#rrggbb" or "rgba(r,g,b,a)"; empty: the Caption / Description page's). ?>
+			<input type="hidden" name="wp_swiper_slides[caption_color][]" value="<?php echo esc_attr( isset( $slide['caption_color'] ) ? WP_Swiper_Settings::sanitize_slide_color( $slide['caption_color'] ) : '' ); ?>">
+			<input type="hidden" name="wp_swiper_slides[description_color][]" value="<?php echo esc_attr( isset( $slide['description_color'] ) ? WP_Swiper_Settings::sanitize_slide_color( $slide['description_color'] ) : '' ); ?>">
 			<input type="hidden" name="wp_swiper_slides[link][]" value="<?php echo esc_attr( $link ); ?>">
 			<input type="hidden" name="wp_swiper_slides[new_tab][]" value="<?php echo empty( $slide['new_tab'] ) ? '0' : '1'; ?>">
 			<?php // "Add info" until the slide has a caption, description or link (admin.js keeps it so). ?>
@@ -973,6 +1155,15 @@ class WP_Swiper_Admin {
 			$poster        = isset( $raw['poster'][ $i ] ) ? absint( $raw['poster'][ $i ] ) : 0;
 			$caption       = isset( $raw['caption'][ $i ] ) ? WP_Swiper_Settings::sanitize_caption( $raw['caption'][ $i ] ) : '';
 			$description   = isset( $raw['description'][ $i ] ) ? WP_Swiper_Settings::sanitize_description( $raw['description'][ $i ] ) : '';
+			// Their own font sizes per device ("20,16,"), or none: the plugin's.
+			$caption_size     = isset( $raw['caption_size'][ $i ] ) ? WP_Swiper_Settings::sanitize_font_sizes( $raw['caption_size'][ $i ] ) : '';
+			$description_size = isset( $raw['description_size'][ $i ] ) ? WP_Swiper_Settings::sanitize_font_sizes( $raw['description_size'][ $i ] ) : '';
+			// And weights ("700"), or none: the tag's or the page's.
+			$caption_weight     = isset( $raw['caption_weight'][ $i ] ) ? WP_Swiper_Settings::sanitize_font_weights( $raw['caption_weight'][ $i ] ) : '';
+			$description_weight = isset( $raw['description_weight'][ $i ] ) ? WP_Swiper_Settings::sanitize_font_weights( $raw['description_weight'][ $i ] ) : '';
+			// And colors ("#rrggbb", "rgba(r,g,b,a)"), or none: the Caption / Description page's.
+			$caption_color     = isset( $raw['caption_color'][ $i ] ) ? WP_Swiper_Settings::sanitize_slide_color( $raw['caption_color'][ $i ] ) : '';
+			$description_color = isset( $raw['description_color'][ $i ] ) ? WP_Swiper_Settings::sanitize_slide_color( $raw['description_color'][ $i ] ) : '';
 
 			// A YouTube / Vimeo slide: its link, once it reads as one (anything else
 			// there is ignored: the slide is then its media library item, if any).
@@ -986,6 +1177,12 @@ class WP_Swiper_Admin {
 					'embed'   => $embed,
 					'caption'     => $caption,
 					'description' => $description,
+					'caption_size'     => $caption_size,
+					'description_size' => $description_size,
+					'caption_weight'     => $caption_weight,
+					'description_weight' => $description_weight,
+					'caption_color'      => $caption_color,
+					'description_color'  => $description_color,
 					'link'        => '',
 					'new_tab'     => false,
 					'poster'      => $poster && wp_attachment_is_image( $poster ) ? $poster : 0,
@@ -1003,6 +1200,12 @@ class WP_Swiper_Admin {
 				'id'          => $attachment_id,
 				'caption'     => $caption,
 				'description' => $description,
+				'caption_size'     => $caption_size,
+				'description_size' => $description_size,
+				'caption_weight'     => $caption_weight,
+				'description_weight' => $description_weight,
+				'caption_color'      => $caption_color,
+				'description_color'  => $description_color,
 				// A video slide has no link (a click on it is the player's).
 				'link'        => ! $video && isset( $raw['link'][ $i ] ) ? esc_url_raw( $raw['link'][ $i ] ) : '',
 				'new_tab'     => ! $video && isset( $raw['new_tab'][ $i ] ) && '1' === $raw['new_tab'][ $i ],

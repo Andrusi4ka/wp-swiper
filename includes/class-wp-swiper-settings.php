@@ -1439,49 +1439,10 @@ class WP_Swiper_Settings {
 					'h6'  => 'h6',
 				),
 			),
-			// 'Default': the plugin's size (16px); 'Custom': Size, per device.
-			'caption_font'          => array(
-				'section' => 'caption',
-				'label'   => __( 'Font size', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => 'default',
-				'choices' => array(
-					'default' => __( 'Default', 'wp-swiper' ),
-					'custom'  => __( 'Custom', 'wp-swiper' ),
-				),
-			),
-			'caption_font_size'     => array(
-				'section'    => 'caption',
-				'label'      => __( 'Size', 'wp-swiper' ),
-				// Desktop, and tablet and mobile beside it once opened (admin.php).
-				'devices'    => 'inline',
-				'suffix'     => 'px',
-				'type'       => 'number',
-				'responsive' => true,
-				'default'    => 16,
-				'min'        => 8,
-				'max'        => 200,
-				'step'       => 1,
-			),
-			'caption_weight'        => array(
-				'section' => 'caption',
-				'group'   => 'caption_style',
-				'label'   => __( 'Font weight', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => '',
-				'choices' => array(
-					''    => __( 'Default (of the tag)', 'wp-swiper' ),
-					'100' => '100',
-					'200' => '200',
-					'300' => '300',
-					'400' => __( '400 (normal)', 'wp-swiper' ),
-					'500' => '500',
-					'600' => '600',
-					'700' => __( '700 (bold)', 'wp-swiper' ),
-					'800' => '800',
-					'900' => '900',
-				),
-			),
+			// No Font size here: each slide's caption has its own (Slide info window);
+			// see legacy_font_sizes() for the sliders saved with one.
+			// No Font weight either: each slide's caption has its own; see
+			// legacy_font_weights() for the sliders saved with one.
 			'caption_color'         => array(
 				'section' => 'caption',
 				'group'   => 'caption_style',
@@ -1547,48 +1508,8 @@ class WP_Swiper_Settings {
 			// Slide descriptions: under the slider, the current slide's only (see
 			// can_describe() for the sliders that show them). The page is greyed
 			// while no slide has one (admin.js).
-			// 'Default': the plugin's size (16px); 'Custom': Size, per device.
-			'description_font'      => array(
-				'section' => 'description',
-				'label'   => __( 'Font size', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => 'default',
-				'choices' => array(
-					'default' => __( 'Default', 'wp-swiper' ),
-					'custom'  => __( 'Custom', 'wp-swiper' ),
-				),
-			),
-			'description_font_size' => array(
-				'section'    => 'description',
-				'label'      => __( 'Size', 'wp-swiper' ),
-				// Desktop, and tablet and mobile beside it once opened (admin.php).
-				'devices'    => 'inline',
-				'suffix'     => 'px',
-				'type'       => 'number',
-				'responsive' => true,
-				'default'    => 16,
-				'min'        => 8,
-				'max'        => 200,
-				'step'       => 1,
-			),
-			'description_weight'    => array(
-				'section' => 'description',
-				'label'   => __( 'Font weight', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => '',
-				'choices' => array(
-					''    => __( 'Default (of the page)', 'wp-swiper' ),
-					'100' => '100',
-					'200' => '200',
-					'300' => '300',
-					'400' => __( '400 (normal)', 'wp-swiper' ),
-					'500' => '500',
-					'600' => '600',
-					'700' => __( '700 (bold)', 'wp-swiper' ),
-					'800' => '800',
-					'900' => '900',
-				),
-			),
+			// No Font size here either: each slide's description has its own.
+			// Nor a Font weight: each slide's description has its own.
 			// No Alignment field: each paragraph has its own (the editor's buttons);
 			// see legacy_description_align() for the sliders saved with one.
 			// How the text changes with the slide (see description_motion()).
@@ -1803,6 +1724,146 @@ class WP_Swiper_Settings {
 			&& ! self::is_background( $settings )
 			&& ! self::is_marquee( $settings )
 			&& ! self::is_collage( $settings );
+	}
+
+	/**
+	 * A slide's own font size (caption or description) as stored: the sizes
+	 * on desktop, tablet and mobile, "20,16," (8–200 px; an empty tablet or
+	 * mobile one takes the larger screen's, an empty desktop one the plugin's
+	 * 16px: ",,14" is a size on mobile only). '' for none (the plugin's size).
+	 *
+	 * @param mixed $value Raw input: "20,16," or [ desktop, tablet, mobile ].
+	 * @return string
+	 */
+	public static function sanitize_font_sizes( $value ) {
+		$parts = is_array( $value ) ? array_values( $value ) : explode( ',', (string) $value );
+		$sizes = array();
+		for ( $i = 0; $i < 3; $i++ ) {
+			$size    = isset( $parts[ $i ] ) ? trim( (string) $parts[ $i ] ) : '';
+			$sizes[] = '' === $size || ! is_numeric( $size ) ? '' : (string) max( 8, min( 200, (int) $size ) );
+		}
+		return '' === implode( '', $sizes ) ? '' : implode( ',', $sizes );
+	}
+
+	/**
+	 * The CSS variables of a font size (sanitize_font_sizes()): --{name} on
+	 * desktop, -tablet and -mobile where set (the CSS takes the larger
+	 * screen's for the others).
+	 *
+	 * @param string $sizes Sizes as stored.
+	 * @param string $name  The variable, e.g. "wp-swiper-caption-size".
+	 * @return string[] e.g. [ '--wp-swiper-caption-size:20px' ]; none without sizes.
+	 */
+	public static function font_size_vars( $sizes, $name ) {
+		$sizes = self::sanitize_font_sizes( $sizes );
+		if ( '' === $sizes ) {
+			return array();
+		}
+		$vars = array();
+		foreach ( array_combine( array( '', '-tablet', '-mobile' ), explode( ',', $sizes ) ) as $suffix => $size ) {
+			if ( '' !== $size ) {
+				$vars[] = '--' . $name . $suffix . ':' . (int) $size . 'px';
+			}
+		}
+		return $vars;
+	}
+
+	/**
+	 * A slide's own font weight (caption or description) as stored: one for
+	 * every screen, "700" (100–900 in hundreds). '' for none (the tag's or the
+	 * page's own). A value saved per device ("700,,400", until 2.9) keeps its
+	 * desktop weight.
+	 *
+	 * @param mixed $value Raw input: "700", or the old "700,,400".
+	 * @return string
+	 */
+	public static function sanitize_font_weights( $value ) {
+		$parts  = is_array( $value ) ? array_values( $value ) : explode( ',', (string) $value );
+		$weight = isset( $parts[0] ) ? trim( (string) $parts[0] ) : '';
+		return in_array( $weight, array( '100', '200', '300', '400', '500', '600', '700', '800', '900' ), true ) ? $weight : '';
+	}
+
+	/**
+	 * A slide's own text color (caption or description) as stored: "#rrggbb"
+	 * (or "#rgb"), or "rgba(r,g,b,a)" below full opacity (a full one is kept
+	 * as its hex). '' for none or anything else (the Caption / Description
+	 * page's color).
+	 *
+	 * @param mixed $value Raw input.
+	 * @return string
+	 */
+	public static function sanitize_slide_color( $value ) {
+		$value = strtolower( preg_replace( '/\s+/', '', (string) $value ) );
+		$hex   = sanitize_hex_color( $value );
+		if ( $hex ) {
+			return $hex;
+		}
+		if ( ! preg_match( '/^rgba\((\d{1,3}),(\d{1,3}),(\d{1,3}),(0|1|0?\.\d+|1\.0+)\)$/', $value, $m ) ) {
+			return '';
+		}
+		$rgb = array_map(
+			function ( $channel ) {
+				return min( 255, (int) $channel );
+			},
+			array_slice( $m, 1, 3 )
+		);
+		$alpha = round( (float) $m[4], 2 );
+		if ( $alpha >= 1 ) {
+			return vsprintf( '#%02x%02x%02x', $rgb );
+		}
+		// A dot whatever the locale (PHP 7 prints floats with the locale's).
+		return sprintf( 'rgba(%d,%d,%d,%s)', $rgb[0], $rgb[1], $rgb[2], rtrim( rtrim( number_format( $alpha, 2, '.', '' ), '0' ), '.' ) );
+	}
+
+	/**
+	 * The CSS variable of a font weight (sanitize_font_weights()), the same
+	 * on every screen.
+	 *
+	 * @param string $weights Weight as stored.
+	 * @param string $name    The variable, e.g. "wp-swiper-caption-weight".
+	 * @return string[] none without a weight.
+	 */
+	public static function font_weight_vars( $weights, $name ) {
+		$weight = self::sanitize_font_weights( $weights );
+		return '' === $weight ? array() : array( '--' . $name . ':' . (int) $weight );
+	}
+
+	/**
+	 * The font weight of the whole slider's captions or descriptions, from a
+	 * slider saved while it had one (until 2.8): as stored per slide
+	 * (sanitize_font_weights()), for the slides without their own until it is
+	 * saved again (the editor moves it into them, admin.js); '' for none.
+	 *
+	 * @param array  $settings Slider settings.
+	 * @param string $text     caption | description.
+	 * @return string
+	 */
+	public static function legacy_font_weights( $settings, $text ) {
+		return isset( $settings[ $text . '_weight' ] ) ? self::sanitize_font_weights( (string) $settings[ $text . '_weight' ] ) : '';
+	}
+
+	/**
+	 * The font size of the whole slider's captions or descriptions, from a
+	 * slider saved while it had one (until 2.8): its sizes as stored per
+	 * slide (sanitize_font_sizes()), for the slides without their own until
+	 * it is saved again (the editor moves it into them, admin.js); '' for none.
+	 *
+	 * @param array  $settings Slider settings.
+	 * @param string $text     caption | description.
+	 * @return string
+	 */
+	public static function legacy_font_sizes( $settings, $text ) {
+		if ( ! isset( $settings[ $text . '_font' ] ) || 'custom' !== $settings[ $text . '_font' ] ) {
+			return '';
+		}
+		$sizes = array();
+		foreach ( array( '', '_tablet', '_mobile' ) as $suffix ) {
+			$sizes[] = isset( $settings[ $text . '_font_size' . $suffix ] ) ? (string) $settings[ $text . '_font_size' . $suffix ] : '';
+		}
+		if ( '' === $sizes[0] ) {
+			$sizes[0] = '16';
+		}
+		return self::sanitize_font_sizes( $sizes );
 	}
 
 	/**
@@ -2682,11 +2743,14 @@ class WP_Swiper_Settings {
 			}
 		}
 
-		// Font size "Default" or "Custom" (until 2.8 just a size): a slider
-		// saved with a size of its own (not 16px, or one on tablet or mobile)
-		// keeps it as Custom.
+		// Font size of the whole slider (until 2.8 just a size, then "Default" or
+		// "Custom"; now each slide's own): a slider saved with a size of its own
+		// (not 16px, or one on tablet or mobile) keeps it as Custom, read by
+		// legacy_font_sizes() until it is saved again.
 		foreach ( array( 'caption', 'description' ) as $text ) {
-			if ( $saved && ! isset( $saved[ $text . '_font' ] ) ) {
+			// Only for a slider saved with a size (one saved since has none).
+			$sized = isset( $saved[ $text . '_font_size' ] ) || isset( $saved[ $text . '_font_size_tablet' ] ) || isset( $saved[ $text . '_font_size_mobile' ] );
+			if ( $saved && $sized && ! isset( $saved[ $text . '_font' ] ) ) {
 				$own = ( isset( $saved[ $text . '_font_size' ] ) && 16 !== (int) $saved[ $text . '_font_size' ] )
 					|| ( isset( $saved[ $text . '_font_size_tablet' ] ) && '' !== (string) $saved[ $text . '_font_size_tablet' ] )
 					|| ( isset( $saved[ $text . '_font_size_mobile' ] ) && '' !== (string) $saved[ $text . '_font_size_mobile' ] );

@@ -169,6 +169,23 @@
 			$embedError.prop( 'hidden', true );
 		} );
 
+		// A new slide's row for a media library image or video (its JSON).
+		function mediaRow( data ) {
+			var video = data.type === 'video';
+			var sizes = data.sizes || {};
+			// A video has no picture of its own until a poster is chosen.
+			var thumb = video ? '' : ( sizes.medium || sizes.thumbnail || data ).url;
+			// The larger image for the Image position window.
+			var full = video ? '' : ( sizes.large || data ).url;
+			var $item = $( slideRow( data.id, thumb, data.title || data.filename || '', '', i18n.videoBadge, full ) );
+			// Without a poster a video has no thumbnail to go back to.
+			$item.attr( 'data-default-thumb', '' );
+			if ( video ) {
+				$item.addClass( 'wp-swiper-slide--video' ).find( '.wp-swiper-slide__thumb img' ).prop( 'hidden', true );
+			}
+			return $item;
+		}
+
 		// Slides: add from media library.
 		$( '#wp-swiper-add' ).on( 'click', function ( e ) {
 			e.preventDefault();
@@ -183,20 +200,7 @@
 
 				frame.on( 'select', function () {
 					frame.state().get( 'selection' ).each( function ( attachment ) {
-						var data = attachment.toJSON();
-						var video = data.type === 'video';
-						var sizes = data.sizes || {};
-						// A video has no picture of its own until a poster is chosen.
-						var thumb = video ? '' : ( sizes.medium || sizes.thumbnail || data ).url;
-
-						// The larger image for the Image position window.
-						var full = video ? '' : ( sizes.large || data ).url;
-						var $item = $( slideRow( data.id, thumb, data.title || data.filename || '', '', i18n.videoBadge, full ) ).appendTo( $list );
-						// Without a poster a video has no thumbnail to go back to.
-						$item.attr( 'data-default-thumb', '' );
-						if ( video ) {
-							$item.addClass( 'wp-swiper-slide--video' ).find( '.wp-swiper-slide__thumb img' ).prop( 'hidden', true );
-						}
+						mediaRow( attachment.toJSON() ).appendTo( $list );
 					} );
 
 					// Start with an empty selection next time.
@@ -212,6 +216,21 @@
 		$list.on( 'click', '.wp-swiper-slide__remove', function () {
 			$( this ).closest( '.wp-swiper-slide' ).remove();
 			toggleEmpty();
+		} );
+
+		// Slides: clone. The copy (media, caption, description, fonts, colors,
+		// link, position, poster) right after it, the others one place on.
+		$list.on( 'click', '.wp-swiper-slide__clone', function () {
+			var $slide = $( this ).closest( '.wp-swiper-slide' );
+			var $copy = $slide.clone();
+			// Values as they are now (a clone keeps a textarea's first one only).
+			var fields = $slide.find( 'input, textarea' );
+			$copy.find( 'input, textarea' ).each( function ( i ) {
+				this.value = fields[ i ].value;
+			} );
+			$slide.after( $copy );
+			toggleEmpty();
+			$copy.find( '.wp-swiper-slide__clone' ).trigger( 'focus' );
 		} );
 
 		$list.sortable( {
@@ -359,6 +378,247 @@
 			return $slide.find( '[name="wp_swiper_slides[' + name + '][]"]' );
 		}
 
+		/*
+		 * A slide's own font size and weight, for its caption and its description.
+		 * A size "20,16," — desktop, tablet, mobile, one field with device icons
+		 * that switch it (as a responsive setting); an empty one takes the larger
+		 * screen's, an empty desktop one the plugin's 16px. A weight "700", one
+		 * for every screen, picked from a list (.wp-swiper-modal__weight); none:
+		 * the tag's or the page's. Set in the Slide info window under each editor,
+		 * each in its row (.wp-swiper-modal__size[data-prop]).
+		 */
+		var FONT_PROPS = [ 'caption_size', 'caption_weight', 'description_size', 'description_weight' ];
+		var FONT_DEVICES = [ 'desktop', 'tablet', 'mobile' ];
+
+		// A slider saved with one size or weight for all (until 2.8): into the
+		// slides without their own, so saving keeps it (render.php uses it until then).
+		FONT_PROPS.forEach( function ( prop ) {
+			var legacy = $list.attr( 'data-legacy-' + prop.replace( '_', '-' ) ) || '';
+			if ( legacy ) {
+				$list.children( '.wp-swiper-slide' ).each( function () {
+					var $input = slideInput( $( this ), prop );
+					if ( ! $input.val() ) {
+						$input.val( legacy );
+					}
+				} );
+			}
+		} );
+
+		function fontControl( prop ) {
+			return $( '.wp-swiper-modal__size[data-prop="' + prop + '"]' );
+		}
+
+		function fontField( $control, device ) {
+			return $control.find( '[data-device="' + device + '"]' );
+		}
+
+		// Empty tablet / mobile sizes show what they take as their placeholder;
+		// a dot on the icon of one with its own (as on a responsive setting).
+		function syncFontInherits( $control ) {
+			var inherited = '16';
+			FONT_DEVICES.forEach( function ( device ) {
+				var $field = fontField( $control, device ).filter( 'input' );
+				if ( device !== 'desktop' ) {
+					$field.attr( 'placeholder', inherited );
+					$control.find( '.wp-swiper-devices__btn[data-device="' + device + '"]' ).toggleClass( 'has-value', $field.val() !== '' );
+				}
+				inherited = $field.val() || inherited;
+			} );
+		}
+
+		// Which device's size the row shows.
+		function showFontDevice( $control, device ) {
+			$control.find( '.wp-swiper-devices__btn' ).each( function () {
+				var on = $( this ).data( 'device' ) === device;
+				$( this ).toggleClass( 'is-active', on ).attr( 'aria-pressed', on ? 'true' : 'false' );
+			} );
+			$control.find( '.wp-swiper-modal__size-input' ).each( function () {
+				this.hidden = $( this ).data( 'device' ) !== device;
+			} );
+		}
+
+		function showFont( prop, value ) {
+			var $control = fontControl( prop );
+			var values = String( value || '' ).split( ',' );
+			var $weight = $control.find( '.wp-swiper-modal__weight' );
+			if ( $weight.length ) {
+				// An old per-device weight ("700,,400"): its desktop one.
+				$weight.val( values[ 0 ] );
+				if ( $weight.val() === null ) {
+					$weight.val( '' );
+				}
+				return;
+			}
+			FONT_DEVICES.forEach( function ( device, i ) {
+				fontField( $control, device ).filter( 'input' ).val( values[ i ] || '' );
+			} );
+			showFontDevice( $control, 'desktop' );
+			syncFontInherits( $control );
+		}
+
+		// What the row says, as stored ("" for Default); render.php checks it again.
+		function readFont( prop ) {
+			var $control = fontControl( prop );
+			var $weight = $control.find( '.wp-swiper-modal__weight' );
+			if ( $weight.length ) {
+				return $weight.val() || '';
+			}
+			var values = FONT_DEVICES.map( function ( device ) {
+				var value = parseInt( fontField( $control, device ).filter( 'input' ).val(), 10 );
+				return isNaN( value ) ? '' : String( Math.max( 8, Math.min( 200, value ) ) );
+			} );
+			return values.join( '' ) ? values.join( ',' ) : '';
+		}
+
+		/*
+		 * A slide's own text color, for its caption and its description:
+		 * "#rrggbb", or "rgba(r,g,b,a)" below full opacity; none: Default (the
+		 * Caption page's color; the Description page's or the page's text).
+		 * Custom shows a swatch that opens a picker (Iris, WordPress's: the color,
+		 * a palette) with an Opacity slider; the arrow beside it goes back to the
+		 * default color. Each row (.wp-swiper-modal__color) keeps what is chosen
+		 * as its data: hex and alpha (0–100).
+		 */
+		var COLOR_PROPS = [ 'caption_color', 'description_color' ];
+
+		function colorControl( prop ) {
+			return $( '.wp-swiper-modal__color[data-prop="' + prop + '"]' );
+		}
+
+		// Where Custom starts: the Caption / Description page's color.
+		function defaultColor( prop ) {
+			var value = String( $( '[name="wp_swiper_settings[' + prop + ']"]' ).val() || '' ).toLowerCase();
+			return /^#[0-9a-f]{6}$/.test( value ) ? value : ( prop === 'caption_color' ? '#ffffff' : '#333333' );
+		}
+
+		// "#rrggbb" / "rgba(r,g,b,a)" as { hex, alpha }; null for anything else.
+		function parseColor( value ) {
+			value = String( value || '' ).replace( /\s+/g, '' ).toLowerCase();
+			var m = /^rgba\((\d{1,3}),(\d{1,3}),(\d{1,3}),(\d*\.?\d+)\)$/.exec( value );
+			if ( m ) {
+				return {
+					hex: '#' + [ m[ 1 ], m[ 2 ], m[ 3 ] ].map( function ( channel ) {
+						return ( '0' + Math.min( 255, parseInt( channel, 10 ) ).toString( 16 ) ).slice( -2 );
+					} ).join( '' ),
+					alpha: Math.round( Math.min( 1, parseFloat( m[ 4 ] ) ) * 100 )
+				};
+			}
+			if ( /^#[0-9a-f]{3}$/.test( value ) ) {
+				value = '#' + value[ 1 ] + value[ 1 ] + value[ 2 ] + value[ 2 ] + value[ 3 ] + value[ 3 ];
+			}
+			return /^#[0-9a-f]{6}$/.test( value ) ? { hex: value, alpha: 100 } : null;
+		}
+
+		function colorValue( hex, alpha ) {
+			if ( alpha >= 100 ) {
+				return hex;
+			}
+			return 'rgba(' + [ 1, 3, 5 ].map( function ( i ) {
+				return parseInt( hex.substr( i, 2 ), 16 );
+			} ).join( ',' ) + ',' + ( alpha / 100 ) + ')';
+		}
+
+		// The swatch and the slider say what is chosen.
+		function paintColor( $control ) {
+			var alpha = $control.data( 'alpha' );
+			// Over the chip's checkerboard (admin.css).
+			$control.find( '.wp-swiper-color-pick__chip' ).css( 'box-shadow', 'inset 0 0 0 40px ' + colorValue( $control.data( 'hex' ), alpha ) );
+			$control.find( '.wp-swiper-color-pick__opacity output' ).text( alpha + '%' );
+			$control.find( '.wp-swiper-color-pick__opacity input' ).val( alpha );
+		}
+
+		function setColor( $control, hex, alpha ) {
+			$control.data( { hex: hex, alpha: alpha } );
+			var $hex = $control.find( '.wp-swiper-color-pick__hex' ).val( hex );
+			if ( $control.data( 'iris' ) ) {
+				$hex.iris( 'color', hex );
+			}
+			paintColor( $control );
+		}
+
+		function closeColorPickers() {
+			$modal.find( '.wp-swiper-color-pick__pop' ).prop( 'hidden', true );
+			$modal.find( '.wp-swiper-color-pick__swatch' ).attr( 'aria-expanded', 'false' );
+		}
+
+		function showColor( prop, value ) {
+			var $control = colorControl( prop );
+			var color = parseColor( value );
+			$control.find( '.wp-swiper-modal__color-mode' ).val( color ? 'custom' : '' );
+			$control.find( '.wp-swiper-color-pick' ).prop( 'hidden', ! color );
+			color = color || { hex: defaultColor( prop ), alpha: 100 };
+			setColor( $control, color.hex, color.alpha );
+			closeColorPickers();
+		}
+
+		// What the row says, as stored ("" for Default); render.php checks it again.
+		function readColor( prop ) {
+			var $control = colorControl( prop );
+			if ( $control.find( '.wp-swiper-modal__color-mode' ).val() !== 'custom' ) {
+				return '';
+			}
+			return colorValue( $control.data( 'hex' ), $control.data( 'alpha' ) );
+		}
+
+		$modal.on( 'change', '.wp-swiper-modal__color-mode', function () {
+			$( this ).closest( '.wp-swiper-modal__color' ).find( '.wp-swiper-color-pick' ).prop( 'hidden', $( this ).val() !== 'custom' );
+			closeColorPickers();
+		} );
+		$modal.on( 'click', '.wp-swiper-color-pick__swatch', function () {
+			var $control = $( this ).closest( '.wp-swiper-modal__color' );
+			var $pop = $control.find( '.wp-swiper-color-pick__pop' );
+			var open = $pop.prop( 'hidden' );
+			closeColorPickers();
+			if ( ! open ) {
+				return;
+			}
+			$pop.prop( 'hidden', false );
+			$( this ).attr( 'aria-expanded', 'true' );
+			// Iris the first time it opens (it goes right after the field).
+			if ( ! $control.data( 'iris' ) && $.fn.iris ) {
+				$control.find( '.wp-swiper-color-pick__hex' ).iris( {
+					hide: false,
+					palettes: true,
+					width: 222,
+					color: $control.data( 'hex' ),
+					change: function ( event, ui ) {
+						$control.data( 'hex', ui.color.toString() );
+						paintColor( $control );
+					}
+				} );
+				$control.data( 'iris', true );
+			}
+		} );
+		$modal.on( 'input change', '.wp-swiper-color-pick__opacity input', function () {
+			var $control = $( this ).closest( '.wp-swiper-modal__color' );
+			$control.data( 'alpha', Math.max( 0, Math.min( 100, parseInt( this.value, 10 ) || 0 ) ) );
+			paintColor( $control );
+		} );
+		// A color typed in that is none: the field shows the chosen one again.
+		$modal.on( 'change', '.wp-swiper-color-pick__hex', function () {
+			$( this ).val( $( this ).closest( '.wp-swiper-modal__color' ).data( 'hex' ) );
+		} );
+		$modal.on( 'click', '.wp-swiper-color-pick__reset', function () {
+			var $control = $( this ).closest( '.wp-swiper-modal__color' );
+			setColor( $control, defaultColor( $control.attr( 'data-prop' ) ), 100 );
+		} );
+		// A click anywhere else closes the picker.
+		$( document ).on( 'mousedown', function ( e ) {
+			if ( ! $( e.target ).closest( '.wp-swiper-color-pick' ).length ) {
+				closeColorPickers();
+			}
+		} );
+
+		// A size's device icons: which device's value the field shows.
+		$modal.on( 'click', '.wp-swiper-modal__size .wp-swiper-devices__btn', function () {
+			var $control = $( this ).closest( '.wp-swiper-modal__size' );
+			showFontDevice( $control, $( this ).data( 'device' ) );
+			$control.find( '.wp-swiper-modal__size-input:not([hidden])' ).trigger( 'focus' );
+		} );
+		$modal.on( 'input change', '.wp-swiper-modal__size-input', function () {
+			syncFontInherits( $( this ).closest( '.wp-swiper-modal__size' ) );
+		} );
+
 		// Some text, not just tags or the editor's empty paragraph ($.trim takes
 		// its no-break space too). DOMParser: the HTML is read, nothing of it
 		// loads or runs.
@@ -454,15 +714,16 @@
 			$editing = $slide;
 			$modal.find( '.wp-swiper-modal__slide' ).text( '— ' + ( i18n.slideNumber || '%d' ).replace( '%d', $slide.index() + 1 ) );
 			// Which picture it is about: the slide's own thumbnail, as in the list.
-			var $img = $slide.find( '.wp-swiper-slide__thumb img' );
-			var $thumb = $modal.find( '.wp-swiper-modal__thumb' ).empty();
-			if ( ! $img.prop( 'hidden' ) && $img.attr( 'src' ) ) {
-				$( '<img alt="">' ).attr( 'src', $img.attr( 'src' ) ).appendTo( $thumb );
-			} else {
-				$thumb.append( '<span class="dashicons dashicons-video-alt3"></span>' );
-			}
+			$replacement = null;
+			showModalThumb( $slide );
 			$( '#' + CAPTION_EDITOR ).val( captionForEditor( slideInput( $slide, 'caption' ).val() ) );
 			$( '#' + DESCRIPTION_EDITOR ).val( slideInput( $slide, 'description' ).val() );
+			FONT_PROPS.forEach( function ( prop ) {
+				showFont( prop, slideInput( $slide, prop ).val() );
+			} );
+			COLOR_PROPS.forEach( function ( prop ) {
+				showColor( prop, slideInput( $slide, prop ).val() );
+			} );
 			// A video slide has no link (a click on it is the player's).
 			$modal.find( '.wp-swiper-modal__link' ).prop( 'hidden', $slide.hasClass( 'wp-swiper-slide--video' ) );
 			$( '#wp-swiper-link-input' ).val( slideInput( $slide, 'link' ).val() );
@@ -493,6 +754,82 @@
 			}
 		}
 
+		/*
+		 * The window's Replace photo button (under its title) picks another image
+		 * or video from the media library for the slide. Its thumbnail at once,
+		 * applied with the rest: a new row for it (as when added) takes the
+		 * slide's place with its caption, description, fonts, colors and link;
+		 * its own image position and poster are the new media's (none yet). No
+		 * way to leave the slide without one: the old media until another is chosen.
+		 */
+		var $replacement = null;
+		var replaceFrame;
+
+		// A row's picture in the window: its image or poster, else a video icon.
+		function showModalThumb( $row ) {
+			var $img = $row.find( '.wp-swiper-slide__thumb img' );
+			var $media = $modal.find( '.wp-swiper-modal__thumb-media' ).empty();
+			if ( ! $img.prop( 'hidden' ) && $img.attr( 'src' ) ) {
+				$( '<img alt="">' ).attr( 'src', $img.attr( 'src' ) ).appendTo( $media );
+			} else {
+				$media.append( '<span class="dashicons dashicons-video-alt3"></span>' );
+			}
+		}
+
+		$modal.on( 'click', '.wp-swiper-modal__replace', function () {
+			if ( ! window.wp || ! wp.media ) {
+				return;
+			}
+			if ( ! replaceFrame ) {
+				replaceFrame = wp.media( {
+					title: i18n.replaceTitle,
+					button: { text: i18n.replaceButton },
+					library: { type: [ 'image', 'video' ] },
+					multiple: false
+				} );
+				replaceFrame.on( 'select', function () {
+					var data = replaceFrame.state().get( 'selection' ).first().toJSON();
+					replaceFrame.state().get( 'selection' ).reset();
+					if ( ! $editing ) {
+						return;
+					}
+					$replacement = mediaRow( data );
+					showModalThumb( $replacement );
+					// A video slide has no link (a click on it is the player's).
+					$modal.find( '.wp-swiper-modal__link' ).prop( 'hidden', $replacement.hasClass( 'wp-swiper-slide--video' ) );
+				} );
+			}
+			replaceFrame.open();
+		} );
+
+		// The slide's values into the new row; the collage and Art orders (photo
+		// ids) keep the new one where the old one was.
+		function replaceSlide( $old, $row ) {
+			var skip = [ 'id', 'embed', 'poster', 'position' ];
+			$old.find( '[name^="wp_swiper_slides["]' ).each( function () {
+				var prop = this.name.replace( /^wp_swiper_slides\[([^\]]+)\]\[\]$/, '$1' );
+				if ( skip.indexOf( prop ) === -1 ) {
+					slideInput( $row, prop ).val( $( this ).val() );
+				}
+			} );
+			var from = String( slideInput( $old, 'id' ).val() || '' );
+			var to = String( slideInput( $row, 'id' ).val() || '' );
+			if ( from !== '0' && from !== '' ) {
+				$( '[name^="wp_swiper_settings[collage_order"], [name^="wp_swiper_settings[art_order"]' ).each( function () {
+					var ids = String( $( this ).val() || '' ).split( ',' );
+					if ( ids.indexOf( from ) !== -1 ) {
+						$( this ).val( ids.map( function ( id ) {
+							return id === from ? to : id;
+						} ).filter( function ( id, i, all ) {
+							return all.indexOf( id ) === i;
+						} ).join( ',' ) );
+					}
+				} );
+			}
+			$old.replaceWith( $row );
+			return $row;
+		}
+
 		function closeSlide( apply ) {
 			if ( ! $editing ) {
 				return;
@@ -502,9 +839,20 @@
 				var description = editorValue( DESCRIPTION_EDITOR );
 				slideInput( $editing, 'caption' ).val( hasText( caption ) ? $.trim( caption ) : '' );
 				slideInput( $editing, 'description' ).val( hasText( description ) ? description : '' );
+				FONT_PROPS.forEach( function ( prop ) {
+					slideInput( $editing, prop ).val( readFont( prop ) );
+				} );
+				COLOR_PROPS.forEach( function ( prop ) {
+					slideInput( $editing, prop ).val( readColor( prop ) );
+				} );
 				if ( ! $editing.hasClass( 'wp-swiper-slide--video' ) ) {
 					slideInput( $editing, 'link' ).val( $.trim( $( '#wp-swiper-link-input' ).val() ) );
 					slideInput( $editing, 'new_tab' ).val( $( '#wp-swiper-new-tab-input' ).is( ':checked' ) ? '1' : '0' );
+				}
+				if ( $replacement ) {
+					$editing = replaceSlide( $editing, $replacement );
+					// The Video page's posters too (it may be a video now, or no longer).
+					syncPosters();
 				}
 				syncMarks( $editing );
 				$( '.wp-swiper-preview__update' ).addClass( 'is-stale' );
@@ -512,10 +860,12 @@
 				syncCaptions();
 				syncFields();
 			}
+			$replacement = null;
 			if ( editor() ) {
 				editor().remove( CAPTION_EDITOR );
 				editor().remove( DESCRIPTION_EDITOR );
 			}
+			closeColorPickers();
 			$modal.prop( 'hidden', true );
 			$( document.body ).removeClass( 'wp-swiper-modal-open' );
 			var $button = $editing.find( '.wp-swiper-slide__edit' );
@@ -541,7 +891,13 @@
 		} );
 		$( document ).on( 'keydown', function ( e ) {
 			// Not while the editor's own link window is open (Escape closes that).
-			if ( e.key === 'Escape' && $editing && ! $( '#wp-link-wrap' ).is( ':visible' ) ) {
+			// Nor while the media library is open over it (for a replacement).
+			if ( e.key === 'Escape' && $editing && ! $( '#wp-link-wrap' ).is( ':visible' ) && ! $( '.media-modal' ).is( ':visible' ) ) {
+				// An open color picker first.
+				if ( $modal.find( '.wp-swiper-color-pick__pop' ).is( ':visible' ) ) {
+					closeColorPickers();
+					return;
+				}
 				closeSlide( false );
 			}
 		} );
@@ -1206,9 +1562,6 @@
 			field( 'description_lightbox_width' ).toggle( textUnder );
 			field( 'description_lightbox_max' ).toggle( textUnder );
 			field( 'description_color' ).toggle( $( '#wp-swiper-description_own_color' ).is( ':checked' ) );
-			// Font size: its Size only when Custom (Default: the plugin's 16px).
-			field( 'caption_font_size' ).toggle( $( '#wp-swiper-caption_font' ).val() === 'custom' );
-			field( 'description_font_size' ).toggle( $( '#wp-swiper-description_font' ).val() === 'custom' );
 
 			// Pagination layout: one position field per direction.
 			var paginated = $( '#wp-swiper-pagination' ).val() !== 'none';

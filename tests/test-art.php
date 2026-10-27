@@ -125,6 +125,16 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '--wp-swiper-caption-size-mobile:12px', $html );
 		$this->assertStringContainsString( '--wp-swiper-caption-bg-from:rgba(0,0,0,0.4)', $html );
 
+		// A caption's own font size (the Slide info window), on itself.
+		$slides[0]['caption_size'] = '30,24,';
+		$this->assertStringContainsString( '<div class="wp-swiper-art__caption" style="--wp-swiper-caption-size:30px;--wp-swiper-caption-size-tablet:24px"><h3', $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3' ), $slides ) );
+		unset( $slides[0]['caption_size'] );
+
+		// And its own color.
+		$slides[0]['caption_color'] = 'rgba(255,255,0,0.8)';
+		$this->assertStringContainsString( '<div class="wp-swiper-art__caption" style="--wp-swiper-caption-color:rgba(255,255,0,0.8)"><h3', $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3' ), $slides ) );
+		unset( $slides[0]['caption_color'] );
+
 		// No background: no colour for it.
 		$html = $this->render( array( 'effect' => 'art', 'caption_bg' => false ), $slides );
 		$this->assertStringContainsString( 'wp-swiper-art--caption-nobg', $html );

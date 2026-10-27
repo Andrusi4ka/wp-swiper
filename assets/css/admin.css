@@ -151,13 +151,45 @@
 	background: #d63638;
 }
 
+/* The thumbnail's top left: the Image position button (when shown), then
+   Clone slide. */
+.wp-swiper-slide__tools {
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	display: flex;
+	gap: 4px;
+}
+
+.wp-swiper-slide__clone {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.6);
+	color: #fff;
+	cursor: pointer;
+}
+
+.wp-swiper-slide__clone:hover,
+.wp-swiper-slide__clone:focus {
+	background: var(--wp-swiper-accent, #2271b1);
+}
+
+.wp-swiper-slide__clone-icon {
+	display: block;
+	width: 13px;
+	height: 13px;
+}
+
 /* An image's own position ("Cover"): its button, on the left of the
    thumbnail, while the slider crops (admin.js syncFields); filled once set.
    The thumbnail shows that crop; the Position mark says it has one. */
 .wp-swiper-slide__position {
-	position: absolute;
-	top: 4px;
-	left: 4px;
 	display: none;
 	align-items: center;
 	justify-content: center;
@@ -987,11 +1019,41 @@ body.wp-swiper-modal-open {
 	color: #fff;
 }
 
+.wp-swiper-modal__thumb-media {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
 .wp-swiper-modal__thumb img {
 	display: block;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+}
+
+/* The title and, under it, the Replace photo button. */
+.wp-swiper-modal__heading {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	min-width: 0;
+}
+
+.wp-swiper-modal__replace.button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.wp-swiper-modal__replace .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
 }
 
 .wp-swiper-modal__title {
@@ -1058,6 +1120,172 @@ body.wp-swiper-modal-open {
 
 .wp-swiper-modal__new-tab input {
 	margin: 0;
+}
+
+/* Under a text's editor: its font size, weight and color side by side (one
+   under another in a narrow window), each its label over its field. */
+.wp-swiper-modal__text-style {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px 16px;
+	margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+	.wp-swiper-modal__text-style {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.wp-swiper-modal__size {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+/* The label, and a size's device icons at the end of its line. */
+.wp-swiper-modal__size-head {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 26px;
+}
+
+.wp-swiper-modal__size-label {
+	font-weight: 600;
+}
+
+.wp-swiper-modal__size .wp-swiper-modal__weight,
+.wp-swiper-modal__size .wp-swiper-modal__color-mode {
+	width: 100%;
+	max-width: none;
+}
+
+.wp-swiper-modal__size-field,
+.wp-swiper-modal__color-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.wp-swiper-modal__size-input,
+.wp-swiper-modal__color-row .wp-swiper-modal__color-mode {
+	flex: 1 1 auto;
+	width: auto;
+	min-width: 0;
+}
+
+.wp-swiper-modal__size-input[hidden] {
+	display: none;
+}
+
+/* A text's own color: after Custom, a swatch (the color over a checkerboard,
+   so a see-through one shows as such, and a pipette) that opens the picker
+   under it, and an arrow back to the default color. */
+.wp-swiper-color-pick {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.wp-swiper-color-pick[hidden],
+.wp-swiper-color-pick__pop[hidden] {
+	display: none;
+}
+
+.wp-swiper-color-pick__swatch {
+	display: inline-flex;
+	align-items: stretch;
+	height: 30px;
+	padding: 0;
+	overflow: hidden;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: #fff;
+	cursor: pointer;
+}
+
+.wp-swiper-color-pick__swatch:focus-visible {
+	border-color: var(--wp-admin-theme-color);
+	outline: none;
+	box-shadow: 0 0 0 1px var(--wp-admin-theme-color);
+}
+
+.wp-swiper-color-pick__chip {
+	width: 40px;
+	background: repeating-conic-gradient(#dcdcde 0% 25%, #fff 0% 50%) 0 0 / 10px 10px;
+}
+
+.wp-swiper-color-pick__swatch .dashicons {
+	width: 30px;
+	height: auto;
+	border-left: 1px solid #dcdcde;
+	background: #f6f7f7;
+	color: #50575e;
+	font-size: 16px;
+	line-height: 28px;
+}
+
+.wp-swiper-color-pick__reset {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #50575e;
+	cursor: pointer;
+}
+
+.wp-swiper-color-pick__reset:hover,
+.wp-swiper-color-pick__reset:focus-visible {
+	color: var(--wp-admin-theme-color);
+}
+
+/* The picker: the color's field, Iris (square, hue, palette), Opacity. */
+.wp-swiper-color-pick__pop {
+	position: absolute;
+	top: calc(100% + 6px);
+	right: 0;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: 248px;
+	box-sizing: border-box;
+	padding: 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.wp-swiper-color-pick__hex {
+	width: 100%;
+}
+
+.wp-swiper-color-pick__pop .iris-picker {
+	border: 0;
+}
+
+.wp-swiper-color-pick__opacity {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.wp-swiper-color-pick__opacity output {
+	display: inline-block;
+	min-width: 3.2em;
+}
+
+.wp-swiper-color-pick__opacity input {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+}
+
+.wp-swiper-modal__size-unit {
+	color: #646970;
 }
 
 .wp-swiper-modal__body textarea {
