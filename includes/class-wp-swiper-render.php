@@ -168,8 +168,11 @@ class WP_Swiper_Render {
 		// and Height is not used (the CSS takes the block's).
 		$background = WP_Swiper_Settings::is_background( $settings );
 		if ( $background ) {
-			$settings['image_fit']      = 'cover';
-			$settings['height_unit']    = 'px';
+			$settings['image_fit'] = 'cover';
+			// On every device (tablet and mobile inherit it).
+			$settings['height_unit']        = 'px';
+			$settings['height_unit_tablet'] = '';
+			$settings['height_unit_mobile'] = '';
 			$settings['autoplay']       = true;
 			$settings['loop']           = true;
 			$settings['pause_on_hover'] = false;
@@ -329,8 +332,9 @@ class WP_Swiper_Render {
 			// Slide effect only (the editor offers it there; coverflow, cards and
 			// the creative carousel centre on their own).
 			'centered'      => self::centered( $settings ),
-			// Height "Auto": frontend.js sizes the slider to its parent block.
-			'fill'          => WP_Swiper_Settings::is_auto_height( $settings ),
+			// Height "Auto": frontend.js sizes the slider to its parent block, on
+			// the devices that have it (false: none).
+			'fill'          => WP_Swiper_Settings::fill_config( $settings ),
 			// "Zoom the main image" (frontend.js zoom()): from one scale to the other.
 			'zoom'          => WP_Swiper_Settings::is_zoom( $settings ) ? array(
 				'duration' => WP_Swiper_Settings::zoom_duration( $settings ),
@@ -660,8 +664,14 @@ class WP_Swiper_Render {
 		$background = WP_Swiper_Settings::is_background( $settings );
 		$zoom       = WP_Swiper_Settings::is_zoom( $settings );
 		$expand     = WP_Swiper_Settings::is_expand( $settings );
-		$fill       = WP_Swiper_Settings::is_auto_height( $settings );
 		$videos     = in_array( true, wp_list_pluck( $slides, 'video' ), true );
+		// Per device: a Height in % of the parent block (the whole chain must stretch).
+		$percent = array_map(
+			function ( $height ) {
+				return '%' === substr( $height, -1 );
+			},
+			WP_Swiper_Settings::css_heights( $settings )
+		);
 
 		$classes = array(
 			'wp-swiper',
@@ -669,10 +679,12 @@ class WP_Swiper_Render {
 			'wp-swiper--effect-' . $settings['effect'],
 			'wp-swiper--' . $settings['direction'],
 			'wp-swiper--fit-' . $settings['image_fit'],
-			! $fill && '%' === $settings['height_unit'] && max( WP_Swiper_Settings::responsive( $settings, 'height' ) ) ? 'wp-swiper--height-percent' : '',
+			in_array( true, $percent, true ) ? 'wp-swiper--height-percent' : '',
 			$expand ? 'wp-swiper--expand' : '',
-			// Height "Auto": frontend.js sizes the slider to its parent block.
-			$fill ? 'wp-swiper--fill' : '',
+			// Height "Auto": frontend.js sizes the slider to its parent block. On
+			// every device: from the start; on some: frontend.js sets the class
+			// on those (the CSS heights are "auto" there until it does).
+			WP_Swiper_Settings::is_auto_height_everywhere( $settings ) ? 'wp-swiper--fill' : '',
 			WP_Swiper_Settings::is_auto_width( $settings ) ? 'wp-swiper--auto-width' : '',
 			WP_Swiper_Settings::is_marquee( $settings ) ? 'wp-swiper--marquee' : '',
 			WP_Swiper_Settings::separator( $settings ) ? 'wp-swiper--separator' : '',
@@ -831,10 +843,17 @@ class WP_Swiper_Render {
 			}
 		}
 
-		// Height of the slides per device (0 = 500px), unless "Auto".
-		if ( ! $fill ) {
+		// Height of the slides per device (0 = 500px; "auto" where the unit is
+		// "Auto"), unless "Auto" everywhere. With a % on some device: the
+		// block's own height there, 100% (else auto).
+		if ( ! WP_Swiper_Settings::is_auto_height_everywhere( $settings ) ) {
 			foreach ( WP_Swiper_Settings::css_heights( $settings ) as $device => $height ) {
 				$style[] = '--wp-swiper-height' . self::SUFFIX[ $device ] . ':' . $height;
+			}
+		}
+		if ( in_array( true, $percent, true ) ) {
+			foreach ( $percent as $device => $on ) {
+				$style[] = '--wp-swiper-block-height' . self::SUFFIX[ $device ] . ':' . ( $on ? '100%' : 'auto' );
 			}
 		}
 
@@ -1172,8 +1191,9 @@ class WP_Swiper_Render {
 				'pause' => (bool) $settings['collage_pause'],
 			) : false,
 			// Height "Auto": the collage fills the free height of its column (frontend.js
-			// collage() stretch()); where there is none, the grid takes fixed proportions.
-			'fill'      => WP_Swiper_Settings::is_auto_height( $settings ),
+			// collage() stretch()); where there is none, the grid takes fixed
+			// proportions. Per device (false: none).
+			'fill'      => WP_Swiper_Settings::fill_config( $settings ),
 			'lightbox'  => $settings['lightbox'] ? array(
 				'radius' => self::lightbox_radius( $settings, 'lightbox_radius', 'border_radius' ),
 			) : false,
@@ -1183,7 +1203,7 @@ class WP_Swiper_Render {
 		?>
 		<div<?php echo $attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?>>
 			<div class="wp-swiper-collage" data-wp-swiper-collage="<?php echo esc_attr( wp_json_encode( $config ) ); ?>">
-				<div class="wp-swiper-collage__grid<?php echo $config['fill'] ? ' wp-swiper-collage__grid--ratio' : ''; ?>"></div>
+				<div class="wp-swiper-collage__grid<?php echo $config['fill'] && $config['fill']['desktop'] ? ' wp-swiper-collage__grid--ratio' : ''; ?>"></div>
 				<template class="wp-swiper-collage__pool">
 					<?php
 					foreach ( $slides as $index => $slide ) {

@@ -47,9 +47,24 @@
       - розміри зберігаються для кожного пристрою в `collage_cuts` у форматі
         `"feature-left:V0.5[0,H0.5[1,2]]"`;
       - Reset у полі Order їх очищає.
-    - `random.svg` у корені — іконка, яку користувач додав «на потім». Ще
-      ніде не використовується. Коли знадобиться, перенеси в
-      `assets/images/...` з `currentColor`, як інші іконки.
+  - коміт після `f25fd0e` (2026-10-27, вдома):
+    - **Height unit для кожного пристрою** (усі слайдери): `height_unit`
+      responsive. «Auto» тільки на деяких екранах: `config.fill` =
+      `{desktop,tablet,mobile}`, `frontend.js fills()` / `fitHeight()`
+      ставить `.wp-swiper--fill` на потрібних. % на деяких:
+      `--wp-swiper-block-height[-device]`.
+    - **Style колажу «Scattered»** (`scatter`): фото посередині й 4 «руки»
+      вертушкою, проміжки всюди однакові, кути порожні
+      (`frontend.js scatterLayout()` / `scatterRects()`). Кількість фото —
+      `collage_count`. Розміри: тягнути зовнішні краї фото в прев'ю
+      (`preview-collage.js`), зберігаються в `collage_cuts` як
+      `"scatter:1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8"`
+      (`sanitize_scatter()`). При обміні фото їхні місця теж міняються
+      розмірами. Іконка — колишній `random.svg` з кореня, тепер
+      `assets/images/collage/scatter.svg`.
+    - Кнопка на мініатюрі слайду завжди «Edit» (була «Add info» / «Edit info»).
+    - Біля кожного кольору в налаштуваннях — стрілка назад до кольору за
+      замовчуванням (`color_reset()`, як у вікні Slide info).
 
 ## Що далі / відкладено
 

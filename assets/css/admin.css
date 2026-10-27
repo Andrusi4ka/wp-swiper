@@ -897,15 +897,10 @@
 	pointer-events: none;
 }
 
-/* A value its unit leaves unused on that device (Art's Size "Auto"): greyed, kept. */
+/* A value its unit leaves unused on that device (Art's Size, the Height,
+   "Auto"): greyed, kept. */
 .wp-swiper-field .wp-swiper-devices__input.is-unused {
 	opacity: 0.45;
-}
-
-/* Height "Auto": only the unit select is left. */
-.wp-swiper-field.is-auto .wp-swiper-devices,
-.wp-swiper-field.is-auto .wp-swiper-devices__input {
-	display: none;
 }
 
 /* Help text behind an "i" icon: shown on hover and keyboard focus. */
@@ -1312,6 +1307,13 @@ body.wp-swiper-modal-open {
 .wp-swiper-color-pick__reset:hover,
 .wp-swiper-color-pick__reset:focus-visible {
 	color: var(--wp-admin-theme-color);
+}
+
+/* A color setting with its arrow back to the default color beside it. */
+.wp-swiper-color-field {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
 }
 
 /* The picker: the color's field, Iris (square, hue, palette), Opacity. */

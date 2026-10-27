@@ -38,6 +38,13 @@ class WP_Swiper_Settings {
 	const COLLAGE_TEMPLATES = array( 'feature-left', 'feature-center', 'mosaic', 'banner' );
 
 	/**
+	 * The collage's Scattered Style: a photo in the middle and arms of photos
+	 * around it (frontend.js scatterLayout()), resized in the preview by
+	 * dragging the photos' outer edges; its sizes kept in collage_cuts too.
+	 */
+	const COLLAGE_SCATTER = 'scatter';
+
+	/**
 	 * Field definitions grouped into sections. `effects`: the effects a field
 	 * applies to (the editor hides it for the others); none = all effects.
 	 *
@@ -504,8 +511,9 @@ class WP_Swiper_Settings {
 					'justified'      => __( 'Justified rows', 'wp-swiper' ),
 					'masonry'        => __( 'Masonry', 'wp-swiper' ),
 					'random'         => __( 'Random mosaic', 'wp-swiper' ),
+					'scatter'        => __( 'Scattered', 'wp-swiper' ),
 				),
-				'help'            => __( 'Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them; as a background, as tall as the block (the places stretched or shrunk to it).', 'wp-swiper' ),
+				'help'            => __( 'Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Scattered: a photo in the middle and the others around it in uneven arms, each shaped after its photo, the gap between neighbours always the same; as large as the Height and the width allow, the corners left empty. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them; as a background, as tall as the block (the places stretched or shrunk to it).', 'wp-swiper' ),
 			),
 			// The order of the photos without one set (collage_order): the shuffle
 			// of this number (the same number, the same arrangement). Kept inside
@@ -530,7 +538,7 @@ class WP_Swiper_Settings {
 				'type'       => 'order',
 				'responsive' => true,
 				'default'    => '',
-				'help'       => __( 'Drag a photo onto another place in the preview to swap the two; with Random mosaic, drag a line between photos to resize them. Shuffle mixes the photos at random. All only for the device chosen (a tablet or phone without its own takes the larger screen\'s); Reset goes back to that, order and sizes.', 'wp-swiper' ),
+				'help'       => __( 'Drag a photo onto another place in the preview to swap the two; with Random mosaic and the templates, drag a line between photos to resize them; with Scattered, drag a photo\'s outer edge. Shuffle mixes the photos at random. All only for the device chosen (a tablet or phone without its own takes the larger screen\'s); Reset goes back to that, order and sizes.', 'wp-swiper' ),
 			),
 			// Random mosaic: its cuts as set by dragging the lines between the
 			// photos in the preview, per device (see sanitize_mosaic()); '' on
@@ -545,7 +553,8 @@ class WP_Swiper_Settings {
 				'inline_in'  => 'collage_order',
 				'default'    => '',
 			),
-			// A template's sizes, as set by dragging the lines between its photos
+			// A template's sizes, as set by dragging the lines between its photos (or
+			// Scattered's, its photos' outer edges, "scatter:...", see sanitize_scatter())
 			// in the preview, per device: the template and its cuts (see
 			// sanitize_template_cuts()); used while the device's Style is that
 			// template, else its own proportions. '' on tablet and mobile: the
@@ -586,7 +595,7 @@ class WP_Swiper_Settings {
 				'min'             => 2,
 				'max'             => 30,
 				'step'            => 1,
-				'help'            => __( 'Grid, Justified rows, Masonry and Random mosaic; a template has its own number of places.', 'wp-swiper' ),
+				'help'            => __( 'Grid, Justified rows, Masonry, Random mosaic and Scattered; a template has its own number of places.', 'wp-swiper' ),
 			),
 			'collage_columns'       => array(
 				'section'         => 'layout',
@@ -1062,13 +1071,15 @@ class WP_Swiper_Settings {
 				),
 				'help'      => __( 'Space between: the outer images at the row\'s edges, the free width between them. Space around: each image in the middle of its equal share, so half a space at the edges.', 'wp-swiper' ),
 			),
-			// Rendered next to the Height input (its "unit"), not as a field of its own.
+			// Rendered next to the Height input (its "unit"), not as a field of its
+			// own; per device (tablet and mobile empty: the larger screen's).
 			'height_unit'           => array(
-				'section'   => 'layout',
-				'label'     => __( 'Height unit', 'wp-swiper' ),
-				'type'      => 'select',
-				'inline_in' => 'height',
-				'default'   => 'px',
+				'section'    => 'layout',
+				'label'      => __( 'Height unit', 'wp-swiper' ),
+				'type'       => 'select',
+				'responsive' => true,
+				'inline_in'  => 'height',
+				'default'    => 'px',
 				'choices'   => array(
 					'px'   => 'px',
 					'vh'   => 'vh',
@@ -2378,17 +2389,92 @@ class WP_Swiper_Settings {
 	 * A collage template's sizes as stored: the template (one of
 	 * COLLAGE_TEMPLATES), a colon and its cuts as a mosaic's
 	 * (sanitize_mosaic()), "feature-left:V0.7[0,H0.5[1,2]]". frontend.js uses
-	 * them while they have the template's places.
+	 * them while they have the template's places. Or Scattered's, "scatter:"
+	 * and its places (sanitize_scatter()).
 	 *
 	 * @param string $value Raw input.
 	 * @return string As above; '' when it is not one.
 	 */
 	public static function sanitize_template_cuts( $value ) {
-		if ( ! preg_match( '/^\s*([a-z-]+):(.+)$/s', (string) $value, $match ) || ! in_array( $match[1], self::COLLAGE_TEMPLATES, true ) ) {
+		if ( ! preg_match( '/^\s*([a-z-]+):(.+)$/s', (string) $value, $match ) ) {
 			return '';
 		}
-		$cuts = self::sanitize_mosaic( $match[2] );
+		if ( self::COLLAGE_SCATTER === $match[1] ) {
+			$cuts = self::sanitize_scatter( $match[2] );
+		} elseif ( in_array( $match[1], self::COLLAGE_TEMPLATES, true ) ) {
+			$cuts = self::sanitize_mosaic( $match[2] );
+		} else {
+			return '';
+		}
 		return '' === $cuts ? '' : $match[1] . ':' . $cuts;
+	}
+
+	/**
+	 * Scattered places as stored (frontend.js scatterLayout()): the middle
+	 * photo's width x height, then the arms that have photos, each once and
+	 * in this order: T (above it), R (right), B (below), L (left), each its
+	 * first photo's size and the next ones', each after the way it steps from
+	 * the one before, "a" (along the arm) or "o" (outwards):
+	 * "1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8;L0.85x0.5". Sizes 0.05–20, in no
+	 * unit (the collage is scaled to its block); at most 100 places.
+	 *
+	 * @param string $value Raw input.
+	 * @return string As above, sizes to four decimals; '' when it is not one.
+	 */
+	public static function sanitize_scatter( $value ) {
+		$value = preg_replace( '/\s+/', '', (string) $value );
+		if ( '' === $value || strlen( $value ) > 4000 ) {
+			return '';
+		}
+		$number = function ( $text ) {
+			$size = (float) $text;
+			// A dot whatever the locale; no trailing zeros.
+			return $size >= 0.05 && $size <= 20 ? rtrim( rtrim( sprintf( '%.4F', $size ), '0' ), '.' ) : null;
+		};
+		$size   = function ( $text ) use ( $number ) {
+			if ( ! preg_match( '/^(\d*\.?\d+)x(\d*\.?\d+)$/', $text, $match ) ) {
+				return null;
+			}
+			$w = $number( $match[1] );
+			$h = $number( $match[2] );
+			return null === $w || null === $h ? null : $w . 'x' . $h;
+		};
+
+		$groups = explode( ';', $value );
+		$middle = $size( array_shift( $groups ) );
+		if ( null === $middle ) {
+			return '';
+		}
+		$out    = array( $middle );
+		$places = 1;
+		$arms   = 'TRBL';
+		$last   = -1;
+		foreach ( $groups as $group ) {
+			$arm = '' === $group ? false : strpos( $arms, $group[0] );
+			// Each arm once, in order, with a photo at least.
+			if ( false === $arm || $arm <= $last ) {
+				return '';
+			}
+			$last  = $arm;
+			$steps = explode( ',', substr( $group, 1 ) );
+			$first = $size( array_shift( $steps ) );
+			if ( null === $first ) {
+				return '';
+			}
+			$arm_out = $arms[ $arm ] . $first;
+			++$places;
+			foreach ( $steps as $step ) {
+				$way  = substr( $step, 0, 1 );
+				$next = $size( substr( $step, 1 ) );
+				if ( ( 'a' !== $way && 'o' !== $way ) || null === $next ) {
+					return '';
+				}
+				$arm_out .= ',' . $way . $next;
+				++$places;
+			}
+			$out[] = $arm_out;
+		}
+		return $places > 100 ? '' : implode( ';', $out );
 	}
 
 	/**
@@ -2869,31 +2955,71 @@ class WP_Swiper_Settings {
 	}
 
 	/**
-	 * Whether the slider takes its height from its parent block (Height unit
-	 * "Auto") instead of a set Height.
+	 * Per device, whether the slider takes its height from its parent block
+	 * there (Height unit "Auto") instead of a set Height.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array [ 'desktop' => bool, 'tablet' => bool, 'mobile' => bool ]
+	 */
+	public static function auto_heights( $settings ) {
+		return array_map(
+			function ( $unit ) {
+				return 'auto' === $unit;
+			},
+			self::responsive( $settings, 'height_unit' )
+		);
+	}
+
+	/**
+	 * Whether the slider takes its height from its parent block on some
+	 * device (Height unit "Auto" there).
 	 *
 	 * @param array $settings Slider settings.
 	 * @return bool
 	 */
 	public static function is_auto_height( $settings ) {
-		return 'auto' === $settings['height_unit'];
+		return in_array( true, self::auto_heights( $settings ), true );
 	}
 
 	/**
-	 * CSS height per device: the Height in its unit, 0 = 500px.
+	 * Whether it does so on every device.
 	 *
-	 * @param array $settings Slider settings (not "Auto").
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function is_auto_height_everywhere( $settings ) {
+		return ! in_array( false, self::auto_heights( $settings ), true );
+	}
+
+	/**
+	 * CSS height per device: the Height in that device's unit, 0 = 500px;
+	 * "auto" where the unit is "Auto" (frontend.js sizes the slider there).
+	 *
+	 * @param array $settings Slider settings.
 	 * @return array [ 'desktop' => string, 'tablet' => string, 'mobile' => string ]
 	 */
 	public static function css_heights( $settings ) {
-		$unit = $settings['height_unit'];
+		$units = self::responsive( $settings, 'height_unit' );
+		$css   = array();
+		foreach ( self::responsive( $settings, 'height' ) as $device => $height ) {
+			if ( 'auto' === $units[ $device ] ) {
+				$css[ $device ] = 'auto';
+			} else {
+				$css[ $device ] = $height ? (int) $height . $units[ $device ] : '500px';
+			}
+		}
+		return $css;
+	}
 
-		return array_map(
-			function ( $height ) use ( $unit ) {
-				return $height ? (int) $height . $unit : '500px';
-			},
-			self::responsive( $settings, 'height' )
-		);
+	/**
+	 * Height "Auto" for frontend.js: false where no device has it; else
+	 * whether each device does.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array|false [ 'desktop' => bool, 'tablet' => bool, 'mobile' => bool ]
+	 */
+	public static function fill_config( $settings ) {
+		return self::is_auto_height( $settings ) ? self::auto_heights( $settings ) : false;
 	}
 
 	/**

@@ -79,6 +79,11 @@ class WP_Swiper_Preview {
 					<span class="dashicons dashicons-leftright" aria-hidden="true"></span>
 					<?php esc_html_e( 'Drag a line between photos to resize them.', 'wp-swiper' ); ?>
 				</p>
+				<?php // Scattered only (admin.js): a photo's outer edges resize it. ?>
+				<p class="description wp-swiper-preview__hint" data-effect="scatter" hidden>
+					<span class="dashicons dashicons-editor-expand" aria-hidden="true"></span>
+					<?php esc_html_e( 'Drag the outer edge of a photo to resize it.', 'wp-swiper' ); ?>
+				</p>
 				<div class="wp-swiper-preview__stage">
 					<iframe class="wp-swiper-preview__frame" name="wp-swiper-preview-<?php echo (int) $post->ID; ?>" title="<?php esc_attr_e( 'Slider preview', 'wp-swiper' ); ?>" src="about:blank"></iframe>
 				</div>

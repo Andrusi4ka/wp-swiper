@@ -105,9 +105,39 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 
 	public function test_height_auto_fills_the_parent() {
 		$html = $this->render( array( 'height_unit' => 'auto' ) );
-		$this->assertTrue( $this->config( $html )['fill'] );
+		$this->assertSame( array( 'desktop' => true, 'tablet' => true, 'mobile' => true ), $this->config( $html )['fill'] );
 		$this->assertContains( 'wp-swiper--fill', $this->root_classes( $html ) );
 		$this->assertStringNotContainsString( '--wp-swiper-height', $this->root_style( $html ) );
+	}
+
+	public function test_height_auto_on_some_devices_only() {
+		$html  = $this->render( array( 'height' => 400, 'height_unit' => 'px', 'height_unit_tablet' => '', 'height_unit_mobile' => 'auto' ) );
+		$style = $this->root_style( $html );
+
+		// frontend.js sizes it on the phone only (it sets the class there).
+		$this->assertSame( array( 'desktop' => false, 'tablet' => false, 'mobile' => true ), $this->config( $html )['fill'] );
+		$this->assertNotContains( 'wp-swiper--fill', $this->root_classes( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-height:400px', $style );
+		$this->assertStringContainsString( '--wp-swiper-height-tablet:400px', $style );
+		$this->assertStringContainsString( '--wp-swiper-height-mobile:auto', $style );
+
+		$this->assertFalse( $this->config( $this->render( array( 'height_unit' => 'px' ) ) )['fill'] );
+	}
+
+	public function test_height_in_percent_on_some_devices_only() {
+		$html  = $this->render( array( 'height' => 500, 'height_mobile' => 60, 'height_unit' => 'px', 'height_unit_mobile' => '%' ) );
+		$style = $this->root_style( $html );
+
+		// The block stretches (100%) only where the Height is in %.
+		$this->assertContains( 'wp-swiper--height-percent', $this->root_classes( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-height-mobile:60%', $style );
+		$this->assertStringContainsString( '--wp-swiper-block-height:auto', $style );
+		$this->assertStringContainsString( '--wp-swiper-block-height-tablet:auto', $style );
+		$this->assertStringContainsString( '--wp-swiper-block-height-mobile:100%', $style );
+
+		$plain = $this->render( array( 'height' => 500, 'height_unit' => 'px' ) );
+		$this->assertNotContains( 'wp-swiper--height-percent', $this->root_classes( $plain ) );
+		$this->assertStringNotContainsString( '--wp-swiper-block-height', $this->root_style( $plain ) );
 	}
 
 	public function test_responsive_values_reach_the_config() {
@@ -835,6 +865,42 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$config = $this->config( $this->render( array( 'effect' => 'collage', 'collage_layout' => 'feature-left', 'collage_cuts' => 'feature-left:V0.5[0,H0.3[1,2]]', 'collage_cuts_mobile' => 'nope' ) ), 'data-wp-swiper-collage' );
 		// Tablet: the desktop's; checked again (mobile's is not one: the tablet's).
 		$this->assertSame( array( 'desktop' => 'feature-left:V0.5[0,H0.3[1,2]]', 'tablet' => 'feature-left:V0.5[0,H0.3[1,2]]', 'mobile' => '' ), $config['cuts'] );
+	}
+
+	public function test_collage_config_has_the_scattered_layout_per_device() {
+		$config = $this->config(
+			$this->render(
+				array(
+					'effect'                => 'collage',
+					'collage_layout'        => 'scatter',
+					'collage_count'         => 7,
+					'collage_count_mobile'  => 4,
+					'collage_gap'           => 14,
+					'collage_gap_mobile'    => 6,
+					'collage_cuts'          => 'scatter:1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8',
+					'collage_cuts_tablet'   => '',
+					'collage_cuts_mobile'   => 'scatter:bad',
+				),
+				$this->slides( 8 )
+			),
+			'data-wp-swiper-collage'
+		);
+		$this->assertSame( 'scatter', $config['layout']['desktop'] );
+		$this->assertEquals( array( 'desktop' => 7, 'tablet' => 7, 'mobile' => 4 ), $config['count'] );
+		$this->assertEquals( array( 'desktop' => 14, 'tablet' => 14, 'mobile' => 6 ), $config['gap'] );
+		// Tablet: the desktop's; checked again (mobile's is not one: none, worked out).
+		$this->assertSame( array( 'desktop' => 'scatter:1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8', 'tablet' => 'scatter:1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8', 'mobile' => '' ), $config['cuts'] );
+	}
+
+	public function test_collage_height_auto_per_device() {
+		$html   = $this->render( array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'height_unit' => 'px', 'height_unit_tablet' => 'auto', 'height_unit_mobile' => 'px' ) );
+		$config = $this->config( $html, 'data-wp-swiper-collage' );
+		$this->assertSame( array( 'desktop' => false, 'tablet' => true, 'mobile' => false ), $config['fill'] );
+		// The grid takes fixed proportions only on the devices with "Auto" (frontend.js).
+		$this->assertStringContainsString( '<div class="wp-swiper-collage__grid"></div>', $html );
+
+		$all = $this->render( array( 'effect' => 'collage', 'height_unit' => 'auto' ) );
+		$this->assertStringContainsString( '<div class="wp-swiper-collage__grid wp-swiper-collage__grid--ratio"></div>', $all );
 	}
 
 	public function test_collage_ids_follow_the_slides_shown() {

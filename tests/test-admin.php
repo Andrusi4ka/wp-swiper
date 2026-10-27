@@ -306,9 +306,8 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		// No visible field in the slides: a button each, and marks of what they have.
 		$this->assertStringNotContainsString( 'type="url" name=', $html );
 		$this->assertSame( 3, substr_count( $html, 'class="button button-small wp-swiper-slide__edit"' ) );
-		// "Edit info" for the slide with some, "Add info" for the other one and the template.
-		$this->assertSame( 1, substr_count( $html, 'wp-swiper-slide__edit">Edit info<' ) );
-		$this->assertSame( 2, substr_count( $html, 'wp-swiper-slide__edit">Add info<' ) );
+		// "Edit" on each, whatever the slide has.
+		$this->assertSame( 3, substr_count( $html, 'wp-swiper-slide__edit">Edit<' ) );
 		foreach ( array( 'caption', 'description', 'link' ) as $mark ) {
 			$this->assertSame( 1, substr_count( $html, 'data-mark="' . $mark . '">' ), $mark );
 		}
@@ -339,8 +338,8 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString( 'data-mark="link" hidden>', $html );
-		// Its link is not used: nothing to edit there.
-		$this->assertStringContainsString( 'wp-swiper-slide__edit">Add info<', $html );
+		// The same button as any slide.
+		$this->assertStringContainsString( 'wp-swiper-slide__edit">Edit<', $html );
 	}
 
 	public function test_settings_screen_has_every_field_once() {
@@ -681,6 +680,26 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'slide links, captions, descriptions, the lightbox and Height are not used', $html );
 	}
 
+	public function test_each_color_setting_has_an_arrow_back_to_its_default() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 1 ), array( 'caption_color' => '#ff0000' ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// The Caption's color: the one set, its arrow back to white beside it.
+		$this->assertMatchesRegularExpression( '#<span class="wp-swiper-color-field">\s*<input type="color" class="wp-swiper-color" id="wp-swiper-caption_color" name="wp_swiper_settings\[caption_color\]"\s+value="\#ff0000">\s*<button type="button" class="wp-swiper-color-pick__reset wp-swiper-color-reset" data-default="\#ffffff"#', $html );
+		// One for every color setting.
+		$colors = array_filter(
+			WP_Swiper_Settings::fields(),
+			function ( $field ) {
+				return 'color' === $field['type'];
+			}
+		);
+		$this->assertSame( count( $colors ), substr_count( $html, 'wp-swiper-color-reset"' ) );
+	}
+
 	public function test_collage_style_is_chosen_from_icons() {
 		$this->as_role( 'editor' );
 		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'collage', 'collage_layout' => 'grid' ) );
@@ -698,7 +717,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 			$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/collage/' . $style . '.svg', $style );
 			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="[^"]+" aria-label="[^"]+">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
 		}
-		$this->assertSame( 8, substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
+		$this->assertSame( 9, substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
 		$this->assertStringContainsString( 'class="wp-swiper-tiles__tile wp-swiper-tiles__tile--inherit" data-value="" role="radio" aria-checked="false" hidden>Inherit</button>', $html );
 	}
 

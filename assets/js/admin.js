@@ -659,7 +659,6 @@
 			$slide.find( '.wp-swiper-slide__mark' ).each( function () {
 				this.hidden = ! marks[ $( this ).data( 'mark' ) ];
 			} );
-			$slide.find( '.wp-swiper-slide__edit' ).text( marks.caption || marks.description || marks.link ? i18n.infoEdit : i18n.infoAdd );
 		}
 
 		function editor() {
@@ -1557,8 +1556,15 @@
 			lockVideoControls( ! videoAutoplay || background, ! background );
 			lockVideoWait( ! autoplay || marquee || ! videoAutoplay );
 			lockVideoLoop( ! $( '#wp-swiper-video_wait' ).prop( 'disabled' ) && $( '#wp-swiper-video_wait' ).is( ':checked' ) );
-			// Height "Auto" (the parent block's) needs no numbers.
-			field( 'height' ).toggleClass( 'is-auto', $( '#wp-swiper-height_unit' ).val() === 'auto' );
+			// Height "Auto" on a device (its unit, else the larger screen's): its
+			// number does not apply there (greyed, kept), as Art's Size. Still
+			// read-only everywhere while a background locks it (lockHeight).
+			var heightUnit = 'px';
+			[ 'desktop', 'tablet', 'mobile' ].forEach( function ( device ) {
+				var suffix = device === 'desktop' ? '' : '_' + device;
+				heightUnit = $( '#wp-swiper-height_unit' + suffix ).val() || heightUnit;
+				$( '#wp-swiper-height' + suffix ).prop( 'readOnly', heightUnit === 'auto' || background ).toggleClass( 'is-unused', heightUnit === 'auto' && ! background );
+			} );
 			// Fields with their own help text for "Contain".
 			$( '.wp-swiper-help-contain' ).each( function () {
 				$( this ).prop( 'hidden', cover ).siblings( '.wp-swiper-help' ).prop( 'hidden', ! cover );
@@ -1639,6 +1645,8 @@
 			field( 'collage_order' ).toggle( collage );
 			// Lines between the photos resize them: Random mosaic and the templates.
 			$( '.wp-swiper-preview__hint[data-effect="mosaic"]' ).prop( 'hidden', ! collageUses( [ 'random' ].concat( TEMPLATES ) ) );
+			// Scattered: the photos' outer edges.
+			$( '.wp-swiper-preview__hint[data-effect="scatter"]' ).prop( 'hidden', ! collageUses( [ 'scatter' ] ) );
 			// The preview says its photos swap by dragging.
 			$( '.wp-swiper-preview__hint[data-effect="collage"]' ).prop( 'hidden', ! collage );
 			// The collage's Height: not for the styles as tall as their photos make them.
@@ -1657,7 +1665,7 @@
 			field( 'slide_distribution' ).toggle( ratioOn.length > 0 );
 			// Its places always crop their photos (Cover): no Image fit.
 			field( 'image_fit' ).toggle( ! collage );
-			field( 'collage_count' ).toggle( collageUses( [ 'grid', 'justified', 'masonry', 'random' ] ) );
+			field( 'collage_count' ).toggle( collageUses( [ 'grid', 'justified', 'masonry', 'random', 'scatter' ] ) );
 			field( 'collage_columns' ).toggle( collageUses( [ 'grid', 'masonry' ] ) );
 			field( 'collage_row_height' ).toggle( collageUses( [ 'justified' ] ) );
 			field( 'collage_row_exact' ).toggle( collageUses( [ 'justified' ] ) );
@@ -1973,6 +1981,11 @@
 			syncTiles( $( this ) );
 		} );
 
+		// A color setting's arrow: back to its default color (as if picked there).
+		$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-color-reset', function () {
+			$( this ).siblings( 'input[type="color"]' ).val( $( this ).data( 'default' ) ).trigger( 'input' ).trigger( 'change' );
+		} );
+
 		$( '#wp-swiper-settings' )
 			.on( 'click', '.wp-swiper-tiles__tile', function () {
 				var $field = $( this ).closest( '.wp-swiper-field' );
@@ -2235,6 +2248,11 @@
 					} else {
 						setMosaic( data.device, data.mosaic );
 					}
+					setByHand( data.device, true );
+				} else if ( data.wpSwiper === 'collage-scatter' && typeof data.layout === 'string' && /^[0-9.x;,TRBLao]{1,4000}$/.test( data.layout ) ) {
+					// Scattered's layout, a photo's edge dragged or two photos swapped
+					// there; checked again when saved (WP_Swiper_Settings::sanitize_scatter()).
+					setCuts( data.device, 'scatter:' + data.layout );
 					setByHand( data.device, true );
 				}
 			} );

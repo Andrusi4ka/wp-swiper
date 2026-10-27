@@ -280,9 +280,22 @@
 	min-height: 0;
 }
 
-/* Height in % of the parent block: the whole chain must stretch. */
+/* Height in % of the parent block: the whole chain must stretch (on the
+   devices whose Height is in %: --wp-swiper-block-height 100%, else auto). */
 .wp-swiper--height-percent {
-	height: 100%;
+	height: var(--wp-swiper-block-height, 100%);
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper--height-percent {
+		height: var(--wp-swiper-block-height-tablet, var(--wp-swiper-block-height, 100%));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper--height-percent {
+		height: var(--wp-swiper-block-height-mobile, var(--wp-swiper-block-height-tablet, var(--wp-swiper-block-height, 100%)));
+	}
 }
 
 /* "Width from image": every slide as long as its image's proportions make it

@@ -69,8 +69,9 @@
 	object-fit: cover;
 }
 
-/* Random mosaic (preview-collage.js): the line between two parts is a
-   handle; on hover and while dragged a white bar shows where it is. */
+/* Random mosaic and the templates (preview-collage.js): the line between two
+   parts is a handle; Scattered: a photo's outer edge (.wp-swiper-collage__edge).
+   On hover and while dragged a white bar shows where it is. */
 .wp-swiper-collage__line {
 	position: absolute;
 	z-index: 6;

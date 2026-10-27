@@ -183,6 +183,14 @@
 			} );
 			var api = drag.api;
 			end();
+			// Scattered: each place keeps the shape of its photo, so the two
+			// places swap sizes too; kept as set, the new order goes into it.
+			var scattered = '';
+			if ( api.scatter && api.scatter.active() ) {
+				api.scatter.swap( from, to );
+				scattered = api.scatter.serialize();
+				api.scatter.set( scattered );
+			}
 			api.setOrder( list );
 			if ( window.parent && window.parent !== window ) {
 				window.parent.postMessage( {
@@ -194,6 +202,9 @@
 						return id > 0;
 					} )
 				}, window.location.origin );
+				if ( scattered ) {
+					window.parent.postMessage( { wpSwiper: 'collage-scatter', device: places.device, layout: scattered }, window.location.origin );
+				}
 			}
 			return;
 		}
@@ -237,6 +248,31 @@
 			handle.wpApi = api;
 			grid.appendChild( handle );
 		} );
+
+		// Scattered: each photo's two outer edges (scatter below).
+		if ( api.scatter && api.scatter.active() ) {
+			api.scatter.places().forEach( function ( place ) {
+				place.edges.forEach( function ( side ) {
+					var vertical = side === 'left' || side === 'right';
+					var handle = document.createElement( 'div' );
+					handle.className = 'wp-swiper-collage__line wp-swiper-collage__edge wp-swiper-collage__line--' + ( vertical ? 'vertical' : 'horizontal' );
+					if ( vertical ) {
+						handle.style.left = ( place.left + ( side === 'right' ? place.width : 0 ) - HANDLE / 2 ) + 'px';
+						handle.style.top = place.top + 'px';
+						handle.style.width = HANDLE + 'px';
+						handle.style.height = place.height + 'px';
+					} else {
+						handle.style.left = place.left + 'px';
+						handle.style.top = ( place.top + ( side === 'bottom' ? place.height : 0 ) - HANDLE / 2 ) + 'px';
+						handle.style.width = place.width + 'px';
+						handle.style.height = HANDLE + 'px';
+					}
+					handle.wpEdge = { index: place.index, side: side, place: place };
+					handle.wpApi = api;
+					grid.appendChild( handle );
+				} );
+			} );
+		}
 	}
 
 	function setup() {
@@ -255,7 +291,8 @@
 
 	document.addEventListener( 'pointerdown', function ( e ) {
 		var handle = e.button === 0 && e.target.closest( '.wp-swiper-collage__line' );
-		if ( ! handle ) {
+		// Scattered's edges: their own handlers (below).
+		if ( ! handle || ! handle.wpLine ) {
 			return;
 		}
 		e.preventDefault();
@@ -305,6 +342,79 @@
 			window.parent.postMessage( { wpSwiper: 'collage-mosaic', device: device, mosaic: text, template: api.mosaic.template() }, window.location.origin );
 		}
 	} );
+
+	/*
+	 * Scattered: a photo's outer edge is a handle; dragged, the photo grows or
+	 * shrinks on that side (its other edges stay), at least MIN_PART, and the
+	 * photos beyond it move along, a gap away as always (frontend.js
+	 * collage() scatter.resize()). Meanwhile the collage stays at its scale
+	 * and spot (it may run over the block's edges); on the release it is
+	 * fitted to the block again, kept for the device in view and the editor
+	 * stores it (admin.js: a message with the layout).
+	 */
+	var edge = null;
+
+	document.addEventListener( 'pointerdown', function ( e ) {
+		var handle = e.button === 0 && e.target.closest( '.wp-swiper-collage__edge' );
+		if ( ! handle || ! handle.wpEdge ) {
+			return;
+		}
+		e.preventDefault();
+		var vertical = handle.wpEdge.side === 'left' || handle.wpEdge.side === 'right';
+		edge = {
+			api: handle.wpApi,
+			grid: handle.parentNode,
+			index: handle.wpEdge.index,
+			side: handle.wpEdge.side,
+			place: handle.wpEdge.place,
+			device: handle.wpApi.places().device
+		};
+		edge.api.hold( true );
+		edge.api.scatter.freeze( true );
+		handle.classList.add( 'is-active' );
+		document.documentElement.classList.add( 'wp-swiper-collage-resizing', 'wp-swiper-collage-resizing--' + ( vertical ? 'vertical' : 'horizontal' ) );
+	} );
+
+	document.addEventListener( 'pointermove', function ( e ) {
+		if ( ! edge ) {
+			return;
+		}
+		var rect = edge.grid.getBoundingClientRect();
+		var x = e.clientX - rect.left;
+		var y = e.clientY - rect.top;
+		var p = edge.place;
+		var width = p.width;
+		var height = p.height;
+		if ( edge.side === 'right' ) {
+			width = x - p.left;
+		} else if ( edge.side === 'left' ) {
+			width = p.left + p.width - x;
+		} else if ( edge.side === 'bottom' ) {
+			height = y - p.top;
+		} else {
+			height = p.top + p.height - y;
+		}
+		edge.api.scatter.resize( edge.index, Math.max( MIN_PART, width ), Math.max( MIN_PART, height ) );
+	} );
+
+	function endEdge() {
+		if ( ! edge ) {
+			return;
+		}
+		var api = edge.api;
+		var device = edge.device;
+		edge = null;
+		document.documentElement.classList.remove( 'wp-swiper-collage-resizing', 'wp-swiper-collage-resizing--vertical', 'wp-swiper-collage-resizing--horizontal' );
+		api.hold( false );
+		// Kept as it is now (fitted to the block again): rebuilt (another order, a resize) it stays.
+		var text = api.scatter.serialize();
+		api.scatter.set( text );
+		if ( text && window.parent && window.parent !== window ) {
+			window.parent.postMessage( { wpSwiper: 'collage-scatter', device: device, layout: text }, window.location.origin );
+		}
+	}
+	document.addEventListener( 'pointerup', endEdge );
+	document.addEventListener( 'pointercancel', endEdge );
 
 	// The collages are set up by frontend.js once the page is there.
 	if ( document.readyState === 'complete' ) {

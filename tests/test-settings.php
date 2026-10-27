@@ -220,6 +220,43 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( array( 'desktop' => '500px', 'tablet' => '50vh', 'mobile' => '50vh' ), WP_Swiper_Settings::css_heights( $settings ) );
 	}
 
+	public function test_height_unit_per_device() {
+		// Tablet in %, mobile "Auto"; an empty unit takes the larger screen's.
+		$settings = $this->settings(
+			array(
+				'height'             => 400,
+				'height_tablet'      => 80,
+				'height_mobile'      => 300,
+				'height_unit'        => 'px',
+				'height_unit_tablet' => '%',
+				'height_unit_mobile' => 'auto',
+			)
+		);
+		$this->assertSame( array( 'desktop' => '400px', 'tablet' => '80%', 'mobile' => 'auto' ), WP_Swiper_Settings::css_heights( $settings ) );
+		$this->assertSame( array( 'desktop' => false, 'tablet' => false, 'mobile' => true ), WP_Swiper_Settings::auto_heights( $settings ) );
+		$this->assertTrue( WP_Swiper_Settings::is_auto_height( $settings ) );
+		$this->assertFalse( WP_Swiper_Settings::is_auto_height_everywhere( $settings ) );
+		$this->assertSame( array( 'desktop' => false, 'tablet' => false, 'mobile' => true ), WP_Swiper_Settings::fill_config( $settings ) );
+
+		$inherit = $this->settings( array( 'height_unit' => 'auto', 'height_unit_tablet' => '', 'height_unit_mobile' => '' ) );
+		$this->assertTrue( WP_Swiper_Settings::is_auto_height_everywhere( $inherit ) );
+
+		$none = $this->settings( array( 'height_unit' => 'vh', 'height_unit_mobile' => 'px' ) );
+		$this->assertFalse( WP_Swiper_Settings::is_auto_height( $none ) );
+		$this->assertFalse( WP_Swiper_Settings::fill_config( $none ) );
+	}
+
+	public function test_sanitize_keeps_a_height_unit_per_device() {
+		$clean = WP_Swiper_Settings::sanitize( array( 'height_unit' => 'vh', 'height_unit_tablet' => '', 'height_unit_mobile' => 'auto' ) );
+		$this->assertSame( 'vh', $clean['height_unit'] );
+		$this->assertSame( '', $clean['height_unit_tablet'] );
+		$this->assertSame( 'auto', $clean['height_unit_mobile'] );
+
+		$bad = WP_Swiper_Settings::sanitize( array( 'height_unit' => 'em', 'height_unit_tablet' => 'rem' ) );
+		$this->assertSame( 'px', $bad['height_unit'] );
+		$this->assertSame( '', $bad['height_unit_tablet'] );
+	}
+
 	public function test_is_expand() {
 		$on = array( 'effect' => 'slide', 'expand_active' => true );
 		$this->assertTrue( WP_Swiper_Settings::is_expand( $this->settings( $on ) ) );
@@ -554,6 +591,49 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$clean = WP_Swiper_Settings::sanitize( array( 'collage_cuts' => 'mosaic:H0.5[V0.6[0,1],V0.3[2,V0.5[3,4]]]', 'collage_cuts_tablet' => 'random:V0.5[0,1]', 'collage_cuts_mobile' => '' ) );
 		$this->assertSame( 'mosaic:H0.5[V0.6[0,1],V0.3[2,V0.5[3,4]]]', $clean['collage_cuts'] );
 		$this->assertSame( '', $clean['collage_cuts_tablet'] );
+		$this->assertSame( '', $clean['collage_cuts_mobile'] );
+	}
+
+	public function test_sanitize_scatter() {
+		$this->assertSame( 'scatter', WP_Swiper_Settings::COLLAGE_SCATTER );
+		$this->assertArrayHasKey( 'scatter', WP_Swiper_Settings::fields()['collage_layout']['choices'] );
+		// Sizes to four decimals, no trailing zeros, spaces dropped.
+		$this->assertSame( '1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8,o0.5x0.9;B0.9x0.5;L0.8333x0.5', WP_Swiper_Settings::sanitize_scatter( '1.20x1.6; T0.9x0.6;R1.0x0.7,a0.8x0.8,o0.5x0.9;B0.9x0.5;L0.83333x0.5' ) );
+		// The middle photo alone; some arms empty.
+		$this->assertSame( '1x1', WP_Swiper_Settings::sanitize_scatter( '1x1' ) );
+		$this->assertSame( '1x1;R2x1;L1x2,o1x1', WP_Swiper_Settings::sanitize_scatter( '1x1;R2x1;L1x2,o1x1' ) );
+		foreach (
+			array(
+				'',
+				'1x',
+				'x1',
+				'1x1;',
+				'1x1;T',
+				'1x1;X1x1',
+				'1x1;R1x1;T1x1', // Out of order.
+				'1x1;T1x1;T1x1', // Twice.
+				'1x1;T1x1,1x1', // A step without its way.
+				'1x1;T1x1,b1x1',
+				'0.01x1',
+				'1x21',
+				'V0.5[0,1]',
+			) as $bad
+		) {
+			$this->assertSame( '', WP_Swiper_Settings::sanitize_scatter( $bad ), $bad );
+		}
+		// At most 100 places.
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_scatter( '1x1;T' . implode( ',a', array_fill( 0, 100, '1x1' ) ) ) );
+		$this->assertNotSame( '', WP_Swiper_Settings::sanitize_scatter( '1x1;T' . implode( ',a', array_fill( 0, 99, '1x1' ) ) ) );
+	}
+
+	public function test_sanitize_template_cuts_keeps_scattered() {
+		$this->assertSame( 'scatter:1.2x1.6;R1x0.7', WP_Swiper_Settings::sanitize_template_cuts( 'scatter:1.20x1.6;R1x0.7' ) );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_template_cuts( 'scatter:V0.5[0,1]' ) );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_template_cuts( 'feature-left:1x1;R1x1' ) );
+
+		$clean = WP_Swiper_Settings::sanitize( array( 'collage_layout' => 'scatter', 'collage_cuts' => 'scatter:1x1;B2x1', 'collage_cuts_mobile' => 'scatter:bad' ) );
+		$this->assertSame( 'scatter', $clean['collage_layout'] );
+		$this->assertSame( 'scatter:1x1;B2x1', $clean['collage_cuts'] );
 		$this->assertSame( '', $clean['collage_cuts_mobile'] );
 	}
 

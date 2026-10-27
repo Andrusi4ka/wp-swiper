@@ -245,6 +245,12 @@
 		return window.matchMedia( '(max-width: ' + ( BREAKPOINT_DESKTOP - 1 ) + 'px)' ).matches ? 'tablet' : 'desktop';
 	}
 
+	// Height "Auto" on the device in view (config.fill: false, or per device;
+	// true from an older page cache: every device).
+	function fills( config ) {
+		return config.fill === true || !! ( config.fill && config.fill[ device() ] );
+	}
+
 	function realIndexOf( slide ) {
 		return Number( slide.getAttribute( 'data-wp-swiper-index' ) );
 	}
@@ -2325,7 +2331,8 @@
 	 */
 	function capHeight( el, config ) {
 		function apply() {
-			var cap = containCap( el, config );
+			// Height "Auto" on this device: capped by fillHeight() instead.
+			var cap = fills( config ) ? 0 : containCap( el, config );
 			el.style.maxHeight = cap ? cap + 'px' : '';
 		}
 		apply();
@@ -2363,8 +2370,29 @@
 		return root.offsetHeight;
 	}
 
+	/**
+	 * Height "Auto" where the device in view has it (the block marked
+	 * .wp-swiper--fill and sized to its parent); elsewhere its own Height
+	 * (the CSS's), the size set before taken back.
+	 *
+	 * @param {Element} root       The .wp-swiper block.
+	 * @param {Element} el         The .swiper element.
+	 * @param {Object}  config     Slider config.
+	 * @param {boolean} needsFixed The slides cannot take the image proportions.
+	 * @return {number} The block's height.
+	 */
+	function fitHeight( root, el, config, needsFixed ) {
+		var on = fills( config );
+		root.classList.toggle( 'wp-swiper--fill', on );
+		if ( ! on ) {
+			root.style.height = '';
+			return root.offsetHeight;
+		}
+		return fillHeight( root, needsFixed, containCap( el, config ) );
+	}
+
 	function fillParent( root, swiper, needsFixed, config ) {
-		var last = fillHeight( root, needsFixed, containCap( swiper.el, config ) );
+		var last = fitHeight( root, swiper.el, config, needsFixed );
 		var queued = false;
 
 		function refit() {
@@ -2374,7 +2402,7 @@
 			queued = true;
 			requestAnimationFrame( function () {
 				queued = false;
-				var size = fillHeight( root, needsFixed, containCap( swiper.el, config ) );
+				var size = fitHeight( root, swiper.el, config, needsFixed );
 				if ( Math.abs( size - last ) > 1 ) {
 					last = size;
 					swiper.update();
@@ -2607,6 +2635,253 @@
 		return list;
 	}
 
+	/*
+	 * Scattered: a photo in the middle and four arms of photos around it,
+	 * turning like a pinwheel. Each arm keeps to its own quarter: above the
+	 * middle photo from its left edge on (T), right of it from its top edge
+	 * down (R), below it from its right edge back (B), left of it from its
+	 * bottom edge up (L). An arm's first photo touches the middle one, a gap
+	 * between them; each next one touches the one before, either along the
+	 * arm ("a": right, down, left, up) or outwards ("o": up, right, down,
+	 * left), lined up with it on the side towards the middle. So photos never
+	 * overlap and neighbours are always a gap apart, whatever their sizes,
+	 * while the outline stays uneven, its corners empty.
+	 *
+	 * The layout: { middle: { w, h }, arms: [ T, R, B, L ] }, each arm a list
+	 * of { w, h, step } (step: "a" or "o"; none for the first), sizes in no
+	 * unit: the whole is scaled to its block. The places in order: the
+	 * middle one, then T's, R's, B's and L's.
+	 */
+	var SCATTER_ARMS = 'TRBL';
+	// Scattered: how many layouts are tried for one shuffle (the one filling its block most kept).
+	var SCATTER_TRIES = 80;
+
+	// The layout's places in order (the objects themselves: resizing one resizes the layout).
+	function scatterPlaces( layout ) {
+		var list = [ layout.middle ];
+		layout.arms.forEach( function ( arm ) {
+			list = list.concat( arm );
+		} );
+		return list;
+	}
+
+	/**
+	 * The places' rectangles at a scale (px per unit), a gap apart, the
+	 * middle photo's top left corner at 0, 0. Each with its arm (-1: the
+	 * middle) and the edges it is resized by: those not lined up with its
+	 * neighbour (the others stay where they are as it changes size).
+	 *
+	 * @param {Object} layout See above.
+	 * @param {number} scale  px per unit.
+	 * @param {number} gap    px.
+	 * @return {Object[]} { x, y, w, h, arm, edges: [ horizontal edge, vertical edge ] }
+	 */
+	function scatterRects( layout, scale, gap ) {
+		// The edges each arm grows from (the middle: right and down, as it is placed from its top left).
+		var EDGES = [ [ 'right', 'top' ], [ 'right', 'bottom' ], [ 'left', 'bottom' ], [ 'left', 'top' ] ];
+		var mid = { x: 0, y: 0, w: layout.middle.w * scale, h: layout.middle.h * scale, arm: -1, edges: [ 'right', 'bottom' ] };
+		var rects = [ mid ];
+		layout.arms.forEach( function ( arm, a ) {
+			var prev = null;
+			arm.forEach( function ( place ) {
+				var w = place.w * scale;
+				var h = place.h * scale;
+				var along = place.step !== 'o';
+				var x;
+				var y;
+				if ( ! prev ) {
+					// Next to the middle photo, lined up with its edge where the arm starts.
+					x = [ mid.x, mid.x + mid.w + gap, mid.x + mid.w - w, mid.x - gap - w ][ a ];
+					y = [ mid.y - gap - h, mid.y, mid.y + mid.h + gap, mid.y + mid.h - h ][ a ];
+				} else if ( a === 0 ) {
+					x = along ? prev.x + prev.w + gap : prev.x;
+					y = along ? prev.y + prev.h - h : prev.y - gap - h;
+				} else if ( a === 1 ) {
+					x = along ? prev.x : prev.x + prev.w + gap;
+					y = along ? prev.y + prev.h + gap : prev.y;
+				} else if ( a === 2 ) {
+					x = along ? prev.x - gap - w : prev.x + prev.w - w;
+					y = along ? prev.y : prev.y + prev.h + gap;
+				} else {
+					x = along ? prev.x + prev.w - w : prev.x - gap - w;
+					y = along ? prev.y - gap - h : prev.y + prev.h - h;
+				}
+				prev = { x: x, y: y, w: w, h: h, arm: a, edges: EDGES[ a ] };
+				rects.push( prev );
+			} );
+		} );
+		return rects;
+	}
+
+	// The rectangles' bounds: { left, top, width, height }.
+	function scatterBox( rects ) {
+		var left = Infinity;
+		var top = Infinity;
+		var right = -Infinity;
+		var bottom = -Infinity;
+		rects.forEach( function ( r ) {
+			left = Math.min( left, r.x );
+			top = Math.min( top, r.y );
+			right = Math.max( right, r.x + r.w );
+			bottom = Math.max( bottom, r.y + r.h );
+		} );
+		return { left: left, top: top, width: right - left, height: bottom - top };
+	}
+
+	/**
+	 * The largest scale at which the layout fits the block, the gaps kept
+	 * as they are (they do not scale).
+	 *
+	 * @param {Object} layout See above.
+	 * @param {number} width  The block's, px.
+	 * @param {number} height The block's, px.
+	 * @param {number} gap    px.
+	 * @return {number} px per unit.
+	 */
+	function scatterFit( layout, width, height, gap ) {
+		var low = 0;
+		var high = Math.max( width, height, 1 );
+		for ( var i = 0; i < 32; i++ ) {
+			var scale = ( low + high ) / 2;
+			var box = scatterBox( scatterRects( layout, scale, gap ) );
+			if ( box.width <= width && box.height <= height ) {
+				low = scale;
+			} else {
+				high = scale;
+			}
+		}
+		return Math.max( low, 0.0001 );
+	}
+
+	/**
+	 * A layout for these photos: the first in the middle (larger), the others
+	 * dealt out to the arms, each place shaped after its photo, give or take,
+	 * and a little larger or smaller than the others. Of SCATTER_TRIES such
+	 * layouts (all from the shuffle, so the same each time) the one whose
+	 * photos cover most of the block is kept.
+	 *
+	 * @param {number[]} ratios Width / height of each place's photo, in order.
+	 * @param {number}   width  The block's, px.
+	 * @param {number}   height The block's, px.
+	 * @param {number}   gap    px.
+	 * @param {Function} random Seeded random numbers.
+	 * @return {Object} The layout.
+	 */
+	function scatterLayout( ratios, width, height, gap, random ) {
+		function shape( ratio, area ) {
+			var r = Math.max( 0.4, Math.min( 2.5, ( ratio || 1 ) * ( 0.9 + random() * 0.2 ) ) );
+			return { w: Math.sqrt( area * r ), h: Math.sqrt( area / r ) };
+		}
+
+		var others = ratios.length - 1;
+		var best = null;
+		var bestScore = -Infinity;
+		for ( var t = 0; t < SCATTER_TRIES; t++ ) {
+			// How many photos each arm gets: as many each (fewer than four: one
+			// each to some), the rest to arms at random; now and then one moved
+			// to another arm, so the arms are a little uneven.
+			var counts = [ 0, 0, 0, 0 ];
+			var arms = seededOrder( 4, Math.floor( random() * 4294967296 ) );
+			for ( var i = 0; i < others; i++ ) {
+				counts[ arms[ i % 4 ] ]++;
+			}
+			if ( others > 4 && random() < 0.4 ) {
+				var from = arms[ Math.floor( random() * 4 ) ];
+				if ( counts[ from ] > 1 ) {
+					counts[ from ]--;
+					counts[ arms[ Math.floor( random() * 4 ) ] ]++;
+				}
+			}
+			var layout = { middle: shape( ratios[ 0 ], 1.5 + random() * 0.6 ), arms: [ [], [], [], [] ] };
+			var index = 1;
+			counts.forEach( function ( count, a ) {
+				for ( var k = 0; k < count; k++ ) {
+					var place = shape( ratios[ index++ ], 0.6 + random() * 0.65 );
+					if ( k ) {
+						place.step = random() < 0.55 ? 'a' : 'o';
+					}
+					layout.arms[ a ].push( place );
+				}
+			} );
+
+			// How good it is: the share of the block its photos cover, less how
+			// far the middle photo is from the block's middle.
+			var scale = scatterFit( layout, width, height, gap );
+			var rects = scatterRects( layout, scale, gap );
+			var box = scatterBox( rects );
+			var cover = rects.reduce( function ( sum, r ) {
+				return sum + r.w * r.h;
+			}, 0 ) / ( width * height );
+			var offX = Math.abs( rects[ 0 ].x + rects[ 0 ].w / 2 - box.left - box.width / 2 ) / width;
+			var offY = Math.abs( rects[ 0 ].y + rects[ 0 ].h / 2 - box.top - box.height / 2 ) / height;
+			var score = cover - 0.8 * ( offX + offY );
+			if ( score > bestScore ) {
+				best = layout;
+				bestScore = score;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * A Scattered layout as stored (WP_Swiper_Settings::sanitize_scatter()):
+	 * "1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8;L0.85x0.5", and back.
+	 *
+	 * @param {string} text The layout.
+	 * @return {Object|null} The layout; null when it is not one.
+	 */
+	function parseScatter( text ) {
+		var size = function ( part ) {
+			var match = /^(\d*\.?\d+)x(\d*\.?\d+)$/.exec( part );
+			return match && Number( match[ 1 ] ) > 0 && Number( match[ 2 ] ) > 0 ? { w: Number( match[ 1 ] ), h: Number( match[ 2 ] ) } : null;
+		};
+		var groups = String( text || '' ).split( ';' );
+		var middle = size( groups.shift() );
+		if ( ! middle ) {
+			return null;
+		}
+		var layout = { middle: middle, arms: [ [], [], [], [] ] };
+		var last = -1;
+		for ( var g = 0; g < groups.length; g++ ) {
+			var a = SCATTER_ARMS.indexOf( groups[ g ].charAt( 0 ) );
+			if ( a <= last ) {
+				return null;
+			}
+			last = a;
+			var steps = groups[ g ].slice( 1 ).split( ',' );
+			for ( var k = 0; k < steps.length; k++ ) {
+				var step = k ? steps[ k ].charAt( 0 ) : '';
+				var place = size( k ? steps[ k ].slice( 1 ) : steps[ k ] );
+				if ( ! place || ( k && step !== 'a' && step !== 'o' ) ) {
+					return null;
+				}
+				if ( k ) {
+					place.step = step;
+				}
+				layout.arms[ a ].push( place );
+			}
+		}
+		return layout;
+	}
+
+	function serializeScatter( layout ) {
+		var number = function ( value ) {
+			return Math.round( Math.max( 0.05, Math.min( 20, value ) ) * 10000 ) / 10000;
+		};
+		var size = function ( place ) {
+			return number( place.w ) + 'x' + number( place.h );
+		};
+		var parts = [ size( layout.middle ) ];
+		layout.arms.forEach( function ( arm, a ) {
+			if ( arm.length ) {
+				parts.push( SCATTER_ARMS.charAt( a ) + arm.map( function ( place, k ) {
+					return ( k ? place.step : '' ) + size( place );
+				} ).join( ',' ) );
+			}
+		} );
+		return parts.join( ';' );
+	}
+
 	/**
 	 * @param {Element} el     The .wp-swiper-collage block.
 	 * @param {Object}  config { layout, count, columns, rowHeight, gap: per
@@ -2628,13 +2903,24 @@
 		var inView = true;
 		var calm = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
 		var root = el.parentNode;
-		// Height "Auto" in a column: the collage fills the column's height, like a
-		// slider (fillHeight()); not a background (it fills its block anyway).
+		// Height "Auto" in a column (on the devices that have it, fills()): the
+		// collage fills the column's height, like a slider (fillHeight()); not a
+		// background (it fills its block anyway).
 		var stretchy = !! config.fill && ! root.classList.contains( 'wp-swiper--background' );
 		var stretched = false;
 		// Random mosaic and the templates: their cuts as last laid out (place()),
 		// for the preview.
 		var mosaicLines = [];
+		// Scattered: its layout (scatterLayout()), whether it is the one set in
+		// the preview, the block's proportions it was worked out for, and its
+		// places as last laid out (place(): the scale, where the middle photo's
+		// corner is, the rectangles in grid px). Held at a scale and spot while
+		// a place is resized in the preview (frozen).
+		var scatter = null;
+		var scatterSet = false;
+		var scatterAspect = 0;
+		var scatterView = null;
+		var frozen = null;
 		// Called once the places are laid out (the preview draws the lines then).
 		var placed = [];
 
@@ -2653,7 +2939,7 @@
 		function stretch() {
 			var before = root.offsetHeight;
 			var layout = config.layout[ device() ] || 'grid';
-			if ( stretchy && layout !== 'justified' && layout !== 'masonry' ) {
+			if ( stretchy && fills( config ) && layout !== 'justified' && layout !== 'masonry' ) {
 				fillHeight( root, false, 0 );
 				stretched = !! root.style.height;
 			} else {
@@ -2699,6 +2985,25 @@
 				return set;
 			}
 			return own;
+		}
+
+		// Scattered: the layout set in the preview for this device, while it
+		// has a place for every place shown; else worked out for the block's
+		// proportions (from the shuffle too, and the number of places).
+		function scatterCut() {
+			var stored = config.cuts && config.cuts[ current ];
+			var set = stored && stored.indexOf( 'scatter:' ) === 0 ? parseScatter( stored.slice( 8 ) ) : null;
+			var width = grid.clientWidth || 1;
+			var height = grid.clientHeight || 1;
+			scatterAspect = width / height;
+			scatterSet = !! set && scatterPlaces( set ).length === cells.length;
+			if ( scatterSet ) {
+				scatter = set;
+				return;
+			}
+			scatter = scatterLayout( cells.map( function ( cell ) {
+				return cell.wpRatio;
+			} ), width, height, Number( config.gap[ current ] ) || 0, seededRandom( ( config.seed || 1 ) * 7919 + cells.length * 31 + 7 ) );
 		}
 
 		function ratioOf( slide ) {
@@ -2823,7 +3128,25 @@
 				grid.style.height = fill ? '' : Math.max( 0, height ) + 'px';
 			};
 
-			if ( layout === 'random' || COLLAGE_TEMPLATES[ layout ] ) {
+			if ( layout === 'scatter' ) {
+				// The block keeps its Height; the layout as large as fits it, in its
+				// middle (held where it is while a place is resized in the preview).
+				mosaicLines = [];
+				if ( scatter ) {
+					var gridHeight = grid.clientHeight;
+					var scale = frozen ? frozen.scale : scatterFit( scatter, width, gridHeight, gap );
+					var rects = scatterRects( scatter, scale, gap );
+					var box = scatterBox( rects );
+					var originX = frozen ? frozen.x : ( width - box.width ) / 2 - box.left;
+					var originY = frozen ? frozen.y : ( gridHeight - box.height ) / 2 - box.top;
+					rects.forEach( function ( r, i ) {
+						if ( cells[ i ] ) {
+							set( cells[ i ], originX + r.x, originY + r.y, r.w, r.h );
+						}
+					} );
+					scatterView = { scale: scale, x: originX, y: originY, rects: rects };
+				}
+			} else if ( layout === 'random' || COLLAGE_TEMPLATES[ layout ] ) {
 				// The block keeps its Height; the cuts are laid over it, gaps between.
 				// Each cut kept with its part and the line between its two (mosaicLines).
 				mosaicLines = [];
@@ -2937,8 +3260,8 @@
 			order = orderFor( current );
 			var layout = config.layout[ current ] || 'grid';
 			var template = COLLAGE_TEMPLATES[ layout ] ? templateTree( layout ) : null;
-			// Laid out by cuts (Random mosaic, the templates): in the block's Height.
-			var cuts = layout === 'random' || !! template;
+			// Laid out by cuts (Random mosaic, the templates), or Scattered: in the block's Height.
+			var cuts = layout === 'random' || layout === 'scatter' || !! template;
 			// Places positioned by the script.
 			var free = cuts || layout === 'justified' || layout === 'masonry';
 			var gap = Number( config.gap[ current ] ) || 0;
@@ -2947,7 +3270,7 @@
 			var count = template ? mosaicLeaves( template ).length : Math.min( slides.length, Math.max( 1, Number( config.count[ current ] ) || 1 ) );
 
 			grid.innerHTML = '';
-			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( free ? ' wp-swiper-collage__grid--free' : '' ) + ( cuts ? ' wp-swiper-collage__grid--cuts' : '' ) + ( config.fill ? ' wp-swiper-collage__grid--ratio' : '' ) + ( stretched ? ' wp-swiper-collage__grid--stretch' : '' );
+			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( free ? ' wp-swiper-collage__grid--free' : '' ) + ( cuts ? ' wp-swiper-collage__grid--cuts' : '' ) + ( fills( config ) ? ' wp-swiper-collage__grid--ratio' : '' ) + ( stretched ? ' wp-swiper-collage__grid--stretch' : '' );
 			grid.style.cssText = '';
 			cells = [];
 			for ( var i = 0; i < count; i++ ) {
@@ -2965,8 +3288,13 @@
 			queue = order.slice( count );
 
 			tree = template;
+			scatter = null;
+			scatterView = null;
+			frozen = null;
 			if ( layout === 'random' ) {
 				cut();
+			} else if ( layout === 'scatter' ) {
+				scatterCut();
 			}
 
 			if ( free ) {
@@ -3126,6 +3454,11 @@
 					if ( resized && tree && config.layout[ current ] === 'random' ) {
 						cut();
 					}
+					// Scattered, unless set in the preview: worked out again once the
+					// block's proportions are a tenth off those it was made for.
+					if ( scatter && ! scatterSet && ! frozen && grid.clientHeight && Math.abs( grid.clientWidth / grid.clientHeight / scatterAspect - 1 ) > 0.1 ) {
+						scatterCut();
+					}
 					place();
 				} else {
 					cells.forEach( sizeImages );
@@ -3187,6 +3520,62 @@
 						config.mosaic[ current ] = text || '';
 						cut();
 					}
+					place();
+				}
+			},
+			// Scattered: whether it is shown; its places as laid out now (grid px,
+			// each with the edges it is resized by); held at their scale and spot
+			// (on) or fitted to the block again (off); a place's new size in grid
+			// px, laid out at once; two places' sizes swapped (their photos are
+			// swapped: each place keeps the shape of its photo); the layout as
+			// stored, and a new one (or none: worked out again) for this device.
+			scatter: {
+				active: function () {
+					return !! scatter && config.layout[ current ] === 'scatter';
+				},
+				places: function () {
+					if ( ! scatterView ) {
+						return [];
+					}
+					return scatterView.rects.map( function ( r, index ) {
+						return { index: index, left: scatterView.x + r.x, top: scatterView.y + r.y, width: r.w, height: r.h, edges: r.edges.slice() };
+					} );
+				},
+				freeze: function ( on ) {
+					frozen = on && scatterView ? { scale: scatterView.scale, x: scatterView.x, y: scatterView.y } : null;
+					if ( ! on ) {
+						place();
+					}
+				},
+				resize: function ( index, width, height ) {
+					var spot = scatter && scatterPlaces( scatter )[ index ];
+					var scale = scatterView ? scatterView.scale : 0;
+					if ( ! spot || ! scale ) {
+						return;
+					}
+					spot.w = Math.max( 0.05, Math.min( 20, width / scale ) );
+					spot.h = Math.max( 0.05, Math.min( 20, height / scale ) );
+					place();
+				},
+				swap: function ( from, to ) {
+					var list = scatter ? scatterPlaces( scatter ) : [];
+					if ( list[ from ] && list[ to ] ) {
+						var w = list[ from ].w;
+						var h = list[ from ].h;
+						list[ from ].w = list[ to ].w;
+						list[ from ].h = list[ to ].h;
+						list[ to ].w = w;
+						list[ to ].h = h;
+					}
+				},
+				serialize: function () {
+					return scatter ? serializeScatter( scatter ) : '';
+				},
+				set: function ( text ) {
+					config.cuts = config.cuts || {};
+					config.cuts[ current ] = text ? 'scatter:' + text : '';
+					frozen = null;
+					scatterCut();
 					place();
 				}
 			},
@@ -3349,12 +3738,12 @@
 			var wrapper = el.parentNode;
 			background( wrapper );
 			var needsFixed = config.direction === 'vertical' || !! config.expand || !! config.autoWidth || !! carouselOf( config );
-			var recap = null;
+			// Height "Auto" on the device in view (fitHeight()); a set Height
+			// capped for "Contain" on the others (capHeight(): not where "Auto").
 			if ( config.fill ) {
-				fillHeight( wrapper, needsFixed, containCap( el, config ) );
-			} else {
-				recap = capHeight( el, config );
+				fitHeight( wrapper, el, config, needsFixed );
 			}
+			var recap = capHeight( el, config );
 			// Thumbnails beside the slider (on any device) take their share of its width first.
 			var side = config.thumbs && config.thumbs.side;
 			var refitThumbs = side && ( side.desktop || side.tablet || side.mobile ) ? thumbsBeside( wrapper, el, config ) : null;

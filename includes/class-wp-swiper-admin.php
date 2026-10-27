@@ -69,9 +69,6 @@ class WP_Swiper_Admin {
 					'imageButton'  => __( 'Use this image', 'wp-swiper' ),
 					/* translators: %d: slide number. */
 					'slideNumber'  => __( 'Slide %d', 'wp-swiper' ),
-					// A slide's button: without and with a caption, description or link.
-					'infoAdd'      => __( 'Add info', 'wp-swiper' ),
-					'infoEdit'     => __( 'Edit info', 'wp-swiper' ),
 					'copied'      => __( 'Copied!', 'wp-swiper' ),
 					'unsaved'     => __( 'The changes you made will be lost if you leave this page.', 'wp-swiper' ),
 					// Collage Order: Shuffle while the photos were arranged by hand.
@@ -126,7 +123,7 @@ class WP_Swiper_Admin {
 		$shown  = count( $slides );
 		?>
 		<?php // Only useful once there are slides; admin.js toggles it with the list. ?>
-		<p class="description wp-swiper-hint"<?php echo $shown ? '' : ' hidden'; ?>><?php esc_html_e( 'Drag slides to reorder. “Add info”: a slide’s caption, description and link, all optional; a video slide has no link, its poster image is set on the Video page of the settings.', 'wp-swiper' ); ?></p>
+		<p class="description wp-swiper-hint"<?php echo $shown ? '' : ' hidden'; ?>><?php esc_html_e( 'Drag slides to reorder. “Edit”: a slide’s caption, description and link, all optional; a video slide has no link, its poster image is set on the Video page of the settings.', 'wp-swiper' ); ?></p>
 
 		<?php
 		// A slider saved with a font size of its own (until 2.8): admin.js moves
@@ -254,6 +251,20 @@ class WP_Swiper_Admin {
 				</div>
 			</div>
 		</div>
+		<?php
+	}
+
+	/**
+	 * A color setting's arrow back to its default color (as the Slide info
+	 * window's): admin.js puts data-default into the color input beside it.
+	 *
+	 * @param array $field The field.
+	 */
+	private static function color_reset( $field ) {
+		?>
+		<button type="button" class="wp-swiper-color-pick__reset wp-swiper-color-reset" data-default="<?php echo esc_attr( $field['default'] ); ?>" title="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>">
+			<span class="dashicons dashicons-image-rotate" aria-hidden="true"></span>
+		</button>
 		<?php
 	}
 
@@ -524,8 +535,8 @@ class WP_Swiper_Admin {
 			<input type="hidden" name="wp_swiper_slides[description_color][]" value="<?php echo esc_attr( isset( $slide['description_color'] ) ? WP_Swiper_Settings::sanitize_slide_color( $slide['description_color'] ) : '' ); ?>">
 			<input type="hidden" name="wp_swiper_slides[link][]" value="<?php echo esc_attr( $link ); ?>">
 			<input type="hidden" name="wp_swiper_slides[new_tab][]" value="<?php echo empty( $slide['new_tab'] ) ? '0' : '1'; ?>">
-			<?php // "Add info" until the slide has a caption, description or link (admin.js keeps it so). ?>
-			<button type="button" class="button button-small wp-swiper-slide__edit"><?php echo '' !== $caption || '' !== $description || ( '' !== $link && ! $video ) ? esc_html__( 'Edit info', 'wp-swiper' ) : esc_html__( 'Add info', 'wp-swiper' ); ?></button>
+			<?php // Opens the slide's info window (caption, description, link). ?>
+			<button type="button" class="button button-small wp-swiper-slide__edit"><?php esc_html_e( 'Edit', 'wp-swiper' ); ?></button>
 			<?php // What the slide has (admin.js shows them as it changes; a video's link is not used). ?>
 			<span class="wp-swiper-slide__marks">
 				<span class="wp-swiper-slide__mark" data-mark="caption"<?php echo '' !== $caption ? '' : ' hidden'; ?>><?php esc_html_e( 'Caption', 'wp-swiper' ); ?></span>
@@ -611,7 +622,7 @@ class WP_Swiper_Admin {
 			if ( 'description' === $page ) {
 				// admin.js shows one of them (and greys the box): no slide has a
 				// description yet, or this slider shows none (can_describe()).
-				echo '<p class="description wp-swiper-section-note" data-note="empty" hidden>' . esc_html__( 'Add a description to a slide (“Add info”) to use these settings.', 'wp-swiper' ) . '</p>';
+				echo '<p class="description wp-swiper-section-note" data-note="empty" hidden>' . esc_html__( 'Add a description to a slide (“Edit”) to use these settings.', 'wp-swiper' ) . '</p>';
 				echo '<p class="description wp-swiper-section-note" data-note="unavailable" hidden>' . esc_html__( 'Descriptions are not shown with a vertical slider, Continuous scroll, the Collage effect or when the slider is used as a background.', 'wp-swiper' ) . '</p>';
 			}
 			if ( 'video' === $page ) {
@@ -793,9 +804,12 @@ class WP_Swiper_Admin {
 					<?php endforeach; ?>
 				</div>
 			<?php elseif ( ! empty( $field['compact'] ) && 'color' === $field['type'] ) : ?>
-				<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
-					value="<?php echo esc_attr( $value ); ?>"
-					title="<?php echo esc_attr( $field['label'] ); ?>" aria-label="<?php echo esc_attr( $field['label'] ); ?>">
+				<span class="wp-swiper-color-field">
+					<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
+						value="<?php echo esc_attr( $value ); ?>"
+						title="<?php echo esc_attr( $field['label'] ); ?>" aria-label="<?php echo esc_attr( $field['label'] ); ?>">
+					<?php self::color_reset( $field ); ?>
+				</span>
 			<?php elseif ( 'checkbox' === $field['type'] ) : ?>
 				<label for="<?php echo esc_attr( $id ); ?>">
 					<input type="checkbox" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( $value ); ?>>
@@ -827,8 +841,11 @@ class WP_Swiper_Admin {
 						<button type="button" class="button-link wp-swiper-picker__remove"<?php echo $thumb ? '' : ' hidden'; ?>><?php esc_html_e( 'Remove', 'wp-swiper' ); ?></button>
 					</div>
 				<?php elseif ( 'color' === $field['type'] ) : ?>
-					<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
-						value="<?php echo esc_attr( $value ); ?>">
+					<span class="wp-swiper-color-field">
+						<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
+							value="<?php echo esc_attr( $value ); ?>">
+						<?php self::color_reset( $field ); ?>
+					</span>
 				<?php elseif ( 'seed' === $field['type'] ) : ?>
 					<?php // The number is the value kept; the button draws a new one (admin.js). ?>
 					<input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
