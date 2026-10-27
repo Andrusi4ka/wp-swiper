@@ -126,6 +126,9 @@
   - Прев'ю, фон (Use as background): фото можна тягнути (обмін, розміри),
     приклад вмісту блоку пропускає мишку і стоїть по центру (стилі в
     `class-wp-swiper-preview.php`). На сайті фон як і був — без мишки.
+- Після 2.9.1 (2026-10-27, вдома, в `art-effect`):
+  - `650521c`: CI (`tests.yml`) ганяє тести й при push у `art-effect`.
+  - `.pot` перегенеровано під 2.9.1 (491 рядок, +69 нових, −15 прибраних).
 
 ## Що далі / відкладено
 
@@ -133,8 +136,8 @@
   - злити `art-effect` у `main`;
   - підняти версію в `wp-swiper.php` (`Version:` і `WP_SWIPER_VERSION`) та в
     `readme.txt` (`Stable tag:`) і додати changelog;
-  - перегенерувати `.pot` (у 2.9.0 пропущено, він відстає):
-    `wp i18n make-pot . languages/wp-swiper.pot --exclude=vendor`. Якщо тека
+  - перегенерувати `.pot`:
+    `wp i18n make-pot . languages/wp-swiper.pot --exclude=vendor,tests`. Якщо тека
     називається не `wp-swiper-main`, поправ у `.pot` рядок
     `Report-Msgid-Bugs-To`;
   - тег `vX.Y.Z` → workflow Release (спершу тести).
@@ -186,4 +189,6 @@ PHP 7.4 / 8.3 при push у `main` і `art-effect` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає — `C:/OSPanel/modules/PHP-8.3/PHP/php.exe
 tests/vendor/bin/phpunit`; база — `WP_TESTS_DB_HOST=127.127.126.4`
-(на `localhost` MySQL не слухає). WP-CLI вдома теж немає.
+(на `localhost` MySQL не слухає). WP-CLI вдома не встановлено: користувач
+дозволив завантажувати офіційний `wp-cli.phar` (GitHub releases) у
+тимчасову теку й запускати через цей PHP.
