@@ -92,6 +92,8 @@ class WP_Swiper_Admin {
 					'backgroundEffects' => WP_Swiper_Settings::BACKGROUND_EFFECTS,
 					// Effects with a main image that can zoom ("Zoom the main image").
 					'zoomEffects' => WP_Swiper_Settings::ZOOM_EFFECTS,
+					// The collage's template Styles: their sizes kept apart (collage_cuts).
+					'collageTemplates' => WP_Swiper_Settings::COLLAGE_TEMPLATES,
 					// What Height measures (admin.js): each slide across a horizontal
 					// slider; the whole slider, which its slides share, when vertical.
 					'heightLabels' => array(
@@ -131,7 +133,7 @@ class WP_Swiper_Admin {
 		// it into the slides without theirs, so saving keeps it per slide.
 		$settings = WP_Swiper_Settings::get( $post->ID );
 		?>
-		<ul class="wp-swiper-slides" id="wp-swiper-slide-list" data-legacy-caption-size="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_sizes( $settings, 'caption' ) ); ?>" data-legacy-description-size="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_sizes( $settings, 'description' ) ); ?>" data-legacy-caption-weight="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ) ); ?>" data-legacy-description-weight="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_weights( $settings, 'description' ) ); ?>">
+		<ul class="wp-swiper-slides" id="wp-swiper-slide-list" data-legacy-caption-tag="<?php echo esc_attr( WP_Swiper_Settings::legacy_caption_tag( $settings ) ); ?>" data-legacy-caption-size="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_sizes( $settings, 'caption' ) ); ?>" data-legacy-description-size="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_sizes( $settings, 'description' ) ); ?>" data-legacy-caption-weight="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ) ); ?>" data-legacy-description-weight="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_weights( $settings, 'description' ) ); ?>">
 			<?php
 			foreach ( $slides as $slide ) {
 				self::render_slide_item( $slide );
@@ -601,14 +603,16 @@ class WP_Swiper_Admin {
 				echo '<p class="description wp-swiper-section-note" hidden>' . esc_html__( 'With the Thumbnails effect the thumbnails switch the slides: pagination and keyboard control are not used, and the arrows sit on the strip of thumbnails.', 'wp-swiper' ) . '</p>';
 			}
 			if ( 'caption' === $page ) {
-				// admin.js shows it (and greys the box) while no slide has a caption.
-				echo '<p class="description wp-swiper-section-note" hidden>' . esc_html__( 'Add a caption to a slide to use these settings.', 'wp-swiper' ) . '</p>';
+				// admin.js shows one of them (and greys the box): no slide has a
+				// caption yet, or this slider shows none (can_caption()).
+				echo '<p class="description wp-swiper-section-note" data-note="empty" hidden>' . esc_html__( 'Add a caption to a slide to use these settings.', 'wp-swiper' ) . '</p>';
+				echo '<p class="description wp-swiper-section-note" data-note="unavailable" hidden>' . esc_html__( 'Captions are not shown when the slider is used as a background.', 'wp-swiper' ) . '</p>';
 			}
 			if ( 'description' === $page ) {
 				// admin.js shows one of them (and greys the box): no slide has a
 				// description yet, or this slider shows none (can_describe()).
 				echo '<p class="description wp-swiper-section-note" data-note="empty" hidden>' . esc_html__( 'Add a description to a slide (“Add info”) to use these settings.', 'wp-swiper' ) . '</p>';
-				echo '<p class="description wp-swiper-section-note" data-note="unavailable" hidden>' . esc_html__( 'Descriptions are not shown with a vertical slider, Continuous scroll, the Collage effect or as a background.', 'wp-swiper' ) . '</p>';
+				echo '<p class="description wp-swiper-section-note" data-note="unavailable" hidden>' . esc_html__( 'Descriptions are not shown with a vertical slider, Continuous scroll, the Collage effect or when the slider is used as a background.', 'wp-swiper' ) . '</p>';
 			}
 			if ( 'video' === $page ) {
 				// The poster of each video slide: admin.js lists the video slides of
@@ -964,7 +968,7 @@ class WP_Swiper_Admin {
 		);
 		$keys    = WP_Swiper_Settings::device_keys( $key, $field );
 		?>
-		<div class="wp-swiper-field wp-swiper-field--responsive" data-field="<?php echo esc_attr( $key ); ?>"<?php self::effects_attr( $field ); ?>>
+		<div class="wp-swiper-field wp-swiper-field--responsive<?php echo empty( $field['tiles'] ) ? '' : ' wp-swiper-field--tiles'; ?>" data-field="<?php echo esc_attr( $key ); ?>"<?php self::effects_attr( $field ); ?>>
 			<div class="wp-swiper-field__head">
 				<label for="wp-swiper-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $field['label'] ); ?></label>
 				<?php self::field_tips( $field ); ?>
@@ -1040,6 +1044,22 @@ class WP_Swiper_Admin {
 					aria-label="<?php echo esc_attr( $field['label'] . ' — ' . $devices[ $device ][0] ); ?>"
 						<?php echo 'desktop' === $device ? '' : 'hidden'; ?>>
 			<?php endforeach; ?>
+
+			<?php if ( ! empty( $field['tiles'] ) ) : ?>
+				<?php
+				// The choices as icons (assets/images/{tiles}/{choice}.svg) for the
+				// device shown; its select (hidden) keeps the value (admin.js).
+				// Tablet and mobile: Inherit first, the larger screen's choice marked.
+				?>
+				<div class="wp-swiper-tiles" role="radiogroup" aria-label="<?php echo esc_attr( $field['label'] ); ?>">
+					<button type="button" class="wp-swiper-tiles__tile wp-swiper-tiles__tile--inherit" data-value="" role="radio" aria-checked="false" hidden><?php esc_html_e( 'Inherit', 'wp-swiper' ); ?></button>
+					<?php foreach ( $field['choices'] as $choice => $choice_label ) : ?>
+						<button type="button" class="wp-swiper-tiles__tile" data-value="<?php echo esc_attr( $choice ); ?>" role="radio" aria-checked="false" title="<?php echo esc_attr( $choice_label ); ?>" aria-label="<?php echo esc_attr( $choice_label ); ?>">
+							<?php echo self::svg_icon( $field['tiles'] . '/' . $choice . '.svg', 'wp-swiper-tiles__icon', 'dashicons-format-gallery' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
+						</button>
+					<?php endforeach; ?>
+				</div>
+			<?php endif; ?>
 
 			<?php if ( 'order' === $field['type'] ) : ?>
 				<?php // For the device shown: a new order at random; back to the larger screen's order and mosaic sizes (desktop: the shuffle, sizes worked out). ?>

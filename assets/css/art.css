@@ -143,8 +143,16 @@
 	background: none;
 }
 
-/* The caption tag (p, h1-h6...) takes the caption's size and color, not the
-   theme's heading styles. */
+/* The caption's text; its lines, paragraphs or headings, take the caption's
+   size and color, not the theme's heading styles. */
+.wp-swiper-art .wp-swiper-art__caption .wp-swiper-art__caption-text > :is(p, h1, h2, h3, h4, h5, h6) {
+	margin: 0;
+	padding: 0;
+	color: inherit;
+	font-size: inherit;
+	line-height: inherit;
+}
+
 .wp-swiper-art .wp-swiper-art__caption .wp-swiper-art__caption-text {
 	position: absolute;
 	top: var(--wp-swiper-art-cy, 50%);
@@ -167,6 +175,11 @@
 .wp-swiper-art--caption-weight .wp-swiper-art__caption .wp-swiper-art__caption-text,
 .wp-swiper-art .wp-swiper-art__caption--weight .wp-swiper-art__caption-text {
 	font-weight: var(--wp-swiper-caption-weight);
+}
+
+.wp-swiper-art--caption-weight .wp-swiper-art__caption .wp-swiper-art__caption-text > :is(p, h1, h2, h3, h4, h5, h6),
+.wp-swiper-art .wp-swiper-art__caption--weight .wp-swiper-art__caption-text > :is(p, h1, h2, h3, h4, h5, h6) {
+	font-weight: inherit;
 }
 
 .wp-swiper-art--caption-shadow .wp-swiper-art__caption .wp-swiper-art__caption-text {

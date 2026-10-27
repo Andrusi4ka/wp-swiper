@@ -2431,13 +2431,19 @@
 	 * not shown yet; the places keep their size, the photo is cropped to fit.
 	 * ------------------------------------------------------------------ */
 
-	// The templates' grids: columns, rows, and each place's grid-area
-	// (row start / column start / row end / column end), the big one first.
+	// The templates: their places as cuts, the same as a Random mosaic's
+	// (parseMosaic()), the big one first: "V" side by side, "H" one over the
+	// other, the share of the first part. Laid out as a mosaic is, so the
+	// lines between the places resize them in the preview (collage_cuts).
 	var COLLAGE_TEMPLATES = {
-		'feature-left': { columns: '2fr 1fr', rows: '1fr 1fr', areas: [ '1 / 1 / 3 / 2', '1 / 2 / 2 / 3', '2 / 2 / 3 / 3' ] },
-		'feature-center': { columns: '1fr 2fr 1fr', rows: '1fr 1fr', areas: [ '1 / 2 / 3 / 3', '1 / 1 / 2 / 2', '2 / 1 / 3 / 2', '1 / 3 / 2 / 4', '2 / 3 / 3 / 4' ] },
-		mosaic: { columns: 'repeat(6, 1fr)', rows: '1fr 1fr', areas: [ '1 / 1 / 2 / 5', '1 / 5 / 2 / 7', '2 / 1 / 3 / 3', '2 / 3 / 3 / 5', '2 / 5 / 3 / 7' ] },
-		banner: { columns: 'repeat(3, 1fr)', rows: '3fr 2fr', areas: [ '1 / 1 / 2 / 4', '2 / 1 / 3 / 2', '2 / 2 / 3 / 3', '2 / 3 / 3 / 4' ] }
+		// A big photo on the left (2/3), two on the right.
+		'feature-left': 'V0.6667[0,H0.5[1,2]]',
+		// Two on the left, a big one in the middle (half), two on the right.
+		'feature-center': 'V0.25[H0.5[1,2],V0.6667[0,H0.5[3,4]]]',
+		// A wide one (2/3) and one on top, three under them.
+		mosaic: 'H0.5[V0.6667[0,1],V0.3333[2,V0.5[3,4]]]',
+		// A wide one on top (3/5 of the height), three under it.
+		banner: 'H0.6[0,V0.3333[1,V0.5[2,3]]]'
 	};
 
 	// A small seeded random generator (mulberry32): the same seed, the same numbers.
@@ -2626,7 +2632,8 @@
 		// slider (fillHeight()); not a background (it fills its block anyway).
 		var stretchy = !! config.fill && ! root.classList.contains( 'wp-swiper--background' );
 		var stretched = false;
-		// Random mosaic: its cuts as last laid out (place()), for the preview.
+		// Random mosaic and the templates: their cuts as last laid out (place()),
+		// for the preview.
 		var mosaicLines = [];
 		// Called once the places are laid out (the preview draws the lines then).
 		var placed = [];
@@ -2679,6 +2686,19 @@
 			tree = mosaicTree( cells.map( function ( cell ) {
 				return cell.wpRatio;
 			} ), aspect, seededRandom( ( config.seed || 1 ) * 7919 + cells.length ) );
+		}
+
+		// A template's cuts: the ones set in the preview for this device, while
+		// they are this template's and have its places; else its own.
+		function templateTree( layout ) {
+			var own = parseMosaic( COLLAGE_TEMPLATES[ layout ] );
+			var stored = config.cuts && config.cuts[ current ];
+			var prefix = layout + ':';
+			var set = stored && stored.indexOf( prefix ) === 0 ? parseMosaic( stored.slice( prefix.length ) ) : null;
+			if ( set && mosaicLeaves( set ).sort().join( ',' ) === mosaicLeaves( own ).sort().join( ',' ) ) {
+				return set;
+			}
+			return own;
 		}
 
 		function ratioOf( slide ) {
@@ -2803,7 +2823,7 @@
 				grid.style.height = fill ? '' : Math.max( 0, height ) + 'px';
 			};
 
-			if ( layout === 'random' ) {
+			if ( layout === 'random' || COLLAGE_TEMPLATES[ layout ] ) {
 				// The block keeps its Height; the cuts are laid over it, gaps between.
 				// Each cut kept with its part and the line between its two (mosaicLines).
 				mosaicLines = [];
@@ -2916,16 +2936,18 @@
 			current = device();
 			order = orderFor( current );
 			var layout = config.layout[ current ] || 'grid';
-			var template = COLLAGE_TEMPLATES[ layout ];
-			// Places positioned by the script; Random mosaic keeps the block's Height.
-			var free = layout === 'justified' || layout === 'masonry' || layout === 'random';
+			var template = COLLAGE_TEMPLATES[ layout ] ? templateTree( layout ) : null;
+			// Laid out by cuts (Random mosaic, the templates): in the block's Height.
+			var cuts = layout === 'random' || !! template;
+			// Places positioned by the script.
+			var free = cuts || layout === 'justified' || layout === 'masonry';
 			var gap = Number( config.gap[ current ] ) || 0;
 			// A template has its places (photos repeat when there are fewer); the
 			// others show as many as set, at most the photos there are.
-			var count = template ? template.areas.length : Math.min( slides.length, Math.max( 1, Number( config.count[ current ] ) || 1 ) );
+			var count = template ? mosaicLeaves( template ).length : Math.min( slides.length, Math.max( 1, Number( config.count[ current ] ) || 1 ) );
 
 			grid.innerHTML = '';
-			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( free ? ' wp-swiper-collage__grid--free' : '' ) + ( config.fill ? ' wp-swiper-collage__grid--ratio' : '' ) + ( stretched ? ' wp-swiper-collage__grid--stretch' : '' );
+			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( free ? ' wp-swiper-collage__grid--free' : '' ) + ( cuts ? ' wp-swiper-collage__grid--cuts' : '' ) + ( config.fill ? ' wp-swiper-collage__grid--ratio' : '' ) + ( stretched ? ' wp-swiper-collage__grid--stretch' : '' );
 			grid.style.cssText = '';
 			cells = [];
 			for ( var i = 0; i < count; i++ ) {
@@ -2942,7 +2964,7 @@
 			// The photos not in a place wait their turn, in shuffle order.
 			queue = order.slice( count );
 
-			tree = null;
+			tree = template;
 			if ( layout === 'random' ) {
 				cut();
 			}
@@ -2951,17 +2973,9 @@
 				place();
 			} else {
 				grid.style.gap = gap + 'px';
-				if ( template ) {
-					grid.style.gridTemplateColumns = template.columns;
-					grid.style.gridTemplateRows = template.rows;
-					cells.forEach( function ( cell, index ) {
-						cell.style.gridArea = template.areas[ index ];
-					} );
-				} else {
-					var columns = Math.max( 1, Math.min( count, Number( config.columns[ current ] ) || 1 ) );
-					grid.style.gridTemplateColumns = 'repeat(' + columns + ', 1fr)';
-					grid.style.gridTemplateRows = 'repeat(' + Math.ceil( count / columns ) + ', 1fr)';
-				}
+				var columns = Math.max( 1, Math.min( count, Number( config.columns[ current ] ) || 1 ) );
+				grid.style.gridTemplateColumns = 'repeat(' + columns + ', 1fr)';
+				grid.style.gridTemplateRows = 'repeat(' + Math.ceil( count / columns ) + ', 1fr)';
 				cells.forEach( sizeImages );
 			}
 			posterFallbacks( grid );
@@ -3108,7 +3122,8 @@
 					build();
 					schedule();
 				} else if ( grid.classList.contains( 'wp-swiper-collage__grid--free' ) ) {
-					if ( resized && tree ) {
+					// A template keeps its shares whatever the block's proportions.
+					if ( resized && tree && config.layout[ current ] === 'random' ) {
 						cut();
 					}
 					place();
@@ -3143,12 +3158,16 @@
 			hold: function ( on ) {
 				paused = !! on;
 			},
-			// Random mosaic: its cuts' lines as laid out now (grid px), a cut's new
-			// share laid out at once, the cuts as stored, and new ones (or none:
-			// worked out again) for this device.
+			// Random mosaic and the templates: their cuts' lines as laid out now
+			// (grid px), a cut's new share laid out at once, the cuts as stored,
+			// and new ones (or none: worked out again, the template's own) for
+			// this device; which template is shown ('' : none, Random mosaic).
 			mosaic: {
 				lines: function () {
-					return config.layout[ current ] === 'random' && tree ? mosaicLines.slice() : [];
+					return tree ? mosaicLines.slice() : [];
+				},
+				template: function () {
+					return COLLAGE_TEMPLATES[ config.layout[ current ] ] ? config.layout[ current ] : '';
 				},
 				setShare: function ( node, share ) {
 					node.share = share;
@@ -3158,9 +3177,16 @@
 					return tree ? serializeMosaic( tree ) : '';
 				},
 				set: function ( text ) {
-					config.mosaic = config.mosaic || {};
-					config.mosaic[ current ] = text || '';
-					cut();
+					var layout = config.layout[ current ];
+					if ( COLLAGE_TEMPLATES[ layout ] ) {
+						config.cuts = config.cuts || {};
+						config.cuts[ current ] = text ? layout + ':' + text : '';
+						tree = templateTree( layout );
+					} else {
+						config.mosaic = config.mosaic || {};
+						config.mosaic[ current ] = text || '';
+						cut();
+					}
 					place();
 				}
 			},

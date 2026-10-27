@@ -660,8 +660,8 @@ class WP_Swiper_Art {
 		// Sanitized again: saved before, or posted by the preview.
 		$caption = empty( $slide['caption'] ) ? '' : WP_Swiper_Settings::sanitize_caption( $slide['caption'] );
 		if ( '' !== $caption ) {
-			// Outer block: the background over the photo; inner tag: semantics and typography.
-			$tag     = in_array( $settings['caption_tag'], array( 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ), true ) ? $settings['caption_tag'] : 'div';
+			// Outer block: the background over the photo; inner one: typography,
+			// its lines paragraphs or headings (caption_markup()).
 			// Its own font size (the Slide info window), per device.
 			$size    = WP_Swiper_Settings::font_size_vars( isset( $slide['caption_size'] ) ? $slide['caption_size'] : '', 'wp-swiper-caption-size' );
 			// And its own font weight (a class: none keeps the tag's).
@@ -672,7 +672,7 @@ class WP_Swiper_Art {
 			if ( '' !== $color ) {
 				$size[] = '--wp-swiper-caption-color:' . $color;
 			}
-			$caption = sprintf( '<div class="wp-swiper-art__caption%4$s"%3$s><%1$s class="wp-swiper-art__caption-text">%2$s</%1$s></div>', $tag, $caption, $size ? ' style="' . esc_attr( implode( ';', $size ) ) . '"' : '', $weight ? ' wp-swiper-art__caption--weight' : '' );
+			$caption = sprintf( '<div class="wp-swiper-art__caption%3$s"%2$s><div class="wp-swiper-art__caption-text">%1$s</div></div>', WP_Swiper_Settings::caption_markup( $caption, $settings ), $size ? ' style="' . esc_attr( implode( ';', $size ) ) . '"' : '', $weight ? ' wp-swiper-art__caption--weight' : '' );
 		}
 		printf(
 			'<div class="wp-swiper-art__photo" data-real="%d"%s>%s%s</div>',
@@ -680,7 +680,7 @@ class WP_Swiper_Art {
 			// What the lightbox shows: the image's full size.
 			$settings['lightbox'] ? ' data-wp-swiper-full="' . esc_url( wp_get_attachment_image_url( $slide['id'], 'full' ) ) . '"' : '',
 			$image, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core image markup, link escaped above.
-			$caption // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag, text sanitized above (caption_tags()).
+			$caption // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- text sanitized above (caption_tags()), whitelisted tags.
 		);
 	}
 }

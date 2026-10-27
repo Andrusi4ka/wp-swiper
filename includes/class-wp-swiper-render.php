@@ -1164,6 +1164,9 @@ class WP_Swiper_Render {
 			// Random mosaic cuts set in the preview, per device ('' : worked out;
 			// frontend.js uses them while their places match the places shown).
 			'mosaic'    => array_map( array( 'WP_Swiper_Settings', 'sanitize_mosaic' ), WP_Swiper_Settings::responsive( $settings, 'collage_mosaic' ) ),
+			// A template's sizes set there, per device ("feature-left:V0.7[...]";
+			// frontend.js uses them while the device's Style is that template).
+			'cuts'      => array_map( array( 'WP_Swiper_Settings', 'sanitize_template_cuts' ), WP_Swiper_Settings::responsive( $settings, 'collage_cuts' ) ),
 			'swap'      => $settings['collage_swap'] ? array(
 				'delay' => (int) $settings['collage_swap_delay'],
 				'pause' => (bool) $settings['collage_pause'],
@@ -1288,15 +1291,16 @@ class WP_Swiper_Render {
 			?>
 			<?php
 			// Sanitized again: saved before, or posted by the preview.
-			$caption = empty( $slide['caption'] ) ? '' : WP_Swiper_Settings::sanitize_caption( $slide['caption'] );
+			// None as a background (can_caption()).
+			$caption = empty( $slide['caption'] ) || ! WP_Swiper_Settings::can_caption( $settings ) ? '' : WP_Swiper_Settings::sanitize_caption( $slide['caption'] );
 			if ( '' !== $caption ) :
-				// Outer block: position and background; inner tag: semantics and typography.
-				$tag = in_array( $settings['caption_tag'], array( 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ), true ) ? $settings['caption_tag'] : 'div';
+				// Outer block: position and background; inner one: typography, its
+				// lines paragraphs or headings (caption_markup()).
 				?>
 				<?php // Its own font size (the Slide info window), per device. ?>
 				<?php
 				$caption_size   = WP_Swiper_Settings::font_size_vars( isset( $slide['caption_size'] ) ? $slide['caption_size'] : '', 'wp-swiper-caption-size' );
-				// And its own font weight (a class: none keeps the tag's).
+				// And its own font weight (a class: none keeps the paragraph's or heading's).
 				$caption_weight = WP_Swiper_Settings::font_weight_vars( isset( $slide['caption_weight'] ) ? $slide['caption_weight'] : '', 'wp-swiper-caption-weight' );
 				$caption_size   = array_merge( $caption_size, $caption_weight );
 				// And its own color (none: the Caption page's).
@@ -1305,7 +1309,7 @@ class WP_Swiper_Render {
 					$caption_size[] = '--wp-swiper-caption-color:' . $caption_color;
 				}
 				?>
-				<div class="wp-swiper__caption<?php echo $caption_weight ? ' wp-swiper__caption--weight' : ''; ?>"<?php echo $caption_size ? ' style="' . esc_attr( implode( ';', $caption_size ) ) . '"' : ''; ?>><<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?> class="wp-swiper__caption-text"><?php echo $caption; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized above (caption_tags()). ?></<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- whitelisted tag name. ?>></div>
+				<div class="wp-swiper__caption<?php echo $caption_weight ? ' wp-swiper__caption--weight' : ''; ?>"<?php echo $caption_size ? ' style="' . esc_attr( implode( ';', $caption_size ) ) . '"' : ''; ?>><div class="wp-swiper__caption-text"><?php echo WP_Swiper_Settings::caption_markup( $caption, $settings ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized above (caption_tags()), a whitelisted tag around it. ?></div></div>
 			<?php endif; ?>
 			</div>
 			<?php echo $separator; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built in separator(). ?>

@@ -201,7 +201,8 @@
 	} );
 
 	/*
-	 * Random mosaic: each cut's line between its two parts is a handle; dragged
+	 * Random mosaic and the templates: each cut's line between its two parts
+	 * is a handle; dragged
 	 * along, the photos on either side grow and shrink (frontend.js collage()
 	 * mosaic.setShare()), each part at least MIN_PART of the cut's size. On the
 	 * release the mosaic as it is now is kept for the device in view and the
@@ -300,7 +301,8 @@
 		var text = api.mosaic.serialize();
 		api.mosaic.set( text );
 		if ( text && window.parent && window.parent !== window ) {
-			window.parent.postMessage( { wpSwiper: 'collage-mosaic', device: device, mosaic: text }, window.location.origin );
+			// A template's sizes are kept apart from Random mosaic's (collage_cuts).
+			window.parent.postMessage( { wpSwiper: 'collage-mosaic', device: device, mosaic: text, template: api.mosaic.template() }, window.location.origin );
 		}
 	} );
 

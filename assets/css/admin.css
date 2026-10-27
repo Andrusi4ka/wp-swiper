@@ -824,6 +824,79 @@
 	display: none;
 }
 
+/* A select shown as icons ("tiles": the collage's Style): the select stays
+   behind them; as many in a row as fit, evenly (the rest in the next row),
+   the chosen one in the accent color, the one a tablet / mobile Inherit
+   takes dashed. */
+.wp-swiper-field--tiles .wp-swiper-devices__input {
+	display: none !important;
+}
+
+.wp-swiper-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+	gap: 6px;
+	width: 100%;
+}
+
+.wp-swiper-tiles__tile {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1;
+	padding: 2px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+	color: #b3b3b3;
+	cursor: pointer;
+}
+
+.wp-swiper-tiles__tile[hidden] {
+	display: none;
+}
+
+.wp-swiper-tiles__icon {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.wp-swiper-tiles__tile:hover {
+	border-color: #8c8f94;
+	color: #8c8f94;
+}
+
+.wp-swiper-tiles__tile:focus-visible {
+	outline: 2px solid var(--wp-swiper-accent);
+	outline-offset: 1px;
+}
+
+.wp-swiper-tiles__tile.is-selected {
+	border-color: var(--wp-swiper-accent);
+	box-shadow: 0 0 0 1px var(--wp-swiper-accent);
+	color: var(--wp-swiper-accent);
+}
+
+.wp-swiper-tiles__tile.is-inherited {
+	border-style: dashed;
+	border-color: var(--wp-swiper-accent);
+	color: #72aee6;
+}
+
+.wp-swiper-tiles__tile--inherit {
+	padding: 2px;
+	color: #50575e;
+	font-size: 11px;
+	line-height: 1.2;
+	text-align: center;
+}
+
+.wp-swiper-field.is-disabled .wp-swiper-tiles__tile {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
 /* A value its unit leaves unused on that device (Art's Size "Auto"): greyed, kept. */
 .wp-swiper-field .wp-swiper-devices__input.is-unused {
 	opacity: 0.45;

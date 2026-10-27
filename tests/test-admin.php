@@ -441,6 +441,11 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		foreach ( array( 'collage_mosaic' => 'desktop', 'collage_mosaic_tablet' => 'tablet', 'collage_mosaic_mobile' => 'mobile' ) as $key => $device ) {
 			$this->assertStringContainsString( '<input type="hidden" id="wp-swiper-' . $key . '" name="wp_swiper_settings[' . $key . ']" value="" class="wp-swiper-devices__input" data-device="' . $device . '">', $field, $key );
 		}
+		// A template's sizes too, apart from the mosaic's.
+		$this->assertStringNotContainsString( 'data-field="collage_cuts"', $html );
+		foreach ( array( 'collage_cuts' => 'desktop', 'collage_cuts_tablet' => 'tablet', 'collage_cuts_mobile' => 'mobile' ) as $key => $device ) {
+			$this->assertStringContainsString( '<input type="hidden" id="wp-swiper-' . $key . '" name="wp_swiper_settings[' . $key . ']" value="" class="wp-swiper-devices__input" data-device="' . $device . '">', $field, $key );
+		}
 		// Whether a device's order or sizes were set by hand (admin.js greys Shuffle then).
 		foreach ( array( 'collage_manual', 'collage_manual_tablet', 'collage_manual_mobile' ) as $key ) {
 			$this->assertStringContainsString( 'id="wp-swiper-' . $key . '" name="wp_swiper_settings[' . $key . ']"', $field, $key );
@@ -658,6 +663,43 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( 1, substr_count( $html, 'data-mark="position">' ) );
 		// The larger image for the window.
 		$this->assertStringContainsString( 'data-full="' . esc_attr( wp_get_attachment_image_url( $slides[0]['id'], 'large' ) ) . '"', $html );
+	}
+
+	public function test_caption_and_description_pages_say_why_they_are_greyed() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 1 ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// No caption yet, or none shown (as a background): admin.js shows one.
+		$this->assertStringContainsString( 'data-note="empty" hidden>Add a caption to a slide to use these settings.</p>', $html );
+		$this->assertStringContainsString( 'data-note="unavailable" hidden>Captions are not shown when the slider is used as a background.</p>', $html );
+		$this->assertStringContainsString( 'the Collage effect or when the slider is used as a background.</p>', $html );
+		// And the background's own help says so.
+		$this->assertStringContainsString( 'slide links, captions, descriptions, the lightbox and Height are not used', $html );
+	}
+
+	public function test_collage_style_is_chosen_from_icons() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'collage', 'collage_layout' => 'grid' ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// The selects stay (one per device, hidden by the CSS), the icons over them.
+		$this->assertStringContainsString( 'wp-swiper-field--responsive wp-swiper-field--tiles" data-field="collage_layout"', $html );
+		$this->assertStringContainsString( 'name="wp_swiper_settings[collage_layout]"', $html );
+		$this->assertMatchesRegularExpression( '#<option value="grid"\s+selected=\'selected\'>Grid</option>#', $html );
+		// A tile per style, its icon inline (it takes the tile's color), and Inherit.
+		foreach ( array_keys( WP_Swiper_Settings::fields()['collage_layout']['choices'] ) as $style ) {
+			$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/collage/' . $style . '.svg', $style );
+			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="[^"]+" aria-label="[^"]+">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
+		}
+		$this->assertSame( 8, substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
+		$this->assertStringContainsString( 'class="wp-swiper-tiles__tile wp-swiper-tiles__tile--inherit" data-value="" role="radio" aria-checked="false" hidden>Inherit</button>', $html );
 	}
 
 	public function test_each_slide_has_a_clone_button_right_of_the_position_one() {

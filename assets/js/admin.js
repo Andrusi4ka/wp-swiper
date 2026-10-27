@@ -9,6 +9,8 @@
 	var SINGLE_SLIDE_EFFECTS = i18n.singleSlide || [];
 	// Effects that can be their block's background (WP_Swiper_Settings::BACKGROUND_EFFECTS).
 	var BACKGROUND_EFFECTS = i18n.backgroundEffects || [];
+	// The collage's template Styles (resized by the lines between their photos).
+	var TEMPLATES = i18n.collageTemplates || [];
 	// Effects with a main image that can zoom (WP_Swiper_Settings::ZOOM_EFFECTS).
 	var ZOOM_EFFECTS = i18n.zoomEffects || [];
 
@@ -404,6 +406,15 @@
 			}
 		} );
 
+		// The same for a caption saved in the slider's old tag (p, h1–h6; "div"
+		// needs none): its lines into that tag, as the editor shows them.
+		if ( /^(p|h[1-6])$/.test( $list.attr( 'data-legacy-caption-tag' ) || '' ) ) {
+			$list.children( '.wp-swiper-slide' ).each( function () {
+				var $caption = slideInput( $( this ), 'caption' );
+				$caption.val( captionForEditor( $caption.val() ) );
+			} );
+		}
+
 		function fontControl( prop ) {
 			return $( '.wp-swiper-modal__size[data-prop="' + prop + '"]' );
 		}
@@ -688,26 +699,49 @@
 			return editor() ? editor().getContent( id ) : $( '#' + id ).val();
 		}
 
-		// A caption's aligned lines are kept as spans shown as blocks
-		// (WP_Swiper_Settings::sanitize_caption()); the editor aligns blocks, so
-		// they go back to the blocks it made, and its buttons show their alignment.
+		/*
+		 * A caption's lines are paragraphs or headings (the editor's Format). One
+		 * saved before (until 2.8) has none: its text goes into the slider's old
+		 * tag (the Caption page's Tag; a paragraph for "div"), each aligned line
+		 * (a span shown as a block, WP_Swiper_Settings::sanitize_caption()) into
+		 * one of its own, so the Format and alignment buttons show them.
+		 */
 		function captionForEditor( html ) {
+			html = String( html || '' );
+			if ( /<(?:p|h[1-6])\b/i.test( html ) || $.trim( html ) === '' ) {
+				return html;
+			}
+			var tag = $list.attr( 'data-legacy-caption-tag' ) || '';
+			tag = /^(p|h[1-6])$/.test( tag ) ? tag : 'p';
 			// Parsed inert (a template): nothing in it loads or runs.
 			var box = document.createElement( 'template' );
-			box.innerHTML = String( html || '' );
-			[].slice.call( box.content.children ).forEach( function ( node ) {
-				var align = node.tagName === 'SPAN' && node.style.display === 'block' ? node.style.textAlign : '';
-				if ( [ 'left', 'center', 'right' ].indexOf( align ) === -1 ) {
+			box.innerHTML = html;
+			var out = document.createElement( 'div' );
+			var line = null;
+			[].slice.call( box.content.childNodes ).forEach( function ( node ) {
+				var align = node.nodeType === 1 && node.tagName === 'SPAN' && node.style.display === 'block' ? node.style.textAlign : '';
+				if ( [ 'left', 'center', 'right' ].indexOf( align ) !== -1 ) {
+					// The break before it only ended the line above.
+					if ( line && line.lastChild && line.lastChild.nodeName === 'BR' ) {
+						line.removeChild( line.lastChild );
+					}
+					var own = document.createElement( tag );
+					own.style.textAlign = align;
+					while ( node.firstChild ) {
+						own.appendChild( node.firstChild );
+					}
+					out.appendChild( own );
+					line = null;
 					return;
 				}
-				var line = document.createElement( 'div' );
-				line.style.textAlign = align;
-				while ( node.firstChild ) {
-					line.appendChild( node.firstChild );
+				// A break right after an aligned line was only its end.
+				if ( ! line && node.nodeType === 1 && node.tagName === 'BR' ) {
+					return;
 				}
-				node.parentNode.replaceChild( line, node );
+				line = line || out.appendChild( document.createElement( tag ) );
+				line.appendChild( node );
 			} );
-			return box.innerHTML;
+			return out.innerHTML;
 		}
 
 		function openSlide( $slide ) {
@@ -731,13 +765,13 @@
 			$modal.prop( 'hidden', false );
 			$( document.body ).addClass( 'wp-swiper-modal-open' );
 
-			// The caption: inline styles (text color too) and each line's alignment only, Enter a line break (render.php keeps
-			// what caption_tags() allows); the first field, so it takes the focus.
+			// The caption: paragraph or heading (aligned), the inline styles (text color too); no links (render.php keeps
+			// what caption_tags() allows). The first field, so it takes the focus.
 			startEditor( CAPTION_EDITOR, {
-				toolbar1: 'bold,italic,underline,forecolor,alignleft,aligncenter,alignright,removeformat,undo,redo',
+				toolbar1: 'formatselect,bold,italic,underline,forecolor,alignleft,aligncenter,alignright,removeformat,undo,redo',
 				toolbar2: '',
-				forced_root_block: false,
-				height: 70,
+				block_formats: 'Paragraph=p;Heading 1=h1;Heading 2=h2;Heading 3=h3;Heading 4=h4;Heading 5=h5;Heading 6=h6',
+				height: 90,
 				init_instance_callback: function ( instance ) {
 					instance.focus();
 				}
@@ -1552,6 +1586,12 @@
 			// otherwise, and while no slide has one.
 			// Art: always under it (Direction does not apply).
 			var describable = effect === 'art' || ( ! vertical && ! background && ! marquee && ! collage );
+			// Captions: none as a background either (WP_Swiper_Settings::can_caption());
+			// the Caption page is greyed then, as while no slide has one.
+			captionsShown = ! background;
+			if ( $captionBox ) {
+				syncCaptions();
+			}
 			var described = hasDescriptions();
 			syncDescriptions( ! described ? 'empty' : ( describable ? '' : 'unavailable' ) );
 			field( 'description_lightbox' ).toggle( lightbox && describable && described );
@@ -1597,7 +1637,8 @@
 			};
 			// Which photo is in which place: every style (its own per device).
 			field( 'collage_order' ).toggle( collage );
-			$( '.wp-swiper-preview__hint[data-effect="mosaic"]' ).prop( 'hidden', ! collageUses( [ 'random' ] ) );
+			// Lines between the photos resize them: Random mosaic and the templates.
+			$( '.wp-swiper-preview__hint[data-effect="mosaic"]' ).prop( 'hidden', ! collageUses( [ 'random' ].concat( TEMPLATES ) ) );
 			// The preview says its photos swap by dragging.
 			$( '.wp-swiper-preview__hint[data-effect="collage"]' ).prop( 'hidden', ! collage );
 			// The collage's Height: not for the styles as tall as their photos make them.
@@ -1778,17 +1819,24 @@
 		$( '#wp-swiper-settings' ).on( 'change input', 'select, input', syncFields );
 		syncFields();
 
-		// Caption settings only apply once a slide has a caption: the whole box is
-		// greyed until then (a disabled fieldset is not sent, so it is enabled
-		// again for the submit and saving keeps its values). The slide's window
-		// runs it again on Apply, as does a change of the slides.
+		// Caption settings only apply once a slide has a caption, and while the
+		// slider shows captions (not as a background, syncFields): the whole box
+		// is greyed otherwise, with the note that says which (a disabled fieldset
+		// is not sent, so it is enabled again for the submit and saving keeps its
+		// values). The slide's window runs it again on Apply, as does a change of
+		// the slides. syncFields has run before this point: captionsShown is
+		// declared without a value (one would undo that run's).
 		var $captionBox = $( 'fieldset[data-section="caption"]' );
 		var captionsLocked = false;
+		var captionsShown;
 
 		function syncCaptions() {
-			captionsLocked = ! slidesWith( 'caption' );
+			var why = ! slidesWith( 'caption' ) ? 'empty' : ( captionsShown === false ? 'unavailable' : '' );
+			captionsLocked = !! why;
 			$captionBox.prop( 'disabled', captionsLocked ).find( '.wp-swiper-field' ).toggleClass( 'is-disabled', captionsLocked );
-			$captionBox.find( '.wp-swiper-section-note' ).prop( 'hidden', ! captionsLocked );
+			$captionBox.find( '.wp-swiper-section-note' ).each( function () {
+				this.hidden = $( this ).data( 'note' ) !== why;
+			} );
 		}
 
 		beforeSend( function () {
@@ -1893,6 +1941,50 @@
 				if ( open ) {
 					$box.find( '.wp-swiper-devices__input[data-device="tablet"]' ).trigger( 'focus' );
 				}
+			} );
+
+		/*
+		 * A select shown as icons (a field's "tiles": the collage's Style): the
+		 * choice of the device shown is marked; on tablet and mobile the Inherit
+		 * tile too, and while it inherits, the larger screen's choice (dashed).
+		 * A click puts the tile's value into that device's select, hidden.
+		 */
+		function syncTiles( $field ) {
+			var device = $field.find( '.wp-swiper-devices__btn.is-active' ).data( 'device' ) || 'desktop';
+			var value = '';
+			var inherited = '';
+			$field.find( '.wp-swiper-devices__input' ).each( function () {
+				if ( $( this ).data( 'device' ) === device ) {
+					value = $( this ).val() || '';
+					return false;
+				}
+				inherited = $( this ).val() || inherited;
+			} );
+			$field.find( '.wp-swiper-tiles__tile' ).each( function () {
+				var tile = $( this ).attr( 'data-value' );
+				var chosen = tile === value;
+				$( this ).toggleClass( 'is-selected', chosen ).attr( 'aria-checked', chosen ? 'true' : 'false' )
+					.toggleClass( 'is-inherited', value === '' && tile !== '' && tile === inherited );
+			} );
+			$field.find( '.wp-swiper-tiles__tile--inherit' ).prop( 'hidden', device === 'desktop' );
+		}
+
+		$( '.wp-swiper-field--tiles' ).each( function () {
+			syncTiles( $( this ) );
+		} );
+
+		$( '#wp-swiper-settings' )
+			.on( 'click', '.wp-swiper-tiles__tile', function () {
+				var $field = $( this ).closest( '.wp-swiper-field' );
+				var device = $field.find( '.wp-swiper-devices__btn.is-active' ).data( 'device' ) || 'desktop';
+				$field.find( '.wp-swiper-devices__input[data-device="' + device + '"]' ).val( $( this ).attr( 'data-value' ) ).trigger( 'change' );
+			} )
+			// After the field's own handlers (bound above): its device, its value.
+			.on( 'click', '.wp-swiper-field--tiles .wp-swiper-devices__btn', function () {
+				syncTiles( $( this ).closest( '.wp-swiper-field' ) );
+			} )
+			.on( 'change', '.wp-swiper-field--tiles .wp-swiper-devices__input', function () {
+				syncTiles( $( this ).closest( '.wp-swiper-field' ) );
 			} );
 
 		/*
@@ -2051,7 +2143,7 @@
 			 */
 			var syncOrderButtons = function () {
 				var device = orderDevice();
-				var own = input( 'collage_order', device ).val() !== '' || input( 'collage_mosaic', device ).val() !== '';
+				var own = input( 'collage_order', device ).val() !== '' || input( 'collage_mosaic', device ).val() !== '' || input( 'collage_cuts', device ).val() !== '';
 				var byHand = own && input( 'collage_manual', device ).val() === '1';
 				$shuffle.prop( 'disabled', byHand ).attr( 'title', byHand ? i18n.shuffleLocked || '' : '' );
 				$reset.prop( 'disabled', ! own ).attr( 'title', own ? '' : i18n.resetNothing || '' );
@@ -2063,6 +2155,12 @@
 			};
 			var setMosaic = function ( device, text ) {
 				input( 'collage_mosaic', device ).val( text );
+				syncResponsive( $order );
+				syncOrderButtons();
+			};
+			// A template's sizes: "feature-left:V0.7[...]" (WP_Swiper_Settings::sanitize_template_cuts()).
+			var setCuts = function ( device, text ) {
+				input( 'collage_cuts', device ).val( text );
 				syncResponsive( $order );
 				syncOrderButtons();
 			};
@@ -2107,10 +2205,11 @@
 				updatePreview();
 			} );
 
-			// Reset: the order and the mosaic sizes both, and that they were set by hand.
+			// Reset: the order and the mosaic or template sizes, and that they were set by hand.
 			$order.on( 'click', '.wp-swiper-order-reset', function () {
 				setOrder( orderDevice(), [] );
 				setMosaic( orderDevice(), '' );
+				setCuts( orderDevice(), '' );
 				setByHand( orderDevice(), false );
 				updatePreview();
 			} );
@@ -2129,8 +2228,13 @@
 					} ) );
 					setByHand( data.device, true );
 				} else if ( data.wpSwiper === 'collage-mosaic' && typeof data.mosaic === 'string' && /^[VH0-9.,[\]]{1,4000}$/.test( data.mosaic ) ) {
-					// Checked again when saved (WP_Swiper_Settings::sanitize_mosaic()).
-					setMosaic( data.device, data.mosaic );
+					// Checked again when saved (WP_Swiper_Settings::sanitize_mosaic(),
+					// sanitize_template_cuts()): a template's sizes apart from Random mosaic's.
+					if ( TEMPLATES.indexOf( data.template ) !== -1 ) {
+						setCuts( data.device, data.template + ':' + data.mosaic );
+					} else {
+						setMosaic( data.device, data.mosaic );
+					}
 					setByHand( data.device, true );
 				}
 			} );

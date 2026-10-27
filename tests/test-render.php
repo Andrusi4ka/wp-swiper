@@ -215,12 +215,42 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		}
 	}
 
-	public function test_captions_keep_their_styles_only_and_tag_whitelisted() {
+	public function test_captions_keep_their_styles_only_and_their_lines_tags() {
+		// No Tag on the Caption page any more: each line has its own.
+		$this->assertArrayNotHasKey( 'caption_tag', WP_Swiper_Settings::fields() );
+
 		$html = $this->render( array( 'caption_tag' => 'script' ), $this->slides( 1, array( 'caption' => '<b>Bold</b> & co<br>line <a href="https://example.com" onclick="x()">two</a><img src=x onerror=alert(1)>' ) ) );
 		$this->assertStringContainsString( '<div class="wp-swiper__caption-text"><b>Bold</b> &amp; co<br>line two</div>', $html );
 
+		// Its lines: paragraphs and headings of their own, aligned.
+		$own = $this->render( array(), $this->slides( 1, array( 'caption' => '<h2 style="text-align: center">Title</h2><p>Sub</p>' ) ) );
+		$this->assertStringContainsString( '<div class="wp-swiper__caption-text"><h2 style="text-align: center">Title</h2><p>Sub</p></div>', $own );
+
+		// Saved before with the slider's Tag (until 2.8): in that tag still,
+		// but not around lines of its own.
 		$h2 = $this->render( array( 'caption_tag' => 'h2' ), $this->slides( 1, array( 'caption' => 'Title' ) ) );
-		$this->assertStringContainsString( '<h2 class="wp-swiper__caption-text">Title</h2>', $h2 );
+		$this->assertStringContainsString( '<div class="wp-swiper__caption-text"><h2>Title</h2></div>', $h2 );
+		$own = $this->render( array( 'caption_tag' => 'h2' ), $this->slides( 1, array( 'caption' => '<p>Own</p>' ) ) );
+		$this->assertStringContainsString( '<div class="wp-swiper__caption-text"><p>Own</p></div>', $own );
+		$this->assertSame( 'h2', WP_Swiper_Settings::legacy_caption_tag( array( 'caption_tag' => 'h2' ) ) );
+		$this->assertSame( 'div', WP_Swiper_Settings::legacy_caption_tag( array( 'caption_tag' => 'script' ) ) );
+		$this->assertSame( 'div', WP_Swiper_Settings::legacy_caption_tag( array() ) );
+	}
+
+	public function test_no_captions_as_a_background() {
+		$slides = $this->slides( 2, array( 'caption' => '<p>Over the photo</p>' ) );
+		$this->assertStringContainsString( 'wp-swiper__caption-text', $this->render( array(), $slides ) );
+
+		// Behind a block's content: neither captions nor descriptions.
+		foreach ( array( 'slide', 'fade', 'collage' ) as $effect ) {
+			$settings = array( 'effect' => $effect, 'background' => true, 'background_class' => 'hero' );
+			$html     = $this->render( $settings, $slides );
+			$this->assertStringNotContainsString( 'wp-swiper__caption', $html, $effect );
+			$this->assertFalse( WP_Swiper_Settings::can_caption( $settings ), $effect );
+			$this->assertFalse( WP_Swiper_Settings::can_describe( array( 'direction' => 'horizontal' ) + $settings ), $effect );
+		}
+		// "Use as background" left on with an effect that cannot be one: captions shown.
+		$this->assertTrue( WP_Swiper_Settings::can_caption( array( 'effect' => 'cube', 'background' => true ) ) );
 	}
 
 	public function test_no_caption_without_text() {
@@ -799,6 +829,12 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 	public function test_collage_config_has_the_mosaic_per_device() {
 		$config = $this->config( $this->render( array( 'effect' => 'collage', 'collage_layout' => 'random', 'collage_mosaic_tablet' => 'H0.3[1,0]' ) ), 'data-wp-swiper-collage' );
 		$this->assertSame( array( 'desktop' => '', 'tablet' => 'H0.3[1,0]', 'mobile' => 'H0.3[1,0]' ), $config['mosaic'] );
+	}
+
+	public function test_collage_config_has_the_template_sizes_per_device() {
+		$config = $this->config( $this->render( array( 'effect' => 'collage', 'collage_layout' => 'feature-left', 'collage_cuts' => 'feature-left:V0.5[0,H0.3[1,2]]', 'collage_cuts_mobile' => 'nope' ) ), 'data-wp-swiper-collage' );
+		// Tablet: the desktop's; checked again (mobile's is not one: the tablet's).
+		$this->assertSame( array( 'desktop' => 'feature-left:V0.5[0,H0.3[1,2]]', 'tablet' => 'feature-left:V0.5[0,H0.3[1,2]]', 'mobile' => '' ), $config['cuts'] );
 	}
 
 	public function test_collage_ids_follow_the_slides_shown() {

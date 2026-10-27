@@ -31,6 +31,13 @@ class WP_Swiper_Settings {
 	const ZOOM_EFFECTS = array( 'slide', 'fade', 'cube', 'flip', 'creative', 'cards', 'thumbs' );
 
 	/**
+	 * The collage's template Styles: places of fixed proportions (frontend.js
+	 * COLLAGE_TEMPLATES), resized in the preview by dragging the lines between
+	 * them (collage_cuts).
+	 */
+	const COLLAGE_TEMPLATES = array( 'feature-left', 'feature-center', 'mosaic', 'banner' );
+
+	/**
 	 * Field definitions grouped into sections. `effects`: the effects a field
 	 * applies to (the editor hides it for the others); none = all effects.
 	 *
@@ -483,6 +490,8 @@ class WP_Swiper_Settings {
 				'effects'         => array( 'collage' ),
 				'label'           => __( 'Style', 'wp-swiper' ),
 				'type'            => 'select',
+				// Shown as icons, assets/images/collage/{style}.svg (admin.js keeps the select behind them).
+				'tiles'           => 'collage',
 				'responsive'      => true,
 				'default'         => 'feature-center',
 				'device_defaults' => array( 'mobile' => 'masonry' ),
@@ -532,6 +541,20 @@ class WP_Swiper_Settings {
 				'effects'    => array( 'collage' ),
 				'label'      => __( 'Mosaic sizes', 'wp-swiper' ),
 				'type'       => 'mosaic',
+				'responsive' => true,
+				'inline_in'  => 'collage_order',
+				'default'    => '',
+			),
+			// A template's sizes, as set by dragging the lines between its photos
+			// in the preview, per device: the template and its cuts (see
+			// sanitize_template_cuts()); used while the device's Style is that
+			// template, else its own proportions. '' on tablet and mobile: the
+			// larger screen's. Kept inside the Order field, whose Reset clears it too.
+			'collage_cuts'          => array(
+				'section'    => 'layout',
+				'effects'    => array( 'collage' ),
+				'label'      => __( 'Template sizes', 'wp-swiper' ),
+				'type'       => 'cuts',
 				'responsive' => true,
 				'inline_in'  => 'collage_order',
 				'default'    => '',
@@ -833,17 +856,15 @@ class WP_Swiper_Settings {
 				'default' => '#000000',
 			),
 			'image_fit'             => array(
-				'section'   => 'layout',
-				'label'     => __( 'Image fit', 'wp-swiper' ),
-				'type'      => 'select',
-				// Shown as a row of buttons, like Direction (admin.js keeps the select behind them).
-				'segmented' => true,
-				'default'   => 'cover',
-				'choices'   => array(
+				'section' => 'layout',
+				'label'   => __( 'Image fit', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'cover',
+				'choices' => array(
 					'cover'   => __( 'Cover', 'wp-swiper' ),
 					'contain' => __( 'Contain', 'wp-swiper' ),
 				),
-				'help'      => __( 'Cover: the image fills the slide, cropped where its proportions differ. Contain: the whole image is shown, with empty space beside it where its proportions differ.', 'wp-swiper' ),
+				'help'    => __( 'Cover: the image fills the slide, cropped where its proportions differ. Contain: the whole image is shown, with empty space beside it where its proportions differ.', 'wp-swiper' ),
 			),
 			// Wider active slide layout: Slide effect with Image fit "Cover" only.
 			'expand_active'         => array(
@@ -1422,23 +1443,9 @@ class WP_Swiper_Settings {
 				'step'    => 5,
 			),
 
-			// Caption text (all slides of the slider).
-			'caption_tag'           => array(
-				'section' => 'caption',
-				'label'   => __( 'Tag', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => 'div',
-				'choices' => array(
-					'div' => 'div',
-					'p'   => 'p',
-					'h1'  => 'h1',
-					'h2'  => 'h2',
-					'h3'  => 'h3',
-					'h4'  => 'h4',
-					'h5'  => 'h5',
-					'h6'  => 'h6',
-				),
-			),
+			// No Tag here: each line of a caption is a paragraph or a heading of its
+			// own (the Slide info window's Format); see legacy_caption_tag() for
+			// the captions saved with the slider's one.
 			// No Font size here: each slide's caption has its own (Slide info window);
 			// see legacy_font_sizes() for the sliders saved with one.
 			// No Font weight either: each slide's caption has its own; see
@@ -1644,7 +1651,7 @@ class WP_Swiper_Settings {
 				'label'   => __( 'Use as background', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => false,
-				'help'    => __( 'The slider fills the block with the class below, behind its content, and plays on its own: Autoplay and Infinite loop are on; arrows, pagination, keyboard, slide links, the lightbox and Height are not used, the images are cropped to fill.', 'wp-swiper' ),
+				'help'    => __( 'The slider fills the block with the class below, behind its content, and plays on its own: Autoplay and Infinite loop are on; arrows, pagination, keyboard, slide links, captions, descriptions, the lightbox and Height are not used, the images are cropped to fill.', 'wp-swiper' ),
 			),
 			'background_class'      => array(
 				'section'     => 'advanced',
@@ -1708,6 +1715,17 @@ class WP_Swiper_Settings {
 	 */
 	public static function is_background( $settings ) {
 		return ! empty( $settings['background'] ) && in_array( $settings['effect'], self::BACKGROUND_EFFECTS, true );
+	}
+
+	/**
+	 * Whether the slider shows its slides' captions: not as a background
+	 * (behind a block's content, where they would get in its way).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function can_caption( $settings ) {
+		return ! self::is_background( $settings );
 	}
 
 	/**
@@ -1955,15 +1973,21 @@ class WP_Swiper_Settings {
 	}
 
 	/**
-	 * The markup a caption may have: bold, italic, underline (a span the
-	 * editor styles) and line breaks. It sits over the image in one tag of
-	 * its own (Caption page), letting clicks through to the slide: no blocks,
-	 * no links.
+	 * The markup a caption may have: paragraphs and headings (aligned), bold,
+	 * italic, underline (a span the editor styles) and line breaks. It sits
+	 * over the image, letting clicks through to the slide: no links.
 	 *
 	 * @return array wp_kses() allowed tags.
 	 */
 	public static function caption_tags() {
 		return array(
+			'p'      => array( 'style' => true ),
+			'h1'     => array( 'style' => true ),
+			'h2'     => array( 'style' => true ),
+			'h3'     => array( 'style' => true ),
+			'h4'     => array( 'style' => true ),
+			'h5'     => array( 'style' => true ),
+			'h6'     => array( 'style' => true ),
 			'br'     => array(),
 			'strong' => array(),
 			'b'      => array(),
@@ -2035,21 +2059,60 @@ class WP_Swiper_Settings {
 	 * @return string
 	 */
 	public static function sanitize_caption( $html ) {
-		// A line the editor aligned (it puts each line in a block of its own):
-		// a span shown as a block, with that alignment only.
+		// Paragraphs and headings (the editor's Format) keep their alignment,
+		// and no other attribute.
 		$html = preg_replace_callback(
-			'#<(p|div|h[1-6]|li|blockquote)\b([^>]*)>(.*?)</\1>#is',
+			'#<(p|h[1-6])\b([^>]*)>#i',
+			function ( $match ) {
+				$align = self::text_align( $match[2] );
+				return '<' . $match[1] . ( '' !== $align ? ' style="text-align: ' . $align . '"' : '' ) . '>';
+			},
+			(string) $html
+		);
+		// Other blocks (the editor before it had a Format, text pasted in): an
+		// aligned one a span shown as a block, with that alignment only (as
+		// saved until 2.8), the others lines, so their words do not run together.
+		$html = preg_replace_callback(
+			'#<(div|li|blockquote)\b([^>]*)>(.*?)</\1>#is',
 			function ( $match ) {
 				$align = self::text_align( $match[2] );
 				return '' !== $align ? '<span style="display: block; text-align: ' . $align . '">' . $match[3] . '</span>' : $match[0];
 			},
-			(string) $html
+			$html
 		);
-		// Paragraphs and other blocks (text pasted in) become lines, so their
-		// words do not run together once the blocks are gone.
-		$html = preg_replace( '#\s*</(?:p|div|h[1-6]|li|blockquote)>\s*#i', '<br>', (string) $html );
+		$html = preg_replace( '#\s*</(?:div|li|blockquote)>\s*#i', '<br>', $html );
 		$html = self::sanitize_rich_text( $html, self::caption_tags() );
 		return preg_replace( '#^(?:\s*<br\s*/?>)+|(?:<br\s*/?>\s*)+$#i', '', $html );
+	}
+
+	/**
+	 * The tag a slider's captions were in while it had one for all (until
+	 * 2.8, the Caption page's Tag): for the captions saved then, without
+	 * paragraphs or headings of their own. "div" for none.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string div | p | h1–h6
+	 */
+	public static function legacy_caption_tag( $settings ) {
+		$tag = isset( $settings['caption_tag'] ) ? (string) $settings['caption_tag'] : '';
+		return in_array( $tag, array( 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' ), true ) ? $tag : 'div';
+	}
+
+	/**
+	 * A caption (sanitize_caption()) as shown: its own paragraphs and
+	 * headings; one saved before it had them in the slider's old tag
+	 * (legacy_caption_tag()), none for "div".
+	 *
+	 * @param string $caption  Sanitized caption.
+	 * @param array  $settings Slider settings.
+	 * @return string
+	 */
+	public static function caption_markup( $caption, $settings ) {
+		if ( preg_match( '#<(?:p|h[1-6])\b#i', $caption ) ) {
+			return $caption;
+		}
+		$tag = self::legacy_caption_tag( $settings );
+		return 'div' === $tag ? $caption : '<' . $tag . '>' . $caption . '</' . $tag . '>';
 	}
 
 	/**
@@ -2309,6 +2372,23 @@ class WP_Swiper_Settings {
 	public static function sanitize_order( $value ) {
 		$ids = array_filter( array_map( 'absint', preg_split( '/[\s,]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY ) ) );
 		return implode( ',', array_slice( array_values( array_unique( $ids ) ), 0, 500 ) );
+	}
+
+	/**
+	 * A collage template's sizes as stored: the template (one of
+	 * COLLAGE_TEMPLATES), a colon and its cuts as a mosaic's
+	 * (sanitize_mosaic()), "feature-left:V0.7[0,H0.5[1,2]]". frontend.js uses
+	 * them while they have the template's places.
+	 *
+	 * @param string $value Raw input.
+	 * @return string As above; '' when it is not one.
+	 */
+	public static function sanitize_template_cuts( $value ) {
+		if ( ! preg_match( '/^\s*([a-z-]+):(.+)$/s', (string) $value, $match ) || ! in_array( $match[1], self::COLLAGE_TEMPLATES, true ) ) {
+			return '';
+		}
+		$cuts = self::sanitize_mosaic( $match[2] );
+		return '' === $cuts ? '' : $match[1] . ':' . $cuts;
 	}
 
 	/**
@@ -3119,6 +3199,8 @@ class WP_Swiper_Settings {
 					$value = self::sanitize_order( $value );
 				} elseif ( 'mosaic' === $field['type'] ) {
 					$value = self::sanitize_mosaic( $value );
+				} elseif ( 'cuts' === $field['type'] ) {
+					$value = self::sanitize_template_cuts( $value );
 				} elseif ( '' !== $value ) {
 					$value = 'float' === $field['type'] ? round( (float) $value, 2 ) : (int) $value;
 					$value = max( $field['min'], min( $field['max'], $value ) );
@@ -3181,6 +3263,10 @@ class WP_Swiper_Settings {
 
 				case 'mosaic': // Random mosaic cuts, "V0.6[0,H0.5[1,2]]"; '' = none.
 					$clean[ $key ] = self::sanitize_mosaic( null === $value ? '' : (string) $value );
+					break;
+
+				case 'cuts': // A template's sizes, "feature-left:V0.7[0,H0.5[1,2]]"; '' = none.
+					$clean[ $key ] = self::sanitize_template_cuts( null === $value ? '' : (string) $value );
 					break;
 
 				case 'image': // An image of the media library (its ID); 0 = none.

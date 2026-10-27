@@ -116,10 +116,15 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$slides[0]['caption'] = 'Hannah <b>x</b><script>y</script>';
 		$html                 = $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3', 'caption_shadow' => true, 'caption_bg_style' => 'solid', 'caption_bg_opacity' => 40, 'caption_font' => 'custom', 'caption_font_size_mobile' => 12 ), $slides );
 
-		// In the first photo only, in its tag, sanitized as a slider's.
+		// In the first photo only, sanitized as a slider's; saved before in the
+		// slider's Tag (until 2.8): in that tag still.
 		$this->assertSame( 1, substr_count( $html, 'class="wp-swiper-art__caption"' ) );
 		$this->assertStringContainsString( '<div class="wp-swiper-art__photo" data-real="0">', $html );
-		$this->assertStringContainsString( '<div class="wp-swiper-art__caption"><h3 class="wp-swiper-art__caption-text">Hannah <b>x</b>y</h3></div></div>', $html );
+		$this->assertStringContainsString( '<div class="wp-swiper-art__caption"><div class="wp-swiper-art__caption-text"><h3>Hannah <b>x</b>y</h3></div></div></div>', $html );
+		// Lines of its own: as they are.
+		$own                  = $slides;
+		$own[0]['caption']    = '<h2 style="text-align: right">Own</h2>';
+		$this->assertStringContainsString( '<div class="wp-swiper-art__caption-text"><h2 style="text-align: right">Own</h2></div>', $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3' ), $own ) );
 		// Its look from the Caption page.
 		$this->assertStringContainsString( 'wp-swiper-art--caption-solid wp-swiper-art--caption-shadow', $html );
 		$this->assertStringContainsString( '--wp-swiper-caption-size-mobile:12px', $html );
@@ -127,12 +132,12 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 
 		// A caption's own font size (the Slide info window), on itself.
 		$slides[0]['caption_size'] = '30,24,';
-		$this->assertStringContainsString( '<div class="wp-swiper-art__caption" style="--wp-swiper-caption-size:30px;--wp-swiper-caption-size-tablet:24px"><h3', $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3' ), $slides ) );
+		$this->assertStringContainsString( '<div class="wp-swiper-art__caption" style="--wp-swiper-caption-size:30px;--wp-swiper-caption-size-tablet:24px"><div class="wp-swiper-art__caption-text"><h3', $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3' ), $slides ) );
 		unset( $slides[0]['caption_size'] );
 
 		// And its own color.
 		$slides[0]['caption_color'] = 'rgba(255,255,0,0.8)';
-		$this->assertStringContainsString( '<div class="wp-swiper-art__caption" style="--wp-swiper-caption-color:rgba(255,255,0,0.8)"><h3', $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3' ), $slides ) );
+		$this->assertStringContainsString( '<div class="wp-swiper-art__caption" style="--wp-swiper-caption-color:rgba(255,255,0,0.8)"><div class="wp-swiper-art__caption-text"><h3', $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3' ), $slides ) );
 		unset( $slides[0]['caption_color'] );
 
 		// No background: no colour for it.

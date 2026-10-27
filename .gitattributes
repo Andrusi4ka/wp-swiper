@@ -15,3 +15,6 @@
 /composer.json  export-ignore
 /composer.lock  export-ignore
 /phpunit.xml.dist export-ignore
+/CLAUDE.md      export-ignore
+# An icon kept for later (not used yet).
+/random.svg     export-ignore

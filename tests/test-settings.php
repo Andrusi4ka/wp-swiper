@@ -399,7 +399,7 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 			'Plain<br><span style="display: block;text-align: center">Center <span style="color: #e03e2d">red</span></span>',
 			WP_Swiper_Settings::sanitize_caption( 'Plain<br><div style="text-align: center;" onclick="x()">Center <span style="color: #e03e2d;">red</span></div>' )
 		);
-		$this->assertSame( 'pasted<br>two', WP_Swiper_Settings::sanitize_caption( '<p>pasted</p><p>two</p>' ) );
+		$this->assertSame( '<p>pasted</p><p>two</p>', WP_Swiper_Settings::sanitize_caption( '<p>pasted</p><p>two</p>' ) );
 		// Headings, without attributes.
 		$this->assertSame(
 			'<h1>One</h1><h2>Two</h2><h3>Three</h3><h4>Four</h4><h5>Five</h5><h6>Six</h6>',
@@ -414,14 +414,21 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 			'<strong>Big</strong> <em>and</em> <span style="text-decoration: underline">me</span><br>next line',
 			WP_Swiper_Settings::sanitize_caption( ' <strong>Big</strong> <em>and</em> <span style="text-decoration: underline;">me</span><br>next line ' )
 		);
-		// Blocks become lines (no words run together), links and scripts go, their text stays.
-		$this->assertSame( 'One<br>Two<br>link', WP_Swiper_Settings::sanitize_caption( '<p>One</p><h2>Two</h2><a href="https://example.com">link</a>' ) );
+		// Paragraphs and headings (the editor's Format) with their alignment only;
+		// links and scripts go, their text stays.
+		$this->assertSame( '<p>One</p><h2>Two</h2>link', WP_Swiper_Settings::sanitize_caption( '<p>One</p><h2>Two</h2><a href="https://example.com">link</a>' ) );
+		$this->assertSame(
+			'<p style="text-align: right">R</p><h3 style="text-align: center">C</h3><h6>Six</h6>',
+			WP_Swiper_Settings::sanitize_caption( '<p class="x" style="color:red; text-align: right" onclick="x()">R</p><h3 style="text-align:center">C</h3><h6 style="position: fixed">Six</h6>' )
+		);
 		$this->assertSame( 'Hi alert(1)', WP_Swiper_Settings::sanitize_caption( 'Hi <script>alert(1)</script>' ) );
+		// Other blocks (pasted) become lines, so no words run together.
+		$this->assertSame( 'a<br>b', WP_Swiper_Settings::sanitize_caption( '<div>a</div><div>b</div>' ) );
 		// No line breaks around the text.
-		$this->assertSame( 'Text', WP_Swiper_Settings::sanitize_caption( '<br><p>Text</p><br />' ) );
+		$this->assertSame( '<p>Text</p>', WP_Swiper_Settings::sanitize_caption( '<br><p>Text</p><br />' ) );
 		// A plain caption saved before: kept, its "&" as HTML.
 		$this->assertSame( 'Salt &amp; pepper', WP_Swiper_Settings::sanitize_caption( 'Salt & pepper' ) );
-		foreach ( array( '', '<br>', '<p>&nbsp;</p>', '<strong> </strong>' ) as $empty ) {
+		foreach ( array( '', '<br>', '<p>&nbsp;</p>', '<h2></h2>', '<strong> </strong>' ) as $empty ) {
 			$this->assertSame( '', WP_Swiper_Settings::sanitize_caption( $empty ), $empty );
 		}
 	}
@@ -531,6 +538,23 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 			'markup'            => array( 'V0.5[0,<b>1</b>]', '' ),
 			'empty'             => array( '', '' ),
 		);
+	}
+
+	public function test_sanitize_template_cuts() {
+		$this->assertSame( array( 'feature-left', 'feature-center', 'mosaic', 'banner' ), WP_Swiper_Settings::COLLAGE_TEMPLATES );
+		$this->assertSame( 'feature-left:V0.7[0,H0.5[1,2]]', WP_Swiper_Settings::sanitize_template_cuts( 'feature-left:V0.7[0,H0.5[1,2]]' ) );
+		$this->assertSame( 'banner:H0.6[0,V0.3333[1,V0.5[2,3]]]', WP_Swiper_Settings::sanitize_template_cuts( ' banner:H0.6[0, V0.33333[1,V0.5[2,3]]]' ) );
+		// Not a template, not cuts, or no template at all: none.
+		foreach ( array( '', 'random:V0.5[0,1]', 'grid:V0.5[0,1]', 'feature-left:', 'feature-left:bad', 'V0.5[0,1]', 'feature-left:V0.5[0,0]' ) as $bad ) {
+			$this->assertSame( '', WP_Swiper_Settings::sanitize_template_cuts( $bad ), $bad );
+		}
+	}
+
+	public function test_sanitize_keeps_template_cuts_per_device() {
+		$clean = WP_Swiper_Settings::sanitize( array( 'collage_cuts' => 'mosaic:H0.5[V0.6[0,1],V0.3[2,V0.5[3,4]]]', 'collage_cuts_tablet' => 'random:V0.5[0,1]', 'collage_cuts_mobile' => '' ) );
+		$this->assertSame( 'mosaic:H0.5[V0.6[0,1],V0.3[2,V0.5[3,4]]]', $clean['collage_cuts'] );
+		$this->assertSame( '', $clean['collage_cuts_tablet'] );
+		$this->assertSame( '', $clean['collage_cuts_mobile'] );
 	}
 
 	public function test_sanitize_keeps_a_mosaic_per_device() {
