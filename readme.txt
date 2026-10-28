@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.10.0
+Stable tag: 2.11.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,11 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.11.0 =
+* Collage, Scattered: a photo can also be moved to the end of any arm. While it is dragged in the preview, dashed frames show where it can go (along the arm or outwards; next to the middle photo in an empty arm); over one, the collage shows itself as it would be. Dropped there, the photo keeps its size and the photos after it in its old arm close up. The middle photo still only swaps.
+* Caption: a Font size for every slide's caption, per device (empty: 16px). A slide with a size of its own (its Edit window) keeps it, on the smaller screens too; the Edit window shows the size that applies. A slider saved with one size for all its captions (until 2.8) finds it here.
+* Preview, Collage and Art: Undo and Redo buttons left of the devices (Ctrl+Z, Ctrl+Shift+Z in the preview) for what was done there — photos swapped or moved, sizes dragged — and for Shuffle and Reset. Per device; the preview changes back at once.
 
 = 2.10.0 =
 * Art: a new Style, Ring + text — the ring of photos with no photo in the middle. With Content in the middle on, the circle holds an image and/or text from WordPress's editor (in the theme's colour, single words coloured as in descriptions); its image size, font size and padding per device, and a background colour with opacity (none by default). Text too long for the circle gets smaller to fit.
