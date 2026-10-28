@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.9.2
+Stable tag: 2.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,11 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.10.0 =
+* Art: a new Style, Ring + text — the ring of photos with no photo in the middle. With Content in the middle on, the circle holds an image and/or text from WordPress's editor (in the theme's colour, single words coloured as in descriptions); its image size, font size and padding per device, and a background colour with opacity (none by default). Text too long for the circle gets smaller to fit.
+* Art: a new Style, Grid + circle — a grid like the Collage's, its photos and columns per device, the last row's photos in the middle of it, with a photo circle over the middle of the grid that cuts the photos around it. As wide as the column; its height per device in px, or Auto for square photos. Drag the circle's edge in the preview to resize it.
+* Art: the Image border is in the Look block now, right over the Image shadow.
 
 = 2.9.2 =
 * Faster pages: a Collage's script and styles load only where a collage is shown, so pages with sliders load a third less script.
