@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.13.0
+Stable tag: 3.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,15 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.0.0 =
+* Collage: a new Style, Freeform — the photos at random places and sizes, a Gap apart and never over each other. In the preview drag a photo anywhere (it stops a Gap away from the others and snaps to their edges), drag its corners or edges to resize it, drop it on another photo to swap the two, or take its place out with its ×. Everything is in shares of the Height, so a new Height scales it all, gaps too. Shuffle gives a new layout, Reset the first one.
+* Art, SVG shape: What changes has "One photo through all windows" — the shape becomes a stencil over one photo, its caption in the middle of the shape; the next photo comes into all windows at once.
+* Art, SVG shape: Appearance — with all windows changing at once, they can show the new photo together, at random, left to right, top to bottom, diagonally or from the middle out, over the Fade speed; on the first show too.
+* Art, SVG shape: a file of its own for tablet and mobile (empty: the larger screen's).
+* Art, SVG shape: up to 100 shapes (was 24); more are said under the field.
+* Fixed: in an SVG shape with more than 8 windows, only the first 8 changed photos; a new photo could be lost when changes came close together.
+* Security: alt texts and video titles with quotes are shown safely in the lightbox; SVG files are checked more strictly.
 
 = 2.13.0 =
 * Art: a new Style, SVG shape — upload an SVG file and each of its shapes is a window a photo shows through: a heart in two halves, an organic shape with a circle, shapes lying over each other. Only the drawing's shapes are kept (no file in the media library, nothing of it on the page); objects without a fill, hidden ones and text are left out, and the later ones lie on top, as drawn. The main window is the shape named "main" in the drawing, else the largest; then those named 2, 3..., then the larger ones. The empty margins of the file are left out, unless kept. What changes: one window at random, the windows in turn, or all of them at once (as a slider). A click on any window opens its photo in the lightbox.
