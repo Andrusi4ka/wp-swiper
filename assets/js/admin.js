@@ -2357,7 +2357,7 @@
 			 * (wpSwiperRestoreCollage / wpSwiperRestoreArt in its frame). Until the
 			 * page is left: only the values are saved.
 			 */
-			var HISTORY_FIELDS = [ 'collage_order', 'collage_mosaic', 'collage_cuts', 'collage_manual', 'art_order', 'art_ring_center' ];
+			var HISTORY_FIELDS = [ 'collage_order', 'collage_mosaic', 'collage_cuts', 'collage_manual', 'collage_count', 'art_order', 'art_ring_center' ];
 			var HISTORY_MAX = 50;
 			var $history = $preview.find( '.wp-swiper-preview__history' );
 			var $undo = $history.find( '.wp-swiper-preview__undo' );
@@ -2440,7 +2440,8 @@
 							device: device,
 							order: idsOf( resolved( 'collage_order', device ) ),
 							mosaic: resolved( 'collage_mosaic', device ),
-							cuts: resolved( 'collage_cuts', device )
+							cuts: resolved( 'collage_cuts', device ),
+							count: Number( resolved( 'collage_count', device ) ) || 0
 						} ) || done;
 					}
 					if ( win && win.wpSwiperRestoreArt ) {
@@ -2471,6 +2472,7 @@
 					input( name, device ).val( values[ name ] );
 				} );
 				syncResponsive( $order );
+				syncResponsive( field( 'collage_count' ) );
 				syncOrderButtons();
 				restorePreview( device );
 				syncHistory();
@@ -2541,8 +2543,13 @@
 				if ( e.source !== previewFrame.contentWindow || DEVICES.indexOf( data.device ) === -1 ) {
 					return;
 				}
-				if ( /^collage-(order|mosaic|scatter)$/.test( data.wpSwiper ) ) {
+				if ( /^collage-(order|mosaic|scatter|count)$/.test( data.wpSwiper ) ) {
 					record( data.device );
+				}
+				// Scattered: a place taken out there, one photo fewer on screen on that device.
+				if ( data.wpSwiper === 'collage-count' && data.count >= 2 && data.count <= 30 ) {
+					input( 'collage_count', data.device ).val( Math.round( data.count ) );
+					syncResponsive( field( 'collage_count' ) );
 				}
 				if ( data.wpSwiper === 'collage-order' && Array.isArray( data.ids ) ) {
 					setOrder( data.device, data.ids.map( Number ).filter( function ( id ) {

@@ -226,6 +226,8 @@
 	 * middle one, then T's, R's, B's and L's.
 	 */
 	var SCATTER_ARMS = 'TRBL';
+	// The fewest photos on screen (the Photos on screen field's min).
+	var COLLAGE_MIN_COUNT = 2;
 	// Scattered: how many layouts are tried for one shuffle (the one filling its block most kept).
 	var SCATTER_TRIES = 80;
 
@@ -322,6 +324,36 @@
 	}
 
 	/**
+	 * Scattered: place `from` taken out of its arm (the layout changed). The
+	 * places after it in the arm close up: the next one steps from the one
+	 * before it, or touches the middle photo if it is first now.
+	 *
+	 * @param {Object} layout See scatterRects().
+	 * @param {number} from   The place (not 0, the middle one).
+	 * @return {Object|null} The place taken; null for the middle one or none.
+	 */
+	function scatterTake( layout, from ) {
+		if ( from < 1 ) {
+			return null;
+		}
+		var index = 1;
+		var place = null;
+		layout.arms.some( function ( list ) {
+			if ( from < index + list.length ) {
+				var k = from - index;
+				place = list.splice( k, 1 )[ 0 ];
+				if ( ! k && list.length ) {
+					delete list[ 0 ].step;
+				}
+				return true;
+			}
+			index += list.length;
+			return false;
+		} );
+		return place;
+	}
+
+	/**
 	 * Scattered: the layout with place `from` taken out of its arm and put
 	 * at the end of arm `arm`, a step `step` ("a" or "o") from the last
 	 * photo there; into an empty arm, next to the middle photo. The places
@@ -338,24 +370,8 @@
 	 *                       would change.
 	 */
 	function scatterMove( layout, from, arm, step ) {
-		if ( from < 1 ) {
-			return null;
-		}
 		var copy = scatterCopy( layout );
-		var index = 1;
-		var place = null;
-		copy.arms.some( function ( list ) {
-			if ( from < index + list.length ) {
-				var k = from - index;
-				place = list.splice( k, 1 )[ 0 ];
-				if ( ! k && list.length ) {
-					delete list[ 0 ].step;
-				}
-				return true;
-			}
-			index += list.length;
-			return false;
-		} );
+		var place = scatterTake( copy, from );
 		if ( ! place ) {
 			return null;
 		}
@@ -1204,6 +1220,10 @@
 				config.order[ current ] = state.order && state.order.length ? state.order : false;
 				config.mosaic[ current ] = state.mosaic || '';
 				config.cuts[ current ] = state.cuts || '';
+				// Photos on screen (a place of Scattered taken out has one fewer).
+				if ( state.count > 0 ) {
+					config.count[ current ] = state.count;
+				}
 				build();
 				schedule();
 			},
@@ -1331,6 +1351,39 @@
 					}
 					place();
 					return move ? { from: from, index: move.index } : null;
+				},
+				// Whether place `index` can be taken out (removePlace()): not the
+				// middle one, nor below the fewest photos on screen.
+				removable: function ( index ) {
+					return index > 0 && index < cells.length && cells.length > COLLAGE_MIN_COUNT;
+				},
+				/*
+				 * Place `index` taken out of the layout for this device (the rest
+				 * as it is; the places after it in its arm close up), one photo
+				 * fewer on screen, and its photo to the end of the order (it waits
+				 * with the others; the slide stays). Returns what to store: the
+				 * layout, the number of photos and the order (slide indexes); null
+				 * when it cannot.
+				 */
+				removePlace: function ( index ) {
+					if ( ! scatter || ! this.removable( index ) ) {
+						return null;
+					}
+					var layout = scatterCopy( scatter );
+					scatterTake( layout, index );
+					var list = cells.map( function ( cell ) {
+						return cell.wpReal;
+					} ).concat( queue );
+					list.push( list.splice( index, 1 )[ 0 ] );
+					var text = serializeScatter( layout );
+					config.cuts = config.cuts || {};
+					config.cuts[ current ] = 'scatter:' + text;
+					config.order = config.order || {};
+					config.order[ current ] = list;
+					config.count[ current ] = cells.length - 1;
+					build();
+					schedule();
+					return { layout: text, count: cells.length, order: list };
 				},
 				serialize: function () {
 					return scatter ? serializeScatter( scatter ) : '';

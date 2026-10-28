@@ -422,7 +422,8 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__devices' ), strpos( $html, 'wp-swiper-preview__history' ) );
 		$this->assertGreaterThan( $button, strpos( $html, 'wp-swiper-preview__history' ) );
 		// Scattered: resizing by the edges, and moving a photo to a dashed frame.
-		$this->assertSame( 2, substr_count( $html, '<p class="description wp-swiper-preview__hint" data-effect="scatter" hidden>' ) );
+		$this->assertSame( 3, substr_count( $html, '<p class="description wp-swiper-preview__hint" data-effect="scatter" hidden>' ) );
+		$this->assertStringContainsString( 'take its place out of the collage on this device; the slide stays.', $html );
 		$this->assertStringContainsString( 'Drop a photo on a dashed frame to move it to the end of that arm.', $html );
 	}
 

@@ -98,6 +98,11 @@ class WP_Swiper_Preview {
 					<span class="dashicons dashicons-move" aria-hidden="true"></span>
 					<?php esc_html_e( 'Drop a photo on a dashed frame to move it to the end of that arm.', 'wp-swiper' ); ?>
 				</p>
+				<?php // Scattered only too: a photo's × takes its place out of the collage (preview-collage.js). ?>
+				<p class="description wp-swiper-preview__hint" data-effect="scatter" hidden>
+					<span class="dashicons dashicons-dismiss" aria-hidden="true"></span>
+					<?php esc_html_e( 'Click × on a photo to take its place out of the collage on this device; the slide stays.', 'wp-swiper' ); ?>
+				</p>
 				<div class="wp-swiper-preview__stage">
 					<iframe class="wp-swiper-preview__frame" name="wp-swiper-preview-<?php echo (int) $post->ID; ?>" title="<?php esc_attr_e( 'Slider preview', 'wp-swiper' ); ?>" src="about:blank"></iframe>
 				</div>
@@ -189,7 +194,8 @@ class WP_Swiper_Preview {
 	</div>
 	<?php wp_print_scripts( array( 'swiper', 'wp-swiper', 'wp-swiper-collage', 'wp-swiper-art' ) ); ?>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-dev.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-dev.js' ) ); ?>"></script>
-	<?php // Collage: a photo dragged onto another place swaps with it (the editor stores the order). ?>
+	<?php // Collage: a photo dragged onto another place swaps with it (the editor stores the order); its words. ?>
+	<script>window.wpSwiperPreviewI18n = <?php echo wp_json_encode( array( 'removePlace' => __( 'Remove this place from the collage (the slide stays)', 'wp-swiper' ) ) ); ?>;</script>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-collage.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-collage.js' ) ); ?>"></script>
 	<?php // Art: the same for its pieces, its own script (the editor stores its order apart). ?>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-art.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-art.js' ) ); ?>"></script>

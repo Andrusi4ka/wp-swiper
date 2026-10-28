@@ -195,7 +195,36 @@
 		drag = null;
 	}
 
+	/*
+	 * Scattered: a place taken out with its button (collage.js collage()
+	 * scatter.removePlace()): the rest of the layout as it is, one photo
+	 * fewer on screen on this device, its photo waiting with the others (the
+	 * slide stays). The editor stores the layout, the order and the number
+	 * (admin.js; Undo brings it back).
+	 */
+	document.addEventListener( 'click', function ( e ) {
+		var button = e.target.closest && e.target.closest( '.wp-swiper-collage__remove' );
+		if ( ! button ) {
+			return;
+		}
+		// Not a click on the collage (the lightbox).
+		e.preventDefault();
+		e.stopPropagation();
+		var api = button.wpApi;
+		var device = api.places().device;
+		var done = api.scatter.removePlace( button.wpIndex );
+		if ( ! done || ! window.parent || window.parent === window ) {
+			return;
+		}
+		window.parent.postMessage( { wpSwiper: 'collage-count', device: device, count: done.count }, window.location.origin );
+		store( api, device, done.order, done.layout );
+	}, true );
+
 	document.addEventListener( 'pointerdown', function ( e ) {
+		// The button that takes a place out is no photo to drag.
+		if ( e.target.closest && e.target.closest( '.wp-swiper-collage__remove' ) ) {
+			return;
+		}
 		var cell = e.button === 0 && e.target.closest( '.wp-swiper-collage__cell' );
 		var block = cell && cell.closest( '.wp-swiper-collage' );
 		var api = block && block.wpSwiperCollage;
@@ -327,6 +356,9 @@
 	 * editor stores it (admin.js: a message with the cuts).
 	 */
 	var HANDLE = 12; // The handle's thickness, px (at least the gap).
+	// Scattered's button that takes a place out: its size (preview-dev.css) and words.
+	var REMOVE_SIZE = 24;
+	var REMOVE_LABEL = ( window.wpSwiperPreviewI18n && window.wpSwiperPreviewI18n.removePlace ) || 'Remove this place from the collage';
 	var MIN_SHARE = 0.08;
 	var MIN_PART = 40; // px.
 	var resize = null;
@@ -356,8 +388,28 @@
 			grid.appendChild( handle );
 		} );
 
-		// Scattered: each photo's two outer edges (scatter below).
+		[].forEach.call( grid.querySelectorAll( ':scope > .wp-swiper-collage__remove' ), function ( node ) {
+			node.parentNode.removeChild( node );
+		} );
+
+		// Scattered: each photo's two outer edges (scatter below), and a button
+		// in its corner that takes its place out (not the middle one's).
 		if ( api.scatter && api.scatter.active() ) {
+			api.scatter.places().forEach( function ( place ) {
+				if ( ! api.scatter.removable( place.index ) ) {
+					return;
+				}
+				var button = document.createElement( 'button' );
+				button.type = 'button';
+				button.className = 'wp-swiper-collage__remove';
+				button.title = REMOVE_LABEL;
+				button.setAttribute( 'aria-label', REMOVE_LABEL );
+				button.style.left = ( place.left + place.width - REMOVE_SIZE - 6 ) + 'px';
+				button.style.top = ( place.top + 6 ) + 'px';
+				button.wpIndex = place.index;
+				button.wpApi = api;
+				grid.appendChild( button );
+			} );
 			api.scatter.places().forEach( function ( place ) {
 				place.edges.forEach( function ( side ) {
 					var vertical = side === 'left' || side === 'right';
@@ -548,7 +600,7 @@
 					}
 				}
 			} );
-			api.restore( { order: order, mosaic: state.mosaic, cuts: state.cuts } );
+			api.restore( { order: order, mosaic: state.mosaic, cuts: state.cuts, count: Number( state.count ) || 0 } );
 			done = true;
 		} );
 		return done;
