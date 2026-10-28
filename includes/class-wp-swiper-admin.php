@@ -81,6 +81,7 @@ class WP_Swiper_Admin {
 					/* translators: %s: file name. */
 					'shapeRead'     => __( '%s: read when the preview updates or the slider is saved.', 'wp-swiper' ),
 					'shapeNone'     => __( 'No shape yet: upload an SVG file.', 'wp-swiper' ),
+					'shapeInherit'  => __( 'As on the larger screen: upload a file for this one to change it.', 'wp-swiper' ),
 					'shapeTooBig'   => __( 'This file is too large (1 MB at most).', 'wp-swiper' ),
 					'shapeNotSvg'   => __( 'This is no SVG file.', 'wp-swiper' ),
 					'shapeUpload'   => __( 'Upload SVG', 'wp-swiper' ),
@@ -872,6 +873,38 @@ class WP_Swiper_Admin {
 		);
 	}
 
+	/**
+	 * Art's SVG shape field for a device: the shapes kept (their geometry
+	 * only); the button reads a file into the value (admin.js), read on the
+	 * server when the preview updates or the slider is saved. Tablet and
+	 * mobile without a file of their own take the larger screen's.
+	 *
+	 * @param string $id     The hidden input's id.
+	 * @param string $name   Its name.
+	 * @param string $value  The shapes kept.
+	 * @param string $device Device.
+	 */
+	private static function shape_box( $id, $name, $value, $device ) {
+		$shape   = WP_Swiper_Svg_Shape::decode( $value );
+		$summary = ! $shape && 'desktop' !== $device
+			? __( 'As on the larger screen: upload a file for this one to change it.', 'wp-swiper' )
+			: WP_Swiper_Svg_Shape::summary( $shape );
+		?>
+		<input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
+		<div class="wp-swiper-shape">
+			<span class="wp-swiper-shape__thumb"<?php echo $shape ? '' : ' hidden'; ?>><?php echo $shape ? self::shape_thumb( $shape ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from checked numbers. ?></span>
+			<span class="wp-swiper-shape__summary"><?php echo esc_html( $summary ); ?></span>
+			<span class="wp-swiper-shape__actions">
+				<label class="button wp-swiper-shape__choose">
+					<?php echo $shape ? esc_html__( 'Replace SVG', 'wp-swiper' ) : esc_html__( 'Upload SVG', 'wp-swiper' ); ?>
+					<input type="file" accept=".svg,image/svg+xml" class="screen-reader-text">
+				</label>
+				<button type="button" class="button-link wp-swiper-shape__remove"<?php echo $shape ? '' : ' hidden'; ?>><?php esc_html_e( 'Remove', 'wp-swiper' ); ?></button>
+			</span>
+		</div>
+		<?php
+	}
+
 	private static function render_field( $key, $field, $value ) {
 		$id   = 'wp-swiper-' . $key;
 		$name = 'wp_swiper_settings[' . $key . ']';
@@ -931,24 +964,7 @@ class WP_Swiper_Admin {
 						<button type="button" class="button-link wp-swiper-picker__remove"<?php echo $thumb ? '' : ' hidden'; ?>><?php esc_html_e( 'Remove', 'wp-swiper' ); ?></button>
 					</div>
 				<?php elseif ( 'svg_shape' === $field['type'] ) : ?>
-					<?php
-					// Art's SVG shape: the shapes kept (their geometry only); the button
-					// reads a file into the value (admin.js), read on the server when
-					// the preview updates or the slider is saved.
-					$shape = WP_Swiper_Svg_Shape::decode( $value );
-					?>
-					<input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
-					<div class="wp-swiper-shape">
-						<span class="wp-swiper-shape__thumb"<?php echo $shape ? '' : ' hidden'; ?>><?php echo $shape ? self::shape_thumb( $shape ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from checked numbers. ?></span>
-						<span class="wp-swiper-shape__summary"><?php echo esc_html( WP_Swiper_Svg_Shape::summary( $shape ) ); ?></span>
-						<span class="wp-swiper-shape__actions">
-							<label class="button wp-swiper-shape__choose">
-								<?php echo $shape ? esc_html__( 'Replace SVG', 'wp-swiper' ) : esc_html__( 'Upload SVG', 'wp-swiper' ); ?>
-								<input type="file" accept=".svg,image/svg+xml" class="screen-reader-text">
-							</label>
-							<button type="button" class="button-link wp-swiper-shape__remove"<?php echo $shape ? '' : ' hidden'; ?>><?php esc_html_e( 'Remove', 'wp-swiper' ); ?></button>
-						</span>
-					</div>
+					<?php self::shape_box( $id, $name, $value, 'desktop' ); ?>
 				<?php elseif ( 'color' === $field['type'] ) : ?>
 					<span class="wp-swiper-color-field">
 						<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
@@ -1145,6 +1161,13 @@ class WP_Swiper_Admin {
 					</select>
 					<?php continue; ?>
 				<?php endif; ?>
+				<?php if ( 'svg_shape' === $field['type'] ) : ?>
+					<?php // Art's SVG shape: a file per device, the device shown (admin.js shows the box). ?>
+					<div class="wp-swiper-devices__input wp-swiper-shape-device" data-device="<?php echo esc_attr( $device ); ?>"<?php echo 'desktop' === $device ? '' : ' hidden'; ?>>
+						<?php self::shape_box( 'wp-swiper-' . $storage_key, 'wp_swiper_settings[' . $storage_key . ']', $values[ $storage_key ], $device ); ?>
+					</div>
+					<?php continue; ?>
+				<?php endif; ?>
 				<?php if ( 'order' === $field['type'] ) : ?>
 					<?php // The collage's order: photo IDs, set from the preview or by Shuffle (admin.js). ?>
 					<input type="hidden"
@@ -1305,23 +1328,28 @@ class WP_Swiper_Admin {
 		$slides = array();
 
 		foreach ( $ids as $i => $attachment_id ) {
-			$attachment_id = absint( $attachment_id );
-			$poster        = isset( $raw['poster'][ $i ] ) ? absint( $raw['poster'][ $i ] ) : 0;
-			$caption       = isset( $raw['caption'][ $i ] ) ? WP_Swiper_Settings::sanitize_caption( $raw['caption'][ $i ] ) : '';
-			$description   = isset( $raw['description'][ $i ] ) ? WP_Swiper_Settings::sanitize_description( $raw['description'][ $i ] ) : '';
+			// This slide's value of a field: a plain string, else none (a form
+			// made by hand could send lists, which nothing here takes).
+			$value = function ( $name ) use ( $raw, $i ) {
+				return isset( $raw[ $name ] ) && is_array( $raw[ $name ] ) && isset( $raw[ $name ][ $i ] ) && is_scalar( $raw[ $name ][ $i ] ) ? (string) $raw[ $name ][ $i ] : null;
+			};
+			$attachment_id = is_scalar( $attachment_id ) ? absint( $attachment_id ) : 0;
+			$poster        = null !== $value( 'poster' ) ? absint( $value( 'poster' ) ) : 0;
+			$caption       = null !== $value( 'caption' ) ? WP_Swiper_Settings::sanitize_caption( $value( 'caption' ) ) : '';
+			$description   = null !== $value( 'description' ) ? WP_Swiper_Settings::sanitize_description( $value( 'description' ) ) : '';
 			// Their own font sizes per device ("20,16,"), or none: the plugin's.
-			$caption_size     = isset( $raw['caption_size'][ $i ] ) ? WP_Swiper_Settings::sanitize_font_sizes( $raw['caption_size'][ $i ] ) : '';
-			$description_size = isset( $raw['description_size'][ $i ] ) ? WP_Swiper_Settings::sanitize_font_sizes( $raw['description_size'][ $i ] ) : '';
+			$caption_size     = null !== $value( 'caption_size' ) ? WP_Swiper_Settings::sanitize_font_sizes( $value( 'caption_size' ) ) : '';
+			$description_size = null !== $value( 'description_size' ) ? WP_Swiper_Settings::sanitize_font_sizes( $value( 'description_size' ) ) : '';
 			// And weights ("700"), or none: the tag's or the page's.
-			$caption_weight     = isset( $raw['caption_weight'][ $i ] ) ? WP_Swiper_Settings::sanitize_font_weights( $raw['caption_weight'][ $i ] ) : '';
-			$description_weight = isset( $raw['description_weight'][ $i ] ) ? WP_Swiper_Settings::sanitize_font_weights( $raw['description_weight'][ $i ] ) : '';
+			$caption_weight     = null !== $value( 'caption_weight' ) ? WP_Swiper_Settings::sanitize_font_weights( $value( 'caption_weight' ) ) : '';
+			$description_weight = null !== $value( 'description_weight' ) ? WP_Swiper_Settings::sanitize_font_weights( $value( 'description_weight' ) ) : '';
 			// And colors ("#rrggbb", "rgba(r,g,b,a)"), or none: the Caption / Description page's.
-			$caption_color     = isset( $raw['caption_color'][ $i ] ) ? WP_Swiper_Settings::sanitize_slide_color( $raw['caption_color'][ $i ] ) : '';
-			$description_color = isset( $raw['description_color'][ $i ] ) ? WP_Swiper_Settings::sanitize_slide_color( $raw['description_color'][ $i ] ) : '';
+			$caption_color     = null !== $value( 'caption_color' ) ? WP_Swiper_Settings::sanitize_slide_color( $value( 'caption_color' ) ) : '';
+			$description_color = null !== $value( 'description_color' ) ? WP_Swiper_Settings::sanitize_slide_color( $value( 'description_color' ) ) : '';
 
 			// A YouTube / Vimeo slide: its link, once it reads as one (anything else
 			// there is ignored: the slide is then its media library item, if any).
-			$embed = isset( $raw['embed'][ $i ] ) ? esc_url_raw( trim( $raw['embed'][ $i ] ) ) : '';
+			$embed = null !== $value( 'embed' ) ? esc_url_raw( trim( $value( 'embed' ) ) ) : '';
 			if ( '' !== $embed && WP_Swiper_Settings::parse_embed( $embed ) ) {
 				// Its size, thumbnail and title from the service, cached now
 				// rather than when a visitor first sees it.
@@ -1361,12 +1389,12 @@ class WP_Swiper_Admin {
 				'caption_color'      => $caption_color,
 				'description_color'  => $description_color,
 				// A video slide has no link (a click on it is the player's).
-				'link'        => ! $video && isset( $raw['link'][ $i ] ) ? esc_url_raw( $raw['link'][ $i ] ) : '',
-				'new_tab'     => ! $video && isset( $raw['new_tab'][ $i ] ) && '1' === $raw['new_tab'][ $i ],
+				'link'        => ! $video && null !== $value( 'link' ) ? esc_url_raw( $value( 'link' ) ) : '',
+				'new_tab'     => ! $video && '1' === $value( 'new_tab' ),
 				// A video's poster: an image from the media library, or none.
 				'poster'      => $poster && wp_attachment_is_image( $poster ) ? $poster : 0,
 				// An image's own position ("Cover"), or none: the slider's.
-				'position'    => ! $video && isset( $raw['position'][ $i ] ) ? WP_Swiper_Settings::sanitize_position( $raw['position'][ $i ] ) : '',
+				'position'    => ! $video && null !== $value( 'position' ) ? WP_Swiper_Settings::sanitize_position( $value( 'position' ) ) : '',
 			);
 		}
 		return $slides;

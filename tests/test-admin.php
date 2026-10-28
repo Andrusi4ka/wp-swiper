@@ -127,6 +127,30 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( $image, $slides[2]['poster'] );
 	}
 
+	public function test_posted_slides_take_plain_values_only() {
+		// A form made by hand: lists where text belongs, none of it taken (and no fatal error).
+		$image = $this->image();
+		$_POST = array(
+			'wp_swiper_slides' => array(
+				'id'       => array( $image, array( $image ) ),
+				'embed'    => array( array( 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' ), '' ),
+				'caption'  => array( array( '<b>x</b>' ), '' ),
+				'link'     => array( array( 'https://example.com' ), '' ),
+				'new_tab'  => array( array( '1' ), '' ),
+				'position' => array( array( '10 20' ), '' ),
+				'poster'   => 'not a list',
+			),
+		);
+		$slides = WP_Swiper_Admin::posted_slides();
+		$this->assertCount( 1, $slides );
+		$this->assertSame( $image, $slides[0]['id'] );
+		$this->assertSame( '', $slides[0]['caption'] );
+		$this->assertSame( '', $slides[0]['link'] );
+		$this->assertFalse( $slides[0]['new_tab'] );
+		$this->assertSame( '', $slides[0]['position'] );
+		$this->assertArrayNotHasKey( 'embed', $slides[0] );
+	}
+
 	public function test_posted_slides_keep_their_description() {
 		$image = $this->image();
 		$video = $this->video();

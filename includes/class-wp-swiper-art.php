@@ -57,8 +57,33 @@ class WP_Swiper_Art {
 	 * @return array|null
 	 */
 	public static function shape( $settings ) {
-		$data = WP_Swiper_Svg_Shape::decode( isset( $settings['art_shape'] ) ? $settings['art_shape'] : '' );
-		return $data ? WP_Swiper_Svg_Shape::frame( $data, empty( $settings['art_shape_margins'] ) ) : null;
+		return self::shapes( $settings )['desktop'];
+	}
+
+	/**
+	 * SVG shape per device: a file of its own on tablet and mobile, else the
+	 * larger screen's (as a responsive setting); each as shape() gives it,
+	 * null for none.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array device => array|null
+	 */
+	public static function shapes( $settings ) {
+		$values = array();
+		$last   = '';
+		foreach ( array( 'desktop' => 'art_shape', 'tablet' => 'art_shape_tablet', 'mobile' => 'art_shape_mobile' ) as $device => $key ) {
+			$value             = isset( $settings[ $key ] ) ? (string) $settings[ $key ] : '';
+			$last              = '' !== $value ? $value : $last;
+			$values[ $device ] = $last;
+		}
+		$crop = empty( $settings['art_shape_margins'] );
+		return array_map(
+			function ( $value ) use ( $crop ) {
+				$data = WP_Swiper_Svg_Shape::decode( $value );
+				return $data ? WP_Swiper_Svg_Shape::frame( $data, $crop ) : null;
+			},
+			$values
+		);
 	}
 
 	/**
@@ -146,13 +171,15 @@ class WP_Swiper_Art {
 			// SVG shape: the file's shapes (WP_Swiper_Svg_Shape: their geometry
 			// only, read when the slider is saved or the preview updated).
 			'art_shape'          => array(
-				'section' => 'layout',
-				'effects' => $art,
-				'styles'  => array( 'shape' ),
-				'label'   => __( 'Shape (SVG file)', 'wp-swiper' ),
-				'type'    => 'svg_shape',
-				'default' => '',
-				'help'    => __( 'Each object of the drawing is a window for a photo: the current photo in the main one, the next ones in the others. The main window is the object or layer named "main" in the drawing, else the largest; then those named 2, 3..., then the larger ones. Objects without a fill, hidden ones and text are left out; the later ones lie on top, as in the drawing.', 'wp-swiper' ),
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'shape' ),
+				'label'      => __( 'Shape (SVG file)', 'wp-swiper' ),
+				'type'       => 'svg_shape',
+				// A file of its own on tablet and mobile, else the larger screen's.
+				'responsive' => true,
+				'default'    => '',
+				'help'       => __( 'Each object of the drawing is a window for a photo: the current photo in the main one, the next ones in the others. Tablet and mobile can have a file of their own (empty: the larger screen’s). The main window is the object or layer named "main" in the drawing, else the largest; then those named 2, 3..., then the larger ones. Objects without a fill, hidden ones and text are left out; the later ones lie on top, as in the drawing.', 'wp-swiper' ),
 			),
 			// SVG shape: the empty space around the shapes in the file kept, or
 			// left out (by default: the slider as large as the shapes).
@@ -569,8 +596,31 @@ class WP_Swiper_Art {
 					'any'     => __( 'One window at random', 'wp-swiper' ),
 					'turn'    => __( 'The windows in turn', 'wp-swiper' ),
 					'advance' => __( 'All windows at once', 'wp-swiper' ),
+					'one'     => __( 'One photo through all windows', 'wp-swiper' ),
 				),
-				'help'    => __( 'One window at random, or in turn (the main one, then the next): only with more photos than windows, those not shown come in. All windows at once: as a slider, each takes the photo of the next one, the main one the next photo.', 'wp-swiper' ),
+				'help'    => __( 'One window at random, or in turn (the main one, then the next): only with more photos than windows, those not shown come in. All windows at once: as a slider, each takes the photo of the next one, the main one the next photo. One photo through all windows: the shape is a stencil over one photo, its caption in the middle of the shape; the next photo comes into all windows at once (with Photo swapping on).', 'wp-swiper' ),
+			),
+			// SVG shape, the windows all changing at once (one photo through all,
+			// or all at once): together, or one after another — at random, from
+			// the left, from the top, along the diagonal or from the middle out —
+			// over the Fade speed; on the first show too (art.js).
+			'art_shape_appear'   => array(
+				'section' => 'advanced',
+				'panel'   => 'controls',
+				'effects' => $art,
+				'styles'  => array( 'shape' ),
+				'label'   => __( 'Appearance', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'all',
+				'choices' => array(
+					'all'      => __( 'All together', 'wp-swiper' ),
+					'random'   => __( 'At random', 'wp-swiper' ),
+					'ltr'      => __( 'Left to right', 'wp-swiper' ),
+					'ttb'      => __( 'Top to bottom', 'wp-swiper' ),
+					'diagonal' => __( 'Diagonally', 'wp-swiper' ),
+					'center'   => __( 'From the middle out', 'wp-swiper' ),
+				),
+				'help'    => __( 'The order the windows show a new photo in, one after another over the Fade speed; also when the shape first shows. With One photo through all windows or All windows at once.', 'wp-swiper' ),
 			),
 			'art_swap_delay'     => array(
 				'section' => 'advanced',
@@ -627,7 +677,7 @@ class WP_Swiper_Art {
 			'controls' => array(
 				'art_swap' => array(
 					'title'  => __( 'Photo swapping', 'wp-swiper' ),
-					'fields' => array( 'art_swap', 'art_swap_target', 'art_shape_target', 'art_swap_delay', 'art_swap_speed', 'art_pause' ),
+					'fields' => array( 'art_swap', 'art_swap_target', 'art_shape_target', 'art_shape_appear', 'art_swap_delay', 'art_swap_speed', 'art_pause' ),
 				),
 			),
 		);
@@ -664,8 +714,12 @@ class WP_Swiper_Art {
 		$style = self::style_of( $settings );
 		// SVG shape: its windows, on every device.
 		if ( 'shape' === $style ) {
-			$shape = self::shape( $settings );
-			return array_fill_keys( array( 'desktop', 'tablet', 'mobile' ), $shape ? count( $shape['shapes'] ) : 1 );
+			return array_map(
+				function ( $shape ) {
+					return $shape ? count( $shape['shapes'] ) : 1;
+				},
+				self::shapes( $settings )
+			);
 		}
 		if ( 'grid-circle' === $style ) {
 			return array_map(
@@ -772,7 +826,8 @@ class WP_Swiper_Art {
 
 		$style   = self::style_of( $settings );
 		// SVG shape: no file yet (or no shapes in it), nothing to show.
-		$shape = 'shape' === $style ? self::shape( $settings ) : null;
+		$shapes = 'shape' === $style ? self::shapes( $settings ) : null;
+		$shape  = $shapes ? $shapes['desktop'] : null;
 		if ( 'shape' === $style && ! $shape ) {
 			return current_user_can( 'edit_posts' )
 				? '<p class="wp-swiper-notice">' . esc_html__( 'WP Swiper: upload an SVG file for the SVG shape style (Layout, Art).', 'wp-swiper' ) . '</p>'
@@ -825,7 +880,7 @@ class WP_Swiper_Art {
 				// (Ring + text has no middle photo.) SVG shape: its own What changes
 				// (a window at random, in turn, or all at once: "advance").
 				'target' => $shape
-					? ( in_array( $settings['art_shape_target'], array( 'any', 'turn', 'advance' ), true ) ? $settings['art_shape_target'] : 'any' )
+					? ( in_array( $settings['art_shape_target'], array( 'any', 'turn', 'advance', 'one' ), true ) ? $settings['art_shape_target'] : 'any' )
 					: ( $middle && 'middle' === $settings['art_swap_target'] ? 'middle' : 'any' ),
 				'pause'  => (bool) $settings['art_pause'],
 			) : false,
@@ -853,6 +908,28 @@ class WP_Swiper_Art {
 		if ( $shape ) {
 			$config['shapes'] = $shape['shapes'];
 			$config['ratio']  = $shape['ratio'];
+			// Another file on tablet or mobile: each device's (art.js takes the
+			// one of the device shown). One that cannot be read: the desktop's.
+			$own = array_map(
+				function ( $one ) use ( $shape ) {
+					return $one ? $one : $shape;
+				},
+				$shapes
+			);
+			if ( $own['tablet'] !== $shape || $own['mobile'] !== $shape ) {
+				$config['shapeDevices'] = $own;
+			}
+		}
+		// SVG shape, "One photo through all windows": every window shows its
+		// part of the same photo (with swapping off too).
+		$one = $shape && 'one' === $settings['art_shape_target'];
+		if ( $one ) {
+			$config['one'] = true;
+		}
+		// SVG shape, the windows all changing at once: the order they show a new
+		// photo in (none: together).
+		if ( $shape && in_array( $settings['art_shape_target'], array( 'one', 'advance' ), true ) && 'all' !== $settings['art_shape_appear'] ) {
+			$config['appear'] = $settings['art_shape_appear'];
 		}
 
 		$shadow  = WP_Swiper_Settings::shadow( $settings );
@@ -879,6 +956,8 @@ class WP_Swiper_Art {
 				array( $settings['art_border'] ? 'wp-swiper-art--border' : '' ),
 				// Captions on the middle photo only (art.css).
 				array( $middle && $settings['art_caption_middle'] ? 'wp-swiper-art--caption-middle' : '' ),
+				// SVG shape, one photo through all the windows (art.css).
+				array( $one ? 'wp-swiper-art--one' : '' ),
 				// Image shadow (art.css): along each shape, room kept around the stage for it.
 				array( $shadow ? 'wp-swiper-art--shadow' : '' ),
 				array( WP_Swiper_Settings::sanitize_classes( $settings['css_class'] . ' ' . $extra_class ) )
@@ -899,6 +978,11 @@ class WP_Swiper_Art {
 			$wide ? self::height_style( $settings ) : array(),
 			// SVG shape: the stage at its drawing's proportions (art.css).
 			$shape ? array( '--wp-swiper-art-ratio:' . $shape['ratio'] ) : array(),
+			// Another file on tablet or mobile: its proportions there (art.css).
+			isset( $config['shapeDevices'] ) ? array(
+				'--wp-swiper-art-ratio-tablet:' . $config['shapeDevices']['tablet']['ratio'],
+				'--wp-swiper-art-ratio-mobile:' . $config['shapeDevices']['mobile']['ratio'],
+			) : array(),
 			self::opening_style( $opening, $settings ),
 			self::center_style( $center, $settings ),
 			self::caption_style( $settings ),

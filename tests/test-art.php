@@ -23,7 +23,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 			$this->assertStringStartsWith( 'art_', $key );
 			$this->assertSame( array( 'art' ), $field['effects'], $key );
 			// On the Layout page; Photo swapping on the Controls page; captions on the middle photo only on the Caption page.
-			if ( 0 === strpos( $key, 'art_swap' ) || 'art_pause' === $key || 'art_shape_target' === $key ) {
+			if ( 0 === strpos( $key, 'art_swap' ) || 'art_pause' === $key || in_array( $key, array( 'art_shape_target', 'art_shape_appear' ), true ) ) {
 				$this->assertSame( array( 'advanced', 'controls' ), array( $field['section'], $field['panel'] ), $key );
 			} elseif ( 'art_caption_middle' === $key ) {
 				$this->assertSame( 'caption', $field['section'], $key );

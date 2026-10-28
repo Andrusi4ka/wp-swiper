@@ -619,10 +619,75 @@
 			piece.style.clipPath = 'path(' + ( win.rule === 'evenodd' ? 'evenodd, ' : '' ) + '"' + d + '")';
 			// The drawing's stacking: the later on top.
 			piece.style.zIndex = 1 + ( Number( win.z ) || 0 );
-			captionAt( piece, { x: box.width / 2 + BLEED, y: box.height / 2 + BLEED, width: box.width } );
+			if ( config.one ) {
+				// One photo through all the windows: each its part of the photo,
+				// the photo as large as the stage, where the window is in it; the
+				// caption in the middle of the stage (art.css).
+				piece.style.setProperty( '--wp-swiper-art-ox', ( box.left - BLEED ) + 'px' );
+				piece.style.setProperty( '--wp-swiper-art-oy', ( box.top - BLEED ) + 'px' );
+				captionAt( piece, { x: width / 2, y: height / 2, width: width } );
+			} else {
+				captionAt( piece, { x: box.width / 2 + BLEED, y: box.height / 2 + BLEED, width: box.width } );
+			}
 			outline( block, piece, d );
 		} );
+		if ( config.one ) {
+			block.style.setProperty( '--wp-swiper-art-sw', width + 'px' );
+			block.style.setProperty( '--wp-swiper-art-sh', height + 'px' );
+		}
 	}
+
+	/*
+	 * SVG shape, Appearance (config.appear): when each of the first `count`
+	 * windows shows a new photo, a share (0–1) of the Fade speed: by where its
+	 * middle is (from the left, the top, along the diagonal, from the stage's
+	 * middle out) or at random (a new order each time), spread evenly.
+	 */
+	function wave( config, count ) {
+		var shapes = config.shapes || [];
+		var ratio = Number( config.ratio ) || 1;
+		var values = [];
+		for ( var k = 0; k < count; k++ ) {
+			var box = shapes[ k ] && shapes[ k ].box;
+			var x = box ? box[ 0 ] + box[ 2 ] / 2 : 0.5;
+			var y = box ? box[ 1 ] + box[ 3 ] / 2 : 0.5;
+			values.push( {
+				ltr: x,
+				ttb: y,
+				diagonal: x * ratio + y,
+				center: Math.sqrt( Math.pow( ( x - 0.5 ) * ratio, 2 ) + Math.pow( y - 0.5, 2 ) ),
+				random: Math.random()
+			}[ config.appear ] || 0 );
+		}
+		if ( config.appear === 'random' ) {
+			// Evenly spread: each its place in a shuffled order.
+			var ranks = values.map( function ( value, index ) {
+				return index;
+			} ).sort( function ( a, b ) {
+				return values[ a ] - values[ b ];
+			} );
+			ranks.forEach( function ( index, rank ) {
+				values[ index ] = rank;
+			} );
+		}
+		var min = Math.min.apply( Math, values );
+		var max = Math.max.apply( Math, values );
+		return values.map( function ( value ) {
+			return max - min > 1e-6 ? ( value - min ) / ( max - min ) : 0;
+		} );
+	}
+
+	// The Fade speed (ms), as the block has it (render.php: --wp-swiper-art-speed).
+	function fadeSpeed( block ) {
+		var speed = parseFloat( getComputedStyle( block ).getPropertyValue( '--wp-swiper-art-speed' ) );
+		return speed > 0 ? speed : 800;
+	}
+
+	// The longest a wave waits for its images (a slow file: it goes on without).
+	var GATE_WAIT = 1500;
+
+	// No motion wanted: no wave either.
+	var STILL = !! ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches );
 
 	var STYLES = { ring: ring, 'ring-text': ring, 'grid-circle': gridCircle, shape: shape };
 
@@ -847,6 +912,10 @@
 			if ( typeof block.wpSwiperArtShown === 'number' ) {
 				return Math.max( 1, Math.min( pieces.length, block.wpSwiperArtShown ) );
 			}
+			// SVG shape: all its windows (the ring's number is not its).
+			if ( config.shapes ) {
+				return Math.max( 1, Math.min( pieces.length, config.shapes.length ) );
+			}
 			return Math.max( 1, Math.min( pieces.length, middlePhoto + ( Number( forDevice( config.count ) ) || pieces.length - middlePhoto ) ) );
 		}
 
@@ -870,7 +939,8 @@
 			}
 			order = order.map( Number );
 			pieces.forEach( function ( piece, index ) {
-				var real = order[ index % order.length ];
+				// One photo through all the windows: the first in each.
+				var real = config.one ? order[ 0 ] : order[ index % order.length ];
 				if ( ! photos[ real ] || piece.wpReal === real ) {
 					return;
 				}
@@ -882,7 +952,7 @@
 				piece.appendChild( photos[ real ].cloneNode( true ) );
 			} );
 			var shown = shownCount();
-			queue = order.length > shown ? order.slice( shown ) : [];
+			queue = ! config.one && order.length > shown ? order.slice( shown ) : [];
 			sequence = order;
 			middleAt = 0;
 			at = 0;
@@ -914,12 +984,30 @@
 			}
 			at = ( ( at + by ) % sequence.length + sequence.length ) % sequence.length;
 			var shown = shownCount();
+			// Appearance: one after another over the Fade speed, once all the new
+			// images are there (or late), so the wave runs evenly.
+			var shares = config.appear && ! STILL ? wave( config, shown ) : null;
+			var spread = shares ? fadeSpeed( block ) : 0;
+			var release = null;
+			var gate = shares ? new Promise( function ( resolve ) {
+				release = resolve;
+			} ) : null;
+			var loads = [];
 			for ( var k = 0; k < shown; k++ ) {
-				var real = sequence[ ( at + k ) % sequence.length ];
+				// One photo through all the windows: the same in each.
+				var real = sequence[ ( at + ( config.one ? 0 : k ) ) % sequence.length ];
 				if ( pieces[ k ].wpReal !== real ) {
-					fadeTo( pieces[ k ], real );
+					loads.push( fadeTo( pieces[ k ], real, shares ? shares[ k ] * spread : 0, gate ) );
 				}
 			}
+			if ( gate ) {
+				// A slow file holds the wave GATE_WAIT ms at most.
+				Promise.race( [ Promise.all( loads ), new Promise( function ( resolve ) {
+					setTimeout( resolve, GATE_WAIT );
+				} ) ] ).then( release );
+			}
+			// The next photo loaded meanwhile, so the next change is quick.
+			preload( sequence[ ( at + 1 ) % sequence.length ] );
 			if ( describe ) {
 				describe.refresh();
 			}
@@ -929,7 +1017,7 @@
 			var shown = shownCount();
 			var index;
 			var real;
-			if ( config.swap.target === 'advance' ) {
+			if ( config.swap.target === 'advance' || config.one ) {
 				advance( 1 );
 				return;
 			}
@@ -965,32 +1053,64 @@
 			}
 		}
 
-		// A piece's photo fading to slide `real`'s.
-		function fadeTo( piece, real ) {
+		// Slide `real`'s image fetched and decoded ahead (once).
+		var preloaded = {};
+		function preload( real ) {
+			var source = photos[ real ] && photos[ real ].querySelector( 'img' );
+			var src = source && ( source.currentSrc || source.getAttribute( 'src' ) );
+			if ( ! src || preloaded[ src ] ) {
+				return;
+			}
+			preloaded[ src ] = new Image();
+			preloaded[ src ].decoding = 'async';
+			preloaded[ src ].src = src;
+		}
+
+		/*
+		 * A piece's photo fading to slide `real`'s, `wait` ms after its image
+		 * is there (or `gate` lets it, all of a wave's images: advance()).
+		 * Returns when its image is there.
+		 */
+		function fadeTo( piece, real, wait, gate ) {
 			piece.wpReal = real;
 
 			var fresh = photos[ real ].cloneNode( true );
 			fresh.classList.add( 'is-entering' );
+			var img = fresh.querySelector( 'img' );
+			// Loaded now, not when "lazy" gets to it (it is about to show).
+			if ( img ) {
+				img.removeAttribute( 'loading' );
+			}
 			piece.appendChild( fresh );
 
-			var img = fresh.querySelector( 'img' );
 			var decoded = img && img.decode ? img.decode().catch( function () {} ) : Promise.resolve();
 			var late = new Promise( function ( resolve ) {
 				setTimeout( resolve, Math.max( 500, Number( config.swap.delay ) || 3000 ) );
 			} );
-			Promise.race( [ decoded, late ] ).then( function () {
-				requestAnimationFrame( function () {
-					fresh.classList.remove( 'is-entering' );
-				} );
-				var speed = parseFloat( getComputedStyle( fresh ).transitionDuration ) * 1000 || 0;
+			Promise.race( [ gate || decoded, late ] ).then( function () {
 				setTimeout( function () {
-					[].slice.call( piece.querySelectorAll( ':scope > .wp-swiper-art__photo' ) ).forEach( function ( photo ) {
-						if ( photo !== fresh && fresh.parentNode === piece ) {
-							piece.removeChild( photo );
-						}
+					requestAnimationFrame( function () {
+						fresh.classList.remove( 'is-entering' );
 					} );
-				}, speed + 100 );
+					var speed = parseFloat( getComputedStyle( fresh ).transitionDuration ) * 1000 || 0;
+					// Then the photos under it go; not one put over it since (a
+					// later change still on its way: it shows once it is there).
+					setTimeout( function () {
+						if ( fresh.parentNode !== piece ) {
+							return;
+						}
+						var under = true;
+						[].slice.call( piece.querySelectorAll( ':scope > .wp-swiper-art__photo' ) ).forEach( function ( photo ) {
+							if ( photo === fresh ) {
+								under = false;
+							} else if ( under ) {
+								piece.removeChild( photo );
+							}
+						} );
+					}, speed + 100 );
+				}, wait || 0 );
 			} );
+			return decoded;
 		}
 
 		if ( config.swap ) {
@@ -1061,6 +1181,13 @@
 		var height = 0;
 		var drawnFor = null;
 		var redraw = function () {
+			// SVG shape, another file on tablet or mobile: the device's windows
+			// and proportions (the stage's are art.css's), before the photos go in.
+			var own = config.shapeDevices && config.shapeDevices[ device() ];
+			if ( own && config.shapes !== own.shapes ) {
+				config.shapes = own.shapes;
+				config.ratio = own.ratio;
+			}
 			fill( false );
 			if ( autoSize ) {
 				fit();
@@ -1071,6 +1198,20 @@
 				height = stage.clientHeight;
 				drawnFor = current;
 				draw( block, stage, config );
+				// Appearance: the first show in the wave's order too (each piece
+				// fades in after its share of the Fade speed).
+				if ( config.appear && ! STILL && ! block.classList.contains( 'is-ready' ) ) {
+					var first = wave( config, pieces.length );
+					var over = fadeSpeed( block );
+					pieces.forEach( function ( piece, k ) {
+						piece.style.transitionDelay = Math.round( first[ k ] * over ) + 'ms';
+					} );
+					setTimeout( function () {
+						pieces.forEach( function ( piece ) {
+							piece.style.transitionDelay = '';
+						} );
+					}, over + 1000 );
+				}
 				block.classList.add( 'is-ready' );
 				// Grid + circle: another number of cells shown, the photos waiting again.
 				if ( block.wpSwiperArtShown !== shownFor ) {

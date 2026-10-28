@@ -122,7 +122,44 @@
 	transform: scale(1.06);
 }
 
+/* SVG shape: another file on tablet or mobile, its proportions there. */
+@media (max-width: 1024px) {
+	.wp-swiper-art.wp-swiper-art--shape .wp-swiper-art__stage {
+		aspect-ratio: var(--wp-swiper-art-ratio-tablet, var(--wp-swiper-art-ratio, 1));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-art.wp-swiper-art--shape .wp-swiper-art__stage {
+		aspect-ratio: var(--wp-swiper-art-ratio-mobile, var(--wp-swiper-art-ratio-tablet, var(--wp-swiper-art-ratio, 1)));
+	}
+}
+
+/* SVG shape, one photo through all the windows (art.js): each window's
+   photo as large as the stage and where the window is in it, so together
+   they show one photo; zoomed all at once, from the stage's middle. */
+.wp-swiper-art--one .wp-swiper-art__piece > .wp-swiper-art__photo {
+	inset: auto;
+	top: calc(-1 * var(--wp-swiper-art-oy, 0px));
+	left: calc(-1 * var(--wp-swiper-art-ox, 0px));
+	width: var(--wp-swiper-art-sw, 100%);
+	height: var(--wp-swiper-art-sh, 100%);
+}
+
+.wp-swiper-art--one .wp-swiper-art__piece:hover .wp-swiper-art__image,
+.wp-swiper-art--one .wp-swiper-art__piece:focus-visible .wp-swiper-art__image {
+	transform: none;
+}
+
+.wp-swiper-art--one .wp-swiper-art__stage:hover .wp-swiper-art__piece .wp-swiper-art__image {
+	transform: scale(1.06);
+}
+
 @media (prefers-reduced-motion: reduce) {
+	.wp-swiper-art--one .wp-swiper-art__stage:hover .wp-swiper-art__piece .wp-swiper-art__image {
+		transform: none;
+	}
+
 	.wp-swiper-art__piece,
 	.wp-swiper-art__piece > .wp-swiper-art__photo,
 	.wp-swiper-art .wp-swiper-art__image {

@@ -113,6 +113,19 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 		$this->assertNull( WP_Swiper_Svg_Shape::parse_path( 'nonsense' ) );
 	}
 
+	public function test_no_entities_whatever_the_encoding() {
+		$entities = '<?xml version="1.0"?><!DOCTYPE svg [<!ENTITY a "aaaaaaaaaa"><!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">]><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><style>.c{fill:#000}&b;</style><rect class="c" width="10" height="10"/></svg>';
+		$this->assertNull( WP_Swiper_Svg_Shape::parse( $entities ) );
+		// The same in UTF-16 (the plain check for "<!ENTITY" does not see it): refused too.
+		$this->assertNull( WP_Swiper_Svg_Shape::parse( "\xFF\xFE" . mb_convert_encoding( str_replace( '<?xml version="1.0"?>', '<?xml version="1.0" encoding="UTF-16"?>', $entities ), 'UTF-16LE', 'UTF-8' ) ) );
+		// A doctype with an internal part, even without entities; a NUL byte; not UTF-8.
+		$this->assertNull( WP_Swiper_Svg_Shape::parse( '<!DOCTYPE svg [<!ATTLIST svg x CDATA "1">]>' . $this->svg( '<rect width="10" height="10"/>' ) ) );
+		$this->assertNull( WP_Swiper_Svg_Shape::parse( $this->svg( "<rect width=\"10\" height=\"10\"/>\0" ) ) );
+		$this->assertNull( WP_Swiper_Svg_Shape::parse( $this->svg( "<rect id=\"\xC3\x28\" width=\"10\" height=\"10\"/>" ) ) );
+		// A plain doctype (as some editors write) is fine.
+		$this->assertNotNull( WP_Swiper_Svg_Shape::parse( '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' . $this->svg( '<rect width="10" height="10"/>' ) ) );
+	}
+
 	public function test_what_is_left_out() {
 		$data = WP_Swiper_Svg_Shape::parse(
 			$this->svg(
@@ -135,6 +148,29 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 		$this->assertNull( WP_Swiper_Svg_Shape::parse( '<html><body>no</body></html>' ) );
 		$this->assertNull( WP_Swiper_Svg_Shape::parse( 'not xml' ) );
 		$this->assertNull( WP_Swiper_Svg_Shape::parse( '' ) );
+	}
+
+	public function test_at_most_a_hundred_windows_and_the_rest_said() {
+		// A grid of 103 squares (as ex-9.svg, larger): the first 100 in the file kept.
+		$body = '';
+		for ( $i = 0; $i < 103; $i++ ) {
+			$body .= '<rect x="' . ( $i % 11 * 9 ) . '" y="' . ( intdiv( $i, 11 ) * 9 ) . '" width="8" height="8"/>';
+		}
+		$data = WP_Swiper_Svg_Shape::parse( $this->svg( $body ), 'grid.svg' );
+		$this->assertSame( 100, WP_Swiper_Svg_Shape::MAX_SHAPES );
+		$this->assertCount( 100, $data['shapes'] );
+		$this->assertSame( 3, $data['over'] );
+		$this->assertSame( 0, $data['skipped'] );
+		$this->assertSame( 'grid.svg: 100 shapes, 3 more left out: at most 100 shapes', WP_Swiper_Svg_Shape::summary( $data ) );
+		// Kept and read back: the same.
+		$kept = WP_Swiper_Svg_Shape::decode( WP_Swiper_Svg_Shape::sanitize( wp_json_encode( array( 'name' => 'grid.svg', 'svg' => $this->svg( $body ) ) ) ) );
+		$this->assertCount( 100, $kept['shapes'] );
+		$this->assertSame( 3, $kept['over'] );
+		// Art draws all of them.
+		$html = $this->render( array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => WP_Swiper_Svg_Shape::sanitize( $this->svg( $body ) ) ), $this->slides( 4 ) );
+		$this->assertSame( 100, substr_count( $html, 'class="wp-swiper-art__piece"' ) );
+		// Within the limit, nothing said.
+		$this->assertSame( 0, WP_Swiper_Svg_Shape::parse( $this->svg( '<rect width="10" height="10"/>' ) )['over'] );
 	}
 
 	public function test_only_the_geometry_is_kept() {
@@ -206,12 +242,38 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 		$field = WP_Swiper_Settings::fields()['art_shape_target'];
 		$this->assertSame( array( 'shape' ), $field['styles'] );
 		$this->assertSame( array( 'advanced', 'controls' ), array( $field['section'], $field['panel'] ) );
-		$this->assertSame( array( 'any', 'turn', 'advance' ), array_keys( $field['choices'] ) );
-		foreach ( array( 'turn', 'advance' ) as $target ) {
+		$this->assertSame( array( 'any', 'turn', 'advance', 'one' ), array_keys( $field['choices'] ) );
+		$this->assertArrayNotHasKey( 'one', $config );
+		$this->assertStringNotContainsString( 'wp-swiper-art--one', $html );
+		foreach ( array( 'turn', 'advance', 'one' ) as $target ) {
 			$config = $this->config( $this->render( array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => $shape, 'art_shape_target' => $target ), $this->slides( 4 ) ), 'data-wp-swiper-art' );
 			$this->assertSame( $target, $config['swap']['target'] );
 		}
 		$this->assertSame( 'any', WP_Swiper_Settings::sanitize( array( 'art_shape_target' => 'nonsense' ) )['art_shape_target'] );
+		// One photo through all windows: a stencil (art.js, art.css), with swapping off too.
+		$this->assertSame( 'one', WP_Swiper_Settings::sanitize( array( 'art_shape_target' => 'one' ) )['art_shape_target'] );
+		$one = $this->render( array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => $shape, 'art_shape_target' => 'one', 'art_swap' => false ), $this->slides( 4 ) );
+		$this->assertStringContainsString( 'wp-swiper-art--one', $one );
+		$this->assertTrue( $this->config( $one, 'data-wp-swiper-art' )['one'] );
+		$this->assertFalse( $this->config( $one, 'data-wp-swiper-art' )['swap'] );
+		// Only for SVG shape.
+		$ring = $this->render( array( 'effect' => 'art', 'art_style' => 'ring', 'art_shape_target' => 'one' ), $this->slides( 4 ) );
+		$this->assertStringNotContainsString( 'wp-swiper-art--one', $ring );
+		$this->assertArrayNotHasKey( 'one', $this->config( $ring, 'data-wp-swiper-art' ) );
+
+		// Appearance: the order the windows change in, only where they all change at once.
+		$field = WP_Swiper_Settings::fields()['art_shape_appear'];
+		$this->assertSame( array( 'shape' ), $field['styles'] );
+		$this->assertSame( array( 'advanced', 'controls' ), array( $field['section'], $field['panel'] ) );
+		$this->assertSame( array( 'all', 'random', 'ltr', 'ttb', 'diagonal', 'center' ), array_keys( $field['choices'] ) );
+		$this->assertSame( 'all', WP_Swiper_Settings::sanitize( array( 'art_shape_appear' => 'sideways' ) )['art_shape_appear'] );
+		$this->assertArrayNotHasKey( 'appear', $this->config( $one, 'data-wp-swiper-art' ) );
+		foreach ( array( 'one', 'advance' ) as $target ) {
+			$wave = $this->render( array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => $shape, 'art_shape_target' => $target, 'art_shape_appear' => 'diagonal' ), $this->slides( 4 ) );
+			$this->assertSame( 'diagonal', $this->config( $wave, 'data-wp-swiper-art' )['appear'], $target );
+		}
+		$any = $this->render( array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => $shape, 'art_shape_target' => 'any', 'art_shape_appear' => 'diagonal' ), $this->slides( 4 ) );
+		$this->assertArrayNotHasKey( 'appear', $this->config( $any, 'data-wp-swiper-art' ) );
 		$config = $this->config( $html, 'data-wp-swiper-art' );
 		$this->assertStringContainsString( '--wp-swiper-art-ratio:1.01145', $html );
 		$this->assertSame( array( 'desktop' => 3, 'tablet' => 3, 'mobile' => 3 ), WP_Swiper_Art::counts( $this->settings( array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => $shape ) ) ) );
@@ -272,5 +334,45 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 		// Gap and Rounded corners are not for it; Size is.
 		$this->assertSame( 1, preg_match( '/data-field="art_gap"[^>]*data-styles="ring ring-text grid-circle"/', $html ) );
 		$this->assertSame( 1, preg_match( '/data-field="art_size"[^>]*data-styles="ring ring-text shape"/', $html ) );
+	}
+
+	public function test_a_file_per_device() {
+		$desktop = WP_Swiper_Svg_Shape::sanitize( $this->file( 'ex-3' ) );
+		$mobile  = WP_Swiper_Svg_Shape::sanitize( $this->file( 'ex-1' ) );
+		$this->assertTrue( WP_Swiper_Settings::fields()['art_shape']['responsive'] );
+		$clean = WP_Swiper_Settings::sanitize( array( 'art_shape' => $desktop, 'art_shape_tablet' => '', 'art_shape_mobile' => $mobile ) );
+		$this->assertSame( '', $clean['art_shape_tablet'] );
+		$this->assertSame( $mobile, $clean['art_shape_mobile'] );
+
+		// Tablet takes the desktop's; mobile its own (3 windows, then 2).
+		$values = array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => $desktop, 'art_shape_mobile' => $mobile );
+		$this->assertSame( array( 'desktop' => 3, 'tablet' => 3, 'mobile' => 2 ), WP_Swiper_Art::counts( $this->settings( $values ) ) );
+		$html   = $this->render( $values, $this->slides( 4 ) );
+		$config = $this->config( $html, 'data-wp-swiper-art' );
+		// As many pieces as the most windows; each device's windows and proportions.
+		$this->assertSame( 3, substr_count( $html, 'class="wp-swiper-art__piece"' ) );
+		$this->assertCount( 3, $config['shapes'] );
+		$this->assertCount( 3, $config['shapeDevices']['tablet']['shapes'] );
+		$this->assertCount( 2, $config['shapeDevices']['mobile']['shapes'] );
+		$this->assertSame( $config['shapes'], $config['shapeDevices']['desktop']['shapes'] );
+		$this->assertStringContainsString( '--wp-swiper-art-ratio-mobile:' . $config['shapeDevices']['mobile']['ratio'], $html );
+		$this->assertStringContainsString( '--wp-swiper-art-ratio-tablet:' . $config['ratio'], $html );
+
+		// One file for all: as before, nothing per device.
+		$one = $this->render( array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => $desktop ), $this->slides( 4 ) );
+		$this->assertArrayNotHasKey( 'shapeDevices', $this->config( $one, 'data-wp-swiper-art' ) );
+		$this->assertStringNotContainsString( '--wp-swiper-art-ratio-mobile', $one );
+
+		// The field: a box per device, tablet and mobile hidden; an empty one says it inherits.
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, $values ) ) );
+		$admin = ob_get_clean();
+		$this->assertStringContainsString( '<div class="wp-swiper-devices__input wp-swiper-shape-device" data-device="desktop">', $admin );
+		$this->assertStringContainsString( '<div class="wp-swiper-devices__input wp-swiper-shape-device" data-device="tablet" hidden>', $admin );
+		$this->assertStringContainsString( '<div class="wp-swiper-devices__input wp-swiper-shape-device" data-device="mobile" hidden>', $admin );
+		$this->assertStringContainsString( 'name="wp_swiper_settings[art_shape_mobile]"', $admin );
+		$this->assertStringContainsString( '<span class="wp-swiper-shape__summary">As on the larger screen: upload a file for this one to change it.</span>', $admin );
+		$this->assertStringContainsString( '<span class="wp-swiper-shape__summary">2 shapes</span>', $admin );
 	}
 }

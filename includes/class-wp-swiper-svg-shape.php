@@ -28,8 +28,8 @@ class WP_Swiper_Svg_Shape {
 
 	// The largest file read, bytes.
 	const MAX_BYTES = 1048576;
-	// The most windows.
-	const MAX_SHAPES = 24;
+	// The most windows (more in the file: left out, counted in 'over').
+	const MAX_SHAPES = 100;
 	// The longest path kept for a window, characters.
 	const MAX_PATH = 60000;
 	// Points per curve when measuring (bounds, area).
@@ -95,6 +95,7 @@ class WP_Swiper_Svg_Shape {
 				'w'       => $data['w'],
 				'h'       => $data['h'],
 				'skipped' => $data['skipped'],
+				'over'    => $data['over'],
 				'shapes'  => $data['shapes'],
 			)
 		);
@@ -139,6 +140,8 @@ class WP_Swiper_Svg_Shape {
 			'w'       => self::round( $w ),
 			'h'       => self::round( $h ),
 			'skipped' => isset( $input['skipped'] ) ? max( 0, (int) $input['skipped'] ) : 0,
+			// Windows over MAX_SHAPES, left out.
+			'over'    => ( isset( $input['over'] ) ? max( 0, (int) $input['over'] ) : 0 ) + max( 0, count( $input['shapes'] ) - self::MAX_SHAPES ),
 			'shapes'  => $shapes,
 		);
 	}
@@ -153,7 +156,10 @@ class WP_Swiper_Svg_Shape {
 	public static function parse( $svg, $name = '' ) {
 		$svg = (string) $svg;
 		// No entities (they could expand without end); a doctype alone is fine.
-		if ( '' === $svg || strlen( $svg ) > self::MAX_BYTES || preg_match( '/<!ENTITY/i', $svg ) ) {
+		// UTF-8 only (an editor's export): in another encoding (UTF-16) the
+		// check for entities could be got round.
+		if ( '' === $svg || strlen( $svg ) > self::MAX_BYTES || preg_match( '/<!ENTITY/i', $svg )
+			|| false !== strpos( $svg, "\0" ) || ! self::is_utf8( $svg ) ) {
 			return null;
 		}
 		$doc      = new DOMDocument();
@@ -171,6 +177,10 @@ class WP_Swiper_Svg_Shape {
 		libxml_use_internal_errors( $internal );
 		$root = $loaded ? $doc->documentElement : null;
 		if ( ! $root || 'svg' !== strtolower( $root->localName ) ) {
+			return null;
+		}
+		// And once read: no entities declared, whatever the file looked like.
+		if ( $doc->doctype && ( $doc->doctype->entities->length || '' !== trim( (string) $doc->doctype->internalSubset ) ) ) {
 			return null;
 		}
 
@@ -203,11 +213,17 @@ class WP_Swiper_Svg_Shape {
 
 		$windows = array();
 		$skipped = 0;
+		$over    = 0;
 		foreach ( self::drawn_children( $container, $classes, $inherited, $skipped ) as $z => $child ) {
 			$parts = array();
 			$rule  = null;
 			self::collect( $child, $matrix, $inherited, $classes, $parts, $rule, $skipped );
 			if ( ! $parts ) {
+				continue;
+			}
+			// More than MAX_SHAPES: left out, and said so (summary()).
+			if ( count( $windows ) >= self::MAX_SHAPES ) {
+				++$over;
 				continue;
 			}
 			$label     = $child->getAttribute( 'data-name' );
@@ -218,9 +234,6 @@ class WP_Swiper_Svg_Shape {
 				'rule'  => $rule ? $rule : 'nonzero',
 				'z'     => count( $windows ),
 			);
-			if ( count( $windows ) >= self::MAX_SHAPES ) {
-				break;
-			}
 		}
 		if ( ! $windows ) {
 			return null;
@@ -282,6 +295,7 @@ class WP_Swiper_Svg_Shape {
 			'w'       => self::round( $vw ),
 			'h'       => self::round( $vh ),
 			'skipped' => $skipped,
+			'over'    => $over,
 			'shapes'  => self::ordered( $shapes ),
 		);
 	}
@@ -355,6 +369,10 @@ class WP_Swiper_Svg_Shape {
 		if ( $data['skipped'] ) {
 			/* translators: %d: number of objects left out. */
 			$text .= ', ' . sprintf( _n( '%d object left out (no fill, hidden or text)', '%d objects left out (no fill, hidden or text)', $data['skipped'], 'wp-swiper' ), $data['skipped'] );
+		}
+		if ( ! empty( $data['over'] ) ) {
+			/* translators: 1: number of shapes left out, 2: the most shapes kept. */
+			$text .= ', ' . sprintf( _n( '%1$d more left out: at most %2$d shapes', '%1$d more left out: at most %2$d shapes', $data['over'], 'wp-swiper' ), $data['over'], self::MAX_SHAPES );
 		}
 		return '' !== $data['name'] ? $data['name'] . ': ' . $text : $text;
 	}
@@ -1077,6 +1095,11 @@ class WP_Swiper_Svg_Shape {
 	}
 
 	// A layer's or object's name: plain text, short.
+	// Whether text is valid UTF-8 (without mbstring too).
+	private static function is_utf8( $text ) {
+		return function_exists( 'mb_check_encoding' ) ? mb_check_encoding( $text, 'UTF-8' ) : (bool) preg_match( '//u', $text );
+	}
+
 	private static function clean_id( $id ) {
 		return substr( sanitize_text_field( (string) $id ), 0, 64 );
 	}

@@ -3582,6 +3582,9 @@ class WP_Swiper_Settings {
 					$value = self::sanitize_mosaic( $value );
 				} elseif ( 'cuts' === $field['type'] ) {
 					$value = self::sanitize_template_cuts( $value );
+				} elseif ( 'svg_shape' === $field['type'] ) {
+					// Art's SVG shape of its own on this device ('' : the larger screen's).
+					$value = WP_Swiper_Svg_Shape::sanitize( $value );
 				} elseif ( '' !== $value ) {
 					$value = 'float' === $field['type'] ? round( (float) $value, 2 ) : (int) $value;
 					$value = max( $field['min'], min( $field['max'], $value ) );

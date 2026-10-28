@@ -415,7 +415,9 @@
 			var $box = $( this ).closest( '.wp-swiper-shape' );
 			var $input = $box.prevAll( 'input[type="hidden"]' ).first();
 			$input.val( '' );
-			shapeState( $box, i18n.shapeNone, false );
+			// Tablet and mobile: back to the larger screen's.
+			var device = $box.closest( '.wp-swiper-shape-device' ).data( 'device' );
+			shapeState( $box, device && device !== 'desktop' ? i18n.shapeInherit : i18n.shapeNone, false );
 			shapeChanged( $input );
 		} );
 
@@ -1849,6 +1851,10 @@
 					} );
 				}
 				// Ring: what is in the opening, its own settings (image or text) and the gap.
+				// SVG shape: the order windows show a new photo in, only where they all change at once.
+				if ( [ 'one', 'advance' ].indexOf( $( '#wp-swiper-art_shape_target' ).val() ) === -1 ) {
+					field( 'art_shape_appear' ).hide();
+				}
 				var opening = $( '#wp-swiper-art_opening_content' ).val();
 				if ( opening !== 'image' ) {
 					field( 'art_opening_image' ).hide();
@@ -2095,17 +2101,19 @@
 			$inputs.each( function () {
 				var $input = $( this );
 				var device = $input.data( 'device' );
-				var own = $input.val() !== '';
+				// Art's SVG shape: a box per device, its value in the input inside.
+				var value = $input.is( '.wp-swiper-shape-device' ) ? $input.find( 'input[type="hidden"]' ).val() : $input.val();
+				var own = value !== '';
 
 				if ( device !== 'desktop' ) {
 					// Numbers only: a select's empty choice just says "Inherit".
-					if ( ! $input.is( 'select' ) ) {
+					if ( ! $input.is( 'select, .wp-swiper-shape-device' ) ) {
 						$input.attr( 'placeholder', inherited );
 					}
 					owns[ device ] = owns[ device ] || own;
 				}
 				if ( own ) {
-					inherited = $input.val();
+					inherited = value;
 				} else if ( device === 'desktop' ) {
 					// An empty desktop value says what it means ("As the slides").
 					inherited = $input.attr( 'placeholder' ) || '';

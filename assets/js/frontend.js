@@ -1000,10 +1000,15 @@
 
 	var i18n = window.wpSwiperI18n || { dialog: 'Image viewer', close: 'Close', prev: 'Previous image', next: 'Next image' };
 
+	// Text for HTML, in an attribute's quotes too (an image's alt text, a
+	// video's title may have quotes: they must not end the attribute).
 	function escapeHtml( text ) {
-		var div = document.createElement( 'div' );
-		div.textContent = text;
-		return div.innerHTML;
+		return String( null === text || undefined === text ? '' : text )
+			.replace( /&/g, '&amp;' )
+			.replace( /</g, '&lt;' )
+			.replace( />/g, '&gt;' )
+			.replace( /"/g, '&quot;' )
+			.replace( /'/g, '&#39;' );
 	}
 
 	/**
