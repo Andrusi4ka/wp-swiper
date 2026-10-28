@@ -1651,9 +1651,10 @@
 			field( 'image_border_width' ).toggle( border );
 			field( 'image_border_color' ).toggle( border );
 			// Image shadow: where the photos stand apart (WP_Swiper_Settings::shadow()
-			// checks the same): not a background; Creative: the carousel; Slide:
-			// more than one slide in view, of their own widths or a continuous
-			// scroll. Its settings once on; Art has no spread (drop-shadow).
+			// checks the same), and Fade's one photo: not a background; Creative:
+			// the carousel; Slide: more than one slide in view, of their own
+			// widths or a continuous scroll. Its settings once on; Art has no
+			// spread (drop-shadow).
 			var canShadow = SHADOW_EFFECTS.indexOf( effect ) !== -1 && ! background
 				&& ( effect !== 'creative' || carousel )
 				&& ( ! slide || marquee || autoWidth || expand || maxPerView() > 1 );

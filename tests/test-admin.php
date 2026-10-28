@@ -397,6 +397,14 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		}
 		// The effects a field belongs to, for admin.js.
 		$this->assertStringContainsString( 'data-field="background" data-effects="slide fade collage"', $html );
+		// Use as background: no page of its own, the last block of Layout.
+		$this->assertStringNotContainsString( 'id="wp-swiper-page-background"', $html );
+		$this->assertStringNotContainsString( 'data-page="background"', $html );
+		$layout = WP_Swiper_Settings::blocks()['layout'];
+		$this->assertSame( 'background', array_key_last( $layout ) );
+		$this->assertSame( array( 'background', 'background_class', 'background_overlay_opacity', 'background_overlay_color', 'background_min_height' ), $layout['background']['fields'] );
+		preg_match( '#<fieldset[^>]*id="wp-swiper-page-layout"[^>]*>(.*?)</fieldset>#s', $html, $match );
+		$this->assertStringContainsString( 'data-block="background"', $match[1] );
 		// Description: its two notes (no description yet, or none shown).
 		$this->assertStringContainsString( 'data-note="empty"', $html );
 		$this->assertStringContainsString( 'data-note="unavailable"', $html );
@@ -495,6 +503,22 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( 1, $clean['collage_manual'] );
 		$this->assertSame( '', $clean['collage_manual_tablet'] );
 		$this->assertSame( 1, $clean['collage_manual_mobile'] );
+	}
+
+	public function test_preview_labels_the_background_mode() {
+		$slider = '<div class="wp-swiper">slider</div>';
+
+		// On: the block with the label, before the content and the slider.
+		$html = WP_Swiper_Preview::background_block( $slider, $this->settings( array( 'background' => true, 'background_class' => 'hero' ) ) );
+		$this->assertStringStartsWith( '<div class="wp-swiper-preview-block hero"><span class="wp-swiper-preview-block__mode">Background mode</span>', $html );
+		$this->assertStringContainsString( $slider, $html );
+
+		// Off, or an effect that cannot be one: the slider alone, no label.
+		$this->assertSame( $slider, WP_Swiper_Preview::background_block( $slider, $this->settings() ) );
+		$this->assertSame( $slider, WP_Swiper_Preview::background_block( $slider, $this->settings( array( 'effect' => 'cube', 'background' => true ) ) ) );
+
+		// Never on a page.
+		$this->assertStringNotContainsString( 'Background mode', $this->render( array( 'background' => true, 'background_class' => 'hero' ) ) );
 	}
 
 	public function test_preview_refuses_a_bad_nonce() {

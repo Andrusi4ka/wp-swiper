@@ -18,6 +18,15 @@ $slider = array(
 	'height'     => '400',
 );
 
+$shadow = array(
+	'image_shadow'        => '1',
+	'image_shadow_x'      => '0',
+	'image_shadow_y'      => '12',
+	'image_shadow_blur'   => '24',
+	'image_shadow_spread' => '0',
+	'image_shadow_color'  => 'rgba(0,0,0,0.5)',
+);
+
 return array(
 	'slide'            => array( 'settings' => $slider + array( 'effect' => 'slide' ) ),
 	'slide-loop'       => array( 'settings' => $slider + array( 'effect' => 'slide', 'loop' => '1', 'slides_per_view' => '3', 'space_between' => '12' ) ),
@@ -26,9 +35,18 @@ return array(
 		'captions' => true,
 	),
 	'expand'           => array( 'settings' => $slider + array( 'effect' => 'slide', 'expand_active' => '1', 'slides_per_view' => '5' ) ),
+	// Image shadow on a strip: its room shows no neighbour (slider.js hideOutside()).
+	'expand-shadow'    => array(
+		'settings' => $slider + $shadow + array( 'effect' => 'slide', 'expand_active' => '1', 'slides_per_view' => '5', 'space_between' => '6', 'active_width' => '50', 'active_width_mobile' => '70', 'loop' => '1', 'border_radius' => '10' ),
+		'photos'   => 10,
+	),
+	'slide-loop-shadow' => array( 'settings' => $slider + $shadow + array( 'effect' => 'slide', 'loop' => '1', 'slides_per_view' => '3', 'space_between' => '12' ) ),
+	'marquee-shadow'   => array( 'settings' => $slider + $shadow + array( 'effect' => 'slide', 'marquee' => '1', 'slides_per_view' => '3', 'space_between' => '12' ) ),
 	'auto-width'       => array( 'settings' => $slider + array( 'effect' => 'slide', 'auto_width' => '1', 'space_between' => '12' ) ),
 	'marquee'          => array( 'settings' => $slider + array( 'effect' => 'slide', 'marquee' => '1', 'slides_per_view' => '3' ) ),
 	'fade'             => array( 'settings' => $slider + array( 'effect' => 'fade' ) ),
+	'fade-shadow'      => array( 'settings' => $slider + $shadow + array( 'effect' => 'fade', 'border_radius' => '16' ) ),
+	'fade-shadow-contain' => array( 'settings' => $slider + $shadow + array( 'effect' => 'fade', 'image_fit' => 'contain' ) ),
 	'cube'             => array( 'settings' => $slider + array( 'effect' => 'cube' ) ),
 	'coverflow'        => array( 'settings' => $slider + array( 'effect' => 'coverflow', 'slides_per_view' => '3' ) ),
 	'flip'             => array( 'settings' => $slider + array( 'effect' => 'flip' ) ),

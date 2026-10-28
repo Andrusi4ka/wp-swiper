@@ -7,7 +7,8 @@ const FIXTURE = '/wp-content/plugins/wp-swiper/tests/browser/fixture.php';
 
 const CASES = [
 	'slide', 'slide-loop', 'slide-captions', 'expand', 'auto-width', 'marquee',
-	'fade', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'creative-carousel',
+	'expand-shadow', 'slide-loop-shadow', 'marquee-shadow',
+	'fade', 'fade-shadow', 'fade-shadow-contain', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'creative-carousel',
 	'thumbs', 'video', 'background',
 	'collage-scatter', 'collage-freeform', 'collage-grid', 'collage-masonry',
 	'collage-justified', 'collage-random', 'collage-feature',
@@ -16,8 +17,8 @@ const CASES = [
 
 // Ones with arrows that move the slides (a marquee runs on its own).
 const NAVIGATES = [
-	'slide', 'slide-loop', 'slide-captions', 'expand', 'auto-width',
-	'fade', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'creative-carousel', 'thumbs', 'video',
+	'slide', 'slide-loop', 'slide-captions', 'expand', 'auto-width', 'expand-shadow', 'slide-loop-shadow',
+	'fade', 'fade-shadow', 'fade-shadow-contain', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'creative-carousel', 'thumbs', 'video',
 ];
 
 // Ones whose photo opens the lightbox on a click.
@@ -60,6 +61,28 @@ async function open( page, name ) {
 }
 
 /**
+ * The slides on screen outside the slides' area, in the room kept for the
+ * image shadow, that are not hidden: none should be. A moving strip (the
+ * marquee) is checked for the mark (slider.js), its fading may be under way.
+ */
+function inRoom( page, moving ) {
+	return page.evaluate( ( moving ) => {
+		const el = document.querySelector( '.swiper-initialized' );
+		const box = el.getBoundingClientRect();
+		const style = getComputedStyle( el );
+		const start = box.left + parseFloat( style.paddingLeft );
+		const end = box.right - parseFloat( style.paddingRight );
+		return el.swiper.slides.filter( ( slide ) => {
+			const rect = slide.getBoundingClientRect();
+			const out = rect.right <= start + 0.5 || rect.left >= end - 0.5;
+			const onScreen = rect.right > box.left && rect.left < box.right;
+			const shown = moving ? ! slide.classList.contains( 'wp-swiper-slide--outside' ) : Number( getComputedStyle( slide ).opacity ) > 0.01;
+			return out && onScreen && shown;
+		} ).length;
+	}, moving );
+}
+
+/**
  * Where the slider's photos are: the boxes of its shown images and videos,
  * from the slider's top left corner, in whole pixels. Only their sizes for
  * a marquee (it keeps moving).
@@ -76,7 +99,7 @@ function layout( page, name ) {
 			boxes.sort();
 		}
 		return [ 'root ' + Math.round( base.width ) + 'x' + Math.round( base.height ) ].concat( boxes ).join( '\n' ) + '\n';
-	}, 'marquee' === name );
+	}, /^marquee/.test( name ) );
 }
 
 for ( const name of CASES ) {
@@ -107,6 +130,23 @@ for ( const name of CASES ) {
 				const before = await index();
 				await page.locator( '.swiper-button-next' ).first().click();
 				await expect.poll( index ).not.toBe( before );
+			} );
+		}
+
+		if ( /-shadow$/.test( name ) && ! /^fade/.test( name ) ) {
+			test( 'no neighbour shows in the room for the shadow', async ( { page } ) => {
+				await open( page, name );
+				expect( await inRoom( page, /^marquee/.test( name ) ) ).toBe( 0 );
+				if ( NAVIGATES.includes( name ) ) {
+					for ( let i = 0; i < 3; i++ ) {
+						await page.locator( '.swiper-button-next' ).first().click();
+						await page.waitForTimeout( 900 );
+						expect( await inRoom( page, /^marquee/.test( name ) ) ).toBe( 0 );
+					}
+				} else {
+					await page.waitForTimeout( 1500 );
+					expect( await inRoom( page, /^marquee/.test( name ) ) ).toBe( 0 );
+				}
 			} );
 		}
 

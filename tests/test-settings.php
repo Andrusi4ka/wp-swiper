@@ -602,13 +602,14 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		// Blur + spread, less or more the offset on each side.
 		$this->assertSame( array( 'top' => 12, 'right' => 26, 'bottom' => 32, 'left' => 18 ), $shadow['room'] );
 
-		// Off; not a background; not for an effect with one photo in view.
+		// Off; not a background; not for an effect with one photo in view (but Fade).
 		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( array( 'effect' => 'collage' ) ) ) );
 		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'collage', 'background' => true, 'background_class' => 'hero' ) ) ) );
-		foreach ( array( 'fade', 'cube', 'flip', 'thumbs' ) as $effect ) {
+		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'fade', 'background' => true, 'background_class' => 'hero' ) ) ) );
+		foreach ( array( 'cube', 'flip', 'thumbs' ) as $effect ) {
 			$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => $effect ) ) ), $effect );
 		}
-		foreach ( array( 'coverflow', 'cards', 'art' ) as $effect ) {
+		foreach ( array( 'fade', 'coverflow', 'cards', 'art' ) as $effect ) {
 			$this->assertNotFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => $effect ) ) ), $effect );
 		}
 		// Creative: the carousel only.

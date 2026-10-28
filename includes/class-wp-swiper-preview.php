@@ -67,7 +67,6 @@ class WP_Swiper_Preview {
 						<?php esc_html_e( 'Update', 'wp-swiper' ); ?>
 					</button>
 				</div>
-				<p class="description wp-swiper-preview__note"><?php esc_html_e( 'The settings as they are now, saved or not. Press Update after changes.', 'wp-swiper' ); ?></p>
 				<?php // Collage only (admin.js): its photos swap places by dragging here (preview-collage.js). ?>
 				<p class="description wp-swiper-preview__hint" data-effect="collage" hidden>
 					<span class="dashicons dashicons-move" aria-hidden="true"></span>
@@ -127,6 +126,31 @@ class WP_Swiper_Preview {
 	}
 
 	/**
+	 * Background: the slider in a block with its class and some content over
+	 * it, as on a page (without a class there is no such block: the notice
+	 * says so), and a label in its corner saying the mode is on (the preview
+	 * only, never on a page). Otherwise the slider as it is.
+	 *
+	 * @param string $slider   The slider's markup.
+	 * @param array  $settings Slider settings.
+	 * @return string
+	 */
+	public static function background_block( $slider, $settings ) {
+		if ( ! WP_Swiper_Settings::is_background( $settings ) ) {
+			return $slider;
+		}
+		return sprintf(
+			'<div class="wp-swiper-preview-block %1$s"><span class="wp-swiper-preview-block__mode">%2$s</span><div class="wp-swiper-preview-block__content"><h2>%3$s</h2><p>%4$s</p><span class="wp-swiper-preview-block__button">%5$s</span></div>%6$s</div>',
+			esc_attr( $settings['background_class'] ),
+			esc_html__( 'Background mode', 'wp-swiper' ),
+			esc_html__( 'The block’s content', 'wp-swiper' ),
+			esc_html__( 'Text, buttons and other elements of the row or column sit over the slider.', 'wp-swiper' ),
+			esc_html__( 'Button', 'wp-swiper' ),
+			$slider
+		);
+	}
+
+	/**
 	 * The frame: the slider drawn from the posted form, with the plugin's
 	 * assets and no theme. The block around it is as tall as the frame, for
 	 * Height "Auto" to fill.
@@ -150,18 +174,7 @@ class WP_Swiper_Preview {
 		WP_Swiper_Art::register_assets();
 		$slider = WP_Swiper_Render::render_slider( $post_id, WP_Swiper_Admin::posted_slides(), $settings );
 
-		// Background: in a block with its class and some content over it, as on
-		// a page (without a class there is no such block: the notice says so).
-		if ( WP_Swiper_Settings::is_background( $settings ) ) {
-			$slider = sprintf(
-				'<div class="wp-swiper-preview-block %1$s"><div class="wp-swiper-preview-block__content"><h2>%2$s</h2><p>%3$s</p><span class="wp-swiper-preview-block__button">%4$s</span></div>%5$s</div>',
-				esc_attr( $settings['background_class'] ),
-				esc_html__( 'The block’s content', 'wp-swiper' ),
-				esc_html__( 'Text, buttons and other elements of the row or column sit over the slider.', 'wp-swiper' ),
-				esc_html__( 'Button', 'wp-swiper' ),
-				$slider
-			);
-		}
+		$slider = self::background_block( $slider, $settings );
 
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
@@ -183,7 +196,9 @@ class WP_Swiper_Preview {
 		body { font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 		.wp-swiper-preview-page { box-sizing: border-box; min-height: 100vh; padding: 24px; }
 		@media (max-width: 767px) { .wp-swiper-preview-page { padding: 12px; } }
-		.wp-swiper-preview-block { background: #f0f0f1; }
+		.wp-swiper-preview-block { position: relative; background: #f0f0f1; }
+		/* "Background mode": a small label in the block's corner, over the slider and its content. */
+		.wp-swiper-preview-block__mode { position: absolute; top: 12px; left: 12px; z-index: 3; padding: 3px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 12px; line-height: 18px; font-weight: 600; pointer-events: none; }
 		/* Its content in the middle of the block, as an example of what sits over the slider. */
 		.wp-swiper-preview-block { display: flex; align-items: center; justify-content: center; }
 		/* Background: the block at a screen's usual proportions per device, unless

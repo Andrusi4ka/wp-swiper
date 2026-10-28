@@ -753,7 +753,7 @@ return array(
 		'label'   => __( 'Image shadow', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => false,
-		'help'    => __( 'A shadow under each photo where they stand apart: several slides in view, Coverflow, Cards, the Creative carousel, Collage and Art (where it follows each shape, with no spread). Not for a background. Room is kept around the photos for it, so they get a little smaller.', 'wp-swiper' ),
+		'help'    => __( 'A shadow under each photo where they stand apart: several slides in view, Coverflow, Cards, the Creative carousel, Collage and Art (where it follows each shape, with no spread); with Fade, around the photo in view. Not for a background. Room is kept around the photos for it, so they get a little smaller.', 'wp-swiper' ),
 	),
 	'image_shadow_x'        => array(
 		'section' => 'layout',
@@ -1697,7 +1697,7 @@ return array(
 	// found by a class given to that block (frontend.js background()).
 	'background'            => array(
 		'section' => 'advanced',
-		'panel'   => 'background',
+		'panel'   => 'layout',
 		'effects' => self::BACKGROUND_EFFECTS,
 		'label'   => __( 'Use as background', 'wp-swiper' ),
 		'type'    => 'checkbox',
@@ -1706,7 +1706,7 @@ return array(
 	),
 	'background_class'      => array(
 		'section'     => 'advanced',
-		'panel'       => 'background',
+		'panel'       => 'layout',
 		'effects'     => self::BACKGROUND_EFFECTS,
 		'label'       => __( 'Parent block class', 'wp-swiper' ),
 		'type'        => 'text',
@@ -1717,7 +1717,7 @@ return array(
 	// One row: how dark, and in what color.
 	'background_overlay_opacity' => array(
 		'section' => 'advanced',
-		'panel'   => 'background',
+		'panel'   => 'layout',
 		'effects' => self::BACKGROUND_EFFECTS,
 		'group'   => 'background_overlay',
 		'label'   => __( 'Overlay opacity (%)', 'wp-swiper' ),
@@ -1730,7 +1730,7 @@ return array(
 	),
 	'background_overlay_color' => array(
 		'section' => 'advanced',
-		'panel'   => 'background',
+		'panel'   => 'layout',
 		'effects' => self::BACKGROUND_EFFECTS,
 		'group'   => 'background_overlay',
 		'label'   => __( 'Overlay color', 'wp-swiper' ),
@@ -1740,7 +1740,7 @@ return array(
 	// Per device; empty (desktop too) = none: the block as tall as its content.
 	'background_min_height' => array(
 		'section'     => 'advanced',
-		'panel'       => 'background',
+		'panel'       => 'layout',
 		'effects'     => self::BACKGROUND_EFFECTS,
 		'label'       => __( 'Minimum block height (px)', 'wp-swiper' ),
 		'type'        => 'number',

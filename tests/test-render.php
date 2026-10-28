@@ -1156,6 +1156,10 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '--wp-swiper-shadow-room:12px 20px 28px 20px', $style );
 
 		$this->assertContains( 'wp-swiper--shadow', $this->root_classes( $this->render( $on + array( 'effect' => 'coverflow' ) ) ) );
+		// Fade: its one photo, the class the CSS frames it by too.
+		$fade = $this->root_classes( $this->render( $on + array( 'effect' => 'fade' ) ) );
+		$this->assertContains( 'wp-swiper--shadow', $fade );
+		$this->assertContains( 'wp-swiper--effect-fade', $fade );
 		// None where it does not apply: one slide in view.
 		$single = $this->render( $on + array( 'effect' => 'slide', 'slides_per_view' => 1, 'slides_per_view_tablet' => '', 'slides_per_view_mobile' => '' ) );
 		$this->assertNotContains( 'wp-swiper--shadow', $this->root_classes( $single ) );

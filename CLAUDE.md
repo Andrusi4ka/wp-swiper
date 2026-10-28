@@ -31,6 +31,14 @@
 - Після нього в `art-effect` (2026-10-28): тести в браузері
   (`tests/browser/`), схема полів в окремому `includes/settings-fields.php`,
   слайдери в окремому `assets/js/slider.js` (див. «Як влаштований код»).
+- Далі (2026-10-29): Use as background — не окрема сторінка меню, а останній
+  блок Layout; у прев'ю без тексту «The settings as they are now…», з
+  плашкою «Background mode» при фоні (`WP_Swiper_Preview::background_block()`);
+  Image shadow і для Fade (Cover — тінь на `.swiper-wrapper`, щоб не
+  блідла під час переходу; Contain — на фото). Slide з тінню: відступ під
+  тінь показував сусідній слайд (місце під тінь > проміжку); тепер слайди
+  цілком поза кадром згасають (`slider.js hideOutside()`, клас
+  `wp-swiper-slide--outside`, перевірка щокадру, поки щось рухається).
 
 ## Наступний реліз (на прохання)
 

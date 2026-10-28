@@ -1764,6 +1764,79 @@
 		}
 		start();
 	}
+
+	/* ------------------------------------------------------------------ *
+	 * Image shadow, Slide: the slides out of view hidden
+	 *
+	 * Room is kept around the slides for the shadow (frontend.css: padding
+	 * of the .swiper), and Swiper only clips at its outer edge, so a slide a
+	 * gap away from those in view would show in that room. A slide wholly
+	 * outside the slides' area gets OUTSIDE_CLASS (frontend.css fades it
+	 * out); checked frame by frame while anything in the slider moves (the
+	 * strip, the wider active slide's widths, the marquee), so a slide
+	 * coming in shows as it crosses the edge.
+	 * ------------------------------------------------------------------ */
+
+	var OUTSIDE_CLASS = 'wp-swiper-slide--outside';
+
+	function hideOutside( swiper ) {
+		var el = swiper.el;
+		var until = 0;
+		var ticking = false;
+
+		function check() {
+			var box = el.getBoundingClientRect();
+			var style = getComputedStyle( el );
+			var horizontal = swiper.isHorizontal();
+			var start = horizontal ? box.left + parseFloat( style.paddingLeft ) : box.top + parseFloat( style.paddingTop );
+			var end = horizontal ? box.right - parseFloat( style.paddingRight ) : box.bottom - parseFloat( style.paddingBottom );
+			swiper.slides.forEach( function ( slide ) {
+				var rect = slide.getBoundingClientRect();
+				var from = horizontal ? rect.left : rect.top;
+				var to = horizontal ? rect.right : rect.bottom;
+				slide.classList.toggle( OUTSIDE_CLASS, to <= start + 0.5 || from >= end - 0.5 );
+			} );
+		}
+
+		function tick() {
+			check();
+			if ( performance.now() < until ) {
+				requestAnimationFrame( tick );
+			} else {
+				ticking = false;
+			}
+		}
+
+		// Checked every frame for this long (ms), and once more after.
+		function watch( ms ) {
+			until = Math.max( until, performance.now() + ms );
+			if ( ! ticking ) {
+				ticking = true;
+				requestAnimationFrame( tick );
+			}
+		}
+
+		// A CSS transition in the slider (the strip's move, a slide's width):
+		// as long as it may take. Not the fading itself.
+		function moving( e ) {
+			if ( 'opacity' !== e.propertyName ) {
+				watch( ( Number( swiper.params.speed ) || 600 ) + 100 );
+			}
+		}
+		el.addEventListener( 'transitionrun', moving );
+		el.addEventListener( 'transitionend', function ( e ) {
+			if ( 'opacity' !== e.propertyName ) {
+				watch( 50 );
+			}
+		} );
+		// Dragged (no transition), resized, rebuilt: where they are now.
+		swiper.on( 'setTranslate resize update slidesUpdated', check );
+		swiper.on( 'transitionStart', function () {
+			watch( ( Number( swiper.params.speed ) || 600 ) + 100 );
+		} );
+		check();
+	}
+
 	/* ------------------------------------------------------------------ *
 	 * One slider (frontend.js init(): not made a Swiper yet, its config read)
 	 * ------------------------------------------------------------------ */
@@ -1790,6 +1863,10 @@
 		options.on = {
 			init: function ( swiper ) {
 				setupControls( swiper, el, config );
+				// Image shadow on a strip of slides: its room shows no neighbour.
+				if ( 'slide' === config.effect && wrapper.classList.contains( 'wp-swiper--shadow' ) ) {
+					hideOutside( swiper );
+				}
 				if ( config.zoom ) {
 					zoom( swiper, el, config );
 				}

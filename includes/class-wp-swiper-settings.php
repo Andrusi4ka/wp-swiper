@@ -53,9 +53,10 @@ class WP_Swiper_Settings {
 
 	/**
 	 * Effects whose photos can have a shadow (Image shadow): those where they
-	 * stand apart (see shadow() for the rest of the conditions).
+	 * stand apart, and Fade, one photo framed by it (see shadow() for the rest
+	 * of the conditions).
 	 */
-	const SHADOW_EFFECTS = array( 'slide', 'coverflow', 'cards', 'creative', 'collage', 'art' );
+	const SHADOW_EFFECTS = array( 'slide', 'fade', 'coverflow', 'cards', 'creative', 'collage', 'art' );
 
 	/**
 	 * Field definitions grouped into sections (includes/settings-fields.php),
@@ -1181,8 +1182,6 @@ class WP_Swiper_Settings {
 			'video'       => array( __( 'Video', 'wp-swiper' ), 'dashicons-video-alt3' ),
 			// The outer block's class and id.
 			'attributes'  => array( __( 'Custom', 'wp-swiper' ), 'dashicons-editor-code' ),
-			// The slider behind its block's content (its menu item shows for the effects that can be).
-			'background'  => array( __( 'Background', 'wp-swiper' ), 'dashicons-format-image' ),
 		);
 	}
 
@@ -1277,6 +1276,13 @@ class WP_Swiper_Settings {
 				'zoom'        => array(
 					'title'  => __( 'Zoom', 'wp-swiper' ),
 					'fields' => array( 'zoom', 'zoom_direction', 'zoom_amount', 'zoom_origin', 'zoom_duration' ),
+				),
+				// Last: the slider behind its block's content, for the effects that
+				// can be one (the block shows for them only); its settings under
+				// the checkbox while it is on (admin.js).
+				'background'  => array(
+					'title'  => __( 'Background', 'wp-swiper' ),
+					'fields' => array( 'background', 'background_class', 'background_overlay_opacity', 'background_overlay_color', 'background_min_height' ),
 				),
 			),
 			'thumbs'   => array(

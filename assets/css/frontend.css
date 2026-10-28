@@ -510,6 +510,54 @@
 	box-shadow: var(--wp-swiper-shadow, none);
 }
 
+/* Slide: the room kept for the shadow would show a neighbour of the slides
+   in view (a gap away), so a slide wholly outside their area fades out
+   (slider.js hideOutside()), and takes no clicks. Faded only once the
+   slider is laid out (.wp-swiper--ready): hidden at once on load. The wider
+   active slide keeps its own size transition along. */
+.wp-swiper--shadow.wp-swiper--effect-slide .swiper-slide.wp-swiper-slide--outside {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.wp-swiper--shadow.wp-swiper--effect-slide.wp-swiper--ready .swiper-slide {
+	transition: opacity 0.2s ease;
+}
+
+.wp-swiper--shadow.wp-swiper--expand.wp-swiper--horizontal.wp-swiper--ready .swiper-slide {
+	transition: width var(--wp-swiper-speed, 600ms) ease, opacity 0.2s ease;
+}
+
+.wp-swiper--shadow.wp-swiper--expand.wp-swiper--vertical.wp-swiper--ready .swiper-slide {
+	transition: height var(--wp-swiper-speed, 600ms) ease, opacity 0.2s ease;
+}
+
+/* Fade: its slides fade over each other, so a shadow of their own would
+   pale halfway through each change. With "Cover" (one size for all) it is
+   the frame's instead (.swiper-wrapper, as large as a slide, its corners
+   rounded as theirs) and stays while the photos change; with "Contain" it
+   stays under each image box (above), which changes size with the photo. */
+.wp-swiper--shadow.wp-swiper--effect-fade:not(.wp-swiper--fit-contain) .swiper-slide {
+	box-shadow: none;
+}
+
+.wp-swiper--shadow.wp-swiper--effect-fade:not(.wp-swiper--fit-contain) .swiper-wrapper {
+	box-shadow: var(--wp-swiper-shadow, none);
+	border-radius: var(--wp-swiper-radius, 0px);
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper--shadow.wp-swiper--effect-fade:not(.wp-swiper--fit-contain) .swiper-wrapper {
+		border-radius: var(--wp-swiper-radius-tablet, var(--wp-swiper-radius, 0px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper--shadow.wp-swiper--effect-fade:not(.wp-swiper--fit-contain) .swiper-wrapper {
+		border-radius: var(--wp-swiper-radius-mobile, var(--wp-swiper-radius-tablet, var(--wp-swiper-radius, 0px)));
+	}
+}
+
 /* Caption */
 .wp-swiper__caption {
 	position: absolute;
