@@ -564,7 +564,67 @@
 		block.wpSwiperArtShown = used;
 	}
 
-	var STYLES = { ring: ring, 'ring-text': ring, 'grid-circle': gridCircle };
+	/*
+	 * Windows drawn edge to edge would show a hairline of the page between
+	 * them (each edge is smoothed on its own, half see-through): each grows
+	 * by BLEED px at its box's sides, from its middle, so neighbours overlap
+	 * a little there. Too little to see anywhere else.
+	 */
+	var BLEED = 0.75;
+
+	// The path in px of its box (grown by BLEED: see above).
+	function scaledPath( d, width, height, box ) {
+		var kx = ( box.width + 2 * BLEED ) / ( box.width || 1 );
+		var ky = ( box.height + 2 * BLEED ) / ( box.height || 1 );
+		var x = true;
+		return d.replace( /-?\d+(?:\.\d+)?/g, function ( number ) {
+			var value = x
+				? ( Number( number ) * width - box.left - box.width / 2 ) * kx + box.width / 2 + BLEED
+				: ( Number( number ) * height - box.top - box.height / 2 ) * ky + box.height / 2 + BLEED;
+			x = ! x;
+			return String( Math.round( value * 100 ) / 100 );
+		} );
+	}
+
+	/*
+	 * SVG shape: the windows of an SVG file (WP_Swiper_Svg_Shape), the stage
+	 * at its drawing's proportions (art.css). Each window's box and path come
+	 * in numbers of the stage (0–1 each way): here in px of its box, cut to it
+	 * with clip-path; stacked as in the drawing. The main window, where the
+	 * current photo shows, is the first piece.
+	 */
+	function shape( block, stage, config ) {
+		var width = stage.clientWidth;
+		var height = stage.clientHeight;
+		if ( ! width || ! height ) {
+			return;
+		}
+		var pieces = stage.querySelectorAll( '.wp-swiper-art__piece' );
+		var shapes = config.shapes || [];
+		[].forEach.call( pieces, function ( piece, i ) {
+			var win = shapes[ i ];
+			piece.hidden = ! win;
+			if ( ! win ) {
+				return;
+			}
+			var box = {
+				left: win.box[ 0 ] * width,
+				top: win.box[ 1 ] * height,
+				width: win.box[ 2 ] * width,
+				height: win.box[ 3 ] * height
+			};
+			var d = scaledPath( win.d, width, height, box );
+			// The box grows with it.
+			place( piece, { left: box.left - BLEED, top: box.top - BLEED, width: box.width + 2 * BLEED, height: box.height + 2 * BLEED } );
+			piece.style.clipPath = 'path(' + ( win.rule === 'evenodd' ? 'evenodd, ' : '' ) + '"' + d + '")';
+			// The drawing's stacking: the later on top.
+			piece.style.zIndex = 1 + ( Number( win.z ) || 0 );
+			captionAt( piece, { x: box.width / 2 + BLEED, y: box.height / 2 + BLEED, width: box.width } );
+			outline( block, piece, d );
+		} );
+	}
+
+	var STYLES = { ring: ring, 'ring-text': ring, 'grid-circle': gridCircle, shape: shape };
 
 	/**
 	 * The slides' descriptions (render.php descriptions()): the block right
@@ -825,6 +885,7 @@
 			queue = order.length > shown ? order.slice( shown ) : [];
 			sequence = order;
 			middleAt = 0;
+			at = 0;
 			// The middle photo may be another one now.
 			if ( describe ) {
 				describe.rest();
@@ -839,10 +900,39 @@
 		 * under it go.
 		 */
 		var lastSwapped = -1;
+
+		/*
+		 * SVG shape ("advance"): every window takes the photo `by` places on in
+		 * the device's order, the main one the current photo; as a slider, from
+		 * the last photo back to the first. (A click on any window opens its
+		 * photo in the lightbox, as in the other styles.)
+		 */
+		var at = 0;
+		function advance( by ) {
+			if ( sequence.length < 2 || ! by ) {
+				return;
+			}
+			at = ( ( at + by ) % sequence.length + sequence.length ) % sequence.length;
+			var shown = shownCount();
+			for ( var k = 0; k < shown; k++ ) {
+				var real = sequence[ ( at + k ) % sequence.length ];
+				if ( pieces[ k ].wpReal !== real ) {
+					fadeTo( pieces[ k ], real );
+				}
+			}
+			if ( describe ) {
+				describe.refresh();
+			}
+		}
+
 		function swap() {
 			var shown = shownCount();
 			var index;
 			var real;
+			if ( config.swap.target === 'advance' ) {
+				advance( 1 );
+				return;
+			}
 			if ( config.swap.target === 'middle' ) {
 				// The middle photo: the next of all the photos in turn (the ring as
 				// it is: a photo may be in both for a while).
@@ -856,23 +946,32 @@
 				if ( ! queue.length ) {
 					return;
 				}
-				do {
-					index = Math.floor( Math.random() * shown );
-				} while ( shown > 1 && index === lastSwapped );
+				if ( config.swap.target === 'turn' ) {
+					// SVG shape, "in turn": the main window, then the next, and so on.
+					index = ( lastSwapped + 1 ) % shown;
+				} else {
+					do {
+						index = Math.floor( Math.random() * shown );
+					} while ( shown > 1 && index === lastSwapped );
+				}
 				lastSwapped = index;
 				real = queue.shift();
 				queue.push( pieces[ index ].wpReal );
 			}
 
-			var piece = pieces[ index ];
+			fadeTo( pieces[ index ], real );
+			if ( describe && index === 0 ) {
+				describe.refresh();
+			}
+		}
+
+		// A piece's photo fading to slide `real`'s.
+		function fadeTo( piece, real ) {
 			piece.wpReal = real;
 
 			var fresh = photos[ real ].cloneNode( true );
 			fresh.classList.add( 'is-entering' );
 			piece.appendChild( fresh );
-			if ( describe && index === 0 ) {
-				describe.refresh();
-			}
 
 			var img = fresh.querySelector( 'img' );
 			var decoded = img && img.decode ? img.decode().catch( function () {} ) : Promise.resolve();
@@ -927,6 +1026,7 @@
 		}
 
 		var describe = descriptions( block, stage, pieces );
+
 		if ( config.lightbox ) {
 			lightbox( block, stage, pieces, photos, config.lightbox );
 		}
@@ -952,7 +1052,9 @@
 			var collapsed = column.getBoundingClientRect().height;
 			stage.style.width = collapsed + 'px';
 			var free = Math.floor( collapsed - ( column.getBoundingClientRect().height - collapsed ) );
-			stage.style.width = free >= FIT_MIN ? 'min(100%, ' + free + 'px)' : '';
+			// As tall as the free height: square, or (SVG shape) its proportions.
+			var ratio = Number( config.ratio ) || 1;
+			stage.style.width = free >= FIT_MIN ? 'min(100%, ' + Math.floor( free * ratio ) + 'px)' : '';
 		}
 
 		var width = 0;

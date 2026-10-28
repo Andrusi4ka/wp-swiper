@@ -42,7 +42,23 @@ class WP_Swiper_Art {
 			// A square grid (its Columns per device) with a circle over its
 			// middle: the cells around it cut by it (those it covers left out).
 			'grid-circle' => __( 'Grid + circle', 'wp-swiper' ),
+			// The shapes of an SVG file, each a window for a photo
+			// (WP_Swiper_Svg_Shape): the current one in the main window, the next
+			// ones in the others, moving on window by window.
+			'shape'       => __( 'SVG shape', 'wp-swiper' ),
 		);
+	}
+
+	/**
+	 * SVG shape: its windows for a page (WP_Swiper_Svg_Shape::frame()); null
+	 * when no file was uploaded (or it had no shapes).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array|null
+	 */
+	public static function shape( $settings ) {
+		$data = WP_Swiper_Svg_Shape::decode( isset( $settings['art_shape'] ) ? $settings['art_shape'] : '' );
+		return $data ? WP_Swiper_Svg_Shape::frame( $data, empty( $settings['art_shape_margins'] ) ) : null;
 	}
 
 	/**
@@ -63,7 +79,8 @@ class WP_Swiper_Art {
 	 * @return bool
 	 */
 	public static function has_middle_photo( $style ) {
-		return in_array( $style, array( 'ring', 'grid-circle' ), true );
+		// SVG shape: its main window.
+		return in_array( $style, array( 'ring', 'grid-circle', 'shape' ), true );
 	}
 
 	/**
@@ -126,10 +143,32 @@ class WP_Swiper_Art {
 				'inline_hidden' => true,
 				'default'       => '',
 			),
+			// SVG shape: the file's shapes (WP_Swiper_Svg_Shape: their geometry
+			// only, read when the slider is saved or the preview updated).
+			'art_shape'          => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'shape' ),
+				'label'   => __( 'Shape (SVG file)', 'wp-swiper' ),
+				'type'    => 'svg_shape',
+				'default' => '',
+				'help'    => __( 'Each object of the drawing is a window for a photo: the current photo in the main one, the next ones in the others. The main window is the object or layer named "main" in the drawing, else the largest; then those named 2, 3..., then the larger ones. Objects without a fill, hidden ones and text are left out; the later ones lie on top, as in the drawing.', 'wp-swiper' ),
+			),
+			// SVG shape: the empty space around the shapes in the file kept, or
+			// left out (by default: the slider as large as the shapes).
+			'art_shape_margins'  => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'shape' ),
+				'label'   => __( 'Keep the file\'s empty margins', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'Off: the slider is as large as its shapes. On: the whole drawing, with the space around them.', 'wp-swiper' ),
+			),
 			'art_size'           => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring', 'ring-text' ),
+				'styles'     => array( 'ring', 'ring-text', 'shape' ),
 				'label'      => __( 'Size', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -138,13 +177,13 @@ class WP_Swiper_Art {
 				'min'        => 1,
 				'max'        => 2000,
 				'step'       => 1,
-				'help'       => __( 'Its width and height (it is square), never wider than the column. px: the most it gets (160 at least). %: of the column\'s width. vh: of the screen\'s height. Auto: as large as the free space of the column allows (its width, and its height where the row gives it one).', 'wp-swiper' ),
+				'help'       => __( 'Its width (a ring is square; an SVG shape keeps the proportions of its drawing), never wider than the column. px: the most it gets (160 at least). %: of the column\'s width. vh: of the screen\'s height. Auto: as large as the free space of the column allows (its width, and its height where the row gives it one).', 'wp-swiper' ),
 			),
 			// Size's unit, per device (tablet and mobile empty: the larger screen's).
 			'art_size_unit'      => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring', 'ring-text' ),
+				'styles'     => array( 'ring', 'ring-text', 'shape' ),
 				'label'      => __( 'Size unit', 'wp-swiper' ),
 				'type'       => 'select',
 				'responsive' => true,
@@ -161,7 +200,7 @@ class WP_Swiper_Art {
 			'art_align'          => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring', 'ring-text' ),
+				'styles'     => array( 'ring', 'ring-text', 'shape' ),
 				'label'      => __( 'Alignment', 'wp-swiper' ),
 				'type'       => 'select',
 				'responsive' => true,
@@ -274,9 +313,11 @@ class WP_Swiper_Art {
 				'step'       => 1,
 				'help'       => __( '0: the photos evenly all around the circle. More: a gap at the bottom of the ring.', 'wp-swiper' ),
 			),
+			// Not for SVG shape: its windows are as drawn.
 			'art_gap'            => array(
 				'section'    => 'layout',
 				'effects'    => $art,
+				'styles'     => array( 'ring', 'ring-text', 'grid-circle' ),
 				'label'      => __( 'Gap (px)', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -288,6 +329,7 @@ class WP_Swiper_Art {
 			'art_radius'         => array(
 				'section'    => 'layout',
 				'effects'    => $art,
+				'styles'     => array( 'ring', 'ring-text', 'grid-circle' ),
 				'label'      => __( 'Rounded corners (px)', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -477,7 +519,7 @@ class WP_Swiper_Art {
 			'art_caption_middle' => array(
 				'section' => 'caption',
 				'effects' => $art,
-				'styles'  => array( 'ring', 'grid-circle' ),
+				'styles'  => array( 'ring', 'grid-circle', 'shape' ),
 				'label'   => __( 'Only on the middle photo', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => false,
@@ -511,6 +553,24 @@ class WP_Swiper_Art {
 					'middle' => __( 'The middle photo', 'wp-swiper' ),
 				),
 				'help'    => __( 'Any piece at random: only with more photos than pieces, those not shown come in. The middle photo: it goes through all the photos in turn, the ring stays as it is.', 'wp-swiper' ),
+			),
+			// SVG shape: which window gets a new photo — one at random (with more
+			// photos than windows: those not shown), the windows in turn, or all
+			// of them at once, each taking the next one's photo (as a slider).
+			'art_shape_target'   => array(
+				'section' => 'advanced',
+				'panel'   => 'controls',
+				'effects' => $art,
+				'styles'  => array( 'shape' ),
+				'label'   => __( 'What changes', 'wp-swiper' ),
+				'type'    => 'select',
+				'default' => 'any',
+				'choices' => array(
+					'any'     => __( 'One window at random', 'wp-swiper' ),
+					'turn'    => __( 'The windows in turn', 'wp-swiper' ),
+					'advance' => __( 'All windows at once', 'wp-swiper' ),
+				),
+				'help'    => __( 'One window at random, or in turn (the main one, then the next): only with more photos than windows, those not shown come in. All windows at once: as a slider, each takes the photo of the next one, the main one the next photo.', 'wp-swiper' ),
 			),
 			'art_swap_delay'     => array(
 				'section' => 'advanced',
@@ -560,14 +620,14 @@ class WP_Swiper_Art {
 			'layout'   => array(
 				'art' => array(
 					'title'  => __( 'Art', 'wp-swiper' ),
-					'fields' => array( 'art_style', 'art_size', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_grid_height', 'art_ring_opening', 'art_gap', 'art_radius', 'art_center', 'art_center_image', 'art_center_image_size', 'art_center_text', 'art_center_font_size', 'art_center_padding', 'art_center_bg', 'art_opening_content', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
+					'fields' => array( 'art_style', 'art_shape', 'art_shape_margins', 'art_size', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_grid_height', 'art_ring_opening', 'art_gap', 'art_radius', 'art_center', 'art_center_image', 'art_center_image_size', 'art_center_text', 'art_center_font_size', 'art_center_padding', 'art_center_bg', 'art_opening_content', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
 				),
 			),
 			// As the Collage's own (the same block and fields).
 			'controls' => array(
 				'art_swap' => array(
 					'title'  => __( 'Photo swapping', 'wp-swiper' ),
-					'fields' => array( 'art_swap', 'art_swap_target', 'art_swap_delay', 'art_swap_speed', 'art_pause' ),
+					'fields' => array( 'art_swap', 'art_swap_target', 'art_shape_target', 'art_swap_delay', 'art_swap_speed', 'art_pause' ),
 				),
 			),
 		);
@@ -602,6 +662,11 @@ class WP_Swiper_Art {
 	 */
 	public static function counts( $settings ) {
 		$style = self::style_of( $settings );
+		// SVG shape: its windows, on every device.
+		if ( 'shape' === $style ) {
+			$shape = self::shape( $settings );
+			return array_fill_keys( array( 'desktop', 'tablet', 'mobile' ), $shape ? count( $shape['shapes'] ) : 1 );
+		}
 		if ( 'grid-circle' === $style ) {
 			return array_map(
 				function ( $photos ) {
@@ -706,6 +771,13 @@ class WP_Swiper_Art {
 		}
 
 		$style   = self::style_of( $settings );
+		// SVG shape: no file yet (or no shapes in it), nothing to show.
+		$shape = 'shape' === $style ? self::shape( $settings ) : null;
+		if ( 'shape' === $style && ! $shape ) {
+			return current_user_can( 'edit_posts' )
+				? '<p class="wp-swiper-notice">' . esc_html__( 'WP Swiper: upload an SVG file for the SVG shape style (Layout, Art).', 'wp-swiper' ) . '</p>'
+				: '';
+		}
 		$middle  = self::has_middle_photo( $style );
 		$count   = self::count( $settings );
 		$sizes   = self::sizes( $settings );
@@ -750,8 +822,11 @@ class WP_Swiper_Art {
 			'swap'    => $settings['art_swap'] ? array(
 				'delay'  => max( 1000, min( 30000, (int) $settings['art_swap_delay'] ) ),
 				// Any piece at random, or the middle one through all the photos.
-				// (Ring + text has no middle photo.)
-				'target' => $middle && 'middle' === $settings['art_swap_target'] ? 'middle' : 'any',
+				// (Ring + text has no middle photo.) SVG shape: its own What changes
+				// (a window at random, in turn, or all at once: "advance").
+				'target' => $shape
+					? ( in_array( $settings['art_shape_target'], array( 'any', 'turn', 'advance' ), true ) ? $settings['art_shape_target'] : 'any' )
+					: ( $middle && 'middle' === $settings['art_swap_target'] ? 'middle' : 'any' ),
 				'pause'  => (bool) $settings['art_pause'],
 			) : false,
 		);
@@ -771,6 +846,13 @@ class WP_Swiper_Art {
 				},
 				WP_Swiper_Settings::responsive( $settings, 'art_grid_height_unit' )
 			);
+		}
+
+		// SVG shape: its windows (paths and boxes in numbers of the stage, the
+		// main one first, each with its place in the stacking) and proportions.
+		if ( $shape ) {
+			$config['shapes'] = $shape['shapes'];
+			$config['ratio']  = $shape['ratio'];
 		}
 
 		$shadow  = WP_Swiper_Settings::shadow( $settings );
@@ -815,6 +897,8 @@ class WP_Swiper_Art {
 				'--wp-swiper-art-speed:' . max( 100, min( 3000, (int) $settings['art_swap_speed'] ) ) . 'ms',
 			),
 			$wide ? self::height_style( $settings ) : array(),
+			// SVG shape: the stage at its drawing's proportions (art.css).
+			$shape ? array( '--wp-swiper-art-ratio:' . $shape['ratio'] ) : array(),
 			self::opening_style( $opening, $settings ),
 			self::center_style( $center, $settings ),
 			self::caption_style( $settings ),
@@ -1106,9 +1190,13 @@ class WP_Swiper_Art {
 	 * @param array $settings Slider settings.
 	 */
 	private static function photo( $slide, $index, $settings ) {
+		// The full size only, no smaller copies to pick from (srcset): a photo
+		// is cropped to its shape, often drawn wider than its piece, and the
+		// browser's guess from the piece made it blurry first, sharp later.
+		add_filter( 'wp_calculate_image_srcset', '__return_false', 99 );
 		$image = wp_get_attachment_image(
 			$slide['id'],
-			'large',
+			'full',
 			false,
 			array(
 				'class'    => 'wp-swiper-art__image',
@@ -1116,6 +1204,7 @@ class WP_Swiper_Art {
 				'decoding' => 'async',
 			)
 		);
+		remove_filter( 'wp_calculate_image_srcset', '__return_false', 99 );
 		if ( ! empty( $slide['link'] ) ) {
 			$image = sprintf(
 				'<a class="wp-swiper-art__link" href="%s"%s>%s</a>',

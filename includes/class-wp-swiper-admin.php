@@ -77,6 +77,14 @@ class WP_Swiper_Admin {
 					/* translators: 1: percent across the image, 2: percent down it. */
 					'positionPoint' => __( 'Kept in view: %1$s%% across, %2$s%% down.', 'wp-swiper' ),
 					'positionNone'  => __( 'Not set: the slider\'s Image position applies.', 'wp-swiper' ),
+					// Art's SVG shape (admin.js reads the file into the field).
+					/* translators: %s: file name. */
+					'shapeRead'     => __( '%s: read when the preview updates or the slider is saved.', 'wp-swiper' ),
+					'shapeNone'     => __( 'No shape yet: upload an SVG file.', 'wp-swiper' ),
+					'shapeTooBig'   => __( 'This file is too large (1 MB at most).', 'wp-swiper' ),
+					'shapeNotSvg'   => __( 'This is no SVG file.', 'wp-swiper' ),
+					'shapeUpload'   => __( 'Upload SVG', 'wp-swiper' ),
+					'shapeReplace'  => __( 'Replace SVG', 'wp-swiper' ),
 					// A slider saved with the old Description Alignment (center, right):
 					// admin.js moves it into each description's paragraphs.
 					'legacyDescriptionAlign' => get_post() ? WP_Swiper_Settings::legacy_description_align( WP_Swiper_Settings::get( get_post()->ID ) ) : '',
@@ -828,6 +836,42 @@ class WP_Swiper_Admin {
 		<?php
 	}
 
+	/**
+	 * Art's SVG shape in small: its windows as drawn (the file's margins left
+	 * out), the main one, where the current photo shows, darker.
+	 *
+	 * @param array $data WP_Swiper_Svg_Shape::decode().
+	 * @return string SVG markup.
+	 */
+	public static function shape_thumb( $data ) {
+		$frame  = WP_Swiper_Svg_Shape::frame( $data, true );
+		$ratio  = max( 0.1, (float) $frame['ratio'] );
+		$shapes = $frame['shapes'];
+		// Drawn in the file's stacking order: the later on top.
+		$order = array_keys( $shapes );
+		usort(
+			$order,
+			function ( $a, $b ) use ( $shapes ) {
+				return $shapes[ $a ]['z'] - $shapes[ $b ]['z'];
+			}
+		);
+		$paths = '';
+		foreach ( $order as $index ) {
+			$paths .= sprintf(
+				'<path d="%s" fill-rule="%s" class="%s"/>',
+				esc_attr( $shapes[ $index ]['d'] ),
+				esc_attr( $shapes[ $index ]['rule'] ),
+				0 === $index ? 'wp-swiper-shape__main' : 'wp-swiper-shape__window'
+			);
+		}
+		// Numbers of the stage (0–1 each way), drawn at its proportions.
+		return sprintf(
+			'<svg viewBox="0 0 1 1" preserveAspectRatio="none" style="aspect-ratio:%s" aria-hidden="true" focusable="false">%s</svg>',
+			esc_attr( (string) $ratio ),
+			$paths
+		);
+	}
+
 	private static function render_field( $key, $field, $value ) {
 		$id   = 'wp-swiper-' . $key;
 		$name = 'wp_swiper_settings[' . $key . ']';
@@ -885,6 +929,25 @@ class WP_Swiper_Admin {
 						<span class="wp-swiper-picker__thumb"><?php echo $thumb ? '<img src="' . esc_url( $thumb ) . '" alt="">' : ''; ?></span>
 						<button type="button" class="button wp-swiper-picker__choose"><?php echo $thumb ? esc_html__( 'Change', 'wp-swiper' ) : esc_html__( 'Choose', 'wp-swiper' ); ?></button>
 						<button type="button" class="button-link wp-swiper-picker__remove"<?php echo $thumb ? '' : ' hidden'; ?>><?php esc_html_e( 'Remove', 'wp-swiper' ); ?></button>
+					</div>
+				<?php elseif ( 'svg_shape' === $field['type'] ) : ?>
+					<?php
+					// Art's SVG shape: the shapes kept (their geometry only); the button
+					// reads a file into the value (admin.js), read on the server when
+					// the preview updates or the slider is saved.
+					$shape = WP_Swiper_Svg_Shape::decode( $value );
+					?>
+					<input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
+					<div class="wp-swiper-shape">
+						<span class="wp-swiper-shape__thumb"<?php echo $shape ? '' : ' hidden'; ?>><?php echo $shape ? self::shape_thumb( $shape ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from checked numbers. ?></span>
+						<span class="wp-swiper-shape__summary"><?php echo esc_html( WP_Swiper_Svg_Shape::summary( $shape ) ); ?></span>
+						<span class="wp-swiper-shape__actions">
+							<label class="button wp-swiper-shape__choose">
+								<?php echo $shape ? esc_html__( 'Replace SVG', 'wp-swiper' ) : esc_html__( 'Upload SVG', 'wp-swiper' ); ?>
+								<input type="file" accept=".svg,image/svg+xml" class="screen-reader-text">
+							</label>
+							<button type="button" class="button-link wp-swiper-shape__remove"<?php echo $shape ? '' : ' hidden'; ?>><?php esc_html_e( 'Remove', 'wp-swiper' ); ?></button>
+						</span>
 					</div>
 				<?php elseif ( 'color' === $field['type'] ) : ?>
 					<span class="wp-swiper-color-field">

@@ -86,6 +86,79 @@
 	display: none;
 }
 
+/* Art's SVG shape: its windows in small (the main one darker), what was
+   read, Upload / Replace and Remove. */
+.wp-swiper-shape {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+}
+
+.wp-swiper-shape__thumb {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 72px;
+	height: 72px;
+	padding: 6px;
+	box-sizing: border-box;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.wp-swiper-shape__thumb[hidden],
+.wp-swiper-shape__remove[hidden] {
+	display: none;
+}
+
+.wp-swiper-shape__thumb svg {
+	display: block;
+	max-width: 100%;
+	max-height: 100%;
+	width: 100%;
+	height: auto;
+}
+
+/* Taller than wide: as tall as the box instead. */
+.wp-swiper-shape__thumb svg[style*="aspect-ratio:0"] {
+	width: auto;
+	height: 100%;
+}
+
+.wp-swiper-shape__main {
+	fill: var(--wp-swiper-accent, #2271b1);
+}
+
+.wp-swiper-shape__window {
+	fill: #a7aaad;
+}
+
+/* A white line between windows that lie over each other. */
+.wp-swiper-shape__main,
+.wp-swiper-shape__window {
+	stroke: #fff;
+	stroke-width: 1px;
+	vector-effect: non-scaling-stroke;
+}
+
+.wp-swiper-shape__summary {
+	flex: 1 1 160px;
+	color: #50575e;
+}
+
+.wp-swiper-shape__actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.wp-swiper-shape .button-link.wp-swiper-shape__remove {
+	color: #b32d2e;
+}
+
 .wp-swiper-picker .button-link.wp-swiper-picker__remove {
 	color: #b32d2e;
 }

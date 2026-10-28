@@ -3601,6 +3601,10 @@ class WP_Swiper_Settings {
 				case 'image': // An image of the media library (its ID); 0 = none.
 					$clean[ $key ] = self::is_image( absint( $value ) ) ? absint( $value ) : 0;
 					break;
+
+				case 'svg_shape': // Art's SVG shape: its shapes' geometry only, as JSON; '' = none.
+					$clean[ $key ] = WP_Swiper_Svg_Shape::sanitize( null === $value ? '' : (string) $value );
+					break;
 			}
 		}
 

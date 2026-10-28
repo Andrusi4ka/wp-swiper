@@ -49,6 +49,12 @@
 	}
 }
 
+/* SVG shape: the stage at its drawing's proportions (width / height), its
+   width as a ring's (Size). */
+.wp-swiper-art.wp-swiper-art--shape .wp-swiper-art__stage {
+	aspect-ratio: var(--wp-swiper-art-ratio, 1);
+}
+
 /* A photo's piece: its box (art.js), cut to its shape; hidden until placed. */
 .wp-swiper-art__piece {
 	position: absolute;

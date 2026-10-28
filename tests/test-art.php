@@ -23,7 +23,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 			$this->assertStringStartsWith( 'art_', $key );
 			$this->assertSame( array( 'art' ), $field['effects'], $key );
 			// On the Layout page; Photo swapping on the Controls page; captions on the middle photo only on the Caption page.
-			if ( 0 === strpos( $key, 'art_swap' ) || 'art_pause' === $key ) {
+			if ( 0 === strpos( $key, 'art_swap' ) || 'art_pause' === $key || 'art_shape_target' === $key ) {
 				$this->assertSame( array( 'advanced', 'controls' ), array( $field['section'], $field['panel'] ), $key );
 			} elseif ( 'art_caption_middle' === $key ) {
 				$this->assertSame( 'caption', $field['section'], $key );
@@ -542,9 +542,9 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		foreach ( array( 'art_ring_opening', 'art_opening_content', 'art_opening_text' ) as $key ) {
 			$this->assertSame( array( 'ring' ), $fields[ $key ]['styles'], $key );
 		}
-		foreach ( array( 'art_caption_middle', 'art_swap_target' ) as $key ) {
-			$this->assertSame( array( 'ring', 'grid-circle' ), $fields[ $key ]['styles'], $key );
-		}
+		// SVG shape: captions on its main window only too; its photos move on window by window.
+		$this->assertSame( array( 'ring', 'grid-circle', 'shape' ), $fields['art_caption_middle']['styles'] );
+		$this->assertSame( array( 'ring', 'grid-circle' ), $fields['art_swap_target']['styles'] );
 		$this->assertSame( 'editor', $fields['art_center_text']['type'] );
 		// Content in the middle: a checkbox, on by default, before the middle's own settings.
 		$this->assertSame( 'checkbox', $fields['art_center']['type'] );
@@ -673,9 +673,9 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 			$this->assertSame( array( 'grid-circle' ), $fields[ $key ]['styles'], $key );
 			$this->assertTrue( $fields[ $key ]['responsive'], $key );
 		}
-		// The rings' own: their Size and Alignment (a grid is as wide as the column).
+		// The rings' own and SVG shape's: their Size and Alignment (a grid is as wide as the column).
 		foreach ( array( 'art_size', 'art_size_unit', 'art_align' ) as $key ) {
-			$this->assertSame( array( 'ring', 'ring-text' ), $fields[ $key ]['styles'], $key );
+			$this->assertSame( array( 'ring', 'ring-text', 'shape' ), $fields[ $key ]['styles'], $key );
 		}
 		$this->assertArrayNotHasKey( 'art_grid_shape', $fields );
 		$defaults = WP_Swiper_Settings::defaults();

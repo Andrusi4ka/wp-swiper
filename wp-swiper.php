@@ -51,6 +51,7 @@ require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-wpbakery.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-whats-new.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-art.php';
+require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-svg-shape.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-palette.php';
 
 /**

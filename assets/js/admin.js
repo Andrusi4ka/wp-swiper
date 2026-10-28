@@ -366,6 +366,60 @@
 		} );
 
 		/*
+		 * Art's SVG shape (a field of type svg_shape): the file chosen is read
+		 * here, in the browser, and goes into the field as { name, svg }; the
+		 * server keeps only its shapes' geometry (WP_Swiper_Svg_Shape) when the
+		 * preview updates (at once, below) or the slider is saved. The file is
+		 * not uploaded to the media library.
+		 */
+		var SHAPE_MAX = 1048576;
+		function shapeState( $box, text, loaded ) {
+			$box.find( '.wp-swiper-shape__summary' ).text( text );
+			$box.find( '.wp-swiper-shape__thumb' ).prop( 'hidden', true ).empty();
+			$box.find( '.wp-swiper-shape__remove' ).prop( 'hidden', ! loaded );
+			$box.find( '.wp-swiper-shape__choose' ).contents().filter( function () {
+				return this.nodeType === 3 && $.trim( this.nodeValue ) !== '';
+			} ).first().replaceWith( document.createTextNode( ( loaded ? i18n.shapeReplace : i18n.shapeUpload ) + ' ' ) );
+		}
+		function shapeChanged( $input ) {
+			$input.trigger( 'change' );
+			$( '.wp-swiper-preview__update' ).trigger( 'click' );
+		}
+		$( '#wp-swiper-settings' ).on( 'change', '.wp-swiper-shape input[type="file"]', function () {
+			var file = this.files && this.files[ 0 ];
+			var $box = $( this ).closest( '.wp-swiper-shape' );
+			var $input = $box.prevAll( 'input[type="hidden"]' ).first();
+			// The same file chosen again is a change too.
+			this.value = '';
+			if ( ! file ) {
+				return;
+			}
+			if ( file.size > SHAPE_MAX ) {
+				$box.find( '.wp-swiper-shape__summary' ).text( i18n.shapeTooBig );
+				return;
+			}
+			var reader = new FileReader();
+			reader.onload = function () {
+				var text = String( reader.result || '' );
+				if ( ! /<svg[\s>]/i.test( text ) ) {
+					$box.find( '.wp-swiper-shape__summary' ).text( i18n.shapeNotSvg );
+					return;
+				}
+				$input.val( JSON.stringify( { name: file.name, svg: text } ) );
+				shapeState( $box, ( i18n.shapeRead || '%s' ).replace( '%s', file.name ), true );
+				shapeChanged( $input );
+			};
+			reader.readAsText( file );
+		} );
+		$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-shape__remove', function () {
+			var $box = $( this ).closest( '.wp-swiper-shape' );
+			var $input = $box.prevAll( 'input[type="hidden"]' ).first();
+			$input.val( '' );
+			shapeState( $box, i18n.shapeNone, false );
+			shapeChanged( $input );
+		} );
+
+		/*
 		 * A slide's caption, description and link: kept in its hidden fields,
 		 * edited in one window (WordPress's editor, wp.editor, for the two
 		 * texts), whose editors start when it opens and are removed when it
