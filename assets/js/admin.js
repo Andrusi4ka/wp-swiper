@@ -386,7 +386,8 @@
 		 * A slide's own font size and weight, for its caption and its description.
 		 * A size "20,16," — desktop, tablet, mobile, one field with device icons
 		 * that switch it (as a responsive setting); an empty one takes the larger
-		 * screen's, an empty desktop one the plugin's 16px. A weight "700", one
+		 * screen's, before the first one the slider's (a caption: the Caption
+		 * page's Font size) or the plugin's 16px. A weight "700", one
 		 * for every screen, picked from a list (.wp-swiper-modal__weight); none:
 		 * the tag's or the page's. Set in the Slide info window under each editor,
 		 * each in its row (.wp-swiper-modal__size[data-prop]).
@@ -396,6 +397,7 @@
 
 		// A slider saved with one size or weight for all (until 2.8): into the
 		// slides without their own, so saving keeps it (render.php uses it until then).
+		// Not the captions' size: it is the Caption page's Font size now (WP_Swiper_Settings::get()).
 		FONT_PROPS.forEach( function ( prop ) {
 			var legacy = $list.attr( 'data-legacy-' + prop.replace( '_', '-' ) ) || '';
 			if ( legacy ) {
@@ -425,17 +427,35 @@
 			return $control.find( '[data-device="' + device + '"]' );
 		}
 
-		// Empty tablet / mobile sizes show what they take as their placeholder;
-		// a dot on the icon of one with its own (as on a responsive setting).
+		/*
+		 * The size a slide without its own gets, per device: a caption the
+		 * Caption page's Font size (caption_size: empty tablet / mobile take the
+		 * larger screen's, empty desktop 16px), a description 16px.
+		 */
+		function baseFontSizes( prop ) {
+			var size = '16';
+			return FONT_DEVICES.map( function ( device ) {
+				if ( prop === 'caption_size' ) {
+					var key = 'caption_size' + ( device === 'desktop' ? '' : '_' + device );
+					size = $.trim( $( '[name="wp_swiper_settings[' + key + ']"]' ).val() || '' ) || size;
+				}
+				return size;
+			} );
+		}
+
+		// Empty sizes show what they take as their placeholder: the slide's own
+		// for a larger screen, else the slider's (baseFontSizes()); a dot on the
+		// icon of one with its own (as on a responsive setting).
 		function syncFontInherits( $control ) {
-			var inherited = '16';
-			FONT_DEVICES.forEach( function ( device ) {
+			var base = baseFontSizes( $control.data( 'prop' ) );
+			var own = '';
+			FONT_DEVICES.forEach( function ( device, i ) {
 				var $field = fontField( $control, device ).filter( 'input' );
+				$field.attr( 'placeholder', own || base[ i ] );
 				if ( device !== 'desktop' ) {
-					$field.attr( 'placeholder', inherited );
 					$control.find( '.wp-swiper-devices__btn[data-device="' + device + '"]' ).toggleClass( 'has-value', $field.val() !== '' );
 				}
-				inherited = $field.val() || inherited;
+				own = $field.val() || own;
 			} );
 		}
 
@@ -2327,6 +2347,159 @@
 			showOrderDevice( currentDevice );
 			syncOrderButtons();
 
+			/*
+			 * Undo / redo (the buttons left of the preview's devices, Collage and
+			 * Art; Ctrl+Z / Ctrl+Shift+Z in the preview): what was done by hand
+			 * there (photos swapped or moved, sizes dragged) and the Order field's
+			 * Shuffle and Reset. Per device, as their values are: the buttons work
+			 * on the device shown. A step keeps the values before it; going back
+			 * puts them in again and the preview takes them at once
+			 * (wpSwiperRestoreCollage / wpSwiperRestoreArt in its frame). Until the
+			 * page is left: only the values are saved.
+			 */
+			var HISTORY_FIELDS = [ 'collage_order', 'collage_mosaic', 'collage_cuts', 'collage_manual', 'art_order', 'art_ring_center' ];
+			var HISTORY_MAX = 50;
+			var $history = $preview.find( '.wp-swiper-preview__history' );
+			var $undo = $history.find( '.wp-swiper-preview__undo' );
+			var $redo = $history.find( '.wp-swiper-preview__redo' );
+			var edits = {};
+			// A step still taking the messages of the same drag (a swap in Scattered sends two).
+			var stepOpen = {};
+			DEVICES.forEach( function ( device ) {
+				edits[ device ] = { undo: [], redo: [] };
+			} );
+
+			var snapshot = function ( device ) {
+				var values = {};
+				HISTORY_FIELDS.forEach( function ( name ) {
+					values[ name ] = input( name, device ).val() || '';
+				} );
+				return values;
+			};
+			var sameValues = function ( a, b ) {
+				return HISTORY_FIELDS.every( function ( name ) {
+					return a[ name ] === b[ name ];
+				} );
+			};
+			var syncHistory = function () {
+				var on = [ 'collage', 'art' ].indexOf( $( '#wp-swiper-effect' ).val() ) !== -1;
+				var steps = edits[ currentDevice ];
+				$history.prop( 'hidden', ! on );
+				$undo.prop( 'disabled', ! steps.undo.length );
+				$redo.prop( 'disabled', ! steps.redo.length );
+			};
+
+			// Before a change on `device`: its values as they are, a step to go back to.
+			var record = function ( device ) {
+				if ( ! edits[ device ] || stepOpen[ device ] ) {
+					return;
+				}
+				var steps = edits[ device ];
+				var before = snapshot( device );
+				var redo = steps.redo;
+				steps.undo.push( before );
+				if ( steps.undo.length > HISTORY_MAX ) {
+					steps.undo.shift();
+				}
+				steps.redo = [];
+				stepOpen[ device ] = setTimeout( function () {
+					stepOpen[ device ] = null;
+					// Nothing changed after all (an edge let go where it was): no step.
+					if ( steps.undo[ steps.undo.length - 1 ] === before && sameValues( before, snapshot( device ) ) ) {
+						steps.undo.pop();
+						steps.redo = redo;
+					}
+					syncHistory();
+				}, 300 );
+				syncHistory();
+			};
+
+			// A device's value as the slider takes it: its own, else the larger screen's.
+			var resolved = function ( name, device ) {
+				for ( var i = DEVICES.indexOf( device ); i >= 0; i-- ) {
+					var value = input( name, DEVICES[ i ] ).val() || '';
+					if ( value !== '' ) {
+						return value;
+					}
+				}
+				return '';
+			};
+			var idsOf = function ( text ) {
+				return text.split( ',' ).map( Number ).filter( function ( id ) {
+					return id > 0;
+				} );
+			};
+			// The preview takes the device's values at once; drawn again if it cannot.
+			var restorePreview = function ( device ) {
+				var win = previewFrame.contentWindow;
+				var center = parseFloat( resolved( 'art_ring_center', device ) );
+				var done = false;
+				try {
+					if ( win && win.wpSwiperRestoreCollage ) {
+						done = win.wpSwiperRestoreCollage( {
+							device: device,
+							order: idsOf( resolved( 'collage_order', device ) ),
+							mosaic: resolved( 'collage_mosaic', device ),
+							cuts: resolved( 'collage_cuts', device )
+						} ) || done;
+					}
+					if ( win && win.wpSwiperRestoreArt ) {
+						done = win.wpSwiperRestoreArt( {
+							device: device,
+							order: idsOf( resolved( 'art_order', device ) ),
+							center: isFinite( center ) ? center : null
+						} ) || done;
+					}
+				} catch ( e ) {}
+				if ( ! done ) {
+					updatePreview();
+				}
+			};
+
+			var stepHistory = function ( back ) {
+				var device = currentDevice;
+				var steps = edits[ device ];
+				var from = back ? steps.undo : steps.redo;
+				if ( ! from.length ) {
+					return;
+				}
+				clearTimeout( stepOpen[ device ] );
+				stepOpen[ device ] = null;
+				( back ? steps.redo : steps.undo ).push( snapshot( device ) );
+				var values = from.pop();
+				HISTORY_FIELDS.forEach( function ( name ) {
+					input( name, device ).val( values[ name ] );
+				} );
+				syncResponsive( $order );
+				syncOrderButtons();
+				restorePreview( device );
+				syncHistory();
+			};
+
+			$undo.on( 'click', function () {
+				stepHistory( true );
+			} );
+			$redo.on( 'click', function () {
+				stepHistory( false );
+			} );
+			// The keys in the preview (by the key's place: any keyboard layout).
+			$( previewFrame ).on( 'load', function () {
+				try {
+					previewFrame.contentWindow.document.addEventListener( 'keydown', function ( e ) {
+						if ( ! ( e.ctrlKey || e.metaKey ) || e.altKey || $history.prop( 'hidden' ) ) {
+							return;
+						}
+						if ( e.code === 'KeyZ' || e.code === 'KeyY' ) {
+							e.preventDefault();
+							stepHistory( e.code === 'KeyZ' && ! e.shiftKey );
+						}
+					} );
+				} catch ( e ) {}
+			} );
+			$( '#wp-swiper-effect' ).on( 'change', syncHistory );
+			deviceListeners.push( syncHistory );
+			syncHistory();
+
 			$order.on( 'click', '.wp-swiper-shuffle', function () {
 				var $input = input( 'collage_order', orderDevice() );
 				var ids = $list.find( 'input[name="wp_swiper_slides[id][]"]' ).map( function () {
@@ -2345,12 +2518,14 @@
 						shuffled[ j ] = swap;
 					}
 				} while ( shuffled.length > 1 && shuffled.join( ',' ) === $input.val() && ++tries < 10 );
+				record( orderDevice() );
 				setOrder( orderDevice(), shuffled );
 				updatePreview();
 			} );
 
 			// Reset: the order and the mosaic or template sizes, and that they were set by hand.
 			$order.on( 'click', '.wp-swiper-order-reset', function () {
+				record( orderDevice() );
 				setOrder( orderDevice(), [] );
 				setMosaic( orderDevice(), '' );
 				setCuts( orderDevice(), '' );
@@ -2365,6 +2540,9 @@
 				var data = e.data || {};
 				if ( e.source !== previewFrame.contentWindow || DEVICES.indexOf( data.device ) === -1 ) {
 					return;
+				}
+				if ( /^collage-(order|mosaic|scatter)$/.test( data.wpSwiper ) ) {
+					record( data.device );
 				}
 				if ( data.wpSwiper === 'collage-order' && Array.isArray( data.ids ) ) {
 					setOrder( data.device, data.ids.map( Number ).filter( function ( id ) {
@@ -2398,6 +2576,9 @@
 					return;
 				}
 				var suffix = data.device === 'desktop' ? '' : '_' + data.device;
+				if ( data.wpSwiper === 'art-order' || data.wpSwiper === 'art-center' ) {
+					record( data.device );
+				}
 				if ( data.wpSwiper === 'art-order' && Array.isArray( data.ids ) ) {
 					$( '#wp-swiper-art_order' + suffix ).val( data.ids.map( Number ).filter( function ( id ) {
 						return id > 0;

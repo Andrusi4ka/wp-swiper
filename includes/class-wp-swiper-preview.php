@@ -51,6 +51,15 @@ class WP_Swiper_Preview {
 						<span class="dashicons dashicons-editor-code" aria-hidden="true"></span>
 						<?php esc_html_e( 'Developer mode', 'wp-swiper' ); ?>
 					</button>
+					<?php // Collage and Art only (admin.js): undo / redo what was done in the preview, for the device shown. ?>
+					<span class="wp-swiper-preview__history" role="group" aria-label="<?php esc_attr_e( 'Changes made in the preview', 'wp-swiper' ); ?>" hidden>
+						<button type="button" class="button wp-swiper-preview__undo" disabled title="<?php esc_attr_e( 'Undo (Ctrl+Z)', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Undo', 'wp-swiper' ); ?>">
+							<span class="dashicons dashicons-undo" aria-hidden="true"></span>
+						</button>
+						<button type="button" class="button wp-swiper-preview__redo" disabled title="<?php esc_attr_e( 'Redo (Ctrl+Shift+Z)', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Redo', 'wp-swiper' ); ?>">
+							<span class="dashicons dashicons-redo" aria-hidden="true"></span>
+						</button>
+					</span>
 					<?php // The same device as the settings' values (admin.js). ?>
 					<?php WP_Swiper_Admin::render_device_switch( 'wp-swiper-preview__devices' ); ?>
 					<button type="button" class="button wp-swiper-preview__update">
@@ -83,6 +92,11 @@ class WP_Swiper_Preview {
 				<p class="description wp-swiper-preview__hint" data-effect="scatter" hidden>
 					<span class="dashicons dashicons-editor-expand" aria-hidden="true"></span>
 					<?php esc_html_e( 'Drag the outer edge of a photo to resize it.', 'wp-swiper' ); ?>
+				</p>
+				<?php // Scattered only too: a photo dropped on a dashed frame moves there (preview-collage.js). ?>
+				<p class="description wp-swiper-preview__hint" data-effect="scatter" hidden>
+					<span class="dashicons dashicons-move" aria-hidden="true"></span>
+					<?php esc_html_e( 'Drop a photo on a dashed frame to move it to the end of that arm.', 'wp-swiper' ); ?>
 				</p>
 				<div class="wp-swiper-preview__stage">
 					<iframe class="wp-swiper-preview__frame" name="wp-swiper-preview-<?php echo (int) $post->ID; ?>" title="<?php esc_attr_e( 'Slider preview', 'wp-swiper' ); ?>" src="about:blank"></iframe>

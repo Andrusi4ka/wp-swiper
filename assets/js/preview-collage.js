@@ -6,7 +6,8 @@
  * other's photo), back as they were once the pointer leaves. On the drop
  * the collage takes the new order for the device in view (collage.js
  * collage() setOrder()) and the editor stores it (admin.js: a message with
- * the photos' IDs).
+ * the photos' IDs). Scattered: dropped on a dashed frame at an arm's end,
+ * the photo moves there instead (makeSlots()).
  */
 ( function () {
 	'use strict';
@@ -107,6 +108,68 @@
 		}
 	}
 
+	// The places (not the handles or frames) in a grid, in order.
+	function cellsOf( grid ) {
+		return [].slice.call( grid.querySelectorAll( ':scope > .wp-swiper-collage__cell' ) );
+	}
+
+	/*
+	 * Scattered: a photo can also be moved to the end of an arm (collage.js
+	 * scatterMoves()). Those places are dashed frames while it is dragged;
+	 * over one, the collage shows itself as it would be (the photo in it, the
+	 * photos after it in its arm closed up), back once the pointer leaves.
+	 */
+	function makeSlots() {
+		drag.slots = [];
+		drag.slotEls = [];
+		var from = cellsOf( drag.grid ).indexOf( drag.cell );
+		if ( ! drag.api.scatter || ! drag.api.scatter.active() || from < 1 ) {
+			return;
+		}
+		// Made smaller first where needed, so the frames fit the block too.
+		drag.slots = drag.api.scatter.startMove( from );
+		drag.moving = drag.slots.length > 0;
+		drag.slots.forEach( function ( slot ) {
+			var frame = document.createElement( 'div' );
+			frame.className = 'wp-swiper-collage__slot';
+			frame.style.left = slot.left + 'px';
+			frame.style.top = slot.top + 'px';
+			frame.style.width = slot.width + 'px';
+			frame.style.height = slot.height + 'px';
+			// Before the places: under them, wherever a frame runs into one.
+			drag.grid.insertBefore( frame, drag.grid.firstChild );
+			drag.slotEls.push( frame );
+		} );
+		if ( drag.moving ) {
+			document.documentElement.classList.add( 'wp-swiper-collage-moving' );
+		}
+	}
+
+	function inSlot( slot, x, y ) {
+		return x >= slot.left && x <= slot.left + slot.width && y >= slot.top && y <= slot.top + slot.height;
+	}
+
+	// The move to frame `i` shown (-1: none, the collage as it is).
+	function showSlot( i ) {
+		if ( i === drag.slot ) {
+			return;
+		}
+		if ( drag.slot >= 0 ) {
+			drag.slotEls[ drag.slot ].classList.remove( 'is-active' );
+		}
+		drag.slot = i;
+		drag.api.scatter.showMove( i );
+		if ( i >= 0 ) {
+			// The photo itself in its new place, framed as a place to drop on.
+			drag.slotEls[ i ].classList.add( 'is-active' );
+			drag.cell.classList.remove( 'is-source', 'is-dragged' );
+			drag.cell.classList.add( 'is-drop-target' );
+		} else {
+			drag.cell.classList.remove( 'is-drop-target' );
+			drag.cell.classList.add( 'is-source', 'is-dragged' );
+		}
+	}
+
 	function end() {
 		if ( ! drag ) {
 			return;
@@ -114,7 +177,15 @@
 		if ( drag.moved ) {
 			hover( null );
 			unshow( drag.cell );
-			drag.cell.classList.remove( 'is-dragged', 'is-source' );
+			drag.cell.classList.remove( 'is-dragged', 'is-source', 'is-drop-target' );
+			drag.slotEls.forEach( function ( frame ) {
+				frame.parentNode.removeChild( frame );
+			} );
+			document.documentElement.classList.remove( 'wp-swiper-collage-moving' );
+			// Given up (or a swap): the collage as it was, fitted to the block again.
+			if ( drag.moving ) {
+				drag.api.scatter.endMove( -1 );
+			}
 			if ( drag.ghost ) {
 				drag.ghost.parentNode.removeChild( drag.ghost );
 			}
@@ -131,7 +202,7 @@
 		if ( ! api || ! api.setOrder ) {
 			return;
 		}
-		drag = { cell: cell, grid: cell.parentNode, api: api, x: e.clientX, y: e.clientY, moved: false, target: null, item: null, ghost: null };
+		drag = { cell: cell, grid: cell.parentNode, api: api, x: e.clientX, y: e.clientY, moved: false, target: null, item: null, ghost: null, slots: [], slotEls: [], slot: -1, moving: false };
 		api.hold( true );
 	} );
 
@@ -149,10 +220,25 @@
 			// The place taken from: an empty frame (.is-source hides its own photo).
 			drag.cell.classList.add( 'is-source', 'is-dragged' );
 			document.documentElement.classList.add( 'wp-swiper-collage-dragging' );
+			makeSlots();
 		}
 		moveGhost( e.clientX, e.clientY );
+		var rect = drag.grid.getBoundingClientRect();
+		var x = e.clientX - rect.left;
+		var y = e.clientY - rect.top;
+		// Over the frame shown: it stays (the places moved, the photo is in it now).
+		if ( drag.slot >= 0 && inSlot( drag.slots[ drag.slot ], x, y ) ) {
+			return;
+		}
+		showSlot( -1 );
 		var target = cellAt( e.clientX, e.clientY, drag.grid );
-		hover( target === drag.cell ? null : target );
+		target = target === drag.cell ? null : target;
+		hover( target );
+		if ( ! target ) {
+			showSlot( drag.slots.findIndex( function ( slot ) {
+				return inSlot( slot, x, y );
+			} ) );
+		}
 	} );
 
 	document.addEventListener( 'pointerup', function () {
@@ -167,12 +253,29 @@
 		if ( drag.moved ) {
 			stopNextClick();
 		}
+		var api = drag.api;
+		var places = drag.moved ? api.places() : null;
+		var list = places ? places.order.slice() : [];
+
+		// Scattered, dropped on a frame: the photo moved to the end of that arm,
+		// its place with it (and so its size); the order follows the places.
+		if ( drag.moved && drag.slot >= 0 ) {
+			var made = api.scatter.endMove( drag.slot );
+			drag.moving = false;
+			end();
+			if ( made ) {
+				list.splice( made.index, 0, list.splice( made.from, 1 )[ 0 ] );
+				var layout = api.scatter.serialize();
+				api.scatter.set( layout );
+				store( api, places.device, list, layout );
+			}
+			return;
+		}
+
 		if ( drag.moved && drag.target ) {
-			var cells = [].slice.call( drag.grid.children );
+			var cells = cellsOf( drag.grid );
 			var from = cells.indexOf( drag.cell );
 			var to = cells.indexOf( drag.target );
-			var places = drag.api.places();
-			var list = places.order.slice();
 			var swap = list[ from ];
 			list[ from ] = list[ to ];
 			list[ to ] = swap;
@@ -181,7 +284,6 @@
 			list = list.filter( function ( real ) {
 				return seen[ real ] ? false : ( seen[ real ] = true );
 			} );
-			var api = drag.api;
 			end();
 			// Scattered: each place keeps the shape of its photo, so the two
 			// places swap sizes too; kept as set, the new order goes into it.
@@ -191,25 +293,30 @@
 				scattered = api.scatter.serialize();
 				api.scatter.set( scattered );
 			}
-			api.setOrder( list );
-			if ( window.parent && window.parent !== window ) {
-				window.parent.postMessage( {
-					wpSwiper: 'collage-order',
-					device: places.device,
-					ids: list.map( function ( real ) {
-						return api.ids[ real ] || 0;
-					} ).filter( function ( id ) {
-						return id > 0;
-					} )
-				}, window.location.origin );
-				if ( scattered ) {
-					window.parent.postMessage( { wpSwiper: 'collage-scatter', device: places.device, layout: scattered }, window.location.origin );
-				}
-			}
+			store( api, places.device, list, scattered );
 			return;
 		}
 		end();
 	} );
+
+	// The new order (and Scattered's layout) taken by the collage and stored by the editor.
+	function store( api, device, list, scattered ) {
+		api.setOrder( list );
+		if ( window.parent && window.parent !== window ) {
+			window.parent.postMessage( {
+				wpSwiper: 'collage-order',
+				device: device,
+				ids: list.map( function ( real ) {
+					return api.ids[ real ] || 0;
+				} ).filter( function ( id ) {
+					return id > 0;
+				} )
+			}, window.location.origin );
+			if ( scattered ) {
+				window.parent.postMessage( { wpSwiper: 'collage-scatter', device: device, layout: scattered }, window.location.origin );
+			}
+		}
+	}
 
 	/*
 	 * Random mosaic and the templates: each cut's line between its two parts
@@ -415,6 +522,37 @@
 	}
 	document.addEventListener( 'pointerup', endEdge );
 	document.addEventListener( 'pointercancel', endEdge );
+
+	/*
+	 * Undo / redo in the editor (admin.js calls it, as it stores them): the
+	 * collages shown for `state.device` take its order (photo IDs, each to
+	 * the first slide with it not taken yet, as WP_Swiper_Settings::
+	 * collage_orders() does) and sizes at once. False when none did (the
+	 * editor then updates the preview).
+	 */
+	window.wpSwiperRestoreCollage = function ( state ) {
+		var done = false;
+		[].forEach.call( document.querySelectorAll( '.wp-swiper-collage' ), function ( block ) {
+			var api = block.wpSwiperCollage;
+			if ( ! api || ! api.restore || api.places().device !== state.device ) {
+				return;
+			}
+			var used = {};
+			var order = [];
+			( state.order || [] ).forEach( function ( id ) {
+				for ( var real = 0; real < api.ids.length; real++ ) {
+					if ( api.ids[ real ] === id && ! used[ real ] ) {
+						used[ real ] = true;
+						order.push( real );
+						return;
+					}
+				}
+			} );
+			api.restore( { order: order, mosaic: state.mosaic, cuts: state.cuts } );
+			done = true;
+		} );
+		return done;
+	};
 
 	// The collages are set up by frontend.js (with collage.js) once the page is there.
 	if ( document.readyState === 'complete' ) {

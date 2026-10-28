@@ -279,7 +279,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[description_size][]" value="">', $html );
 		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[caption_weight][]" value="600">', $html );
 		// The slider's own size and weight from before (admin.js moves them into the slides without theirs).
-		$this->assertStringContainsString( 'data-legacy-caption-size="" data-legacy-description-size="19,," data-legacy-caption-weight="300" data-legacy-description-weight=""', $html );
+		$this->assertStringContainsString( 'data-legacy-description-size="19,," data-legacy-caption-weight="300" data-legacy-description-weight=""', $html );
 	}
 
 	public function test_slides_box_keeps_each_slide_in_hidden_fields_and_one_window() {
@@ -414,6 +414,16 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		// The collage's hint, hidden until admin.js sees that effect.
 		$this->assertStringContainsString( '<p class="description wp-swiper-preview__hint" data-effect="collage" hidden>', $html );
 		$this->assertStringContainsString( '<p class="description wp-swiper-preview__hint" data-effect="mosaic" hidden>', $html );
+		// Undo / redo: hidden until admin.js sees Collage or Art, greyed with
+		// nothing to go back to, before the device switch.
+		$this->assertStringContainsString( '<span class="wp-swiper-preview__history" role="group" aria-label="Changes made in the preview" hidden>', $html );
+		$this->assertSame( 1, preg_match( '#<button type="button" class="button wp-swiper-preview__undo" disabled[^>]*aria-label="Undo">#', $html ) );
+		$this->assertSame( 1, preg_match( '#<button type="button" class="button wp-swiper-preview__redo" disabled[^>]*aria-label="Redo">#', $html ) );
+		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__devices' ), strpos( $html, 'wp-swiper-preview__history' ) );
+		$this->assertGreaterThan( $button, strpos( $html, 'wp-swiper-preview__history' ) );
+		// Scattered: resizing by the edges, and moving a photo to a dashed frame.
+		$this->assertSame( 2, substr_count( $html, '<p class="description wp-swiper-preview__hint" data-effect="scatter" hidden>' ) );
+		$this->assertStringContainsString( 'Drop a photo on a dashed frame to move it to the end of that arm.', $html );
 	}
 
 	public function test_collage_order_field_per_device_with_shuffle_and_reset() {

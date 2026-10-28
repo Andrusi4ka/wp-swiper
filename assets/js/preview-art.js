@@ -325,6 +325,40 @@
 		}
 	} );
 
+	/*
+	 * Undo / redo in the editor (admin.js calls it, as it stores them): the
+	 * Art blocks shown for `state.device` take its order (photo IDs, each to
+	 * the first slide with it not taken yet, as WP_Swiper_Art::orders() does)
+	 * and middle circle at once. False when none did (the editor then updates
+	 * the preview).
+	 */
+	window.wpSwiperRestoreArt = function ( state ) {
+		var done = false;
+		[].forEach.call( document.querySelectorAll( '.wp-swiper-art' ), function ( block ) {
+			var api = block.wpSwiperArt;
+			if ( ! api || ! api.setOrder || api.device() !== state.device ) {
+				return;
+			}
+			var used = {};
+			var order = [];
+			( state.order || [] ).forEach( function ( id ) {
+				for ( var real = 0; real < api.ids.length; real++ ) {
+					if ( api.ids[ real ] === id && ! used[ real ] ) {
+						used[ real ] = true;
+						order.push( real );
+						return;
+					}
+				}
+			} );
+			if ( api.setCenter && typeof state.center === 'number' && isFinite( state.center ) ) {
+				api.setCenter( state.center );
+			}
+			api.setOrder( order );
+			done = true;
+		} );
+		return done;
+	};
+
 	document.addEventListener( 'pointercancel', end );
 	document.addEventListener( 'keydown', function ( e ) {
 		if ( drag && e.key === 'Escape' ) {

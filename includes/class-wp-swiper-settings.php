@@ -544,7 +544,7 @@ class WP_Swiper_Settings {
 				'type'       => 'order',
 				'responsive' => true,
 				'default'    => '',
-				'help'       => __( 'Drag a photo onto another place in the preview to swap the two; with Random mosaic and the templates, drag a line between photos to resize them; with Scattered, drag a photo\'s outer edge. Shuffle mixes the photos at random. All only for the device chosen (a tablet or phone without its own takes the larger screen\'s); Reset goes back to that, order and sizes.', 'wp-swiper' ),
+				'help'       => __( 'Drag a photo onto another place in the preview to swap the two; with Random mosaic and the templates, drag a line between photos to resize them; with Scattered, drag a photo\'s outer edge to resize it, or drop it on a dashed frame to move it to the end of an arm. Shuffle mixes the photos at random. All only for the device chosen (a tablet or phone without its own takes the larger screen\'s); Reset goes back to that, order and sizes.', 'wp-swiper' ),
 			),
 			// Random mosaic: its cuts as set by dragging the lines between the
 			// photos in the preview, per device (see sanitize_mosaic()); '' on
@@ -1526,9 +1526,24 @@ class WP_Swiper_Settings {
 			// No Tag here: each line of a caption is a paragraph or a heading of its
 			// own (the Slide info window's Format); see legacy_caption_tag() for
 			// the captions saved with the slider's one.
-			// No Font size here: each slide's caption has its own (Slide info window);
-			// see legacy_font_sizes() for the sliders saved with one.
-			// No Font weight either: each slide's caption has its own; see
+			// The captions' font size, per device: every slide's, unless it has its
+			// own (Slide info window, own_font_size_vars()). Empty: 16px. A slider
+			// saved with one of the old Font size fields gets it (get(), caption_sizes()).
+			'caption_size'          => array(
+				'section'     => 'caption',
+				'group'       => 'caption_style',
+				'label'       => __( 'Font size (px)', 'wp-swiper' ),
+				'type'        => 'number',
+				'responsive'  => true,
+				'empty'       => true,
+				'default'     => '',
+				'min'         => 8,
+				'max'         => 200,
+				'step'        => 1,
+				'placeholder' => '16',
+				'help'        => __( 'For the captions of all slides. A slide with a font size of its own (its Edit window) keeps that one. Empty: 16px.', 'wp-swiper' ),
+			),
+			// No Font weight here: each slide's caption has its own; see
 			// legacy_font_weights() for the sliders saved with one.
 			'caption_color'         => array(
 				'section' => 'caption',
@@ -1864,6 +1879,49 @@ class WP_Swiper_Settings {
 			}
 		}
 		return $vars;
+	}
+
+	/**
+	 * The CSS variables of a slide's own font size (sanitize_font_sizes()),
+	 * on its caption: an empty tablet or mobile size takes the slide's own
+	 * for the larger screen, so a slide's size stays its own on every screen
+	 * after it; before its first size (",,14": desktop and tablet) the
+	 * slider's (caption_sizes()) or the plugin's, from the block around it.
+	 *
+	 * @param string $sizes Sizes as stored.
+	 * @param string $name  The variable, e.g. "wp-swiper-caption-size".
+	 * @return string[]
+	 */
+	public static function own_font_size_vars( $sizes, $name ) {
+		$sizes = self::sanitize_font_sizes( $sizes );
+		if ( '' === $sizes ) {
+			return array();
+		}
+		$parts = explode( ',', $sizes );
+		for ( $i = 1; $i < 3; $i++ ) {
+			if ( '' === $parts[ $i ] ) {
+				$parts[ $i ] = $parts[ $i - 1 ];
+			}
+		}
+		return self::font_size_vars( implode( ',', $parts ), $name );
+	}
+
+	/**
+	 * The captions' font size of the whole slider (Caption page, caption_size),
+	 * as stored per slide ("20,16,"); one saved with the old Font size fields
+	 * (until 2.8, legacy_font_sizes()) until it is saved again. '' for none:
+	 * the plugin's 16px.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string
+	 */
+	public static function caption_sizes( $settings ) {
+		$sizes = array();
+		foreach ( array( '', '_tablet', '_mobile' ) as $suffix ) {
+			$sizes[] = isset( $settings[ 'caption_size' . $suffix ] ) ? (string) $settings[ 'caption_size' . $suffix ] : '';
+		}
+		$sizes = self::sanitize_font_sizes( $sizes );
+		return '' !== $sizes ? $sizes : self::legacy_font_sizes( $settings, 'caption' );
 	}
 
 	/**
@@ -3048,6 +3106,15 @@ class WP_Swiper_Settings {
 					|| ( isset( $saved[ $text . '_font_size_tablet' ] ) && '' !== (string) $saved[ $text . '_font_size_tablet' ] )
 					|| ( isset( $saved[ $text . '_font_size_mobile' ] ) && '' !== (string) $saved[ $text . '_font_size_mobile' ] );
 				$saved[ $text . '_font' ] = $own ? 'custom' : 'default';
+			}
+		}
+
+		// The captions' old Font size of the whole slider (legacy_font_sizes()):
+		// now the Caption page's Font size, until it has one of its own.
+		if ( $saved && ! isset( $saved['caption_size'] ) ) {
+			$legacy = self::legacy_font_sizes( $saved, 'caption' );
+			if ( '' !== $legacy ) {
+				list( $saved['caption_size'], $saved['caption_size_tablet'], $saved['caption_size_mobile'] ) = explode( ',', $legacy );
 			}
 		}
 

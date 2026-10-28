@@ -132,7 +132,7 @@ class WP_Swiper_Admin {
 		// it into the slides without theirs, so saving keeps it per slide.
 		$settings = WP_Swiper_Settings::get( $post->ID );
 		?>
-		<ul class="wp-swiper-slides" id="wp-swiper-slide-list" data-legacy-caption-tag="<?php echo esc_attr( WP_Swiper_Settings::legacy_caption_tag( $settings ) ); ?>" data-legacy-caption-size="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_sizes( $settings, 'caption' ) ); ?>" data-legacy-description-size="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_sizes( $settings, 'description' ) ); ?>" data-legacy-caption-weight="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ) ); ?>" data-legacy-description-weight="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_weights( $settings, 'description' ) ); ?>">
+		<ul class="wp-swiper-slides" id="wp-swiper-slide-list" data-legacy-caption-tag="<?php echo esc_attr( WP_Swiper_Settings::legacy_caption_tag( $settings ) ); ?>" data-legacy-description-size="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_sizes( $settings, 'description' ) ); ?>" data-legacy-caption-weight="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ) ); ?>" data-legacy-description-weight="<?php echo esc_attr( WP_Swiper_Settings::legacy_font_weights( $settings, 'description' ) ); ?>">
 			<?php
 			foreach ( $slides as $slide ) {
 				self::render_slide_item( $slide );

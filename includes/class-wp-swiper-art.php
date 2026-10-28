@@ -1063,9 +1063,9 @@ class WP_Swiper_Art {
 	 */
 	private static function caption_style( $settings ) {
 		$style = array();
-		// Each photo's caption sets its own size (photo()); a slider saved with
-		// one of its own keeps it for the others until saved again.
-		$style = array_merge( $style, WP_Swiper_Settings::font_size_vars( WP_Swiper_Settings::legacy_font_sizes( $settings, 'caption' ), 'wp-swiper-caption-size' ) );
+		// The Caption page's size for every photo; one with its own sets it on
+		// its caption (photo()).
+		$style = array_merge( $style, WP_Swiper_Settings::font_size_vars( WP_Swiper_Settings::caption_sizes( $settings ), 'wp-swiper-caption-size' ) );
 		$style[] = '--wp-swiper-caption-color:' . $settings['caption_color'];
 		if ( $settings['caption_bg'] ) {
 			list( $r, $g, $b ) = sscanf( $settings['caption_bg_color'], '#%02x%02x%02x' );
@@ -1130,7 +1130,7 @@ class WP_Swiper_Art {
 			// Outer block: the background over the photo; inner one: typography,
 			// its lines paragraphs or headings (caption_markup()).
 			// Its own font size (the Slide info window), per device.
-			$size    = WP_Swiper_Settings::font_size_vars( isset( $slide['caption_size'] ) ? $slide['caption_size'] : '', 'wp-swiper-caption-size' );
+			$size    = WP_Swiper_Settings::own_font_size_vars( isset( $slide['caption_size'] ) ? $slide['caption_size'] : '', 'wp-swiper-caption-size' );
 			// And its own font weight (a class: none keeps the tag's).
 			$weight  = WP_Swiper_Settings::font_weight_vars( isset( $slide['caption_weight'] ) ? $slide['caption_weight'] : '', 'wp-swiper-caption-weight' );
 			$size    = array_merge( $size, $weight );

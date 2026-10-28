@@ -203,7 +203,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 
 		// A caption's own font size (the Slide info window), on itself.
 		$slides[0]['caption_size'] = '30,24,';
-		$this->assertStringContainsString( '<div class="wp-swiper-art__caption" style="--wp-swiper-caption-size:30px;--wp-swiper-caption-size-tablet:24px"><div class="wp-swiper-art__caption-text"><h3', $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3' ), $slides ) );
+		$this->assertStringContainsString( '<div class="wp-swiper-art__caption" style="--wp-swiper-caption-size:30px;--wp-swiper-caption-size-tablet:24px;--wp-swiper-caption-size-mobile:24px"><div class="wp-swiper-art__caption-text"><h3', $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3' ), $slides ) );
 		unset( $slides[0]['caption_size'] );
 
 		// And its own color.

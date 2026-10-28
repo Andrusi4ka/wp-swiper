@@ -1117,9 +1117,9 @@ class WP_Swiper_Render {
 				$style[] = '--wp-swiper-justify:' . $edge[ $settings['image_align_vertical'] ];
 			}
 		}
-		// Caption typography: each slide sets its own size (render_slide()); a
-		// slider saved with one of its own keeps it for the others until saved again.
-		$style = array_merge( $style, WP_Swiper_Settings::font_size_vars( WP_Swiper_Settings::legacy_font_sizes( $settings, 'caption' ), 'wp-swiper-caption-size' ) );
+		// Caption typography: the Caption page's size for every slide; one with
+		// its own sets it on its caption (render_slide()).
+		$style = array_merge( $style, WP_Swiper_Settings::font_size_vars( WP_Swiper_Settings::caption_sizes( $settings ), 'wp-swiper-caption-size' ) );
 		$style[] = '--wp-swiper-caption-color:' . $settings['caption_color'];
 		if ( $settings['caption_bg'] ) {
 			// The background color at its opacity, and fully transparent for the
@@ -1557,7 +1557,7 @@ class WP_Swiper_Render {
 				?>
 				<?php // Its own font size (the Slide info window), per device. ?>
 				<?php
-				$caption_size   = WP_Swiper_Settings::font_size_vars( isset( $slide['caption_size'] ) ? $slide['caption_size'] : '', 'wp-swiper-caption-size' );
+				$caption_size   = WP_Swiper_Settings::own_font_size_vars( isset( $slide['caption_size'] ) ? $slide['caption_size'] : '', 'wp-swiper-caption-size' );
 				// And its own font weight (a class: none keeps the paragraph's or heading's).
 				$caption_weight = WP_Swiper_Settings::font_weight_vars( isset( $slide['caption_weight'] ) ? $slide['caption_weight'] : '', 'wp-swiper-caption-weight' );
 				$caption_size   = array_merge( $caption_size, $caption_weight );

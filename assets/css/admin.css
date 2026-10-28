@@ -541,6 +541,29 @@
 	cursor: not-allowed;
 }
 
+/* Undo / redo (Collage, Art): two icon buttons left of the devices, as tall. */
+.wp-swiper-preview__history:not([hidden]) {
+	display: inline-flex;
+	gap: 4px;
+}
+
+#wp-swiper-settings .wp-swiper-preview__history .button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 32px;
+	min-height: 32px;
+	padding: 0 6px;
+	line-height: 1;
+}
+
+#wp-swiper-settings .wp-swiper-preview__history .dashicons {
+	width: 18px;
+	height: 18px;
+	font-size: 18px;
+	line-height: 1;
+}
+
 .wp-swiper-preview__devices {
 	background: #fff;
 }

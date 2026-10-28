@@ -301,6 +301,127 @@
 		return { left: left, top: top, width: right - left, height: bottom - top };
 	}
 
+	// The rectangles of several layouts in one list (their middle photos all at 0, 0).
+	function scatterAllRects( layouts, scale, gap ) {
+		return layouts.reduce( function ( list, layout ) {
+			return list.concat( scatterRects( layout, scale, gap ) );
+		}, [] );
+	}
+
+	function scatterCopy( layout ) {
+		var place = function ( spot ) {
+			var copy = { w: spot.w, h: spot.h };
+			if ( spot.step ) {
+				copy.step = spot.step;
+			}
+			return copy;
+		};
+		return { middle: place( layout.middle ), arms: layout.arms.map( function ( arm ) {
+			return arm.map( place );
+		} ) };
+	}
+
+	/**
+	 * Scattered: the layout with place `from` taken out of its arm and put
+	 * at the end of arm `arm`, a step `step` ("a" or "o") from the last
+	 * photo there; into an empty arm, next to the middle photo. The places
+	 * after it in its old arm close up: the next one steps from the one
+	 * before it, or touches the middle photo if it is first now. The place
+	 * keeps its size (the shape of its photo).
+	 *
+	 * @param {Object} layout See scatterRects().
+	 * @param {number} from   The place moved (not 0, the middle one).
+	 * @param {number} arm    0–3: T, R, B, L.
+	 * @param {string} step   "a" or "o"; not used for an empty arm.
+	 * @return {Object|null} { layout: a new one, index: the place's index in
+	 *                       it }; null for the middle place or when nothing
+	 *                       would change.
+	 */
+	function scatterMove( layout, from, arm, step ) {
+		if ( from < 1 ) {
+			return null;
+		}
+		var copy = scatterCopy( layout );
+		var index = 1;
+		var place = null;
+		copy.arms.some( function ( list ) {
+			if ( from < index + list.length ) {
+				var k = from - index;
+				place = list.splice( k, 1 )[ 0 ];
+				if ( ! k && list.length ) {
+					delete list[ 0 ].step;
+				}
+				return true;
+			}
+			index += list.length;
+			return false;
+		} );
+		if ( ! place ) {
+			return null;
+		}
+		var target = copy.arms[ arm ];
+		if ( target.length ) {
+			place.step = step;
+		} else {
+			delete place.step;
+		}
+		target.push( place );
+		var at = 1;
+		for ( var a = 0; a < arm; a++ ) {
+			at += copy.arms[ a ].length;
+		}
+		at += target.length - 1;
+		if ( at === from && serializeScatter( copy ) === serializeScatter( layout ) ) {
+			return null;
+		}
+		return { layout: copy, index: at };
+	}
+
+	/**
+	 * The places place `from` can be moved to (scatterMove()): the end of
+	 * each arm, along it or outwards; an empty arm, next to the middle photo.
+	 *
+	 * @param {Object} layout See scatterRects().
+	 * @param {number} from   The place moved.
+	 * @return {Object[]} { layout, index } of each.
+	 */
+	function scatterMoves( layout, from ) {
+		var moves = [];
+		if ( from < 1 ) {
+			return moves;
+		}
+		[ 0, 1, 2, 3 ].forEach( function ( arm ) {
+			[ 'a', 'o' ].forEach( function ( step ) {
+				var move = scatterMove( layout, from, arm, step );
+				// Into an empty arm "a" and "o" are the same place: it once.
+				var same = move && moves.some( function ( other ) {
+					return other.index === move.index && serializeScatter( other.layout ) === serializeScatter( move.layout );
+				} );
+				if ( move && ! same ) {
+					moves.push( move );
+				}
+			} );
+		} );
+		return moves;
+	}
+
+	/**
+	 * Where place `c` of a layout is once place `from` was moved to `index`
+	 * (scatterMove()): the places between take one step up or down.
+	 *
+	 * @param {number} c     The place's index before.
+	 * @param {number} from  The place moved, before.
+	 * @param {number} index The place moved, after.
+	 * @return {number}
+	 */
+	function scatterMovedIndex( c, from, index ) {
+		if ( c === from ) {
+			return index;
+		}
+		var rest = c > from ? c - 1 : c;
+		return rest >= index ? rest + 1 : rest;
+	}
+
 	/**
 	 * The largest scale at which the layout fits the block, the gaps kept
 	 * as they are (they do not scale).
@@ -312,11 +433,13 @@
 	 * @return {number} px per unit.
 	 */
 	function scatterFit( layout, width, height, gap ) {
+		// Several layouts (a photo being moved, see scatterMoves()): all of them fit.
+		var layouts = Array.isArray( layout ) ? layout : [ layout ];
 		var low = 0;
 		var high = Math.max( width, height, 1 );
 		for ( var i = 0; i < 32; i++ ) {
 			var scale = ( low + high ) / 2;
-			var box = scatterBox( scatterRects( layout, scale, gap ) );
+			var box = scatterBox( scatterAllRects( layouts, scale, gap ) );
 			if ( box.width <= width && box.height <= height ) {
 				low = scale;
 			} else {
@@ -494,6 +617,10 @@
 		var scatterAspect = 0;
 		var scatterView = null;
 		var frozen = null;
+		// Scattered, a photo dragged in the preview: the place it is taken from,
+		// the places it can be moved to (scatterMoves()), the one shown now (-1:
+		// none) and the scale and spot all of them fit the block at.
+		var moving = null;
 		// Called once the places are laid out (the preview draws the lines then).
 		var placed = [];
 
@@ -707,14 +834,19 @@
 				mosaicLines = [];
 				if ( scatter ) {
 					var gridHeight = grid.clientHeight;
-					var scale = frozen ? frozen.scale : scatterFit( scatter, width, gridHeight, gap );
-					var rects = scatterRects( scatter, scale, gap );
+					// A photo being moved: held where all the places it can go fit, the
+					// move under the pointer shown (each cell at its place after it).
+					var held = moving || frozen;
+					var move = moving && moving.shown >= 0 ? moving.moves[ moving.shown ] : null;
+					var scale = held ? held.scale : scatterFit( scatter, width, gridHeight, gap );
+					var rects = scatterRects( move ? move.layout : scatter, scale, gap );
 					var box = scatterBox( rects );
-					var originX = frozen ? frozen.x : ( width - box.width ) / 2 - box.left;
-					var originY = frozen ? frozen.y : ( gridHeight - box.height ) / 2 - box.top;
-					rects.forEach( function ( r, i ) {
-						if ( cells[ i ] ) {
-							set( cells[ i ], originX + r.x, originY + r.y, r.w, r.h );
+					var originX = held ? held.x : ( width - box.width ) / 2 - box.left;
+					var originY = held ? held.y : ( gridHeight - box.height ) / 2 - box.top;
+					cells.forEach( function ( cell, c ) {
+						var r = rects[ move ? scatterMovedIndex( c, moving.from, move.index ) : c ];
+						if ( r ) {
+							set( cell, originX + r.x, originY + r.y, r.w, r.h );
 						}
 					} );
 					scatterView = { scale: scale, x: originX, y: originY, rects: rects };
@@ -864,6 +996,7 @@
 			scatter = null;
 			scatterView = null;
 			frozen = null;
+			moving = null;
 			if ( layout === 'random' ) {
 				cut();
 			} else if ( layout === 'scatter' ) {
@@ -1029,7 +1162,7 @@
 					}
 					// Scattered, unless set in the preview: worked out again once the
 					// block's proportions are a tenth off those it was made for.
-					if ( scatter && ! scatterSet && ! frozen && grid.clientHeight && Math.abs( grid.clientWidth / grid.clientHeight / scatterAspect - 1 ) > 0.1 ) {
+					if ( scatter && ! scatterSet && ! frozen && ! moving && grid.clientHeight && Math.abs( grid.clientWidth / grid.clientHeight / scatterAspect - 1 ) > 0.1 ) {
 						scatterCut();
 					}
 					place();
@@ -1061,6 +1194,19 @@
 				schedule();
 			},
 			ids: config.ids || [],
+			// Undo / redo in the editor (preview-collage.js): this device's order
+			// (slide indexes; none: the shuffle's), Random mosaic's sizes and the
+			// templates' or Scattered's, as given, laid out again.
+			restore: function ( state ) {
+				config.order = config.order || {};
+				config.mosaic = config.mosaic || {};
+				config.cuts = config.cuts || {};
+				config.order[ current ] = state.order && state.order.length ? state.order : false;
+				config.mosaic[ current ] = state.mosaic || '';
+				config.cuts[ current ] = state.cuts || '';
+				build();
+				schedule();
+			},
 			hold: function ( on ) {
 				paused = !! on;
 			},
@@ -1100,7 +1246,8 @@
 			// each with the edges it is resized by); held at their scale and spot
 			// (on) or fitted to the block again (off); a place's new size in grid
 			// px, laid out at once; two places' sizes swapped (their photos are
-			// swapped: each place keeps the shape of its photo); the layout as
+			// swapped: each place keeps the shape of its photo); a photo moved to
+			// the end of an arm (startMove(), showMove(), endMove()); the layout as
 			// stored, and a new one (or none: worked out again) for this device.
 			scatter: {
 				active: function () {
@@ -1141,6 +1288,50 @@
 						list[ to ].h = h;
 					}
 				},
+				// A photo dragged from place `from`: the collage made smaller where
+				// needed for every place it can be moved to (scatterMoves()) to fit
+				// the block too, and held there; those places (grid px), in order.
+				startMove: function ( from ) {
+					moving = null;
+					var moves = scatter && scatterView ? scatterMoves( scatter, from ) : [];
+					if ( ! moves.length ) {
+						return [];
+					}
+					var width = grid.clientWidth;
+					var height = grid.clientHeight;
+					var gap = Number( config.gap[ current ] ) || 0;
+					var layouts = [ scatter ].concat( moves.map( function ( move ) {
+						return move.layout;
+					} ) );
+					var scale = Math.min( scatterView.scale, scatterFit( layouts, width, height, gap ) );
+					var box = scatterBox( scatterAllRects( layouts, scale, gap ) );
+					moving = { from: from, moves: moves, shown: -1, scale: scale, x: ( width - box.width ) / 2 - box.left, y: ( height - box.height ) / 2 - box.top };
+					place();
+					return moves.map( function ( move ) {
+						var r = scatterRects( move.layout, scale, gap )[ move.index ];
+						return { left: moving.x + r.x, top: moving.y + r.y, width: r.w, height: r.h };
+					} );
+				},
+				// The collage as move `i` would make it (-1: as it is).
+				showMove: function ( i ) {
+					var shown = moving && moving.moves[ i ] ? i : -1;
+					if ( moving && shown !== moving.shown ) {
+						moving.shown = shown;
+						place();
+					}
+				},
+				// The drag over: move `i` made (none: -1), the collage fitted to the
+				// block again. Returns { from, index } of the place moved, or null.
+				endMove: function ( i ) {
+					var move = moving && moving.moves[ i ];
+					var from = moving ? moving.from : -1;
+					moving = null;
+					if ( move ) {
+						scatter = move.layout;
+					}
+					place();
+					return move ? { from: from, index: move.index } : null;
+				},
 				serialize: function () {
 					return scatter ? serializeScatter( scatter ) : '';
 				},
@@ -1148,6 +1339,7 @@
 					config.cuts = config.cuts || {};
 					config.cuts[ current ] = text ? 'scatter:' + text : '';
 					frozen = null;
+					moving = null;
 					scatterCut();
 					place();
 				}

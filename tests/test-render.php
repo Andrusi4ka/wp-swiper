@@ -830,12 +830,63 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$html = $this->render( array(), $slides );
 
 		// The first slide's caption and description: their sizes on themselves.
-		$this->assertStringContainsString( '<div class="wp-swiper__caption" style="--wp-swiper-caption-size:28px;--wp-swiper-caption-size-mobile:18px">', $html );
+		$this->assertStringContainsString( '<div class="wp-swiper__caption" style="--wp-swiper-caption-size:28px;--wp-swiper-caption-size-tablet:28px;--wp-swiper-caption-size-mobile:18px">', $html );
 		$this->assertStringContainsString( '<div class="wp-swiper-descriptions__item is-active" data-wp-swiper-index="0" style="--wp-swiper-description-size:20px;--wp-swiper-description-size-tablet:17px">', $html );
 		// The second: the plugin's size (none of its own), nor one of the slider's.
 		$this->assertStringContainsString( '<div class="wp-swiper__caption"><div class="wp-swiper__caption-text">Plain', $html );
 		$this->assertStringContainsString( '<div class="wp-swiper-descriptions__item" data-wp-swiper-index="2">', $html );
 		$this->assertStringNotContainsString( 'wp-swiper-caption-size:', $this->root_style( $html ) );
+	}
+
+	public function test_caption_font_size_for_all_slides() {
+		// The Caption page's Font size: per device, empty for none (16px).
+		$field = WP_Swiper_Settings::fields()['caption_size'];
+		$this->assertSame( 'caption', $field['section'] );
+		$this->assertTrue( $field['responsive'] );
+		$this->assertSame( '', WP_Swiper_Settings::defaults()['caption_size'] );
+		$clean = WP_Swiper_Settings::sanitize( array( 'caption_size' => '22', 'caption_size_tablet' => '', 'caption_size_mobile' => '500' ) );
+		$this->assertSame( array( 22, '', 200 ), array( $clean['caption_size'], $clean['caption_size_tablet'], $clean['caption_size_mobile'] ) );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize( array() )['caption_size'] );
+
+		$slides                    = $this->slides( 3 );
+		$slides[0]['caption']      = 'Own';
+		$slides[0]['caption_size'] = '30,,';
+		$slides[1]['caption']      = 'Plain';
+		$slides[2]['caption']      = 'Phone only';
+		$slides[2]['caption_size'] = ',,12';
+		$html = $this->render( array( 'caption_size' => 22, 'caption_size_tablet' => '', 'caption_size_mobile' => 14 ), $slides );
+
+		// On the block, for every slide.
+		$this->assertStringContainsString( '--wp-swiper-caption-size:22px;--wp-swiper-caption-size-mobile:14px', $this->root_style( $html ) );
+		// A slide's own on every screen after it (its desktop one on tablet and phone).
+		$this->assertStringContainsString( '<div class="wp-swiper__caption" style="--wp-swiper-caption-size:30px;--wp-swiper-caption-size-tablet:30px;--wp-swiper-caption-size-mobile:30px">', $html );
+		// None: the block's.
+		$this->assertStringContainsString( '<div class="wp-swiper__caption"><div class="wp-swiper__caption-text">Plain', $html );
+		// Only on phones: the block's on the larger screens.
+		$this->assertStringContainsString( '<div class="wp-swiper__caption" style="--wp-swiper-caption-size-mobile:12px">', $html );
+
+		// Art too.
+		$art = $this->render( array( 'effect' => 'art', 'caption_size' => 18 ), $slides );
+		$this->assertStringContainsString( '--wp-swiper-caption-size:18px', $art );
+		$this->assertStringContainsString( '<div class="wp-swiper-art__caption" style="--wp-swiper-caption-size:30px;--wp-swiper-caption-size-tablet:30px;--wp-swiper-caption-size-mobile:30px">', $art );
+
+		$this->assertSame( array( '--x:20px', '--x-tablet:16px', '--x-mobile:16px' ), WP_Swiper_Settings::own_font_size_vars( '20,16,', 'x' ) );
+		$this->assertSame( array(), WP_Swiper_Settings::own_font_size_vars( '', 'x' ) );
+	}
+
+	public function test_old_caption_font_size_becomes_the_caption_pages() {
+		// Saved with the old Font size of the whole slider (until 2.8): now the
+		// Caption page's, shown there and kept when saved.
+		$settings = WP_Swiper_Settings::get( $this->slider( null, array( '_version' => 6, 'caption_font' => 'custom', 'caption_font_size' => 24, 'caption_font_size_mobile' => '15' ) ) );
+		$this->assertSame( array( '24', '', '15' ), array( $settings['caption_size'], $settings['caption_size_tablet'], $settings['caption_size_mobile'] ) );
+		$this->assertSame( '24,,15', WP_Swiper_Settings::caption_sizes( $settings ) );
+		// "Default" then: none.
+		$settings = WP_Swiper_Settings::get( $this->slider( null, array( '_version' => 6, 'caption_font' => 'default', 'caption_font_size' => 30 ) ) );
+		$this->assertSame( '', $settings['caption_size'] );
+		// Its own since: that one.
+		$settings = WP_Swiper_Settings::get( $this->slider( null, array( '_version' => 6, 'caption_size' => 19, 'caption_font' => 'custom', 'caption_font_size' => 24 ) ) );
+		$this->assertSame( 19, (int) $settings['caption_size'] );
+		$this->assertSame( '19,,', WP_Swiper_Settings::caption_sizes( $settings ) );
 	}
 
 	public function test_font_weight_per_slide() {
