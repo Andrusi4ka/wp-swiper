@@ -103,6 +103,21 @@ class WP_Swiper_Preview {
 					<span class="dashicons dashicons-dismiss" aria-hidden="true"></span>
 					<?php esc_html_e( 'Click × on a photo to take its place out of the collage on this device; the slide stays.', 'wp-swiper' ); ?>
 				</p>
+				<?php // Freeform only (admin.js): photos moved anywhere, a Gap from the others (preview-collage.js). ?>
+				<p class="description wp-swiper-preview__hint" data-effect="freeform" hidden>
+					<span class="dashicons dashicons-move" aria-hidden="true"></span>
+					<?php esc_html_e( 'Drag a photo anywhere: it stops a Gap away from the others and snaps to their edges. Drop it on another photo to swap the two.', 'wp-swiper' ); ?>
+				</p>
+				<?php // Freeform only too: a photo's corners and edges resize it. ?>
+				<p class="description wp-swiper-preview__hint" data-effect="freeform" hidden>
+					<span class="dashicons dashicons-editor-expand" aria-hidden="true"></span>
+					<?php esc_html_e( 'Drag a corner or an edge of a photo to resize it.', 'wp-swiper' ); ?>
+				</p>
+				<?php // Freeform only too: a photo's × takes its place out (preview-collage.js); the others stay where they are. ?>
+				<p class="description wp-swiper-preview__hint" data-effect="freeform" hidden>
+					<span class="dashicons dashicons-dismiss" aria-hidden="true"></span>
+					<?php esc_html_e( 'Click × on a photo to take its place out of the collage on this device; the slide stays.', 'wp-swiper' ); ?>
+				</p>
 				<div class="wp-swiper-preview__stage">
 					<iframe class="wp-swiper-preview__frame" name="wp-swiper-preview-<?php echo (int) $post->ID; ?>" title="<?php esc_attr_e( 'Slider preview', 'wp-swiper' ); ?>" src="about:blank"></iframe>
 				</div>

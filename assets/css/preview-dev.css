@@ -215,6 +215,92 @@
 	pointer-events: none;
 }
 
+/* Freeform (preview-collage.js): a photo's corners and edges resize it, the
+   corners white squares while the pointer is over the collage. Not in the
+   way while a photo is moved or resized; the photo moved stays on top. */
+.wp-swiper-collage__grip {
+	position: absolute;
+	z-index: 6;
+	box-sizing: border-box;
+	touch-action: none;
+}
+
+.wp-swiper-collage__grip--corner::after {
+	content: "";
+	position: absolute;
+	inset: 3px;
+	border: 1px solid rgba(0, 0, 0, 0.35);
+	border-radius: 2px;
+	background: #fff;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+
+.wp-swiper-collage__grid:hover > .wp-swiper-collage__grip--corner::after {
+	opacity: 0.85;
+}
+
+.wp-swiper-collage-dragging .wp-swiper-collage__grip,
+.wp-swiper-collage-resizing .wp-swiper-collage__grip {
+	visibility: hidden;
+}
+
+.wp-swiper-collage__grip--n,
+.wp-swiper-collage__grip--s,
+.wp-swiper-collage-grip-n,
+.wp-swiper-collage-grip-n *,
+.wp-swiper-collage-grip-s,
+.wp-swiper-collage-grip-s * {
+	cursor: ns-resize !important;
+}
+
+.wp-swiper-collage__grip--e,
+.wp-swiper-collage__grip--w,
+.wp-swiper-collage-grip-e,
+.wp-swiper-collage-grip-e *,
+.wp-swiper-collage-grip-w,
+.wp-swiper-collage-grip-w * {
+	cursor: ew-resize !important;
+}
+
+.wp-swiper-collage__grip--nw,
+.wp-swiper-collage__grip--se,
+.wp-swiper-collage-grip-nw,
+.wp-swiper-collage-grip-nw *,
+.wp-swiper-collage-grip-se,
+.wp-swiper-collage-grip-se * {
+	cursor: nwse-resize !important;
+}
+
+.wp-swiper-collage__grip--ne,
+.wp-swiper-collage__grip--sw,
+.wp-swiper-collage-grip-ne,
+.wp-swiper-collage-grip-ne *,
+.wp-swiper-collage-grip-sw,
+.wp-swiper-collage-grip-sw * {
+	cursor: nesw-resize !important;
+}
+
+/* Freeform: the photo the dragged one would swap with, framed over its photo. */
+.wp-swiper-collage-free-moving .wp-swiper-collage__cell.is-drop-target::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	border-radius: inherit;
+	background: rgba(34, 113, 177, 0.18);
+	box-shadow: inset 0 0 0 3px #2271b1;
+	pointer-events: none;
+}
+
+.wp-swiper-collage__cell.is-moved {
+	z-index: 5;
+	outline: 2px solid #2271b1;
+	outline-offset: -2px;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
 /* Developer mode of the preview (preview-dev.js): over the slider, clipped
    by it; it never takes clicks. */
 .wp-swiper-dev {

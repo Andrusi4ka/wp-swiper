@@ -1771,6 +1771,8 @@
 			$( '.wp-swiper-preview__hint[data-effect="mosaic"]' ).prop( 'hidden', ! collageUses( [ 'random' ].concat( TEMPLATES ) ) );
 			// Scattered: the photos' outer edges.
 			$( '.wp-swiper-preview__hint[data-effect="scatter"]' ).prop( 'hidden', ! collageUses( [ 'scatter' ] ) );
+			// Freeform: photos moved and resized by hand.
+			$( '.wp-swiper-preview__hint[data-effect="freeform"]' ).prop( 'hidden', ! collageUses( [ 'freeform' ] ) );
 			// The preview says its photos swap by dragging.
 			$( '.wp-swiper-preview__hint[data-effect="collage"]' ).prop( 'hidden', ! collage );
 			// The collage's Height: not for the styles as tall as their photos make them.
@@ -1789,7 +1791,7 @@
 			field( 'slide_distribution' ).toggle( ratioOn.length > 0 );
 			// Its places always crop their photos (Cover): no Image fit.
 			field( 'image_fit' ).toggle( ! collage );
-			field( 'collage_count' ).toggle( collageUses( [ 'grid', 'justified', 'masonry', 'random', 'scatter' ] ) );
+			field( 'collage_count' ).toggle( collageUses( [ 'grid', 'justified', 'masonry', 'random', 'scatter', 'freeform' ] ) );
 			field( 'collage_columns' ).toggle( collageUses( [ 'grid', 'masonry' ] ) );
 			field( 'collage_row_height' ).toggle( collageUses( [ 'justified' ] ) );
 			field( 'collage_row_exact' ).toggle( collageUses( [ 'justified' ] ) );
@@ -2597,7 +2599,7 @@
 				if ( e.source !== previewFrame.contentWindow || DEVICES.indexOf( data.device ) === -1 ) {
 					return;
 				}
-				if ( /^collage-(order|mosaic|scatter|count)$/.test( data.wpSwiper ) ) {
+				if ( /^collage-(order|mosaic|scatter|free|count)$/.test( data.wpSwiper ) ) {
 					record( data.device );
 				}
 				// Scattered: a place taken out there, one photo fewer on screen on that device.
@@ -2623,6 +2625,11 @@
 					// Scattered's layout, a photo's edge dragged or two photos swapped
 					// there; checked again when saved (WP_Swiper_Settings::sanitize_scatter()).
 					setCuts( data.device, 'scatter:' + data.layout );
+					setByHand( data.device, true );
+				} else if ( data.wpSwiper === 'collage-free' && typeof data.layout === 'string' && /^[0-9.,;-]{1,4000}$/.test( data.layout ) ) {
+					// Freeform's layout, a photo moved or resized there; checked again
+					// when saved (WP_Swiper_Settings::sanitize_freeform()).
+					setCuts( data.device, 'freeform:' + data.layout );
 					setByHand( data.device, true );
 				}
 			} );

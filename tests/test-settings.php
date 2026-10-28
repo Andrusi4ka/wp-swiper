@@ -677,6 +677,46 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( '', $clean['collage_cuts_mobile'] );
 	}
 
+	public function test_sanitize_freeform() {
+		$this->assertSame( 'freeform', WP_Swiper_Settings::COLLAGE_FREEFORM );
+		$this->assertArrayHasKey( 'freeform', WP_Swiper_Settings::fields()['collage_layout']['choices'] );
+		// Four decimals, no trailing zeros, no spaces; -0 is 0; a place may run past the frame.
+		$this->assertSame( '1.8;0.1,0.05,0.5,0.4;0,0,0.3,0.45;-0.2,0.9,0.1235,0.2', WP_Swiper_Settings::sanitize_freeform( '1.80; 0.1,0.05,0.5000,0.4;-0.0,0,0.3,0.45;-0.2,0.9,0.12345,0.2' ) );
+		$this->assertSame( '2;0,0,1,1', WP_Swiper_Settings::sanitize_freeform( '2;0,0,1,1' ) );
+
+		foreach ( array(
+			'',
+			'1.8',
+			'1.8;',
+			'0;0,0,1,1',
+			'21;0,0,1,1',
+			'1.8;0,0,1',
+			'1.8;0,0,1,1,1',
+			'1.8;0,0,0,1',
+			'1.8;0,0,1,-1',
+			'1.8;a,0,1,1',
+			'1.8;1e2,0,1,1',
+			'1.8;0,25,1,1',
+			'1.8;0,0,1,1;;0,0,1,1',
+		) as $bad ) {
+			$this->assertSame( '', WP_Swiper_Settings::sanitize_freeform( $bad ), $bad );
+		}
+		// At most 100 places.
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_freeform( '1;' . implode( ';', array_fill( 0, 101, '0,0,0.1,0.1' ) ) ) );
+		$this->assertNotSame( '', WP_Swiper_Settings::sanitize_freeform( '1;' . implode( ';', array_fill( 0, 100, '0,0,0.1,0.1' ) ) ) );
+	}
+
+	public function test_sanitize_template_cuts_keeps_freeform() {
+		$this->assertSame( 'freeform:1.5;0,0,0.5,0.5', WP_Swiper_Settings::sanitize_template_cuts( 'freeform:1.50;0,0,0.5,0.5' ) );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_template_cuts( 'freeform:1x1;R1x1' ) );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize_template_cuts( 'scatter:1.5;0,0,0.5,0.5' ) );
+
+		$clean = WP_Swiper_Settings::sanitize( array( 'collage_layout' => 'freeform', 'collage_cuts' => 'freeform:1.5;0,0,0.5,0.5', 'collage_cuts_mobile' => 'freeform:bad' ) );
+		$this->assertSame( 'freeform', $clean['collage_layout'] );
+		$this->assertSame( 'freeform:1.5;0,0,0.5,0.5', $clean['collage_cuts'] );
+		$this->assertSame( '', $clean['collage_cuts_mobile'] );
+	}
+
 	public function test_sanitize_keeps_a_mosaic_per_device() {
 		$clean = WP_Swiper_Settings::sanitize( array( 'collage_mosaic' => 'V0.5[0,1]', 'collage_mosaic_tablet' => '', 'collage_mosaic_mobile' => 'bad' ) );
 		$this->assertSame( 'V0.5[0,1]', $clean['collage_mosaic'] );

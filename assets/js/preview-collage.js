@@ -212,12 +212,18 @@
 		e.stopPropagation();
 		var api = button.wpApi;
 		var device = api.places().device;
-		var done = api.scatter.removePlace( button.wpIndex );
+		// Freeform's or Scattered's.
+		var done = ( button.wpFree ? api.free : api.scatter ).removePlace( button.wpIndex );
 		if ( ! done || ! window.parent || window.parent === window ) {
 			return;
 		}
 		window.parent.postMessage( { wpSwiper: 'collage-count', device: device, count: done.count }, window.location.origin );
-		store( api, device, done.order, done.layout );
+		if ( button.wpFree ) {
+			store( api, device, done.order, '' );
+			postFree( device, done.layout );
+		} else {
+			store( api, device, done.order, done.layout );
+		}
 	}, true );
 
 	document.addEventListener( 'pointerdown', function ( e ) {
@@ -228,7 +234,8 @@
 		var cell = e.button === 0 && e.target.closest( '.wp-swiper-collage__cell' );
 		var block = cell && cell.closest( '.wp-swiper-collage' );
 		var api = block && block.wpSwiperCollage;
-		if ( ! api || ! api.setOrder ) {
+		// Freeform: its photos are moved, not swapped (below).
+		if ( ! api || ! api.setOrder || ( api.free && api.free.active() ) ) {
 			return;
 		}
 		drag = { cell: cell, grid: cell.parentNode, api: api, x: e.clientX, y: e.clientY, moved: false, target: null, item: null, ghost: null, slots: [], slotEls: [], slot: -1, moving: false };
@@ -362,6 +369,18 @@
 	var MIN_SHARE = 0.08;
 	var MIN_PART = 40; // px.
 	var resize = null;
+	// Freeform's handles: a photo's corners (CORNER px squares) and edges.
+	var CORNER = 16;
+	var GRIPS = [
+		{ name: 'nw', sides: [ 'left', 'top' ] },
+		{ name: 'ne', sides: [ 'right', 'top' ] },
+		{ name: 'se', sides: [ 'right', 'bottom' ] },
+		{ name: 'sw', sides: [ 'left', 'bottom' ] },
+		{ name: 'n', sides: [ 'top' ] },
+		{ name: 'e', sides: [ 'right' ] },
+		{ name: 's', sides: [ 'bottom' ] },
+		{ name: 'w', sides: [ 'left' ] }
+	];
 
 	function drawHandles( block, api ) {
 		var grid = block.querySelector( '.wp-swiper-collage__grid' );
@@ -388,9 +407,55 @@
 			grid.appendChild( handle );
 		} );
 
-		[].forEach.call( grid.querySelectorAll( ':scope > .wp-swiper-collage__remove' ), function ( node ) {
+		[].forEach.call( grid.querySelectorAll( ':scope > .wp-swiper-collage__remove, :scope > .wp-swiper-collage__grip' ), function ( node ) {
 			node.parentNode.removeChild( node );
 		} );
+
+		// Freeform: each photo's corners and edges resize it (free below), and a
+		// button by its top right corner (left of that corner's handle) takes
+		// its place out.
+		if ( api.free && api.free.active() ) {
+			api.free.places().forEach( function ( place ) {
+				if ( ! api.free.removable( place.index ) || place.width < REMOVE_SIZE + CORNER + 12 ) {
+					return;
+				}
+				var button = document.createElement( 'button' );
+				button.type = 'button';
+				button.className = 'wp-swiper-collage__remove';
+				button.title = REMOVE_LABEL;
+				button.setAttribute( 'aria-label', REMOVE_LABEL );
+				button.style.left = ( place.left + place.width - REMOVE_SIZE - CORNER - 6 ) + 'px';
+				button.style.top = ( place.top + 6 ) + 'px';
+				button.wpIndex = place.index;
+				button.wpApi = api;
+				button.wpFree = true;
+				grid.appendChild( button );
+			} );
+			api.free.places().forEach( function ( place ) {
+				GRIPS.forEach( function ( grip ) {
+					var corner = grip.sides.length === 2;
+					var node = document.createElement( 'div' );
+					node.className = 'wp-swiper-collage__grip wp-swiper-collage__grip--' + grip.name + ( corner ? ' wp-swiper-collage__grip--corner' : '' );
+					var size = corner ? CORNER : HANDLE;
+					var has = function ( side ) {
+						return grip.sides.indexOf( side ) !== -1;
+					};
+					// Inside the photo: not over its neighbour a gap away.
+					var left = has( 'left' ) ? place.left : ( has( 'right' ) ? place.left + place.width - size : place.left + CORNER );
+					var top = has( 'top' ) ? place.top : ( has( 'bottom' ) ? place.top + place.height - size : place.top + CORNER );
+					var width = has( 'left' ) || has( 'right' ) ? size : Math.max( 0, place.width - 2 * CORNER );
+					var height = has( 'top' ) || has( 'bottom' ) ? size : Math.max( 0, place.height - 2 * CORNER );
+					node.style.left = left + 'px';
+					node.style.top = top + 'px';
+					node.style.width = width + 'px';
+					node.style.height = height + 'px';
+					node.wpIndex = place.index;
+					node.wpSides = grip.sides;
+					node.wpName = grip.name;
+					grid.appendChild( node );
+				} );
+			} );
+		}
 
 		// Scattered: each photo's two outer edges (scatter below), and a button
 		// in its corner that takes its place out (not the middle one's).
@@ -574,6 +639,362 @@
 	}
 	document.addEventListener( 'pointerup', endEdge );
 	document.addEventListener( 'pointercancel', endEdge );
+
+	/*
+	 * Freeform: a photo dragged moves with the pointer, anywhere in the
+	 * block, but never onto another one: it stops a Gap away from it (and
+	 * slides along it), and near a neighbour it snaps to the Gap from it or
+	 * in line with its edge (within SNAP px). Its corners and edges resize it
+	 * the same way, the opposite ones staying. Let go over another photo, the
+	 * two photos swap places instead (the places stay). Meanwhile the collage
+	 * stays at its scale (collage.js collage() free.begin()); on the release
+	 * it is kept for the device in view and the editor stores it (admin.js:
+	 * a message with the layout); Escape puts it back.
+	 */
+	var SNAP = 8; // px.
+	var free = null;
+
+	function freeClash( a, b, gap ) {
+		var e = 0.01;
+		return a.left < b.left + b.width + gap - e && b.left < a.left + a.width + gap - e && a.top < b.top + b.height + gap - e && b.top < a.top + a.height + gap - e;
+	}
+
+	// Inside the block and clear of the other places.
+	function freeValid( r ) {
+		var b = free.bounds;
+		var e = 0.01;
+		return r.left >= b.left - e && r.top >= b.top - e && r.left + r.width <= b.right + e && r.top + r.height <= b.bottom + e && free.others.every( function ( o ) {
+			return o.skip || ! freeClash( r, o, o.keep );
+		} );
+	}
+
+	// `value` moved to the nearest of `list` within SNAP px, if any.
+	function snapTo( value, list ) {
+		var best = value;
+		var distance = SNAP + 0.001;
+		list.forEach( function ( at ) {
+			if ( Math.abs( at - value ) < distance ) {
+				distance = Math.abs( at - value );
+				best = at;
+			}
+		} );
+		return best;
+	}
+
+	// The rectangle part `t` of the way from `a` to `b`.
+	function lerpRect( a, b, t ) {
+		return {
+			left: a.left + ( b.left - a.left ) * t,
+			top: a.top + ( b.top - a.top ) * t,
+			width: a.width + ( b.width - a.width ) * t,
+			height: a.height + ( b.height - a.height ) * t
+		};
+	}
+
+	// As far from `from` (allowed) towards `to` as allowed.
+	function furthest( from, to ) {
+		if ( freeValid( to ) ) {
+			return to;
+		}
+		var low = 0;
+		var high = 1;
+		for ( var i = 0; i < 18; i++ ) {
+			var mid = ( low + high ) / 2;
+			if ( freeValid( lerpRect( from, to, mid ) ) ) {
+				low = mid;
+			} else {
+				high = mid;
+			}
+		}
+		return lerpRect( from, to, low );
+	}
+
+	// Moved by dx, dy from where it started.
+	function freeMove( dx, dy ) {
+		var s = free.start;
+		var b = free.bounds;
+		var gap = free.gap;
+		var target = {
+			left: Math.max( b.left, Math.min( b.right - s.width, s.left + dx ) ),
+			top: Math.max( b.top, Math.min( b.bottom - s.height, s.top + dy ) ),
+			width: s.width,
+			height: s.height
+		};
+		var xs = [ b.left, b.right - s.width ];
+		var ys = [ b.top, b.bottom - s.height ];
+		free.others.forEach( function ( o ) {
+			xs.push( o.left + o.width + gap, o.left - gap - s.width, o.left, o.left + o.width - s.width );
+			ys.push( o.top + o.height + gap, o.top - gap - s.height, o.top, o.top + o.height - s.height );
+		} );
+		var snapped = { left: snapTo( target.left, xs ), top: snapTo( target.top, ys ), width: s.width, height: s.height };
+		if ( freeValid( snapped ) ) {
+			return snapped;
+		}
+		if ( freeValid( target ) ) {
+			return target;
+		}
+		// In the way: as far as it goes, then along the obstacle each way.
+		var at = furthest( free.rect, target );
+		at = furthest( at, { left: target.left, top: at.top, width: s.width, height: s.height } );
+		at = furthest( at, { left: at.left, top: target.top, width: s.width, height: s.height } );
+		var near = { left: snapTo( at.left, xs ), top: snapTo( at.top, ys ), width: s.width, height: s.height };
+		return freeValid( near ) ? near : at;
+	}
+
+	// Its edges in free.sides moved by dx, dy from where they started.
+	function freeResize( dx, dy ) {
+		var s = free.start;
+		var b = free.bounds;
+		var gap = free.gap;
+		var has = function ( side ) {
+			return free.sides.indexOf( side ) !== -1;
+		};
+		var left = s.left;
+		var top = s.top;
+		var right = s.left + s.width;
+		var bottom = s.top + s.height;
+		var xs = { left: [ b.left ], right: [ b.right ] };
+		var ys = { top: [ b.top ], bottom: [ b.bottom ] };
+		free.others.forEach( function ( o ) {
+			xs.left.push( o.left + o.width + gap, o.left, o.left + o.width );
+			xs.right.push( o.left - gap, o.left + o.width, o.left );
+			ys.top.push( o.top + o.height + gap, o.top, o.top + o.height );
+			ys.bottom.push( o.top - gap, o.top + o.height, o.top );
+		} );
+		var edges = function ( snap ) {
+			var l = left;
+			var t = top;
+			var r = right;
+			var d = bottom;
+			if ( has( 'left' ) ) {
+				l = s.left + dx;
+				l = Math.max( b.left, Math.min( r - MIN_PART, snap ? snapTo( l, xs.left ) : l ) );
+			}
+			if ( has( 'right' ) ) {
+				r = s.left + s.width + dx;
+				r = Math.min( b.right, Math.max( l + MIN_PART, snap ? snapTo( r, xs.right ) : r ) );
+			}
+			if ( has( 'top' ) ) {
+				t = s.top + dy;
+				t = Math.max( b.top, Math.min( d - MIN_PART, snap ? snapTo( t, ys.top ) : t ) );
+			}
+			if ( has( 'bottom' ) ) {
+				d = s.top + s.height + dy;
+				d = Math.min( b.bottom, Math.max( t + MIN_PART, snap ? snapTo( d, ys.bottom ) : d ) );
+			}
+			return { left: l, top: t, width: r - l, height: d - t };
+		};
+		var snapped = edges( true );
+		if ( freeValid( snapped ) ) {
+			return snapped;
+		}
+		return furthest( s, edges( false ) );
+	}
+
+	// The other place under the pointer (a move only): the photos swap there.
+	function freeTarget( x, y ) {
+		var hit = null;
+		free.others.forEach( function ( o ) {
+			if ( x >= o.left && x <= o.left + o.width && y >= o.top && y <= o.top + o.height ) {
+				hit = o.index;
+			}
+		} );
+		return hit;
+	}
+
+	/*
+	 * Over another photo (index; null: none): the swap shown before it is
+	 * made, as the other styles do: the dragged photo back in its place with
+	 * the other's photo, the other with the dragged one, and a small copy of
+	 * the dragged photo under the pointer. Undone once the pointer leaves.
+	 */
+	function freeMark( index ) {
+		if ( index === free.target ) {
+			return;
+		}
+		var cells = cellsOf( free.grid );
+		if ( null !== free.target && cells[ free.target ] ) {
+			cells[ free.target ].classList.remove( 'is-drop-target' );
+			unshow( cells[ free.target ] );
+			unshow( free.cell );
+		}
+		free.target = index;
+		if ( null !== index && cells[ index ] ) {
+			cells[ index ].classList.add( 'is-drop-target' );
+			show( cells[ index ], itemOf( free.cell ) );
+			show( free.cell, itemOf( cells[ index ] ) );
+			free.rect = free.start;
+			free.api.free.setRect( free.index, free.start );
+			if ( ! free.ghost ) {
+				free.ghost = makeGhost( free.cell, itemOf( free.cell ) );
+			}
+		} else if ( free.ghost ) {
+			free.ghost.parentNode.removeChild( free.ghost );
+			free.ghost = null;
+		}
+	}
+
+	function freeGhostAt( x, y ) {
+		if ( free.ghost ) {
+			free.ghost.style.transform = 'translate(' + ( x - free.ghost.offsetWidth / 2 ) + 'px, ' + ( y - free.ghost.offsetHeight / 2 ) + 'px)';
+		}
+	}
+
+	function freeFinish() {
+		if ( null !== free.target ) {
+			freeMark( null );
+		}
+		free.cell.classList.remove( 'is-moved' );
+		document.documentElement.classList.remove( 'wp-swiper-collage-dragging', 'wp-swiper-collage-resizing', 'wp-swiper-collage-free-' + ( free.sides ? 'resizing' : 'moving' ), 'wp-swiper-collage-grip-' + ( free.name || 'none' ) );
+		free.api.hold( false );
+	}
+
+	document.addEventListener( 'pointerdown', function ( e ) {
+		if ( e.button !== 0 || ! e.target.closest ) {
+			return;
+		}
+		var grip = e.target.closest( '.wp-swiper-collage__grip' );
+		var cell = grip ? null : e.target.closest( '.wp-swiper-collage__cell' );
+		var block = ( grip || cell ) && ( grip || cell ).closest( '.wp-swiper-collage' );
+		var api = block && block.wpSwiperCollage;
+		if ( ! api || ! api.free || ! api.free.active() ) {
+			return;
+		}
+		if ( grip ) {
+			e.preventDefault();
+		}
+		var grid = block.querySelector( '.wp-swiper-collage__grid' );
+		var cells = cellsOf( grid );
+		var index = grip ? grip.wpIndex : cells.indexOf( cell );
+		var places = api.free.places();
+		var start = places[ index ];
+		if ( ! start || ! cells[ index ] ) {
+			return;
+		}
+		var gap = api.free.gap();
+		var others = places.filter( function ( p ) {
+			return p.index !== index;
+		} );
+		// Each other place kept as far away as now, at most a Gap; one it runs
+		// into already (a layout made for another Gap or block) does not count.
+		others.forEach( function ( o ) {
+			var apart = Math.max( o.left - start.left - start.width, start.left - o.left - o.width, o.top - start.top - start.height, start.top - o.top - o.height );
+			o.skip = apart < -0.5;
+			o.keep = Math.max( 0, Math.min( gap, apart ) );
+		} );
+		free = {
+			api: api,
+			grid: grid,
+			cell: cells[ index ],
+			index: index,
+			start: start,
+			rect: start,
+			others: others,
+			gap: gap,
+			sides: grip ? grip.wpSides : null,
+			name: grip ? grip.wpName : '',
+			bounds: { left: 0, top: 0, right: grid.clientWidth, bottom: grid.clientHeight },
+			x: e.clientX,
+			y: e.clientY,
+			moved: false,
+			target: null,
+			device: api.places().device
+		};
+		api.hold( true );
+	} );
+
+	document.addEventListener( 'pointermove', function ( e ) {
+		if ( ! free ) {
+			return;
+		}
+		var dx = e.clientX - free.x;
+		var dy = e.clientY - free.y;
+		if ( ! free.moved ) {
+			if ( Math.abs( dx ) < DISTANCE && Math.abs( dy ) < DISTANCE ) {
+				return;
+			}
+			free.moved = true;
+			free.api.free.begin();
+			free.cell.classList.add( 'is-moved' );
+			document.documentElement.classList.add( free.sides ? 'wp-swiper-collage-resizing' : 'wp-swiper-collage-dragging', 'wp-swiper-collage-free-' + ( free.sides ? 'resizing' : 'moving' ), 'wp-swiper-collage-grip-' + ( free.name || 'none' ) );
+		}
+		if ( free.sides ) {
+			free.rect = freeResize( dx, dy );
+			free.api.free.setRect( free.index, free.rect );
+			return;
+		}
+		// Over another photo: the swap shown (freeMark()); else moved.
+		var rect = free.grid.getBoundingClientRect();
+		var over = freeTarget( e.clientX - rect.left, e.clientY - rect.top );
+		freeMark( over );
+		freeGhostAt( e.clientX, e.clientY );
+		if ( null === over ) {
+			free.rect = freeMove( dx, dy );
+			free.api.free.setRect( free.index, free.rect );
+		}
+	} );
+
+	document.addEventListener( 'pointerup', function () {
+		if ( ! free ) {
+			return;
+		}
+		var done = free;
+		if ( ! done.moved ) {
+			free = null;
+			done.api.hold( false );
+			return;
+		}
+		// No click after a drag (the lightbox would open).
+		stopNextClick();
+		var api = done.api;
+		var target = done.target;
+		freeFinish();
+		free = null;
+		if ( null !== target ) {
+			// Over another photo: the two photos swap, the places stay where they were.
+			api.free.cancel();
+			var list = api.places().order.slice();
+			var swap = list[ done.index ];
+			list[ done.index ] = list[ target ];
+			list[ target ] = swap;
+			// Kept as it is: a new order alone would work out another layout.
+			var kept = api.free.store();
+			store( api, done.device, list, '' );
+			postFree( done.device, kept );
+			return;
+		}
+		postFree( done.device, api.free.store() );
+	} );
+
+	function cancelFree() {
+		if ( ! free ) {
+			return;
+		}
+		var done = free;
+		free = null;
+		if ( done.moved ) {
+			// Put back as it was.
+			free = done;
+			freeFinish();
+			free = null;
+			done.api.free.cancel();
+			swallow = true;
+		} else {
+			done.api.hold( false );
+		}
+	}
+	document.addEventListener( 'pointercancel', cancelFree );
+	document.addEventListener( 'keydown', function ( e ) {
+		if ( free && e.key === 'Escape' ) {
+			cancelFree();
+		}
+	} );
+
+	function postFree( device, text ) {
+		if ( text && window.parent && window.parent !== window ) {
+			window.parent.postMessage( { wpSwiper: 'collage-free', device: device, layout: text }, window.location.origin );
+		}
+	}
 
 	/*
 	 * Undo / redo in the editor (admin.js calls it, as it stores them): the

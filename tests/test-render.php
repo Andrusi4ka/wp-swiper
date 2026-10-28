@@ -1111,6 +1111,26 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertSame( array( 'desktop' => 'scatter:1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8', 'tablet' => 'scatter:1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8', 'mobile' => '' ), $config['cuts'] );
 	}
 
+	public function test_collage_config_has_the_freeform_layout_per_device() {
+		$config = $this->config(
+			$this->render(
+				array(
+					'effect'              => 'collage',
+					'collage_layout'      => 'freeform',
+					'collage_count'       => 2,
+					'collage_cuts'        => 'freeform:1.6;0.1,0.1,0.6,0.8;0.75,0.2,0.5,0.5',
+					'collage_cuts_tablet' => '',
+					'collage_cuts_mobile' => 'freeform:bad',
+				),
+				$this->slides( 3 )
+			),
+			'data-wp-swiper-collage'
+		);
+		$this->assertSame( 'freeform', $config['layout']['desktop'] );
+		// Tablet: the desktop's; mobile's is not one: none, worked out.
+		$this->assertSame( array( 'desktop' => 'freeform:1.6;0.1,0.1,0.6,0.8;0.75,0.2,0.5,0.5', 'tablet' => 'freeform:1.6;0.1,0.1,0.6,0.8;0.75,0.2,0.5,0.5', 'mobile' => '' ), $config['cuts'] );
+	}
+
 	public function test_image_shadow_and_its_room() {
 		$on    = array( 'image_shadow' => true, 'image_shadow_x' => 0, 'image_shadow_y' => 8, 'image_shadow_blur' => 20, 'image_shadow_spread' => 0, 'image_shadow_color' => 'rgba(0,0,0,0.3)' );
 		$html  = $this->render( $on + array( 'effect' => 'collage' ) );

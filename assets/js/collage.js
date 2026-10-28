@@ -594,6 +594,233 @@
 		return parts.join( ';' );
 	}
 
+	/*
+	 * Freeform: each place where it was put, as large as it was made, in a
+	 * frame: { aspect, places: [ { x, y, w, h } ] }, the frame 1 high and
+	 * `aspect` wide, the places in its units (so in shares of the block's
+	 * height: a new Height scales all of it, gaps too). Places never overlap,
+	 * neighbours at least a gap apart. Worked out at random for the block
+	 * (freeLayout()) until set in the preview, where photos are moved and
+	 * resized by hand (preview-collage.js); the frame is then the block as
+	 * it was there. Shown as large as the frame fits the block, in its middle.
+	 */
+	// Freeform: layouts tried for one shuffle (the one filling its block best
+	// kept), spots tried for each place.
+	var FREE_TRIES = 24;
+	var FREE_SPOTS = 60;
+	// Freeform: the share of the block its photos cover, about.
+	var FREE_COVER = 0.58;
+
+	// Whether two places are less than `gap` apart (they overlap or touch).
+	function freeClash( a, b, gap ) {
+		var e = 1e-6;
+		return a.x < b.x + b.w + gap - e && b.x < a.x + a.w + gap - e && a.y < b.y + b.h + gap - e && b.y < a.y + a.h + gap - e;
+	}
+
+	/**
+	 * Freeform: a layout for these photos in a block `aspect` wide, 1 high.
+	 * The larger places first, near the middle; each next one a gap from a
+	 * place already there (beside it, above or below, now and then lined up
+	 * with its edge), in the block, clear of all the others, and of the spots
+	 * tried the one nearest the middle, touching most places. Each shaped
+	 * after its photo, give or take, some larger than others. Of FREE_TRIES
+	 * such layouts (all from the shuffle, so the same each time) the one
+	 * spreading over the block most evenly is kept, centred in it.
+	 *
+	 * @param {number[]} ratios Width / height of each place's photo, in order.
+	 * @param {number}   aspect The block's width / height.
+	 * @param {number}   gap    In shares of the block's height.
+	 * @param {Function} random Seeded random numbers.
+	 * @return {Object} { aspect, places }.
+	 */
+	function freeLayout( ratios, aspect, gap, random ) {
+		var count = ratios.length;
+		var best = null;
+		var bestScore = -Infinity;
+
+		function spot( placed, w, h ) {
+			var choice = null;
+			var choiceScore = Infinity;
+			if ( ! placed.length ) {
+				// The first one about the middle.
+				var first = { x: ( aspect - w ) / 2 + ( random() - 0.5 ) * aspect * 0.2, y: ( 1 - h ) / 2 + ( random() - 0.5 ) * 0.2, w: w, h: h };
+				first.x = Math.max( 0, Math.min( aspect - w, first.x ) );
+				first.y = Math.max( 0, Math.min( 1 - h, first.y ) );
+				return first;
+			}
+			for ( var k = 0; k < FREE_SPOTS; k++ ) {
+				var o = placed[ Math.floor( random() * placed.length ) ];
+				var side = Math.floor( random() * 4 );
+				var across = side % 2 === 0;
+				// Along the side: at least a quarter of the smaller one beside the other.
+				var size = across ? h : w;
+				var other = across ? o.h : o.w;
+				var start = across ? o.y : o.x;
+				var overlap = Math.min( size, other ) * 0.25;
+				var along = random() < 0.3 ? ( random() < 0.5 ? start : start + other - size ) : start - size + overlap + random() * ( size + other - 2 * overlap );
+				var r = { w: w, h: h };
+				if ( side === 0 ) {
+					r.x = o.x + o.w + gap;
+					r.y = along;
+				} else if ( side === 2 ) {
+					r.x = o.x - gap - w;
+					r.y = along;
+				} else if ( side === 1 ) {
+					r.y = o.y + o.h + gap;
+					r.x = along;
+				} else {
+					r.y = o.y - gap - h;
+					r.x = along;
+				}
+				if ( r.x < 0 || r.y < 0 || r.x + w > aspect || r.y + h > 1 ) {
+					continue;
+				}
+				var touching = 0;
+				var clear = placed.every( function ( p ) {
+					if ( freeClash( r, p, gap ) ) {
+						return false;
+					}
+					if ( freeClash( r, p, gap * 1.5 + 0.002 ) ) {
+						touching++;
+					}
+					return true;
+				} );
+				if ( ! clear ) {
+					continue;
+				}
+				var dx = ( r.x + w / 2 - aspect / 2 ) / aspect;
+				var dy = r.y + h / 2 - 0.5;
+				var score = dx * dx + dy * dy - 0.02 * touching + random() * 0.01;
+				if ( score < choiceScore ) {
+					choice = r;
+					choiceScore = score;
+				}
+			}
+			return choice;
+		}
+
+		for ( var t = 0; t < FREE_TRIES; t++ ) {
+			var weights = ratios.map( function () {
+				return 0.45 + random() * 1.2;
+			} );
+			var total = weights.reduce( function ( sum, value ) {
+				return sum + value;
+			}, 0 );
+			var cover = FREE_COVER * ( 0.92 + random() * 0.16 );
+			// The larger first.
+			var turn = weights.map( function ( value, index ) {
+				return index;
+			} ).sort( function ( a, b ) {
+				return weights[ b ] - weights[ a ];
+			} );
+			var places = [];
+			var placed = [];
+			var ok = turn.every( function ( index ) {
+				var ratio = Math.max( 0.5, Math.min( 2.2, ( ratios[ index ] || 1 ) * ( 0.85 + random() * 0.3 ) ) );
+				var area = weights[ index ] / total * cover * aspect;
+				var w = Math.sqrt( area * ratio );
+				var h = Math.sqrt( area / ratio );
+				// No taller than the block, no wider than it, less a little.
+				var fit = Math.min( 1, 0.85 / h, aspect * 0.85 / w );
+				w *= fit;
+				h *= fit;
+				for ( var shrink = 0; shrink < 10; shrink++ ) {
+					var r = spot( placed, w, h );
+					if ( r ) {
+						places[ index ] = r;
+						placed.push( r );
+						return true;
+					}
+					w *= 0.88;
+					h *= 0.88;
+				}
+				return false;
+			} );
+			if ( ! ok ) {
+				continue;
+			}
+			// How good: the share covered, how much of the block it spreads
+			// over, how far from its middle it is.
+			var box = scatterBox( places );
+			var area = places.reduce( function ( sum, r ) {
+				return sum + r.w * r.h;
+			}, 0 ) / aspect;
+			var off = Math.abs( box.left + box.width / 2 - aspect / 2 ) / aspect + Math.abs( box.top + box.height / 2 - 0.5 );
+			var score = area + 0.35 * ( box.width / aspect + box.height ) - off;
+			if ( score > bestScore ) {
+				best = { places: places, box: box };
+				bestScore = score;
+			}
+		}
+		if ( ! best ) {
+			// None fitted (a great many photos): a plain row, each a share of the width.
+			var each = ( aspect - gap * ( count - 1 ) ) / count;
+			return { aspect: aspect, places: ratios.map( function ( ratio, i ) {
+				var h = Math.min( 1, each / ( ratio || 1 ) );
+				return { x: i * ( each + gap ), y: ( 1 - h ) / 2, w: each, h: h };
+			} ) };
+		}
+		// Centred in the block.
+		var shiftX = ( aspect - best.box.width ) / 2 - best.box.left;
+		var shiftY = ( 1 - best.box.height ) / 2 - best.box.top;
+		return { aspect: aspect, places: best.places.map( function ( r ) {
+			return { x: r.x + shiftX, y: r.y + shiftY, w: r.w, h: r.h };
+		} ) };
+	}
+
+	/**
+	 * Where a Freeform layout goes in a block: the frame (and any place out of
+	 * it) as large as fits, in the middle.
+	 *
+	 * @param {Object} layout See freeLayout().
+	 * @param {number} width  The block's, px.
+	 * @param {number} height The block's, px.
+	 * @return {Object} { scale: px per unit, x, y: where the frame's 0, 0 is }.
+	 */
+	function freeFit( layout, width, height ) {
+		var box = scatterBox( layout.places.concat( [ { x: 0, y: 0, w: layout.aspect, h: 1 } ] ) );
+		var scale = Math.max( 0.0001, Math.min( width / box.width, height / box.height ) );
+		return {
+			scale: scale,
+			x: ( width - box.width * scale ) / 2 - box.left * scale,
+			y: ( height - box.height * scale ) / 2 - box.top * scale
+		};
+	}
+
+	/**
+	 * A Freeform layout as stored (WP_Swiper_Settings::sanitize_freeform()):
+	 * the frame's aspect, then each place's x,y,w,h: "1.8;0.1,0.05,0.5,0.4;…",
+	 * and back.
+	 *
+	 * @param {string} text The layout.
+	 * @return {Object|null} The layout; null when it is not one.
+	 */
+	function parseFree( text ) {
+		var parts = String( text || '' ).split( ';' );
+		var aspect = Number( parts.shift() );
+		if ( ! ( aspect > 0 ) || ! parts.length ) {
+			return null;
+		}
+		var places = [];
+		for ( var i = 0; i < parts.length; i++ ) {
+			var n = parts[ i ].split( ',' ).map( Number );
+			if ( n.length !== 4 || n.some( isNaN ) || ! ( n[ 2 ] > 0 ) || ! ( n[ 3 ] > 0 ) ) {
+				return null;
+			}
+			places.push( { x: n[ 0 ], y: n[ 1 ], w: n[ 2 ], h: n[ 3 ] } );
+		}
+		return { aspect: aspect, places: places };
+	}
+
+	function serializeFree( layout ) {
+		var number = function ( value ) {
+			return Math.round( value * 10000 ) / 10000;
+		};
+		return [ number( layout.aspect ) ].concat( layout.places.map( function ( r ) {
+			return [ number( r.x ), number( r.y ), number( r.w ), number( r.h ) ].join( ',' );
+		} ) ).join( ';' );
+	}
+
 	/**
 	 * @param {Element} el     The .wp-swiper-collage block.
 	 * @param {Object}  config { layout, count, columns, rowHeight, gap: per
@@ -637,6 +864,15 @@
 		// the places it can be moved to (scatterMoves()), the one shown now (-1:
 		// none) and the scale and spot all of them fit the block at.
 		var moving = null;
+		// Freeform: its layout (freeLayout()), whether it is the one set in the
+		// preview, the block's proportions it was worked out for, where it was
+		// last laid out (freeFit()) and, while a photo is moved or resized in
+		// the preview, that spot held.
+		var free = null;
+		var freeSet = false;
+		var freeAspect = 0;
+		var freeView = null;
+		var freeHeld = null;
 		// Called once the places are laid out (the preview draws the lines then).
 		var placed = [];
 
@@ -720,6 +956,46 @@
 			scatter = scatterLayout( cells.map( function ( cell ) {
 				return cell.wpRatio;
 			} ), width, height, Number( config.gap[ current ] ) || 0, seededRandom( ( config.seed || 1 ) * 7919 + cells.length * 31 + 7 ) );
+		}
+
+		// Freeform: the layout set in the preview for this device, while it has
+		// a place for every place shown; else worked out for the block (from
+		// the shuffle, the photos in their places and their number: Shuffle
+		// gives a new one, Reset the first one back).
+		function freeCut() {
+			var stored = config.cuts && config.cuts[ current ];
+			var set = stored && stored.indexOf( 'freeform:' ) === 0 ? parseFree( stored.slice( 9 ) ) : null;
+			var width = grid.clientWidth || 1;
+			var height = grid.clientHeight || 1;
+			freeAspect = width / height;
+			freeSet = !! set && set.places.length === cells.length;
+			if ( freeSet ) {
+				free = set;
+				return;
+			}
+			var seed = cells.reduce( function ( hash, cell ) {
+				return Math.imul( hash ^ ( cell.wpReal + 1 ), 2654435761 ) >>> 0;
+			}, ( ( config.seed || 1 ) * 7919 + cells.length * 131 + 17 ) >>> 0 );
+			free = freeLayout( cells.map( function ( cell ) {
+				return cell.wpRatio;
+			} ), freeAspect, ( Number( config.gap[ current ] ) || 0 ) / height, seededRandom( seed ) );
+		}
+
+		// Freeform: its layout as shown now, the block its frame (as stored).
+		function freeFramed() {
+			var v = freeHeld || freeView;
+			if ( ! free || ! v ) {
+				return null;
+			}
+			var left = -v.x / v.scale;
+			var top = -v.y / v.scale;
+			var high = ( grid.clientHeight || 1 ) / v.scale;
+			return {
+				aspect: ( grid.clientWidth || 1 ) / v.scale / high,
+				places: free.places.map( function ( r ) {
+					return { x: ( r.x - left ) / high, y: ( r.y - top ) / high, w: r.w / high, h: r.h / high };
+				} )
+			};
 		}
 
 		function ratioOf( slide ) {
@@ -867,6 +1143,20 @@
 					} );
 					scatterView = { scale: scale, x: originX, y: originY, rects: rects };
 				}
+			} else if ( layout === 'freeform' ) {
+				// The block keeps its Height; the frame as large as fits it, in its
+				// middle (held where it is while a photo is moved in the preview).
+				mosaicLines = [];
+				if ( free ) {
+					var view = freeHeld || freeFit( free, width, grid.clientHeight );
+					cells.forEach( function ( cell, c ) {
+						var r = free.places[ c ];
+						if ( r ) {
+							set( cell, view.x + r.x * view.scale, view.y + r.y * view.scale, r.w * view.scale, r.h * view.scale );
+						}
+					} );
+					freeView = view;
+				}
 			} else if ( layout === 'random' || COLLAGE_TEMPLATES[ layout ] ) {
 				// The block keeps its Height; the cuts are laid over it, gaps between.
 				// Each cut kept with its part and the line between its two (mosaicLines).
@@ -981,17 +1271,17 @@
 			order = orderFor( current );
 			var layout = config.layout[ current ] || 'grid';
 			var template = COLLAGE_TEMPLATES[ layout ] ? templateTree( layout ) : null;
-			// Laid out by cuts (Random mosaic, the templates), or Scattered: in the block's Height.
-			var cuts = layout === 'random' || layout === 'scatter' || !! template;
+			// Laid out by cuts (Random mosaic, the templates), or Scattered, Freeform: in the block's Height.
+			var cuts = layout === 'random' || layout === 'scatter' || layout === 'freeform' || !! template;
 			// Places positioned by the script.
-			var free = cuts || layout === 'justified' || layout === 'masonry';
+			var positioned = cuts || layout === 'justified' || layout === 'masonry';
 			var gap = Number( config.gap[ current ] ) || 0;
 			// A template has its places (photos repeat when there are fewer); the
 			// others show as many as set, at most the photos there are.
 			var count = template ? mosaicLeaves( template ).length : Math.min( slides.length, Math.max( 1, Number( config.count[ current ] ) || 1 ) );
 
 			grid.innerHTML = '';
-			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( free ? ' wp-swiper-collage__grid--free' : '' ) + ( cuts ? ' wp-swiper-collage__grid--cuts' : '' ) + ( fills( config ) ? ' wp-swiper-collage__grid--ratio' : '' ) + ( stretched ? ' wp-swiper-collage__grid--stretch' : '' );
+			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( positioned ? ' wp-swiper-collage__grid--free' : '' ) + ( cuts ? ' wp-swiper-collage__grid--cuts' : '' ) + ( fills( config ) ? ' wp-swiper-collage__grid--ratio' : '' ) + ( stretched ? ' wp-swiper-collage__grid--stretch' : '' );
 			grid.style.cssText = '';
 			cells = [];
 			for ( var i = 0; i < count; i++ ) {
@@ -1013,13 +1303,18 @@
 			scatterView = null;
 			frozen = null;
 			moving = null;
+			free = null;
+			freeView = null;
+			freeHeld = null;
 			if ( layout === 'random' ) {
 				cut();
 			} else if ( layout === 'scatter' ) {
 				scatterCut();
+			} else if ( layout === 'freeform' ) {
+				freeCut();
 			}
 
-			if ( free ) {
+			if ( positioned ) {
 				place();
 			} else {
 				grid.style.gap = gap + 'px';
@@ -1180,6 +1475,10 @@
 					// block's proportions are a tenth off those it was made for.
 					if ( scatter && ! scatterSet && ! frozen && ! moving && grid.clientHeight && Math.abs( grid.clientWidth / grid.clientHeight / scatterAspect - 1 ) > 0.1 ) {
 						scatterCut();
+					}
+					// Freeform, the same.
+					if ( free && ! freeSet && ! freeHeld && grid.clientHeight && Math.abs( grid.clientWidth / grid.clientHeight / freeAspect - 1 ) > 0.1 ) {
+						freeCut();
 					}
 					place();
 				} else {
@@ -1395,6 +1694,104 @@
 					moving = null;
 					scatterCut();
 					place();
+				}
+			},
+			/*
+			 * Freeform (preview-collage.js): whether it is shown; its places as
+			 * laid out now (grid px); the gap between them there (px); a photo
+			 * moved or resized: begin() holds the collage at its scale and spot,
+			 * setRect() puts a place at grid px, cancel() puts all back as they
+			 * were, store() keeps it as it is for this device (the frame the
+			 * block, as shown) and returns it as stored.
+			 */
+			free: {
+				active: function () {
+					return !! free && config.layout[ current ] === 'freeform';
+				},
+				places: function () {
+					if ( ! free || ! freeView ) {
+						return [];
+					}
+					var v = freeView;
+					return free.places.map( function ( r, index ) {
+						return { index: index, left: v.x + r.x * v.scale, top: v.y + r.y * v.scale, width: r.w * v.scale, height: r.h * v.scale };
+					} );
+				},
+				gap: function () {
+					var height = grid.clientHeight || 1;
+					return freeView ? ( Number( config.gap[ current ] ) || 0 ) * Math.min( 1, freeView.scale / height ) : 0;
+				},
+				begin: function () {
+					if ( free && freeView ) {
+						freeHeld = { scale: freeView.scale, x: freeView.x, y: freeView.y, before: free.places.map( function ( r ) {
+							return { x: r.x, y: r.y, w: r.w, h: r.h };
+						} ) };
+					}
+				},
+				setRect: function ( index, rect ) {
+					var v = freeHeld || freeView;
+					var r = free && v ? free.places[ index ] : null;
+					if ( ! r ) {
+						return;
+					}
+					r.x = ( rect.left - v.x ) / v.scale;
+					r.y = ( rect.top - v.y ) / v.scale;
+					r.w = rect.width / v.scale;
+					r.h = rect.height / v.scale;
+					place();
+				},
+				cancel: function () {
+					if ( free && freeHeld ) {
+						free.places = freeHeld.before;
+					}
+					freeHeld = null;
+					place();
+				},
+				store: function () {
+					var framed = freeFramed();
+					if ( ! framed ) {
+						return '';
+					}
+					free = framed;
+					var text = serializeFree( free );
+					config.cuts = config.cuts || {};
+					config.cuts[ current ] = 'freeform:' + text;
+					freeSet = true;
+					freeHeld = null;
+					place();
+					return text;
+				},
+				// Whether place `index` can be taken out (removePlace()): not below
+				// the fewest photos on screen.
+				removable: function ( index ) {
+					return index >= 0 && index < cells.length && cells.length > COLLAGE_MIN_COUNT;
+				},
+				/*
+				 * Place `index` taken out for this device, the others where they
+				 * are, one photo fewer on screen, and its photo to the end of the
+				 * order (it waits with the others; the slide stays). Returns what
+				 * to store: the layout, the number of photos and the order (slide
+				 * indexes); null when it cannot.
+				 */
+				removePlace: function ( index ) {
+					var framed = this.removable( index ) ? freeFramed() : null;
+					if ( ! framed ) {
+						return null;
+					}
+					framed.places.splice( index, 1 );
+					var list = cells.map( function ( cell ) {
+						return cell.wpReal;
+					} ).concat( queue );
+					list.push( list.splice( index, 1 )[ 0 ] );
+					var text = serializeFree( framed );
+					config.cuts = config.cuts || {};
+					config.cuts[ current ] = 'freeform:' + text;
+					config.order = config.order || {};
+					config.order[ current ] = list;
+					config.count[ current ] = cells.length - 1;
+					build();
+					schedule();
+					return { layout: text, count: cells.length, order: list };
 				}
 			},
 			onPlace: function ( callback ) {

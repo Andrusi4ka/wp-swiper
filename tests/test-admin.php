@@ -425,6 +425,9 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( 3, substr_count( $html, '<p class="description wp-swiper-preview__hint" data-effect="scatter" hidden>' ) );
 		$this->assertStringContainsString( 'take its place out of the collage on this device; the slide stays.', $html );
 		$this->assertStringContainsString( 'Drop a photo on a dashed frame to move it to the end of that arm.', $html );
+		// Freeform: photos moved anywhere, resized by their corners and edges, a place taken out by its ×.
+		$this->assertSame( 3, substr_count( $html, '<p class="description wp-swiper-preview__hint" data-effect="freeform" hidden>' ) );
+		$this->assertStringContainsString( 'Drag a corner or an edge of a photo to resize it.', $html );
 	}
 
 	public function test_collage_order_field_per_device_with_shuffle_and_reset() {
@@ -788,8 +791,8 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 			$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/collage/' . $style . '.svg', $style );
 			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="[^"]+" aria-label="[^"]+">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
 		}
-		// The Collage's nine, and Art's Styles with those to come (below).
-		$this->assertSame( 9 + count( WP_Swiper_Art::styles() ) + count( WP_Swiper_Art::soon() ), substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
+		// The Collage's ten, and Art's Styles with those to come (below).
+		$this->assertSame( 10 + count( WP_Swiper_Art::styles() ) + count( WP_Swiper_Art::soon() ), substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
 		$this->assertStringContainsString( 'class="wp-swiper-tiles__tile wp-swiper-tiles__tile--inherit" data-value="" role="radio" aria-checked="false" hidden>Inherit</button>', $html );
 	}
 

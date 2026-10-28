@@ -45,6 +45,13 @@ class WP_Swiper_Settings {
 	const COLLAGE_SCATTER = 'scatter';
 
 	/**
+	 * The collage's Freeform Style: each photo where it was put, as large as
+	 * it was made (collage.js freeLayout(): at random until set in the
+	 * preview), never over another; kept in collage_cuts too.
+	 */
+	const COLLAGE_FREEFORM = 'freeform';
+
+	/**
 	 * Effects whose photos can have a shadow (Image shadow): those where they
 	 * stand apart (see shadow() for the rest of the conditions).
 	 */
@@ -518,8 +525,9 @@ class WP_Swiper_Settings {
 					'masonry'        => __( 'Masonry', 'wp-swiper' ),
 					'random'         => __( 'Random mosaic', 'wp-swiper' ),
 					'scatter'        => __( 'Scattered', 'wp-swiper' ),
+					'freeform'       => __( 'Freeform', 'wp-swiper' ),
 				),
-				'help'            => __( 'Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Scattered: a photo in the middle and the others around it in uneven arms, each shaped after its photo, the gap between neighbours always the same; as large as the Height and the width allow, the corners left empty. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them; as a background, as tall as the block (the places stretched or shrunk to it).', 'wp-swiper' ),
+				'help'            => __( 'Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Scattered: a photo in the middle and the others around it in uneven arms, each shaped after its photo, the gap between neighbours always the same; as large as the Height and the width allow, the corners left empty. Freeform: the photos at random places and sizes, a Gap apart, each then moved and resized by hand in the preview; all of it scales with the Height. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them; as a background, as tall as the block (the places stretched or shrunk to it).', 'wp-swiper' ),
 			),
 			// The order of the photos without one set (collage_order): the shuffle
 			// of this number (the same number, the same arrangement). Kept inside
@@ -544,7 +552,7 @@ class WP_Swiper_Settings {
 				'type'       => 'order',
 				'responsive' => true,
 				'default'    => '',
-				'help'       => __( 'Drag a photo onto another place in the preview to swap the two; with Random mosaic and the templates, drag a line between photos to resize them; with Scattered, drag a photo\'s outer edge to resize it, or drop it on a dashed frame to move it to the end of an arm. Shuffle mixes the photos at random. All only for the device chosen (a tablet or phone without its own takes the larger screen\'s); Reset goes back to that, order and sizes.', 'wp-swiper' ),
+				'help'       => __( 'Drag a photo onto another place in the preview to swap the two; with Random mosaic and the templates, drag a line between photos to resize them; with Scattered, drag a photo\'s outer edge to resize it, or drop it on a dashed frame to move it to the end of an arm; with Freeform, drag a photo anywhere (it keeps a Gap from the others) or its corner or edge to resize it, and drop it on another photo to swap the two. Shuffle mixes the photos at random (Freeform: a new layout too). All only for the device chosen (a tablet or phone without its own takes the larger screen\'s); Reset goes back to that, order and sizes.', 'wp-swiper' ),
 			),
 			// Random mosaic: its cuts as set by dragging the lines between the
 			// photos in the preview, per device (see sanitize_mosaic()); '' on
@@ -601,7 +609,7 @@ class WP_Swiper_Settings {
 				'min'             => 2,
 				'max'             => 30,
 				'step'            => 1,
-				'help'            => __( 'Grid, Justified rows, Masonry, Random mosaic and Scattered; a template has its own number of places.', 'wp-swiper' ),
+				'help'            => __( 'Grid, Justified rows, Masonry, Random mosaic, Scattered and Freeform; a template has its own number of places.', 'wp-swiper' ),
 			),
 			'collage_columns'       => array(
 				'section'         => 'layout',
@@ -2573,7 +2581,8 @@ class WP_Swiper_Settings {
 	 * COLLAGE_TEMPLATES), a colon and its cuts as a mosaic's
 	 * (sanitize_mosaic()), "feature-left:V0.7[0,H0.5[1,2]]". collage.js uses
 	 * them while they have the template's places. Or Scattered's, "scatter:"
-	 * and its places (sanitize_scatter()).
+	 * and its places (sanitize_scatter()); or Freeform's, "freeform:" and its
+	 * places (sanitize_freeform()).
 	 *
 	 * @param string $value Raw input.
 	 * @return string As above; '' when it is not one.
@@ -2584,6 +2593,8 @@ class WP_Swiper_Settings {
 		}
 		if ( self::COLLAGE_SCATTER === $match[1] ) {
 			$cuts = self::sanitize_scatter( $match[2] );
+		} elseif ( self::COLLAGE_FREEFORM === $match[1] ) {
+			$cuts = self::sanitize_freeform( $match[2] );
 		} elseif ( in_array( $match[1], self::COLLAGE_TEMPLATES, true ) ) {
 			$cuts = self::sanitize_mosaic( $match[2] );
 		} else {
@@ -2658,6 +2669,56 @@ class WP_Swiper_Settings {
 			$out[] = $arm_out;
 		}
 		return $places > 100 ? '' : implode( ';', $out );
+	}
+
+	/**
+	 * Freeform places as stored (collage.js freeLayout(), serializeFree()):
+	 * the frame's width / height (0.05–20), then each place's x,y,w,h in the
+	 * frame's units (its height is 1): "1.8;0.1,0.05,0.5,0.4;0.65,0,0.3,0.45".
+	 * x and y -20–20 (a place may run past the frame), w and h 0.005–20; at
+	 * least one place, at most 100.
+	 *
+	 * @param string $value Raw input.
+	 * @return string As above, numbers to four decimals; '' when it is not one.
+	 */
+	public static function sanitize_freeform( $value ) {
+		$value = preg_replace( '/\s+/', '', (string) $value );
+		if ( '' === $value || strlen( $value ) > 4000 ) {
+			return '';
+		}
+		// A dot whatever the locale; no trailing zeros.
+		$number = function ( $text, $min, $max ) {
+			if ( ! preg_match( '/^-?\d*\.?\d+$/', $text ) ) {
+				return null;
+			}
+			$size = (float) $text;
+			if ( $size < $min || $size > $max ) {
+				return null;
+			}
+			$out = rtrim( rtrim( sprintf( '%.4F', $size ), '0' ), '.' );
+			return '-0' === $out ? '0' : $out;
+		};
+		$parts  = explode( ';', $value );
+		$aspect = $number( array_shift( $parts ), 0.05, 20 );
+		if ( null === $aspect || ! $parts || count( $parts ) > 100 || 0.0 === (float) $aspect ) {
+			return '';
+		}
+		$out = array( $aspect );
+		foreach ( $parts as $part ) {
+			$numbers = explode( ',', $part );
+			if ( 4 !== count( $numbers ) ) {
+				return '';
+			}
+			$x = $number( $numbers[0], -20, 20 );
+			$y = $number( $numbers[1], -20, 20 );
+			$w = $number( $numbers[2], 0.005, 20 );
+			$h = $number( $numbers[3], 0.005, 20 );
+			if ( null === $x || null === $y || null === $w || null === $h ) {
+				return '';
+			}
+			$out[] = $x . ',' . $y . ',' . $w . ',' . $h;
+		}
+		return implode( ';', $out );
 	}
 
 	/**
