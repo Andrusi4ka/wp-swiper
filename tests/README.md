@@ -27,3 +27,7 @@ The environment variables `tests/wp-tests-config.php` reads:
 ## Writing tests
 
 Files named `test-*.php` in this folder. `WP_Swiper_TestCase` (`class-wp-swiper-testcase.php`) creates images, videos and sliders without real files and reads the config, classes and style of the markup a slider renders.
+
+## In the browser
+
+The front end itself (every effect and style shown, its files, its layout, the arrows and the lightbox) is tested with Playwright on a local site: see [`browser/README.md`](browser/README.md). Those tests run locally only.

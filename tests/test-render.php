@@ -83,18 +83,33 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertTrue( wp_script_is( 'wp-swiper', 'enqueued' ) );
 		$this->assertFalse( wp_script_is( 'swiper', 'enqueued' ) );
 		$this->assertFalse( wp_style_is( 'swiper', 'enqueued' ) );
+		$this->assertFalse( wp_script_is( 'wp-swiper-slider', 'enqueued' ) );
 		$this->assertSame( array(), wp_scripts()->query( 'wp-swiper' )->deps );
 		$i18n = wp_scripts()->get_data( 'wp-swiper', 'data' );
 		$this->assertStringContainsString( 'swiper-bundle.min.js?ver=' . WP_SWIPER_SWIPER_VERSION, wp_unslash( $i18n ) );
 		$this->assertStringContainsString( 'swiper-bundle.min.css?ver=' . WP_SWIPER_SWIPER_VERSION, wp_unslash( $i18n ) );
 
-		// A slider on the same page: Swiper too, before frontend.js.
+		// A slider on the same page: Swiper too and slider.js, after Swiper
+		// and frontend.js; Swiper's stylesheet before frontend.css.
 		do_shortcode( '[wp_swiper id="' . $this->slider() . '"]' );
-		$this->assertSame( array( 'swiper' ), wp_scripts()->query( 'wp-swiper' )->deps );
+		$this->assertTrue( wp_script_is( 'wp-swiper-slider', 'enqueued' ) );
+		$this->assertSame( array( 'swiper', 'wp-swiper' ), wp_scripts()->query( 'wp-swiper-slider' )->deps );
+		$this->assertSame( array(), wp_scripts()->query( 'wp-swiper' )->deps );
 		$this->assertSame( array( 'swiper' ), wp_styles()->query( 'wp-swiper' )->deps );
-		// Printed in this order.
+		// slider.js printed after both (frontend.js itself needs no Swiper).
 		wp_scripts()->all_deps( wp_scripts()->queue );
-		$this->assertSame( array( 'swiper', 'wp-swiper' ), array_values( array_intersect( wp_scripts()->to_do, array( 'swiper', 'wp-swiper' ) ) ) );
+		$order = array_values( array_intersect( wp_scripts()->to_do, array( 'swiper', 'wp-swiper', 'wp-swiper-slider' ) ) );
+		$this->assertCount( 3, $order );
+		$this->assertSame( 'wp-swiper-slider', $order[2] );
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/js/slider.js' );
+	}
+
+	public function test_slider_file_not_loaded_for_collage_or_art() {
+		foreach ( array( 'collage', 'art' ) as $effect ) {
+			$this->fresh_assets();
+			do_shortcode( '[wp_swiper id="' . $this->slider( null, array( 'effect' => $effect ) ) . '"]' );
+			$this->assertFalse( wp_script_is( 'wp-swiper-slider', 'enqueued' ), $effect );
+		}
 	}
 
 	public function test_first_image_of_the_page_fetched_first() {

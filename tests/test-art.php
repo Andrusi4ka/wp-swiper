@@ -223,6 +223,8 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$slides[2]['description'] = '<p>Third</p>';
 		wp_dequeue_style( 'wp-swiper' );
 		wp_dequeue_script( 'wp-swiper' );
+		// slider.js (left by other tests) needs frontend.js: out of the queue too.
+		wp_dequeue_script( 'wp-swiper-slider' );
 		// A direction saved before does not keep them away.
 		$html = $this->render( array( 'effect' => 'art', 'direction' => 'vertical' ), $slides );
 
@@ -334,6 +336,8 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 	public function test_art_loads_only_its_own_assets() {
 		wp_dequeue_style( 'wp-swiper' );
 		wp_dequeue_script( 'wp-swiper' );
+		// slider.js (left by other tests) needs frontend.js: out of the queue too.
+		wp_dequeue_script( 'wp-swiper-slider' );
 		$this->render( array( 'effect' => 'art' ) );
 		$this->assertTrue( wp_style_is( 'wp-swiper-art', 'enqueued' ) );
 		$this->assertTrue( wp_script_is( 'wp-swiper-art', 'enqueued' ) );

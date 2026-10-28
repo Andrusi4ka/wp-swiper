@@ -163,6 +163,9 @@ class WP_Swiper_Render {
 		wp_register_script( 'swiper', WP_SWIPER_URL . 'assets/vendor/swiper/swiper-bundle.min.js', array(), WP_SWIPER_SWIPER_VERSION, true );
 		wp_register_script( 'wp-swiper', WP_SWIPER_URL . 'assets/js/frontend.js', array(), wp_swiper_asset_version( 'assets/js/frontend.js' ), true );
 		wp_register_script( 'wp-swiper-collage', WP_SWIPER_URL . 'assets/js/collage.js', array( 'wp-swiper' ), wp_swiper_asset_version( 'assets/js/collage.js' ), true );
+		// The sliders themselves, after Swiper and frontend.js (enqueue()): a
+		// page with only a Collage or Art does without them.
+		wp_register_script( 'wp-swiper-slider', WP_SWIPER_URL . 'assets/js/slider.js', array( 'swiper', 'wp-swiper' ), wp_swiper_asset_version( 'assets/js/slider.js' ), true );
 		wp_localize_script(
 			'wp-swiper',
 			'wpSwiperI18n',
@@ -252,20 +255,20 @@ class WP_Swiper_Render {
 	}
 
 	/**
-	 * The front end's files for a slider: frontend.js and .css, and Swiper's
-	 * before them where it needs it (they wait for it then).
+	 * The front end's files for a slider: frontend.js and .css, and where it
+	 * needs Swiper, Swiper's files and slider.js (after Swiper and
+	 * frontend.js; Swiper's stylesheet before frontend.css).
 	 *
 	 * @param bool $swiper With Swiper.
 	 */
 	public static function enqueue( $swiper ) {
 		if ( $swiper ) {
-			foreach ( array( wp_styles(), wp_scripts() ) as $assets ) {
-				$file = $assets->query( 'wp-swiper', 'registered' );
-				if ( $file && ! in_array( 'swiper', $file->deps, true ) ) {
-					$file->deps[] = 'swiper';
-				}
+			$file = wp_styles()->query( 'wp-swiper', 'registered' );
+			if ( $file && ! in_array( 'swiper', $file->deps, true ) ) {
+				$file->deps[] = 'swiper';
 			}
 			self::style( 'swiper' );
+			wp_enqueue_script( 'wp-swiper-slider' );
 		}
 		self::style( 'wp-swiper' );
 		wp_enqueue_script( 'wp-swiper' );

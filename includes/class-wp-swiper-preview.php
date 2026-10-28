@@ -207,7 +207,7 @@ class WP_Swiper_Preview {
 	<div class="wp-swiper-preview-page">
 		<?php echo $slider; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the slider's markup, escaped where it is built. ?>
 	</div>
-	<?php wp_print_scripts( array( 'swiper', 'wp-swiper', 'wp-swiper-collage', 'wp-swiper-art' ) ); ?>
+	<?php wp_print_scripts( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-collage', 'wp-swiper-art' ) ); ?>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-dev.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-dev.js' ) ); ?>"></script>
 	<?php // Collage: a photo dragged onto another place swaps with it (the editor stores the order); its words. ?>
 	<script>window.wpSwiperPreviewI18n = <?php echo wp_json_encode( array( 'removePlace' => __( 'Remove this place from the collage (the slide stays)', 'wp-swiper' ) ) ); ?>;</script>

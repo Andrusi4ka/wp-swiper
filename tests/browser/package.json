@@ -1,0 +1,12 @@
+{
+	"name": "wp-swiper-browser-tests",
+	"private": true,
+	"description": "Browser tests of WP Swiper on the local site (see README.md).",
+	"scripts": {
+		"test": "playwright test",
+		"update": "playwright test --update-snapshots"
+	},
+	"devDependencies": {
+		"@playwright/test": "1.48.2"
+	}
+}
