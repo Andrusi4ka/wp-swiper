@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.12.0
+Stable tag: 2.13.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,7 +14,7 @@ Image sliders powered by Swiper: build a slider from the media library, pick an 
 
 WP Swiper adds a "WP Swiper" menu where you build image sliders from the media library and show them anywhere with `[wp_swiper id="123"]` or the "WP Swiper" WPBakery element.
 
-* Ten effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles), Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions), Collage (the photos placed together by a template, a grid, justified rows, masonry, a random mosaic or scattered around a photo in the middle, the others swapped in) and Art (the photos in shapes of their own: a ring around a circle, with an image or text in its opening).
+* Ten effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles), Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions), Collage (the photos placed together by a template, a grid, justified rows, masonry, a random mosaic or scattered around a photo in the middle, the others swapped in) and Art (the photos in shapes of their own: a ring around a circle, with an image or text in its opening, a grid with a circle, or the shapes of an SVG file a designer drew).
 * Image shadow, with its offsets, blur, spread and a colour with opacity, where the photos stand apart.
 * A slider can be the background of the row or column it is in, with an overlay; the main image can zoom slowly in or out (Ken Burns).
 * Each effect keeps its own Layout settings, so switching effects never loses what you set.
@@ -59,6 +59,10 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.13.0 =
+* Art: a new Style, SVG shape — upload an SVG file and each of its shapes is a window a photo shows through: a heart in two halves, an organic shape with a circle, shapes lying over each other. Only the drawing's shapes are kept (no file in the media library, nothing of it on the page); objects without a fill, hidden ones and text are left out, and the later ones lie on top, as drawn. The main window is the shape named "main" in the drawing, else the largest; then those named 2, 3..., then the larger ones. The empty margins of the file are left out, unless kept. What changes: one window at random, the windows in turn, or all of them at once (as a slider). A click on any window opens its photo in the lightbox.
+* Art: the photos are loaded in their full size.
 
 = 2.12.0 =
 * Collage, Scattered: a round × in the corner of each photo in the preview (not the middle one) takes its place out of the collage on the device shown. The rest of the layout stays as it is (the photos after it in its arm close up), Photos on screen goes down by one and its photo waits with the others: the slide stays. Undo brings it back.
