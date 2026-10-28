@@ -16,6 +16,7 @@ class WP_Swiper_Art {
 
 	const EFFECT = 'art';
 
+
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
 	}
@@ -34,8 +35,56 @@ class WP_Swiper_Art {
 		return array(
 			// A circle in the middle, the others around it in a ring (with an
 			// opening at the bottom, if set).
-			'ring' => __( 'Ring', 'wp-swiper' ),
+			'ring'      => __( 'Ring', 'wp-swiper' ),
+			// The same ring without a photo in the middle: an image and/or text
+			// there instead (center()).
+			'ring-text'   => __( 'Ring + text', 'wp-swiper' ),
+			// A square grid (its Columns per device) with a circle over its
+			// middle: the cells around it cut by it (those it covers left out).
+			'grid-circle' => __( 'Grid + circle', 'wp-swiper' ),
 		);
+	}
+
+	/**
+	 * Styles to come: shown as greyed tiles, not to be chosen (nor saved: the
+	 * Style keeps to styles()).
+	 *
+	 * @return array value => label
+	 */
+	public static function soon() {
+		return array();
+	}
+
+	/**
+	 * Whether a Style has a photo in the middle (Ring, Grid + circle), else
+	 * (Ring + text) the image and text of center().
+	 *
+	 * @param string $style Style.
+	 * @return bool
+	 */
+	public static function has_middle_photo( $style ) {
+		return in_array( $style, array( 'ring', 'grid-circle' ), true );
+	}
+
+	/**
+	 * Whether it is as wide as the column (Grid + circle), not a square of its
+	 * Size (the rings).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function is_wide( $settings ) {
+		return 'grid-circle' === self::style_of( $settings );
+	}
+
+	/**
+	 * The Style as drawn: a known one, else Ring.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string
+	 */
+	public static function style_of( $settings ) {
+		return array_key_exists( $settings['art_style'], self::styles() ) ? $settings['art_style'] : 'ring';
 	}
 
 	/**
@@ -59,6 +108,8 @@ class WP_Swiper_Art {
 				'tiles'   => 'art',
 				'default' => 'ring',
 				'choices' => self::styles(),
+				// Greyed tiles after them (admin's tiles()), not choices.
+				'soon'    => self::soon(),
 				'help'    => __( 'The shape the photos make. The slides fill it in their order (they repeat when there are fewer).', 'wp-swiper' ),
 			),
 			// Which photo is in which piece, per device: the photos' IDs, the first
@@ -78,6 +129,7 @@ class WP_Swiper_Art {
 			'art_size'           => array(
 				'section'    => 'layout',
 				'effects'    => $art,
+				'styles'     => array( 'ring', 'ring-text' ),
 				'label'      => __( 'Size', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -92,6 +144,7 @@ class WP_Swiper_Art {
 			'art_size_unit'      => array(
 				'section'    => 'layout',
 				'effects'    => $art,
+				'styles'     => array( 'ring', 'ring-text' ),
 				'label'      => __( 'Size unit', 'wp-swiper' ),
 				'type'       => 'select',
 				'responsive' => true,
@@ -108,6 +161,7 @@ class WP_Swiper_Art {
 			'art_align'          => array(
 				'section'    => 'layout',
 				'effects'    => $art,
+				'styles'     => array( 'ring', 'ring-text' ),
 				'label'      => __( 'Alignment', 'wp-swiper' ),
 				'type'       => 'select',
 				'responsive' => true,
@@ -122,7 +176,7 @@ class WP_Swiper_Art {
 			'art_ring_count'     => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring' ),
+				'styles'     => array( 'ring', 'ring-text' ),
 				'label'      => __( 'Photos around', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -130,7 +184,65 @@ class WP_Swiper_Art {
 				'min'        => 3,
 				'max'        => 16,
 				'step'       => 1,
-				'help'       => __( 'The pieces of the ring; one more photo is in the middle.', 'wp-swiper' ),
+				'help'       => __( 'The pieces of the ring. Ring: one more photo is in the middle.', 'wp-swiper' ),
+			),
+			// Grid + circle, as the Collage's Grid: the photos in the grid (the
+			// circle's one more) and its columns per device, as many rows as they
+			// make (the last one's photos in the middle); as wide as the column.
+			'art_grid_count'     => array(
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'grid-circle' ),
+				'label'      => __( 'Photos in the grid', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 9,
+				'min'        => 2,
+				'max'        => 36,
+				'step'       => 1,
+				'help'       => __( 'One more is in the circle. A photo the circle covers waits to be swapped in.', 'wp-swiper' ),
+			),
+			'art_grid_columns'   => array(
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'grid-circle' ),
+				'label'      => __( 'Columns', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 3,
+				'min'        => 2,
+				'max'        => 6,
+				'step'       => 1,
+				'help'       => __( 'As many rows as the photos make; the last one\'s photos in the middle.', 'wp-swiper' ),
+			),
+			'art_grid_height'    => array(
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'grid-circle' ),
+				'label'      => __( 'Height', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'unit'       => 'art_grid_height_unit',
+				'default'    => 500,
+				'min'        => 120,
+				'max'        => 2000,
+				'step'       => 10,
+				'help'       => __( 'px: the grid\'s height, the photos stretched to it. Auto: square photos, as tall as they make it.', 'wp-swiper' ),
+			),
+			// Height's unit, per device (tablet and mobile empty: the larger screen's).
+			'art_grid_height_unit' => array(
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'grid-circle' ),
+				'label'      => __( 'Height unit', 'wp-swiper' ),
+				'type'       => 'select',
+				'responsive' => true,
+				'inline_in'  => 'art_grid_height',
+				'default'    => 'auto',
+				'choices'    => array(
+					'px'   => 'px',
+					'auto' => __( 'Auto', 'wp-swiper' ),
+				),
 			),
 			// Ring: the middle circle's size in percent of the whole, per device
 			// ('' on tablet and mobile: the larger screen's). Set by dragging its
@@ -138,7 +250,7 @@ class WP_Swiper_Art {
 			'art_ring_center'    => array(
 				'section'       => 'layout',
 				'effects'       => $art,
-				'styles'        => array( 'ring' ),
+				'styles'        => array( 'ring', 'ring-text', 'grid-circle' ),
 				'label'         => __( 'Middle circle (%)', 'wp-swiper' ),
 				'type'          => 'float',
 				'responsive'    => true,
@@ -212,6 +324,83 @@ class WP_Swiper_Art {
 				'label'   => __( 'Color', 'wp-swiper' ),
 				'type'    => 'color',
 				'default' => '#ffffff',
+			),
+			// Ring + text: what is in the middle circle (center()), an image over
+			// text from the editor, either or both; a background with its
+			// opacity (none at 0, as by default). Only while Content in the
+			// middle is on (off: the circle stays empty).
+			'art_center'         => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'ring-text' ),
+				'label'   => __( 'Content in the middle', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => true,
+				'help'    => __( 'An image and/or text in the middle circle, with its own settings.', 'wp-swiper' ),
+			),
+			'art_center_image'   => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'ring-text' ),
+				'label'   => __( 'Image in the middle', 'wp-swiper' ),
+				'type'    => 'image',
+				'default' => 0,
+			),
+			'art_center_image_size' => array(
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'ring-text' ),
+				'label'      => __( 'Image size (%)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 60,
+				'min'        => 10,
+				'max'        => 100,
+				'step'       => 5,
+				'help'       => __( 'Of the width inside the circle; the image keeps its proportions.', 'wp-swiper' ),
+			),
+			'art_center_text'    => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'ring-text' ),
+				'label'   => __( 'Text in the middle', 'wp-swiper' ),
+				'type'    => 'editor',
+				'default' => '',
+			),
+			'art_center_font_size' => array(
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'ring-text' ),
+				'label'      => __( 'Font size (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 18,
+				'min'        => 8,
+				'max'        => 120,
+				'step'       => 1,
+				'help'       => __( 'Too much text for the circle: it gets smaller there to fit.', 'wp-swiper' ),
+			),
+			'art_center_padding' => array(
+				'section'    => 'layout',
+				'effects'    => $art,
+				'styles'     => array( 'ring-text' ),
+				'label'      => __( 'Padding (px)', 'wp-swiper' ),
+				'type'       => 'number',
+				'responsive' => true,
+				'default'    => 12,
+				'min'        => 0,
+				'max'        => 200,
+				'step'       => 1,
+				'help'       => __( 'Between the circle\'s edge and the image and text.', 'wp-swiper' ),
+			),
+			'art_center_bg'      => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'ring-text' ),
+				'label'   => __( 'Middle background', 'wp-swiper' ),
+				'type'    => 'alpha_color',
+				'default' => 'rgba(255,255,255,0)',
+				'help'    => __( 'The circle\'s color under the image and text; at Opacity 0 there is none.', 'wp-swiper' ),
 			),
 			// Ring: what sits in the opening at the bottom (art.js places it in
 			// the free space there, a gap from the photos): nothing, an image,
@@ -288,6 +477,7 @@ class WP_Swiper_Art {
 			'art_caption_middle' => array(
 				'section' => 'caption',
 				'effects' => $art,
+				'styles'  => array( 'ring', 'grid-circle' ),
 				'label'   => __( 'Only on the middle photo', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => false,
@@ -312,6 +502,7 @@ class WP_Swiper_Art {
 				'section' => 'advanced',
 				'panel'   => 'controls',
 				'effects' => $art,
+				'styles'  => array( 'ring', 'grid-circle' ),
 				'label'   => __( 'What changes', 'wp-swiper' ),
 				'type'    => 'select',
 				'default' => 'any',
@@ -358,7 +549,9 @@ class WP_Swiper_Art {
 
 	/**
 	 * Art's blocks, per page (before the other effects' blocks there): its
-	 * shape on the Layout page, Photo swapping on the Controls page.
+	 * shape on the Layout page (its Image border is in the Look block, over
+	 * the Image shadow: WP_Swiper_Settings::blocks()), Photo swapping on the
+	 * Controls page.
 	 *
 	 * @return array page => [ block => [ 'title' => string, 'fields' => string[] ] ]
 	 */
@@ -367,7 +560,7 @@ class WP_Swiper_Art {
 			'layout'   => array(
 				'art' => array(
 					'title'  => __( 'Art', 'wp-swiper' ),
-					'fields' => array( 'art_style', 'art_size', 'art_align', 'art_ring_count', 'art_ring_opening', 'art_gap', 'art_radius', 'art_border', 'art_border_width', 'art_border_color', 'art_opening_content', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
+					'fields' => array( 'art_style', 'art_size', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_grid_height', 'art_ring_opening', 'art_gap', 'art_radius', 'art_center', 'art_center_image', 'art_center_image_size', 'art_center_text', 'art_center_font_size', 'art_center_padding', 'art_center_bg', 'art_opening_content', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
 				),
 			),
 			// As the Collage's own (the same block and fields).
@@ -401,15 +594,26 @@ class WP_Swiper_Art {
 
 	/**
 	 * How many photos a Style shows on each device (Ring: the ring's, and
-	 * one in the middle).
+	 * one in the middle; Ring + text: the ring's; Grid + circle: its Photos in
+	 * the grid and the circle's, art.js leaves out the cells it covers).
 	 *
 	 * @param array $settings Slider settings.
 	 * @return array device => int
 	 */
 	public static function counts( $settings ) {
+		$style = self::style_of( $settings );
+		if ( 'grid-circle' === $style ) {
+			return array_map(
+				function ( $photos ) {
+					return $photos + 1;
+				},
+				self::per_device( $settings, 'art_grid_count', 2, 36 )
+			);
+		}
+		$middle = self::has_middle_photo( $style ) ? 1 : 0;
 		return array_map(
-			function ( $around ) {
-				return 1 + $around;
+			function ( $around ) use ( $middle ) {
+				return $middle + $around;
 			},
 			self::per_device( $settings, 'art_ring_count', 3, 16 )
 		);
@@ -501,7 +705,8 @@ class WP_Swiper_Art {
 			$settings['lightbox'] = false;
 		}
 
-		$style   = array_key_exists( $settings['art_style'], self::styles() ) ? $settings['art_style'] : 'ring';
+		$style   = self::style_of( $settings );
+		$middle  = self::has_middle_photo( $style );
 		$count   = self::count( $settings );
 		$sizes   = self::sizes( $settings );
 		// Alignment per device: the side margins that put it there.
@@ -528,7 +733,8 @@ class WP_Swiper_Art {
 				},
 				WP_Swiper_Settings::responsive( $settings, 'art_ring_center' )
 			),
-			'opening' => self::per_device( $settings, 'art_ring_opening', 0, 180 ),
+			// Ring only (Ring + text goes all around; no ring in a grid).
+			'opening' => 'ring' === $style ? self::per_device( $settings, 'art_ring_opening', 0, 180 ) : 0,
 			// The photos' order per device (slide indexes; false: the slides'
 			// order), and each slide's photo ID for the preview to tell one by.
 			'order'   => self::orders( $settings, $slides ),
@@ -544,10 +750,28 @@ class WP_Swiper_Art {
 			'swap'    => $settings['art_swap'] ? array(
 				'delay'  => max( 1000, min( 30000, (int) $settings['art_swap_delay'] ) ),
 				// Any piece at random, or the middle one through all the photos.
-				'target' => 'middle' === $settings['art_swap_target'] ? 'middle' : 'any',
+				// (Ring + text has no middle photo.)
+				'target' => $middle && 'middle' === $settings['art_swap_target'] ? 'middle' : 'any',
 				'pause'  => (bool) $settings['art_pause'],
 			) : false,
 		);
+
+		// Grid + circle: the grid's columns (and rows) per device.
+		// Grid + circle: as wide as the column (no Size, so no Size Auto), its
+		// photos, columns and, per device, Height "Auto" (square photos).
+		$wide = self::is_wide( $settings );
+		if ( $wide ) {
+			$config['wide']    = true;
+			$config['auto']    = array_fill_keys( array( 'desktop', 'tablet', 'mobile' ), false );
+			$config['columns'] = self::per_device( $settings, 'art_grid_columns', 2, 6 );
+			$config['cells']   = self::per_device( $settings, 'art_grid_count', 2, 36 );
+			$config['square']  = array_map(
+				function ( $unit ) {
+					return 'px' !== $unit;
+				},
+				WP_Swiper_Settings::responsive( $settings, 'art_grid_height_unit' )
+			);
+		}
 
 		$shadow  = WP_Swiper_Settings::shadow( $settings );
 		// Ring: an image or text in its opening (art.js places it, a gap from the photos).
@@ -555,6 +779,8 @@ class WP_Swiper_Art {
 		if ( '' !== $opening ) {
 			$config['openingGap'] = self::per_device( $settings, 'art_opening_gap', 0, 200 );
 		}
+		// Ring + text: the image and text in the middle (art.js places them).
+		$center = 'ring-text' === $style && $settings['art_center'] ? self::center( $settings ) : '';
 
 		$classes = array_filter(
 			array_merge(
@@ -565,10 +791,12 @@ class WP_Swiper_Art {
 				),
 				self::caption_classes( $settings ),
 				array( $settings['lightbox'] ? 'wp-swiper-art--lightbox' : '' ),
+				// Grid + circle (art.css): the stage as wide as the column, its Height.
+				array( $wide ? 'wp-swiper-art--wide' : '' ),
 				// Image border: art.js draws it along each shape.
 				array( $settings['art_border'] ? 'wp-swiper-art--border' : '' ),
 				// Captions on the middle photo only (art.css).
-				array( $settings['art_caption_middle'] ? 'wp-swiper-art--caption-middle' : '' ),
+				array( $middle && $settings['art_caption_middle'] ? 'wp-swiper-art--caption-middle' : '' ),
 				// Image shadow (art.css): along each shape, room kept around the stage for it.
 				array( $shadow ? 'wp-swiper-art--shadow' : '' ),
 				array( WP_Swiper_Settings::sanitize_classes( $settings['css_class'] . ' ' . $extra_class ) )
@@ -586,7 +814,9 @@ class WP_Swiper_Art {
 				// Photo swapping: how long a photo fades in.
 				'--wp-swiper-art-speed:' . max( 100, min( 3000, (int) $settings['art_swap_speed'] ) ) . 'ms',
 			),
+			$wide ? self::height_style( $settings ) : array(),
 			self::opening_style( $opening, $settings ),
+			self::center_style( $center, $settings ),
 			self::caption_style( $settings ),
 			self::border_style( $settings ),
 			$shadow ? array(
@@ -636,7 +866,7 @@ class WP_Swiper_Art {
 				}
 				?>
 			</div>
-			<?php echo $opening; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?>
+			<?php echo $opening . $center; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where they are built. ?>
 			<template class="wp-swiper-art__pool">
 				<?php
 				foreach ( $slides as $index => $slide ) {
@@ -734,6 +964,75 @@ class WP_Swiper_Art {
 		);
 		foreach ( self::per_device( $settings, $key, $range[0], $range[1] ) as $device => $value ) {
 			$style[] = $name . $suffix[ $device ] . ':' . $value . $unit;
+		}
+		return $style;
+	}
+
+	/**
+	 * Grid + circle: the stage's height per device (art.css); "auto" where its
+	 * unit is Auto (art.js makes it as tall as its square photos).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string[]
+	 */
+	private static function height_style( $settings ) {
+		$style   = array();
+		$units   = WP_Swiper_Settings::responsive( $settings, 'art_grid_height_unit' );
+		$heights = self::per_device( $settings, 'art_grid_height', 120, 2000 );
+		foreach ( $heights as $device => $height ) {
+			$style[] = '--wp-swiper-art-height' . WP_Swiper_Render::SUFFIX[ $device ] . ':' . ( 'px' === $units[ $device ] ? $height . 'px' : 'auto' );
+		}
+		return $style;
+	}
+
+	/**
+	 * Ring + text: what is in the middle circle, an image over the editor's
+	 * text (either or both), hidden until art.js places it over the circle
+	 * (beside the stage, as the opening's: the photos' shadow is not for it);
+	 * '' when neither is there.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string Markup.
+	 */
+	public static function center( $settings ) {
+		$image = wp_get_attachment_image( (int) $settings['art_center_image'], 'large', false, array( 'class' => 'wp-swiper-art__center-image', 'loading' => 'lazy' ) );
+		$text  = WP_Swiper_Settings::sanitize_description( $settings['art_center_text'] );
+		if ( '' === $image && '' === $text ) {
+			return '';
+		}
+		return '<div class="wp-swiper-art__center" hidden><div class="wp-swiper-art__center-inner">'
+			. $image
+			. ( '' === $text ? '' : '<div class="wp-swiper-art__center-text">' . $text . '</div>' )
+			. '</div></div>';
+	}
+
+	/**
+	 * The middle's CSS variables per device: the image's size (% of the width
+	 * inside the circle), the font size and the padding; its background.
+	 * None without content.
+	 *
+	 * @param string $center   The markup (center()).
+	 * @param array  $settings Slider settings.
+	 * @return string[]
+	 */
+	private static function center_style( $center, $settings ) {
+		if ( '' === $center ) {
+			return array();
+		}
+		$style = array();
+		$vars  = array(
+			'art_center_image_size' => array( '--wp-swiper-art-center-image', '%', 10, 100 ),
+			'art_center_font_size'  => array( '--wp-swiper-art-center-font', 'px', 8, 120 ),
+			'art_center_padding'    => array( '--wp-swiper-art-center-padding', 'px', 0, 200 ),
+		);
+		foreach ( $vars as $key => $var ) {
+			foreach ( self::per_device( $settings, $key, $var[2], $var[3] ) as $device => $value ) {
+				$style[] = $var[0] . WP_Swiper_Render::SUFFIX[ $device ] . ':' . $value . $var[1];
+			}
+		}
+		$bg = WP_Swiper_Settings::sanitize_slide_color( (string) $settings['art_center_bg'] );
+		if ( '' !== $bg ) {
+			$style[] = '--wp-swiper-art-center-bg:' . $bg;
 		}
 		return $style;
 	}

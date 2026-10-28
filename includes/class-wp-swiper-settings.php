@@ -2890,9 +2890,11 @@ class WP_Swiper_Settings {
 					'title'  => __( 'Size and fit', 'wp-swiper' ),
 					'fields' => array( 'height', 'slide_ratio', 'slide_ratio_custom', 'slide_distribution', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
 				),
+				// Art's Image border here too (its own fields, as a slider's): the
+				// shadow under it on both.
 				'look'        => array(
 					'title'  => __( 'Look', 'wp-swiper' ),
-					'fields' => array( 'border_radius', 'image_border', 'image_border_width', 'image_border_color', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
+					'fields' => array( 'border_radius', 'image_border', 'image_border_width', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
 				),
 				'zoom'        => array(
 					'title'  => __( 'Zoom', 'wp-swiper' ),

@@ -436,12 +436,314 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertArrayNotHasKey( 'art_label_title', $clean );
 	}
 
+	/* Ring + text --------------------------------------------------------- */
+
+	public function test_ring_text_is_the_ring_without_a_middle_photo() {
+		$slides = $this->slides( 3, array( 'caption' => '<p>Hi</p>' ) );
+		$values = array(
+			'effect'              => 'art',
+			'art_style'           => 'ring-text',
+			'art_ring_count'      => 5,
+			// Ring's own: none of them applies.
+			'art_ring_opening'    => 72,
+			'art_opening_content' => 'text',
+			'art_opening_text'    => '<p>Opening</p>',
+			'art_caption_middle'  => true,
+			'art_swap_target'     => 'middle',
+		);
+		$html   = $this->render( $values, $slides );
+		$config = $this->config( $html, 'data-wp-swiper-art' );
+
+		$this->assertStringContainsString( 'class="wp-swiper-art wp-swiper-art--ring-text wp-swiper-art--', $html );
+		// The five around only.
+		$this->assertSame( 5, substr_count( $html, '<div class="wp-swiper-art__piece" data-piece=' ) );
+		$this->assertSame( array( 'desktop' => 5, 'tablet' => 5, 'mobile' => 5 ), WP_Swiper_Art::counts( $this->settings( $values ) ) );
+		$this->assertSame( 'ring-text', $config['style'] );
+		// All around, no opening and nothing in it.
+		$this->assertSame( 0, $config['opening'] );
+		$this->assertStringNotContainsString( 'wp-swiper-art__opening', $html );
+		$this->assertArrayNotHasKey( 'openingGap', $config );
+		// No middle photo: captions on all of them, any piece swaps.
+		$this->assertStringNotContainsString( 'wp-swiper-art--caption-middle', $html );
+		$this->assertSame( 'any', $config['swap']['target'] );
+		// The middle circle's size still per device (dragged in the preview).
+		$this->assertArrayHasKey( 'center', $config );
+
+		// The Ring keeps a photo in the middle.
+		$ring = $values;
+		$ring['art_style'] = 'ring';
+		$this->assertSame( 6, substr_count( $this->render( $ring, $slides ), '<div class="wp-swiper-art__piece" data-piece=' ) );
+	}
+
+	public function test_ring_text_image_and_text_in_the_middle() {
+		$image  = $this->image( 400, 200 );
+		$text   = '<h3>Our <a href="https://example.com/shop">shop</a></h3><script>alert(1)</script><p><span style="color: #ff0000;">Open</span> daily</p>';
+		$values = array(
+			'effect'                       => 'art',
+			'art_style'                    => 'ring-text',
+			'art_center_image'             => $image,
+			'art_center_image_size'        => 40,
+			'art_center_image_size_mobile' => 70,
+			'art_center_text'              => $text,
+			'art_center_font_size'         => 24,
+			'art_center_font_size_mobile'  => 14,
+			'art_center_padding'           => 20,
+			'art_center_bg'                => 'rgba(10,20,30,0.5)',
+		);
+		$html   = $this->render( $values, $this->slides( 3 ) );
+
+		// Beside the stage (the photos' shadow is not for it), hidden until art.js
+		// places it; the image over the text, the text as the editor's (links and
+		// colored words kept, no script).
+		$this->assertMatchesRegularExpression( '#</div>\s*<div class="wp-swiper-art__center" hidden><div class="wp-swiper-art__center-inner"><img[^>]*class="wp-swiper-art__center-image"[^>]*><div class="wp-swiper-art__center-text"><h3>Our <a href="https://example.com/shop">shop</a></h3>#', $html );
+		$this->assertStringContainsString( '<span style="color: #ff0000">Open</span>', $html );
+		$this->assertStringNotContainsString( '<script', $html );
+
+		$this->assertSame( 1, preg_match( '/class="wp-swiper-art [^"]*" style="([^"]*)"/', $html, $match ) );
+		$style = html_entity_decode( $match[1] );
+		$this->assertStringContainsString( '--wp-swiper-art-center-image:40%', $style );
+		$this->assertStringContainsString( '--wp-swiper-art-center-image-tablet:40%', $style );
+		$this->assertStringContainsString( '--wp-swiper-art-center-image-mobile:70%', $style );
+		$this->assertStringContainsString( '--wp-swiper-art-center-font:24px', $style );
+		$this->assertStringContainsString( '--wp-swiper-art-center-font-mobile:14px', $style );
+		$this->assertStringContainsString( '--wp-swiper-art-center-padding:20px', $style );
+		$this->assertStringContainsString( '--wp-swiper-art-center-bg:rgba(10,20,30,0.5)', $style );
+
+		// Either alone.
+		$only_text = $this->render( array( 'art_center_image' => 0 ) + $values, $this->slides( 3 ) );
+		$this->assertStringContainsString( '<div class="wp-swiper-art__center-inner"><div class="wp-swiper-art__center-text">', $only_text );
+		$only_image = $this->render( array( 'art_center_text' => '' ) + $values, $this->slides( 3 ) );
+		$this->assertStringContainsString( 'wp-swiper-art__center-image', $only_image );
+		$this->assertStringNotContainsString( 'wp-swiper-art__center-text', $only_image );
+
+		// Neither: no middle block, none of its variables.
+		$none = $this->render( array( 'art_center_image' => 0, 'art_center_text' => '<p>&nbsp;</p>' ) + $values, $this->slides( 3 ) );
+		$this->assertStringNotContainsString( 'wp-swiper-art__center', $none );
+		$this->assertStringNotContainsString( '--wp-swiper-art-center', $none );
+
+		// Content in the middle off: none of it (the circle stays empty).
+		$off = $this->render( array( 'art_center' => false ) + $values, $this->slides( 3 ) );
+		$this->assertStringNotContainsString( 'wp-swiper-art__center', $off );
+		$this->assertStringNotContainsString( '--wp-swiper-art-center', $off );
+		$this->assertSame( 7, substr_count( $off, '<div class="wp-swiper-art__piece" data-piece=' ) );
+
+		// The Ring shows none of it.
+		$this->assertStringNotContainsString( 'wp-swiper-art__center', $this->render( array( 'art_style' => 'ring' ) + $values, $this->slides( 3 ) ) );
+	}
+
+	public function test_ring_text_settings() {
+		$fields = WP_Swiper_Settings::fields();
+		foreach ( array( 'art_center', 'art_center_image', 'art_center_image_size', 'art_center_text', 'art_center_font_size', 'art_center_padding', 'art_center_bg' ) as $key ) {
+			$this->assertSame( array( 'ring-text' ), $fields[ $key ]['styles'], $key );
+			$this->assertContains( $key, WP_Swiper_Settings::blocks()['layout']['art']['fields'], $key );
+		}
+		// Ring's only: the opening. With a middle photo (Ring, Grid + circle):
+		// captions on it only, swapping it.
+		foreach ( array( 'art_ring_opening', 'art_opening_content', 'art_opening_text' ) as $key ) {
+			$this->assertSame( array( 'ring' ), $fields[ $key ]['styles'], $key );
+		}
+		foreach ( array( 'art_caption_middle', 'art_swap_target' ) as $key ) {
+			$this->assertSame( array( 'ring', 'grid-circle' ), $fields[ $key ]['styles'], $key );
+		}
+		$this->assertSame( 'editor', $fields['art_center_text']['type'] );
+		// Content in the middle: a checkbox, on by default, before the middle's own settings.
+		$this->assertSame( 'checkbox', $fields['art_center']['type'] );
+		$this->assertTrue( WP_Swiper_Settings::defaults()['art_center'] );
+		$block = WP_Swiper_Settings::blocks()['layout']['art']['fields'];
+		$this->assertSame( array_search( 'art_center', $block, true ) + 1, array_search( 'art_center_image', $block, true ) );
+		$this->assertSame( 'alpha_color', $fields['art_center_bg']['type'] );
+
+		// The background: none (transparent) by default; a color or nothing else kept.
+		$this->assertSame( 'rgba(255,255,255,0)', WP_Swiper_Settings::defaults()['art_center_bg'] );
+		$clean = WP_Swiper_Settings::sanitize(
+			array(
+				'art_center_bg'        => 'red; background: url(x)',
+				'art_center_text'      => '<p>&nbsp;</p>',
+				'art_center_font_size' => '500',
+				'art_center_image'     => '999999',
+			)
+		);
+		$this->assertSame( 'rgba(255,255,255,0)', $clean['art_center_bg'] );
+		$this->assertSame( '', $clean['art_center_text'] );
+		$this->assertSame( 120, $clean['art_center_font_size'] );
+		$this->assertSame( 0, $clean['art_center_image'] );
+	}
+
+	public function test_styles_to_come_are_shown_but_not_kept() {
+		// None now; a style in soon() would not be one of styles(), nor kept.
+		foreach ( array_keys( WP_Swiper_Art::soon() ) as $style ) {
+			$this->assertArrayNotHasKey( $style, WP_Swiper_Art::styles() );
+		}
+		$this->assertSame( 'ring', WP_Swiper_Settings::sanitize( array( 'art_style' => 'triangle' ) )['art_style'] );
+		foreach ( array_keys( WP_Swiper_Art::styles() ) as $style ) {
+			$this->assertSame( $style, WP_Swiper_Settings::sanitize( array( 'art_style' => $style ) )['art_style'] );
+		}
+
+		// Its tile: greyed, without a value (nothing to pick).
+		$tiles = new ReflectionMethod( 'WP_Swiper_Admin', 'tiles' );
+		$tiles->setAccessible( true );
+		ob_start();
+		$tiles->invoke( null, array( 'label' => 'Style', 'tiles' => 'art', 'choices' => array( 'ring' => 'Ring' ), 'soon' => array( 'grid-circle' => 'Grid + circle' ) ), false );
+		$html = ob_get_clean();
+		$this->assertStringContainsString( 'data-value="ring"', $html );
+		$this->assertMatchesRegularExpression( '#<span class="wp-swiper-tiles__tile wp-swiper-tiles__tile--soon" title="Grid \+ circle \(coming soon\)"[^>]*aria-disabled="true">\s*<svg class="wp-swiper-tiles__icon"#', $html );
+		$this->assertStringNotContainsString( 'data-value="grid-circle"', $html );
+
+		// On the settings screen: every Style a tile to pick.
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, array( 'effect' => 'art' ) ) ) );
+		$html = ob_get_clean();
+		foreach ( array( 'ring', 'ring-text', 'grid-circle' ) as $style ) {
+			$this->assertStringContainsString( 'class="wp-swiper-tiles__tile" data-value="' . $style . '"', $html );
+			$this->assertStringContainsString( '<option value="' . $style . '"', $html );
+		}
+		$this->assertStringNotContainsString( 'tiles__tile--soon', $html );
+
+		// The icons: the tile's color (currentColor), inline as they are.
+		foreach ( array( 'ring', 'ring-text', 'grid-circle' ) as $style ) {
+			$svg = file_get_contents( WP_SWIPER_DIR . 'assets/images/art/' . $style . '.svg' );
+			$this->assertStringStartsWith( '<svg ', $svg, $style );
+			$this->assertStringContainsString( 'fill="currentColor"', $svg, $style );
+		}
+	}
+
+	/* Grid + circle ------------------------------------------------------- */
+
+	public function test_grid_circle_markup_and_config() {
+		$values = array(
+			'effect'                      => 'art',
+			'art_style'                   => 'grid-circle',
+			'art_grid_count'              => 8,
+			'art_grid_count_mobile'       => '5',
+			'art_grid_columns'            => 3,
+			'art_grid_columns_tablet'     => '4',
+			'art_grid_columns_mobile'     => '2',
+			'art_grid_height'             => 420,
+			'art_grid_height_unit'        => 'auto',
+			'art_grid_height_unit_tablet' => 'px',
+			'art_ring_center'             => 64,
+			// Ring's own: no opening in a grid; nor Size (nor its Auto).
+			'art_ring_opening'            => 72,
+			'art_opening_content'         => 'text',
+			'art_opening_text'            => '<p>Opening</p>',
+			'art_size_unit'               => 'auto',
+			'art_caption_middle'          => true,
+			'art_swap_target'             => 'middle',
+		);
+		$html   = $this->render( $values, $this->slides( 3, array( 'caption' => '<p>Hi</p>' ) ) );
+		$config = $this->config( $html, 'data-wp-swiper-art' );
+
+		$this->assertStringContainsString( 'class="wp-swiper-art wp-swiper-art--grid-circle wp-swiper-art--', $html );
+		// As wide as the column (art.css), whatever the Size says.
+		$this->assertStringContainsString( 'wp-swiper-art--wide', $html );
+		$this->assertTrue( $config['wide'] );
+		$this->assertSame( array( 'desktop' => false, 'tablet' => false, 'mobile' => false ), $config['auto'] );
+		$this->assertSame( 'grid-circle', $config['style'] );
+		// Its photos and columns per device (tablet and mobile: their own, else the larger screen's).
+		$this->assertSame( array( 'desktop' => 8, 'tablet' => 8, 'mobile' => 5 ), $config['cells'] );
+		$this->assertSame( array( 'desktop' => 3, 'tablet' => 4, 'mobile' => 2 ), $config['columns'] );
+		// Height Auto (square photos) per device; px: its height.
+		$this->assertSame( array( 'desktop' => true, 'tablet' => false, 'mobile' => false ), $config['square'] );
+		$this->assertSame( 1, preg_match( '/class="wp-swiper-art [^"]*" style="([^"]*)"/', $html, $match ) );
+		$style = html_entity_decode( $match[1] );
+		$this->assertStringContainsString( '--wp-swiper-art-height:auto', $style );
+		$this->assertStringContainsString( '--wp-swiper-art-height-tablet:420px', $style );
+		$this->assertStringContainsString( '--wp-swiper-art-height-mobile:420px', $style );
+		// A piece per photo and the circle's, as many as the device with the most.
+		$this->assertSame( array( 'desktop' => 9, 'tablet' => 9, 'mobile' => 6 ), WP_Swiper_Art::counts( $this->settings( $values ) ) );
+		$this->assertSame( 9, substr_count( $html, '<div class="wp-swiper-art__piece" data-piece=' ) );
+		$this->assertSame( 64.0, (float) $config['center']['desktop'] );
+		// No opening; a middle photo: its captions only, it swaps.
+		$this->assertSame( 0, $config['opening'] );
+		$this->assertStringNotContainsString( 'wp-swiper-art__opening', $html );
+		$this->assertStringContainsString( 'wp-swiper-art--caption-middle', $html );
+		$this->assertSame( 'middle', $config['swap']['target'] );
+
+		// A ring: none of the grid's.
+		$ring = $this->render( array( 'art_style' => 'ring' ) + $values, $this->slides( 3 ) );
+		$this->assertStringNotContainsString( 'wp-swiper-art--wide', $ring );
+		$this->assertStringNotContainsString( '--wp-swiper-art-height', $ring );
+		$this->assertArrayNotHasKey( 'cells', $this->config( $ring, 'data-wp-swiper-art' ) );
+	}
+
+	public function test_grid_circle_settings() {
+		$fields = WP_Swiper_Settings::fields();
+		foreach ( array( 'art_grid_count', 'art_grid_columns', 'art_grid_height', 'art_grid_height_unit' ) as $key ) {
+			$this->assertSame( array( 'grid-circle' ), $fields[ $key ]['styles'], $key );
+			$this->assertTrue( $fields[ $key ]['responsive'], $key );
+		}
+		// The rings' own: their Size and Alignment (a grid is as wide as the column).
+		foreach ( array( 'art_size', 'art_size_unit', 'art_align' ) as $key ) {
+			$this->assertSame( array( 'ring', 'ring-text' ), $fields[ $key ]['styles'], $key );
+		}
+		$this->assertArrayNotHasKey( 'art_grid_shape', $fields );
+		$defaults = WP_Swiper_Settings::defaults();
+		$this->assertSame( 9, $defaults['art_grid_count'] );
+		$this->assertSame( 3, $defaults['art_grid_columns'] );
+		$this->assertSame( 'auto', $defaults['art_grid_height_unit'] );
+		$this->assertSame( 'art_grid_height_unit', $fields['art_grid_height']['unit'] );
+		$this->assertSame( 'art_grid_height', $fields['art_grid_height_unit']['inline_in'] );
+		// After the ring's Photos around: Photos, Columns, Height.
+		$block = WP_Swiper_Settings::blocks()['layout']['art']['fields'];
+		$at    = array_search( 'art_ring_count', $block, true );
+		$this->assertSame( array( 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_grid_height' ), array_slice( $block, $at, 4 ) );
+		// The middle circle's size for it too (dragged in the preview).
+		$this->assertContains( 'grid-circle', $fields['art_ring_center']['styles'] );
+
+		$clean = WP_Swiper_Settings::sanitize(
+			array(
+				'art_grid_count'          => '99',
+				'art_grid_count_mobile'   => '1',
+				'art_grid_columns'        => '12',
+				'art_grid_columns_tablet' => '1',
+				'art_grid_columns_mobile' => '',
+				'art_grid_height'         => '9000',
+				'art_grid_height_unit'    => 'vh',
+				'art_grid_shape'          => 'wide',
+			)
+		);
+		$this->assertSame( 36, (int) $clean['art_grid_count'] );
+		$this->assertSame( 2, (int) $clean['art_grid_count_mobile'] );
+		$this->assertSame( 6, (int) $clean['art_grid_columns'] );
+		$this->assertSame( 2, (int) $clean['art_grid_columns_tablet'] );
+		$this->assertSame( '', $clean['art_grid_columns_mobile'] );
+		$this->assertSame( 2000, (int) $clean['art_grid_height'] );
+		$this->assertSame( 'auto', $clean['art_grid_height_unit'] );
+		$this->assertArrayNotHasKey( 'art_grid_shape', $clean );
+	}
+
+	public function test_image_border_over_the_shadow_in_the_look_block() {
+		$blocks = WP_Swiper_Settings::blocks()['layout'];
+		// Not in the Art block: in Look, right before the Image shadow.
+		foreach ( array( 'art_border', 'art_border_width', 'art_border_color' ) as $key ) {
+			$this->assertNotContains( $key, $blocks['art']['fields'], $key );
+		}
+		$look = $blocks['look']['fields'];
+		$at   = array_search( 'art_border', $look, true );
+		$this->assertSame( array( 'art_border', 'art_border_width', 'art_border_color', 'image_shadow' ), array_slice( $look, $at, 4 ) );
+
+		// On the screen: the Look title, Image border, then Image shadow.
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, array( 'effect' => 'art' ) ) ) );
+		$html   = ob_get_clean();
+		$title  = strpos( $html, '>Look<' );
+		$border = strpos( $html, 'data-field="art_border"' );
+		$shadow = strpos( $html, 'data-field="image_shadow"' );
+		$this->assertNotFalse( $title );
+		$this->assertGreaterThan( $title, $border );
+		$this->assertGreaterThan( $border, $shadow );
+	}
+
 	public function test_settings_screen_marks_ring_fields() {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, array( 'effect' => 'art' ) ) ) );
 		$html = ob_get_clean();
-		$this->assertStringContainsString( 'data-field="art_ring_count" data-effects="art" data-styles="ring"', $html );
+		$this->assertStringContainsString( 'data-field="art_ring_count" data-effects="art" data-styles="ring ring-text"', $html );
+		$this->assertStringContainsString( 'data-field="art_ring_opening" data-effects="art" data-styles="ring"', $html );
+		$this->assertStringContainsString( 'data-field="art_center_text" data-effects="art" data-styles="ring-text"', $html );
 		$this->assertStringContainsString( 'data-field="art_style" data-effects="art">', $html );
 	}
 }

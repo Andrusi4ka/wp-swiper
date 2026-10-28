@@ -893,6 +893,16 @@
 	text-align: center;
 }
 
+/* A Style to come: greyed, not to be picked. */
+.wp-swiper-tiles__tile.wp-swiper-tiles__tile--soon,
+.wp-swiper-tiles__tile.wp-swiper-tiles__tile--soon:hover {
+	border-style: dashed;
+	border-color: #dcdcde;
+	background: #f6f7f7;
+	color: #dcdcde;
+	cursor: not-allowed;
+}
+
 .wp-swiper-field.is-disabled .wp-swiper-tiles__tile {
 	opacity: 0.5;
 	pointer-events: none;

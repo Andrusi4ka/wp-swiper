@@ -9,6 +9,14 @@
  * bottom. Each ring piece is a box around its shape, cut to it with
  * clip-path, so its photo covers just that box.
  *
+ * Ring + text: the same ring, all around (no opening), and no photo in the
+ * middle: an image and text there instead (centerContent()). Its first
+ * piece is the ring's first.
+ *
+ * Grid + circle: a grid as the Collage's (its Photos in rows of Columns,
+ * per device) and the circle over its middle; each cell its box less the
+ * circle (gridCircle(), gridCell()).
+ *
  * A photo's caption sits in the middle of its shape; the slides'
  * descriptions under the block show the one of the photo under the pointer
  * (or touched, or focused), else the middle photo's.
@@ -167,34 +175,40 @@
 		var middle = outer * ( Number( forDevice( config.center ) ) || 46 ) / 100;
 		var gap = Number( forDevice( config.gap ) ) || 0;
 		var inner = Math.min( outer - 12, middle + gap );
-		var count = Math.max( 1, Math.min( pieces.length - 1, Number( forDevice( config.count ) ) || pieces.length - 1 ) );
+		// Ring: the first piece is the middle circle's photo; Ring + text has
+		// none there (its image and text instead, centerContent()).
+		var first = hasMiddlePhoto( config ) ? 1 : 0;
+		var count = Math.max( 1, Math.min( pieces.length - first, Number( forDevice( config.count ) ) || pieces.length - first ) );
 		var round = Number( forDevice( config.radius ) ) || 0;
 		var opening = ( Number( forDevice( config.opening ) ) || 0 ) * Math.PI / 180;
 
 		// The pieces another device shows more of: none here.
-		for ( var extra = count + 1; extra < pieces.length; extra++ ) {
+		for ( var extra = count + first; extra < pieces.length; extra++ ) {
 			pieces[ extra ].hidden = true;
 		}
 
 		// For the preview (preview-art.js): where the middle circle's edge is.
 		block.wpSwiperArtRing = { cx: cx, cy: cy, outer: outer, middle: middle, gap: gap };
 
-		// The image or text in the opening.
+		// The image or text in the opening (Ring), in the middle (Ring + text).
 		openingContent( block, stage, config, { cx: cx, cy: cy, outer: outer, middle: middle, gap: gap, opening: opening } );
+		centerContent( block, stage, { cx: cx, cy: cy, middle: middle } );
 
 		// The middle circle.
-		place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
-		pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
-		captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 * 0.85 } );
-		outline( block, pieces[ 0 ], 'M 0 ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 ' + ( middle * 2 ) + ' ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 0 ' + middle + ' Z' );
+		if ( first ) {
+			place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
+			pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
+			captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 * 0.85 } );
+			outline( block, pieces[ 0 ], 'M 0 ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 ' + ( middle * 2 ) + ' ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 0 ' + middle + ' Z' );
+		}
 
 		// The ring, clockwise from the opening's left edge (the opening is at the
 		// bottom, a quarter turn from the right).
-		var first = Math.PI / 2 + opening / 2;
+		var from = Math.PI / 2 + opening / 2;
 		var step = ( 2 * Math.PI - opening ) / count;
 		for ( var i = 0; i < count; i++ ) {
-			var shape = ringPiece( cx, cy, inner, outer, first + i * step, first + ( i + 1 ) * step, gap, round );
-			var piece = pieces[ i + 1 ];
+			var shape = ringPiece( cx, cy, inner, outer, from + i * step, from + ( i + 1 ) * step, gap, round );
+			var piece = pieces[ i + first ];
 			if ( ! shape ) {
 				piece.hidden = true;
 				continue;
@@ -251,7 +265,306 @@
 		box.style.height = height + 'px';
 	}
 
-	var STYLES = { ring: ring };
+	/**
+	 * Ring + text: the image and text in the middle circle
+	 * (class-wp-swiper-art.php center()), over it: a circle as large as the
+	 * middle one (its Middle background), its content within the square that
+	 * fits in it, less the Padding (art.css). Text too large for it gets
+	 * smaller here, down to FONT_MIN.
+	 *
+	 * @param {Element} block The Art block (the content is placed in it, beside the stage).
+	 * @param {Element} stage The stage.
+	 * @param {Object}  ring  { cx, cy, middle } in stage px.
+	 */
+	var FONT_MIN = 8;
+	function centerContent( block, stage, ring ) {
+		var box = block.querySelector( ':scope > .wp-swiper-art__center' );
+		if ( ! box ) {
+			return;
+		}
+		box.hidden = false;
+		box.style.left = ( stage.offsetLeft + ring.cx - ring.middle ) + 'px';
+		box.style.top = ( stage.offsetTop + ring.cy - ring.middle ) + 'px';
+		box.style.width = box.style.height = ( ring.middle * 2 ) + 'px';
+
+		// The Font size of this device first (art.css), then smaller while it
+		// does not fit (the image keeps its share, the text takes the rest).
+		var inner = box.firstElementChild;
+		var text = inner && inner.querySelector( '.wp-swiper-art__center-text' );
+		if ( ! text ) {
+			return;
+		}
+		text.style.fontSize = '';
+		var size = parseFloat( getComputedStyle( text ).fontSize ) || 16;
+		var fits = function () {
+			return inner.scrollHeight <= inner.clientHeight + 1 && inner.scrollWidth <= inner.clientWidth + 1;
+		};
+		while ( ! fits() && size > FONT_MIN ) {
+			size = Math.max( FONT_MIN, Math.floor( size * 0.9 ) );
+			text.style.fontSize = size + 'px';
+		}
+	}
+
+	// Ring: a photo in the middle circle; Ring + text: its image and text there.
+	function hasMiddlePhoto( config ) {
+		return config.style !== 'ring-text';
+	}
+
+	/*
+	 * Grid + circle: the grid's Photos in rows of Columns (the last row's in
+	 * the middle of it) with the Gap between them, as wide as the column and as
+	 * tall as its Height (Auto: square photos); a circle (Middle circle) over
+	 * its middle with its photo. Each cell is its box less the circle and the Gap round it, its
+	 * corners rounded (where its sides meet the circle too). A cell the
+	 * circle covers, or leaves less than GRID_MIN_SHARE of, is left out: the
+	 * cells shown take the pieces after the circle's in turn, and
+	 * block.wpSwiperArtShown says how many pieces this device shows. The cell
+	 * with the circle's middle in it is always left out.
+	 */
+	var GRID_MIN_SHARE = 0.2;
+	var ARC_SAMPLES = 12; // Points along a cell's arc (its area, its caption's place).
+
+	// The angle of `p` round the middle (radians, clockwise from the right).
+	function angleOf( cx, cy, p ) {
+		return Math.atan2( p.y - cy, p.x - cx );
+	}
+
+	// How far the arc goes from angle `from` back to `to` (the way the cells' arcs run).
+	function arcSpan( from, to ) {
+		var span = from - to;
+		while ( span < 0 ) {
+			span += 2 * Math.PI;
+		}
+		while ( span >= 2 * Math.PI ) {
+			span -= 2 * Math.PI;
+		}
+		return span;
+	}
+
+	/**
+	 * One grid cell (its box at `x0`, `y0`, `w` × `h`) less the circle of
+	 * radius `cut` round (cx, cy): its shape (an SVG path relative to the
+	 * box), its box, and where its caption goes; null when too little of it
+	 * is left.
+	 */
+	function gridCell( cx, cy, cut, x0, y0, w, h, round ) {
+		// The circle's middle in the cell: its place is the circle's (gridCircle()).
+		if ( cx > x0 && cx < x0 + w && cy > y0 && cy < y0 + h ) {
+			return null;
+		}
+		var corners = [ { x: x0, y: y0 }, { x: x0 + w, y: y0 }, { x: x0 + w, y: y0 + h }, { x: x0, y: y0 + h } ];
+		var inside = function ( p ) {
+			return Math.hypot( p.x - cx, p.y - cy ) < cut;
+		};
+		if ( corners.every( inside ) ) {
+			return null;
+		}
+
+		// The outline clockwise: the corners outside the circle and where the
+		// sides cross it. From a crossing into the circle the outline follows
+		// the circle (an arc) to where it comes out.
+		var nodes = [];
+		for ( var i = 0; i < 4; i++ ) {
+			var a = corners[ i ];
+			var b = corners[ ( i + 1 ) % 4 ];
+			if ( ! inside( a ) ) {
+				nodes.push( { p: a, arc: false } );
+			}
+			var dx = b.x - a.x;
+			var dy = b.y - a.y;
+			var fx = a.x - cx;
+			var fy = a.y - cy;
+			var qa = dx * dx + dy * dy;
+			var qb = 2 * ( fx * dx + fy * dy );
+			var qc = fx * fx + fy * fy - cut * cut;
+			var disc = qb * qb - 4 * qa * qc;
+			if ( disc > 0 ) {
+				var root = Math.sqrt( disc );
+				var tIn = ( -qb - root ) / ( 2 * qa );
+				var tOut = ( -qb + root ) / ( 2 * qa );
+				if ( tIn > 1e-6 && tIn < 1 - 1e-6 ) {
+					nodes.push( { p: { x: a.x + dx * tIn, y: a.y + dy * tIn }, arc: true } );
+				}
+				if ( tOut > 1e-6 && tOut < 1 - 1e-6 ) {
+					nodes.push( { p: { x: a.x + dx * tOut, y: a.y + dy * tOut }, arc: false } );
+				}
+			}
+		}
+		var n = nodes.length;
+		if ( n < 3 ) {
+			return null;
+		}
+		// node.arc: the edge from it to the next one follows the circle.
+		nodes.forEach( function ( node ) {
+			node.angle = angleOf( cx, cy, node.p );
+		} );
+		var edgeLength = function ( k ) {
+			var from = nodes[ k ];
+			var to = nodes[ ( k + 1 ) % n ];
+			return from.arc ? cut * arcSpan( from.angle, to.angle ) : Math.hypot( to.p.x - from.p.x, to.p.y - from.p.y );
+		};
+
+		// Its area and centre of mass (the arcs as points along them): too
+		// little left, none; else its caption goes there.
+		var poly = [];
+		nodes.forEach( function ( node, k ) {
+			poly.push( node.p );
+			if ( node.arc ) {
+				var span = arcSpan( node.angle, nodes[ ( k + 1 ) % n ].angle );
+				for ( var s = 1; s < ARC_SAMPLES; s++ ) {
+					poly.push( polar( cx, cy, cut, node.angle - span * s / ARC_SAMPLES ) );
+				}
+			}
+		} );
+		var area = 0;
+		var mx = 0;
+		var my = 0;
+		for ( var j = 0; j < poly.length; j++ ) {
+			var p = poly[ j ];
+			var q = poly[ ( j + 1 ) % poly.length ];
+			var cross = p.x * q.y - q.x * p.y;
+			area += cross;
+			mx += ( p.x + q.x ) * cross;
+			my += ( p.y + q.y ) * cross;
+		}
+		area /= 2;
+		if ( Math.abs( area ) < GRID_MIN_SHARE * w * h ) {
+			return null;
+		}
+		var spot = { x: mx / ( 6 * area ), y: my / ( 6 * area ) };
+
+		// The caption as wide as a level line through that spot stays inside.
+		var xs = [];
+		for ( var e = 0; e < poly.length; e++ ) {
+			var u = poly[ e ];
+			var v = poly[ ( e + 1 ) % poly.length ];
+			if ( ( u.y <= spot.y ) !== ( v.y <= spot.y ) ) {
+				xs.push( u.x + ( spot.y - u.y ) * ( v.x - u.x ) / ( v.y - u.y ) );
+			}
+		}
+		xs.sort( function ( l, r ) {
+			return l - r;
+		} );
+		var width = w;
+		for ( var c = 0; c + 1 < xs.length; c += 2 ) {
+			if ( xs[ c ] <= spot.x && spot.x <= xs[ c + 1 ] ) {
+				width = 2 * Math.min( spot.x - xs[ c ], xs[ c + 1 ] - spot.x );
+			}
+		}
+
+		// Each corner rounded: the points `r` before and after it along its
+		// edges (on an arc, along the circle), a curve through the corner.
+		var rel = function ( point ) {
+			return ( Math.round( ( point.x - x0 ) * 100 ) / 100 ) + ' ' + ( Math.round( ( point.y - y0 ) * 100 ) / 100 );
+		};
+		var cutIn = [];
+		var cutOut = [];
+		nodes.forEach( function ( node, k ) {
+			var before = ( k - 1 + n ) % n;
+			var r = Math.max( 0, Math.min( round, edgeLength( before ) / 2 - 0.5, edgeLength( k ) / 2 - 0.5 ) );
+			cutIn[ k ] = nodes[ before ].arc ? polar( cx, cy, cut, node.angle + r / cut ) : toward( node.p, nodes[ before ].p, r );
+			cutOut[ k ] = node.arc ? polar( cx, cy, cut, node.angle - r / cut ) : toward( node.p, nodes[ ( k + 1 ) % n ].p, r );
+		} );
+		var path = [ 'M', rel( cutOut[ 0 ] ) ];
+		for ( var k = 1; k <= n; k++ ) {
+			var at = k % n;
+			path.push( nodes[ k - 1 ].arc ? 'A ' + cut + ' ' + cut + ' 0 0 0' : 'L', rel( cutIn[ at ] ), 'Q', rel( nodes[ at ].p ), rel( cutOut[ at ] ) );
+		}
+		path.push( 'Z' );
+
+		return {
+			box: { left: x0, top: y0, width: w, height: h },
+			path: path.join( ' ' ),
+			caption: { x: spot.x - x0, y: spot.y - y0, width: Math.min( w, width ) }
+		};
+	}
+
+	function gridCircle( block, stage, config ) {
+		var width = stage.clientWidth;
+		if ( ! width ) {
+			return;
+		}
+		var pieces = stage.querySelectorAll( '.wp-swiper-art__piece' );
+		var gap = Number( forDevice( config.gap ) ) || 0;
+		var round = Number( forDevice( config.radius ) ) || 0;
+		// As the Collage's Grid: its photos in rows of Columns, as many rows as
+		// they make; the last one's in the middle of it.
+		var columns = Math.max( 2, Math.min( 6, Math.round( Number( forDevice( config.columns ) ) || 3 ) ) );
+		var count = Math.max( 2, Math.min( pieces.length - 1, Math.round( Number( forDevice( config.cells ) ) || pieces.length - 1 ) ) );
+		var rows = Math.ceil( count / columns );
+		var cellW = ( width - ( columns - 1 ) * gap ) / columns;
+		// Height "Auto": square photos, the stage as tall as they make it; else
+		// its Height (art.css), the photos stretched to it.
+		var height;
+		if ( forDevice( config.square ) ) {
+			height = rows * cellW + ( rows - 1 ) * gap;
+			stage.style.height = height + 'px';
+		} else {
+			stage.style.height = '';
+			height = stage.clientHeight;
+		}
+		if ( ! height ) {
+			return;
+		}
+		var cellH = ( height - ( rows - 1 ) * gap ) / rows;
+		var cx = width / 2;
+		var cy = height / 2;
+		var outer = Math.min( width, height ) / 2;
+
+		// Each photo's cell, row by row.
+		var cells = [];
+		for ( var i = 0; i < count; i++ ) {
+			var row = Math.floor( i / columns );
+			var inRow = row === rows - 1 ? count - row * columns : columns;
+			var shift = ( columns - inRow ) * ( cellW + gap ) / 2;
+			cells.push( { x: shift + ( i % columns ) * ( cellW + gap ), y: row * ( cellH + gap ) } );
+		}
+
+		// The circle: its size (Middle circle), at least covering the cell its
+		// middle is in (that cell is the circle's place, gridCell()), within
+		// the grid's smaller side.
+		var middle = outer * ( Number( forDevice( config.center ) ) || 46 ) / 100;
+		cells.forEach( function ( cell ) {
+			if ( cx > cell.x && cx < cell.x + cellW && cy > cell.y && cy < cell.y + cellH ) {
+				// Its farthest corner.
+				var far = Math.hypot( Math.max( cx - cell.x, cell.x + cellW - cx ), Math.max( cy - cell.y, cell.y + cellH - cy ) );
+				middle = Math.max( middle, far - gap + 1 );
+			}
+		} );
+		middle = Math.max( 4, Math.min( middle, outer - gap - 4 ) );
+		var cut = middle + gap;
+
+		// For the preview (preview-art.js): where the middle circle's edge is.
+		block.wpSwiperArtRing = { cx: cx, cy: cy, outer: outer, middle: middle, gap: gap };
+
+		// The circle.
+		pieces[ 0 ].hidden = false;
+		place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
+		pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
+		captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 * 0.85 } );
+		outline( block, pieces[ 0 ], 'M 0 ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 ' + ( middle * 2 ) + ' ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 0 ' + middle + ' Z' );
+
+		// The cells in turn, those left in the pieces after it.
+		var used = 1;
+		cells.forEach( function ( cell ) {
+			var shape = gridCell( cx, cy, cut, cell.x, cell.y, cellW, cellH, round );
+			if ( ! shape || used >= pieces.length ) {
+				return;
+			}
+			var piece = pieces[ used++ ];
+			piece.hidden = false;
+			place( piece, shape.box );
+			piece.style.clipPath = 'path("' + shape.path + '")';
+			captionAt( piece, shape.caption );
+			outline( block, piece, shape.path );
+		} );
+		for ( var extra = used; extra < pieces.length; extra++ ) {
+			pieces[ extra ].hidden = true;
+		}
+		block.wpSwiperArtShown = used;
+	}
+
+	var STYLES = { ring: ring, 'ring-text': ring, 'grid-circle': gridCircle };
 
 	/**
 	 * The slides' descriptions (render.php descriptions()): the block right
@@ -466,9 +779,15 @@
 		var sequence = [];
 		var middleAt = 0;
 
-		// How many pieces this device shows (Ring: the ring's and the middle one).
+		// How many pieces this device shows (Ring: the ring's and the middle
+		// one; Ring + text: the ring's).
+		// Grid + circle: as many as it laid out (block.wpSwiperArtShown).
+		var middlePhoto = hasMiddlePhoto( config ) ? 1 : 0;
 		function shownCount() {
-			return Math.max( 1, Math.min( pieces.length, 1 + ( Number( forDevice( config.count ) ) || pieces.length - 1 ) ) );
+			if ( typeof block.wpSwiperArtShown === 'number' ) {
+				return Math.max( 1, Math.min( pieces.length, block.wpSwiperArtShown ) );
+			}
+			return Math.max( 1, Math.min( pieces.length, middlePhoto + ( Number( forDevice( config.count ) ) || pieces.length - middlePhoto ) ) );
 		}
 
 		/*
@@ -637,20 +956,28 @@
 		}
 
 		var width = 0;
+		var height = 0;
 		var drawnFor = null;
 		var redraw = function () {
 			fill( false );
 			if ( autoSize ) {
 				fit();
 			}
-			// Again at another width, or on another device (its own values).
-			if ( stage.clientWidth !== width || current !== drawnFor ) {
+			// Again at another size, or on another device (its own values).
+			if ( stage.clientWidth !== width || stage.clientHeight !== height || current !== drawnFor ) {
 				width = stage.clientWidth;
+				height = stage.clientHeight;
 				drawnFor = current;
 				draw( block, stage, config );
 				block.classList.add( 'is-ready' );
+				// Grid + circle: another number of cells shown, the photos waiting again.
+				if ( block.wpSwiperArtShown !== shownFor ) {
+					shownFor = block.wpSwiperArtShown;
+					fill( true );
+				}
 			}
 		};
+		var shownFor = block.wpSwiperArtShown;
 		redraw();
 		if ( 'ResizeObserver' in window ) {
 			new ResizeObserver( redraw ).observe( stage );
@@ -692,6 +1019,11 @@
 				}
 				config.center[ current ] = share;
 				draw( block, stage, config );
+				// Grid + circle: a larger circle may leave out more cells.
+				if ( block.wpSwiperArtShown !== shownFor ) {
+					shownFor = block.wpSwiperArtShown;
+					fill( true );
+				}
 			},
 			ids: config.ids || []
 		};

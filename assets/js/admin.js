@@ -1760,6 +1760,12 @@
 					field( 'art_border_width' ).hide();
 					field( 'art_border_color' ).hide();
 				}
+				// Ring + text: the middle's own settings only while Content in the middle is on.
+				if ( ! $( '#wp-swiper-art_center' ).is( ':checked' ) ) {
+					[ 'art_center_image', 'art_center_image_size', 'art_center_text', 'art_center_font_size', 'art_center_padding', 'art_center_bg' ].forEach( function ( name ) {
+						field( name ).hide();
+					} );
+				}
 				// Photo swapping's own settings only while it is on (as the Collage's).
 				if ( ! $( '#wp-swiper-art_swap' ).is( ':checked' ) ) {
 					[ 'art_swap_target', 'art_swap_delay', 'art_swap_speed', 'art_pause' ].forEach( function ( name ) {
@@ -1786,6 +1792,13 @@
 					var suffix = device === 'desktop' ? '' : '_' + device;
 					sizeUnit = $( '#wp-swiper-art_size_unit' + suffix ).val() || sizeUnit;
 					$( '#wp-swiper-art_size' + suffix ).prop( 'readOnly', sizeUnit === 'auto' ).toggleClass( 'is-unused', sizeUnit === 'auto' );
+				} );
+				// Grid + circle, Height Auto (square photos): the same.
+				var gridUnit = 'px';
+				[ 'desktop', 'tablet', 'mobile' ].forEach( function ( device ) {
+					var suffix = device === 'desktop' ? '' : '_' + device;
+					gridUnit = $( '#wp-swiper-art_grid_height_unit' + suffix ).val() || gridUnit;
+					$( '#wp-swiper-art_grid_height' + suffix ).prop( 'readOnly', gridUnit === 'auto' ).toggleClass( 'is-unused', gridUnit === 'auto' );
 				} );
 			}
 
@@ -2104,7 +2117,8 @@
 		} );
 
 		$( '#wp-swiper-settings' )
-			.on( 'click', '.wp-swiper-tiles__tile', function () {
+			// Not a Style to come (greyed, no value).
+			.on( 'click', '.wp-swiper-tiles__tile:not(.wp-swiper-tiles__tile--soon)', function () {
 				var $field = $( this ).closest( '.wp-swiper-field' );
 				var device = $field.find( '.wp-swiper-devices__btn.is-active' ).data( 'device' ) || 'desktop';
 				tilesSelect( $field, device ).val( $( this ).attr( 'data-value' ) ).trigger( 'change' );

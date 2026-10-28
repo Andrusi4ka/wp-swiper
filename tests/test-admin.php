@@ -777,8 +777,8 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 			$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/collage/' . $style . '.svg', $style );
 			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="[^"]+" aria-label="[^"]+">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
 		}
-		// The Collage's nine, and Art's Style (below).
-		$this->assertSame( 9 + count( WP_Swiper_Art::styles() ), substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
+		// The Collage's nine, and Art's Styles with those to come (below).
+		$this->assertSame( 9 + count( WP_Swiper_Art::styles() ) + count( WP_Swiper_Art::soon() ), substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
 		$this->assertStringContainsString( 'class="wp-swiper-tiles__tile wp-swiper-tiles__tile--inherit" data-value="" role="radio" aria-checked="false" hidden>Inherit</button>', $html );
 	}
 
@@ -793,9 +793,9 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		// One value for every screen: its select (hidden) and the icons, no Inherit.
 		$this->assertMatchesRegularExpression( '#<div class="wp-swiper-field wp-swiper-field--select wp-swiper-field--tiles" data-field="art_style"#', $html );
 		$this->assertMatchesRegularExpression( '#<select id="wp-swiper-art_style" name="wp_swiper_settings\[art_style\]" class="wp-swiper-tiles__select" hidden>\s*<option value="ring"\s+selected=\'selected\'>Ring</option>#', $html );
-		foreach ( array_keys( WP_Swiper_Art::styles() ) as $style ) {
+		foreach ( WP_Swiper_Art::styles() as $style => $label ) {
 			$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/art/' . $style . '.svg', $style );
-			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="Ring" aria-label="Ring">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
+			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="' . preg_quote( $label, '#' ) . '" aria-label="' . preg_quote( $label, '#' ) . '">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
 		}
 		$this->assertSame( 1, preg_match_all( '#data-field="art_style".*?</div>\s*</div>#s', $html, $match ) );
 		$this->assertStringNotContainsString( 'tiles__tile--inherit', $match[0][0] );

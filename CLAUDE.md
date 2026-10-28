@@ -135,6 +135,61 @@
     розкладка й знімок такі самі, як до змін; клік по фото відкриває
     лайтбокс (Swiper довантажується), помилок у консолі немає. Прев'ю в
     адмінці не перевіряли (потрібен вхід).
+- Після 2.9.2 (2026-10-28, вдома, в `art-effect`), Art Style **Ring + text**
+  (`ring-text`), за іконками користувача (`assets/images/art/ring-text.svg`,
+  `grid-circle.svg`, почищені від Illustrator, `currentColor`):
+  - те саме кільце (`art.js ring()`, у `STYLES` обидва), але без фото в
+    центрі: `WP_Swiper_Art::has_middle_photo()`, `counts()` без +1, у JS
+    перший шматок — уже кільця (`hasMiddlePhoto()`). Без Opening (у config
+    `opening: 0`), без «підписи лише на центральному фото» і обміну «по
+    центру» (у цих полів тепер `'styles' => array( 'ring' )`).
+  - центр: галочка `art_center` («Content in the middle», за замовчуванням
+    увімкнена; вимкнена — коло порожнє, поля центру сховані в `admin.js`);
+    `art_center_image` (+ `_image_size` %), `art_center_text`
+    (`editor`, колір теми, слова фарбуються в редакторі), `art_center_font_size`,
+    `art_center_padding` (усі для кожного екрана), `art_center_bg`
+    (`alpha_color`, за замовчуванням `rgba(255,255,255,0)` = без фону).
+    Розмітка `center()` поруч зі сценою (не під тінню), `art.js
+    centerContent()` ставить коло над центром і зменшує текст, поки не
+    влізе (до 8px). Картинка над текстом, не стискається.
+  - Image border Art (`art_border*`) перенесено з блоку «Art» у загальний
+    блок «Look» (`WP_Swiper_Settings::blocks()`), одразу перед Image shadow:
+    для Art тепер «Look» → Image border → Image shadow.
+  - Неактивні плитки «coming soon»: `WP_Swiper_Art::soon()` (зараз порожній),
+    ключ поля `'soon'`, `WP_Swiper_Admin::tiles()` малює
+    `.wp-swiper-tiles__tile--soon` без `data-value`; таких немає в `styles()`,
+    тож `sanitize()` їх не збереже. Майбутній стиль: іконка + рядок у `soon()`.
+  - Art Style **Grid + circle** (`grid-circle`), як Grid колажу + коло з фото
+    над центром (користувач відмовився від варіанта «квадрат / Fill width» з
+    полем Shape — його прибрано):
+    - `art_grid_count` (Photos in the grid, 2–36, за замовч. 9; фото кола —
+      ще +1) і `art_grid_columns` (2–6, за замовч. 3), обидва для кожного
+      екрана; рядів = ceil(фото / колонки), фото неповного останнього ряду
+      стоять **по центру** ряду (рішення користувача).
+    - Завжди на всю ширину колонки (`is_wide()`, клас `.wp-swiper-art--wide`,
+      у config `wide: true`, `auto` усі false); Size, Size unit і Alignment
+      тепер лише для ring / ring-text (`styles`).
+    - Висота `art_grid_height` + `art_grid_height_unit` (`px` | `auto`, за
+      замовч. `auto`, inline, для кожного екрана): `--wp-swiper-art-height*`
+      = px або `auto`; в config `square` по пристроях — `art.js` тоді ставить
+      сцені висоту з квадратних клітинок. px — клітинки тягнуться під висоту.
+      У `admin.js` число сіріє при Auto (як Size).
+    - Коло: розмір — той самий `art_ring_center` (тягнеться в прев'ю), центр
+      сітки, від меншої сторони; не менше, ніж треба, щоб накрити клітинку з
+      центром кола (скільки дозволяє висота). Ця клітинка ховається завжди
+      (`gridCell()` → null), її фото чекає обміну.
+    - `art.js gridCircle()` / `gridCell()`: клітинка = прямокутник мінус
+      коло+Gap, точні перетини сторін з колом, кути (і стики з дугою)
+      округлені; клітинки, від яких лишилось < `GRID_MIN_SHARE` (20%),
+      сховані, видимі йдуть підряд після кола, `block.wpSwiperArtShown` —
+      скільки шматків показано (обмін фото рахує по ньому, при зміні —
+      `fill( true )`). `counts()` = фото + 1.
+    - «Лише на центральному фото» й обмін «по центру» діють (`styles` ring +
+      grid-circle), Opening — ні.
+  - Перевірено: 280 тестів (PHP 7.4/8.3); сторінки з Ring + text і Grid + circle
+    (3×9, 3×8 з неповним рядом, 4×10 з висотою px, рамка), згенеровані
+    через WP-CLI з фото слайдера 140, у headless Chrome. Прев'ю в адмінці
+    (перетягування краю центру, обмін фото) не перевіряли — потрібен вхід.
 
 ## Що далі / відкладено
 
@@ -199,7 +254,7 @@
 `wp_swiper_tests`, лише для тестів. Потім:
 `composer install`, `wp core download --path=<core>`,
 `WP_CORE_DIR=<core> WP_TESTS_DB_HOST=<host> tests/vendor/bin/phpunit`.
-Станом на цей коміт: 273 тести, усі зелені. CI (`tests.yml`) ганяє їх на
+Станом на цей коміт: 280 тестів, усі зелені. CI (`tests.yml`) ганяє їх на
 PHP 7.4 / 8.3 при push у `main` і `art-effect` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає — `C:/OSPanel/modules/PHP-8.3/PHP/php.exe

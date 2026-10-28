@@ -210,10 +210,10 @@
 	var MIN_RING = 20; // px.
 	var resize = null;
 
-	// The Ring under the pointer and how far from its middle, if at its edge.
+	// The Ring (Ring + text, Grid + circle) under the pointer and how far from its middle, if at its edge.
 	function edgeAt( e ) {
 		var node = document.elementFromPoint( e.clientX, e.clientY );
-		var block = node && node.closest( '.wp-swiper-art--ring' );
+		var block = node && node.closest( '.wp-swiper-art--ring, .wp-swiper-art--ring-text, .wp-swiper-art--grid-circle' );
 		var api = block && block.wpSwiperArt;
 		var ring = block && block.wpSwiperArtRing;
 		if ( ! api || ! api.setCenter || ! ring ) {

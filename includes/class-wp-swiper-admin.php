@@ -817,6 +817,13 @@ class WP_Swiper_Admin {
 					<?php echo self::svg_icon( $field['tiles'] . '/' . $choice . '.svg', 'wp-swiper-tiles__icon', 'dashicons-format-gallery' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
 				</button>
 			<?php endforeach; ?>
+			<?php // Choices to come ("soon"): greyed, not to be picked (no data-value). ?>
+			<?php foreach ( isset( $field['soon'] ) ? $field['soon'] : array() as $choice => $choice_label ) : ?>
+				<?php /* translators: %s: a Style's name. */ $soon_label = sprintf( __( '%s (coming soon)', 'wp-swiper' ), $choice_label ); ?>
+				<span class="wp-swiper-tiles__tile wp-swiper-tiles__tile--soon" title="<?php echo esc_attr( $soon_label ); ?>" aria-label="<?php echo esc_attr( $soon_label ); ?>" aria-disabled="true">
+					<?php echo self::svg_icon( $field['tiles'] . '/' . $choice . '.svg', 'wp-swiper-tiles__icon', 'dashicons-format-gallery' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
+				</span>
+			<?php endforeach; ?>
 		</div>
 		<?php
 	}
