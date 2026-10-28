@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.11.0
+Stable tag: 2.12.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,9 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 2.12.0 =
+* Collage, Scattered: a round × in the corner of each photo in the preview (not the middle one) takes its place out of the collage on the device shown. The rest of the layout stays as it is (the photos after it in its arm close up), Photos on screen goes down by one and its photo waits with the others: the slide stays. Undo brings it back.
 
 = 2.11.0 =
 * Collage, Scattered: a photo can also be moved to the end of any arm. While it is dragged in the preview, dashed frames show where it can go (along the arm or outwards; next to the middle photo in an empty arm); over one, the collage shows itself as it would be. Dropped there, the photo keeps its size and the photos after it in its old arm close up. The middle photo still only swaps.
