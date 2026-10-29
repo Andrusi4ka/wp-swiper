@@ -259,12 +259,10 @@ class WP_Swiper_Preview {
 		.wp-swiper-preview-block { position: relative; background: #f0f0f1; }
 		/* "Background mode": a small label in the block's corner, over the slider. */
 		.wp-swiper-preview-block__mode { position: absolute; top: 12px; left: 12px; z-index: 3; padding: 3px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 12px; line-height: 18px; font-weight: 600; pointer-events: none; }
-		/* Background: a usual shape per device, the preview only (on the site the
-		   block's height is the page builder's): a large monitor 3:2, a tablet
-		   4:3 upright, a phone 16:9 upright. */
-		.wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 3 / 2; }
-		@media (max-width: 1024px) { .wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 3 / 4; } }
-		@media (max-width: 767px) { .wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 9 / 16; } }
+		/* Background: the block fills the device's screen, no gaps around it (the
+		   preview only; on the site the block's height is the page builder's). */
+		.wp-swiper-preview-page--background { padding: 0; }
+		.wp-swiper-preview-page--background .wp-swiper-preview-block { height: 100vh; }
 		/* Here only (on a page the content takes the clicks): the background slider
 		   takes the pointer, so its photos can be dragged (preview-collage.js,
 		   preview-art.js). */
@@ -272,7 +270,7 @@ class WP_Swiper_Preview {
 	</style>
 </head>
 <body>
-	<div class="wp-swiper-preview-page">
+	<div class="wp-swiper-preview-page<?php echo WP_Swiper_Settings::is_background( $settings ) ? ' wp-swiper-preview-page--background' : ''; ?>">
 		<?php echo $slider; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the slider's markup, escaped where it is built. ?>
 	</div>
 	<?php wp_print_scripts( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-collage', 'wp-swiper-art' ) ); ?>

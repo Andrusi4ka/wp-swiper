@@ -534,6 +534,42 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertContains( 'wp-swiper--thumbs-mobile-left', $this->root_classes( $html ) );
 	}
 
+	public function test_thumbnail_corners_and_frame_behind_switches() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertFalse( $fields['thumbs_rounded']['default'] );
+		$this->assertSame( 6, $fields['thumbs_radius']['default'] );
+		// The frame on by default, as the thumbnails always had one.
+		$this->assertTrue( $fields['thumbs_border']['default'] );
+		$this->assertSame( 1, $fields['thumbs_border_width']['min'] );
+		// Look: the opacity first, each switch above its settings.
+		$this->assertSame( array( 'thumbs_opacity', 'thumbs_rounded', 'thumbs_radius', 'thumbs_border', 'thumbs_border_width', 'thumbs_border_color', 'thumbs_active_color' ), WP_Swiper_Settings::blocks()['thumbs']['look']['fields'] );
+
+		$thumbs = array( 'effect' => 'thumbs', 'lightbox' => true );
+		// Rounded corners off: no radius on any screen, nor in the lightbox's strip that takes it.
+		$html = $this->render( $thumbs + array( 'thumbs_rounded' => false, 'thumbs_radius' => 10, 'thumbs_radius_mobile' => 4 ) );
+		$this->assertStringContainsString( '--wp-swiper-thumb-radius:0px', $this->root_style( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-thumb-radius-mobile:0px', $this->root_style( $html ) );
+		$this->assertSame( array( 'desktop' => 0, 'tablet' => 0, 'mobile' => 0 ), $this->config( $html )['lightbox']['thumbRadius'] );
+		// On: each screen's.
+		$html = $this->render( $thumbs + array( 'thumbs_rounded' => true, 'thumbs_radius' => 10, 'thumbs_radius_mobile' => 4 ) );
+		$this->assertStringContainsString( '--wp-swiper-thumb-radius:10px', $this->root_style( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-thumb-radius-mobile:4px', $this->root_style( $html ) );
+		$this->assertSame( array( 'desktop' => 10, 'tablet' => 10, 'mobile' => 4 ), $this->config( $html )['lightbox']['thumbRadius'] );
+
+		// Frame on: its width; off: none (frontend.js sizes the strip without it too).
+		$html = $this->render( $thumbs + array( 'thumbs_border_width' => 3 ) );
+		$this->assertStringContainsString( '--wp-swiper-thumb-border-width:3px', $this->root_style( $html ) );
+		$this->assertSame( 3, $this->config( $html )['thumbs']['frame'] );
+		$html = $this->render( $thumbs + array( 'thumbs_border' => false, 'thumbs_border_width' => 3 ) );
+		$this->assertStringContainsString( '--wp-swiper-thumb-border-width:0px', $this->root_style( $html ) );
+		$this->assertSame( 0, $this->config( $html )['thumbs']['frame'] );
+
+		// The editor shows their settings once on.
+		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' );
+		$this->assertStringContainsString( "field( 'thumbs_radius' ).toggle( $( '#wp-swiper-thumbs_rounded' ).is( ':checked' ) );", $js );
+		$this->assertStringContainsString( "field( 'thumbs_border_width' ).toggle( thumbsFrame );", $js );
+	}
+
 	public function test_collage_is_not_a_slider() {
 		$html   = $this->render( array( 'effect' => 'collage', 'image_fit' => 'contain', 'navigation' => true, 'collage_layout_mobile' => 'grid' ), $this->slides( 7 ) );
 		$config = $this->config( $html, 'data-wp-swiper-collage' );
@@ -857,6 +893,63 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$css = file_get_contents( WP_SWIPER_DIR . 'assets/css/frontend.css' );
 		$this->assertStringContainsString( 'margin-top: var(--wp-swiper-description-offset-tablet, var(--wp-swiper-description-offset, 16px));', $css );
 		$this->assertStringContainsString( 'margin-top: var(--wp-swiper-description-offset-mobile, var(--wp-swiper-description-offset-tablet, var(--wp-swiper-description-offset, 16px)));', $css );
+	}
+
+	public function test_coverflow_depth_and_stretch_per_device() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertTrue( $fields['coverflow_depth']['responsive'] );
+		$this->assertTrue( $fields['coverflow_stretch']['responsive'] );
+		// Rotate and scale look the same at any size: one for all.
+		$this->assertArrayNotHasKey( 'responsive', $fields['coverflow_rotate'] );
+		$this->assertArrayNotHasKey( 'responsive', $fields['coverflow_scale'] );
+
+		// Each device's; tablet and mobile empty: the larger screen's.
+		$config = $this->config( $this->render( array( 'effect' => 'coverflow', 'coverflow_rotate' => 30, 'coverflow_depth' => 200, 'coverflow_depth_mobile' => 50, 'coverflow_stretch' => 40, 'coverflow_stretch_tablet' => 20 ) ) );
+		$this->assertSame(
+			array(
+				'rotate'  => 30,
+				'depth'   => array( 'desktop' => 200, 'tablet' => 200, 'mobile' => 50 ),
+				'stretch' => array( 'desktop' => 40, 'tablet' => 20, 'mobile' => 20 ),
+				'scale'   => 1,
+			),
+			$config['coverflow']
+		);
+		// Saved before: the one value everywhere.
+		$config = $this->config( $this->render( array( 'effect' => 'coverflow' ) ) );
+		$this->assertSame( array( 'desktop' => 100, 'tablet' => 100, 'mobile' => 100 ), $config['coverflow']['depth'] );
+		$this->assertSame( array( 'desktop' => 0, 'tablet' => 0, 'mobile' => 0 ), $config['coverflow']['stretch'] );
+
+		// slider.js: the phone's as the base, the larger screens' in their breakpoints.
+		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/slider.js' );
+		$this->assertStringContainsString( "coverflowEffect: coverflowAt( config, 'mobile' )", $js );
+		$this->assertStringContainsString( "options.breakpoints[ BREAKPOINT_TABLET ].coverflowEffect = coverflowAt( config, 'tablet' );", $js );
+		$this->assertStringContainsString( "options.breakpoints[ BREAKPOINT_DESKTOP ].coverflowEffect = coverflowAt( config, 'desktop' );", $js );
+	}
+
+	public function test_cube_shadow_color_with_its_opacity() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertArrayNotHasKey( 'cube_shadow_opacity', $fields );
+		$this->assertSame( 'alpha_color', $fields['cube_shadow_color']['type'] );
+		$this->assertSame( 'rgba(0,0,0,0.6)', $fields['cube_shadow_color']['default'] );
+		// Offset, scale and color on one row.
+		$this->assertSame( 'cube_shadow', $fields['cube_shadow_offset']['group'] );
+		$this->assertSame( 'cube_shadow', $fields['cube_shadow_scale']['group'] );
+		$this->assertSame( 'cube_shadow', $fields['cube_shadow_color']['group'] );
+		$effect = WP_Swiper_Settings::blocks()['layout']['effect']['fields'];
+		$at     = array_search( 'cube_shadow', $effect, true );
+		$this->assertSame( array( 'cube_shadow', 'cube_shadow_offset', 'cube_shadow_scale', 'cube_shadow_color' ), array_slice( $effect, $at, 4 ) );
+
+		// Its color with its opacity; the default as before (black at 60%).
+		$style = $this->root_style( $this->render( array( 'effect' => 'cube', 'cube_shadow' => true, 'cube_shadow_color' => 'rgba(16,32,48,0.4)' ) ) );
+		$this->assertStringContainsString( '--wp-swiper-cube-shadow-color:rgba(16,32,48,0.4)', $style );
+		$this->assertStringNotContainsString( 'cube-shadow-opacity', $style );
+		$this->assertStringContainsString( '--wp-swiper-cube-shadow-color:rgba(0,0,0,0.6)', $this->root_style( $this->render( array( 'effect' => 'cube', 'cube_shadow' => true ) ) ) );
+		// Off: none.
+		$this->assertStringNotContainsString( 'cube-shadow-color', $this->root_style( $this->render( array( 'effect' => 'cube' ) ) ) );
+		// The CSS paints Swiper's shadow with it (no opacity of its own left).
+		$css = file_get_contents( WP_SWIPER_DIR . 'assets/css/frontend.css' );
+		$this->assertStringContainsString( "background: var(--wp-swiper-cube-shadow-color, rgba(0, 0, 0, 0.6));", $css );
+		$this->assertStringNotContainsString( '--wp-swiper-cube-shadow-opacity', $css );
 	}
 
 	public function test_caption_background_color_with_its_opacity() {

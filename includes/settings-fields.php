@@ -1194,27 +1194,33 @@ return array(
 		'step'    => 1,
 		'help'    => __( 'How far the side slides turn: above 0 towards the middle one, below 0 away from it (outwards).', 'wp-swiper' ),
 	),
+	// Depth and Stretch are in px, so the same value does more to a phone's
+	// smaller slides: one per device (tablet and mobile empty: the larger
+	// screen's, as every slider saved before). Rotate and scale look the same
+	// at any size: one for every screen.
 	'coverflow_depth'       => array(
-		'section' => 'layout',
-		'effects' => array( 'coverflow' ),
-		'label'   => __( 'Depth (px)', 'wp-swiper' ),
-		'type'    => 'number',
-		'default' => 100,
-		'min'     => 0,
-		'max'     => 1000,
-		'step'    => 10,
-		'help'    => __( 'How far back the side slides sit: the more, the smaller they look.', 'wp-swiper' ),
+		'section'    => 'layout',
+		'effects'    => array( 'coverflow' ),
+		'label'      => __( 'Depth (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 100,
+		'min'        => 0,
+		'max'        => 1000,
+		'step'       => 10,
+		'help'       => __( 'How far back the side slides sit: the more, the smaller they look.', 'wp-swiper' ),
 	),
 	'coverflow_stretch'     => array(
-		'section' => 'layout',
-		'effects' => array( 'coverflow' ),
-		'label'   => __( 'Stretch (px)', 'wp-swiper' ),
-		'type'    => 'number',
-		'default' => 0,
-		'min'     => -500,
-		'max'     => 500,
-		'step'    => 5,
-		'help'    => __( 'Above 0 the side slides move in under the active one; below 0 they move apart.', 'wp-swiper' ),
+		'section'    => 'layout',
+		'effects'    => array( 'coverflow' ),
+		'label'      => __( 'Stretch (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 0,
+		'min'        => -500,
+		'max'        => 500,
+		'step'       => 5,
+		'help'       => __( 'Above 0 the side slides move in under the active one; below 0 they move apart.', 'wp-swiper' ),
 	),
 	'coverflow_scale'       => array(
 		'section' => 'layout',
@@ -1228,7 +1234,10 @@ return array(
 		'help'    => __( '1 = the size of the active slide; 0.8 = smaller.', 'wp-swiper' ),
 	),
 
-	// Cube effect: its two shadows (Effect shadows is not used for it).
+	// Cube effect: its two shadows (Effect shadows is not used for it). The
+	// one under it: its offset, size and color (with opacity) in one row
+	// (until 3.0 an Opacity (%) of a black one, merge_cube_shadow_opacity(),
+	// get()).
 	'cube_shadow'           => array(
 		'section' => 'layout',
 		'effects' => array( 'cube' ),
@@ -1239,7 +1248,8 @@ return array(
 	'cube_shadow_offset'    => array(
 		'section' => 'layout',
 		'effects' => array( 'cube' ),
-		'label'   => __( 'Shadow offset (px)', 'wp-swiper' ),
+		'group'   => 'cube_shadow',
+		'label'   => __( 'Offset (px)', 'wp-swiper' ),
 		'type'    => 'number',
 		'default' => 20,
 		'min'     => 0,
@@ -1250,7 +1260,8 @@ return array(
 	'cube_shadow_scale'     => array(
 		'section' => 'layout',
 		'effects' => array( 'cube' ),
-		'label'   => __( 'Shadow scale', 'wp-swiper' ),
+		'group'   => 'cube_shadow',
+		'label'   => __( 'Scale', 'wp-swiper' ),
 		'type'    => 'float',
 		'default' => 0.94,
 		'min'     => 0.1,
@@ -1258,16 +1269,14 @@ return array(
 		'step'    => 0.01,
 		'help'    => __( 'Size of the shadow: 1 = as wide as the cube.', 'wp-swiper' ),
 	),
-	'cube_shadow_opacity'   => array(
+	// "#rrggbb" or "rgba(r,g,b,a)" (sanitize_slide_color()).
+	'cube_shadow_color'     => array(
 		'section' => 'layout',
 		'effects' => array( 'cube' ),
-		'label'   => __( 'Shadow opacity (%)', 'wp-swiper' ),
-		'type'    => 'number',
-		'default' => 60,
-		'min'     => 0,
-		'max'     => 100,
-		'step'    => 5,
-		'help'    => __( 'The shadow is black: lower values make it a lighter grey.', 'wp-swiper' ),
+		'group'   => 'cube_shadow',
+		'label'   => __( 'Color', 'wp-swiper' ),
+		'type'    => 'alpha_color',
+		'default' => 'rgba(0,0,0,0.6)',
 	),
 	'cube_slide_shadows'    => array(
 		'section' => 'layout',
@@ -1434,18 +1443,40 @@ return array(
 		'placeholder' => '4x3',
 		'help'        => __( 'Width x height, for example 4x3 or 2.35x1.', 'wp-swiper' ),
 	),
+	// Rounded corners of the thumbnails, as the slides': the radius once it is
+	// on; off, none on any screen (apply_rounded()). A slider saved before
+	// with a radius keeps it on (merge_thumbs_switches(), get()).
+	'thumbs_rounded'        => array(
+		'section' => 'layout',
+		'panel'   => 'thumbs',
+		'effects' => array( 'thumbs' ),
+		'label'   => __( 'Rounded corners', 'wp-swiper' ),
+		'type'    => 'checkbox',
+		'default' => false,
+	),
 	// Also that of the thumbnails in the lightbox, unless it has its own.
 	'thumbs_radius'         => array(
 		'section'    => 'layout',
 		'panel'      => 'thumbs',
 		'effects'    => array( 'thumbs' ),
-		'label'      => __( 'Thumbnail border radius (px)', 'wp-swiper' ),
+		'label'      => __( 'Radius (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
-		'default'    => 0,
+		'default'    => 6,
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
+	),
+	// The frame, as Image border: its width and two colors once it is on;
+	// off, none (apply_rounded()). On by default, as the thumbnails always
+	// had one; a slider saved with a width of 0 has it off.
+	'thumbs_border'         => array(
+		'section' => 'layout',
+		'panel'   => 'thumbs',
+		'effects' => array( 'thumbs' ),
+		'label'   => __( 'Frame', 'wp-swiper' ),
+		'type'    => 'checkbox',
+		'default' => true,
 	),
 	// One row: the frame's width and its two colors.
 	'thumbs_border_width'   => array(
@@ -1453,10 +1484,10 @@ return array(
 		'panel'   => 'thumbs',
 		'effects' => array( 'thumbs' ),
 		'group'   => 'thumbs_border',
-		'label'   => __( 'Frame width (px)', 'wp-swiper' ),
+		'label'   => __( 'Width (px)', 'wp-swiper' ),
 		'type'    => 'number',
 		'default' => 1,
-		'min'     => 0,
+		'min'     => 1,
 		'max'     => 20,
 		'step'    => 1,
 	),
@@ -1465,7 +1496,7 @@ return array(
 		'panel'   => 'thumbs',
 		'effects' => array( 'thumbs' ),
 		'group'   => 'thumbs_border',
-		'label'   => __( 'Frame color', 'wp-swiper' ),
+		'label'   => __( 'Color', 'wp-swiper' ),
 		'type'    => 'color',
 		'default' => '#dddddd',
 	),
@@ -1474,7 +1505,7 @@ return array(
 		'panel'   => 'thumbs',
 		'effects' => array( 'thumbs' ),
 		'group'   => 'thumbs_border',
-		'label'   => __( 'Active frame color', 'wp-swiper' ),
+		'label'   => __( 'Active color', 'wp-swiper' ),
 		'type'    => 'color',
 		'default' => '#333333',
 	),

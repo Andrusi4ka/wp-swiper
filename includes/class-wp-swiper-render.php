@@ -485,10 +485,11 @@ class WP_Swiper_Render {
 			// Effect depth shading; never with "Contain", where it would cover the
 			// empty band around the image too.
 			'shadows'       => $settings['effect_shadows'] && 'contain' !== $settings['image_fit'] && 'flip' !== $settings['effect'],
+			// Depth and stretch per device ({ mobile, tablet, desktop }).
 			'coverflow'     => 'coverflow' === $settings['effect'] ? array(
 				'rotate'  => $settings['coverflow_rotate'],
-				'depth'   => $settings['coverflow_depth'],
-				'stretch' => $settings['coverflow_stretch'],
+				'depth'   => array_map( 'intval', WP_Swiper_Settings::responsive( $settings, 'coverflow_depth' ) ),
+				'stretch' => array_map( 'intval', WP_Swiper_Settings::responsive( $settings, 'coverflow_stretch' ) ),
 				'scale'   => $settings['coverflow_scale'],
 			) : false,
 			'cube'          => 'cube' === $settings['effect'] ? array(
@@ -1001,11 +1002,12 @@ class WP_Swiper_Render {
 				}
 			}
 		}
-		// Cube: how dark its (black) shadow is, and room under the slider for it
-		// (it falls `offset` below the cube and is blurred some 20px further).
+		// Cube: its shadow's color (with its opacity), and room under the slider
+		// for it (it falls `offset` below the cube and is blurred some 20px further).
 		if ( 'cube' === $settings['effect'] && $settings['cube_shadow'] ) {
-			$style[] = '--wp-swiper-cube-shadow-opacity:' . max( 0, min( 100, (int) $settings['cube_shadow_opacity'] ) ) / 100;
-			$style[] = '--wp-swiper-cube-shadow-room:' . ( (int) $settings['cube_shadow_offset'] + 20 ) . 'px';
+			$cube_color = WP_Swiper_Settings::sanitize_slide_color( $settings['cube_shadow_color'] );
+			$style[]    = '--wp-swiper-cube-shadow-color:' . ( '' === $cube_color ? WP_Swiper_Settings::fields()['cube_shadow_color']['default'] : $cube_color );
+			$style[]    = '--wp-swiper-cube-shadow-room:' . ( (int) $settings['cube_shadow_offset'] + 20 ) . 'px';
 		}
 
 		// Thumbnails: the look of the strip (its sizes come from frontend.js).

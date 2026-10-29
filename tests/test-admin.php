@@ -590,12 +590,13 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringNotContainsString( 'Background mode', $this->render( array( 'background' => true, 'background_class' => 'hero' ) ) );
 	}
 
-	public function test_preview_background_block_shapes_per_device() {
-		// The preview's own styles: a large monitor 3:2, a tablet 4:3 upright, a phone 16:9 upright.
+	public function test_preview_background_block_fills_the_screen() {
+		// The preview's own styles: no gaps around the block, as tall as the device's screen (no shapes).
 		$source = file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' );
-		$this->assertStringContainsString( '.wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 3 / 2; }', $source );
-		$this->assertStringContainsString( '@media (max-width: 1024px) { .wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 3 / 4; } }', $source );
-		$this->assertStringContainsString( '@media (max-width: 767px) { .wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 9 / 16; } }', $source );
+		$this->assertStringContainsString( '.wp-swiper-preview-page--background { padding: 0; }', $source );
+		$this->assertStringContainsString( '.wp-swiper-preview-page--background .wp-swiper-preview-block { height: 100vh; }', $source );
+		$this->assertStringContainsString( 'WP_Swiper_Settings::is_background( $settings ) ? \' wp-swiper-preview-page--background\'', $source );
+		$this->assertStringNotContainsString( 'aspect-ratio', $source );
 		$this->assertStringNotContainsString( 'wp-swiper-preview-block__content', $source );
 	}
 

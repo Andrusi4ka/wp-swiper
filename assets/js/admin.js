@@ -1732,7 +1732,7 @@
 			var cubeShadow = $( '#wp-swiper-cube_shadow' ).is( ':checked' );
 			field( 'cube_shadow_offset' ).toggle( effect === 'cube' && cubeShadow );
 			field( 'cube_shadow_scale' ).toggle( effect === 'cube' && cubeShadow );
-			field( 'cube_shadow_opacity' ).toggle( effect === 'cube' && cubeShadow );
+			field( 'cube_shadow_color' ).toggle( effect === 'cube' && cubeShadow );
 			lockCubeFaces( effect === 'cube' && ! cover );
 			// The arrows' color and height, once they are on.
 			field( 'navigation_color' ).toggle( $( '#wp-swiper-navigation' ).is( ':checked' ) );
@@ -1743,6 +1743,12 @@
 			var border = $( '#wp-swiper-image_border' ).is( ':checked' );
 			field( 'image_border_width' ).toggle( border );
 			field( 'image_border_color' ).toggle( border );
+			// Thumbnails: the same, their radius and their frame once on.
+			field( 'thumbs_radius' ).toggle( $( '#wp-swiper-thumbs_rounded' ).is( ':checked' ) );
+			var thumbsFrame = $( '#wp-swiper-thumbs_border' ).is( ':checked' );
+			field( 'thumbs_border_width' ).toggle( thumbsFrame );
+			field( 'thumbs_border_color' ).toggle( thumbsFrame );
+			field( 'thumbs_active_color' ).toggle( thumbsFrame );
 			// Image shadow: where the photos stand apart (WP_Swiper_Settings::shadow()
 			// checks the same), and Fade's one photo: not a background; Creative:
 			// the carousel; Slide: more than one slide in view, of their own

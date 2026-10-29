@@ -187,4 +187,48 @@ class Test_WP_Swiper_Migrations extends WP_Swiper_TestCase {
 		// Saved since: as it is.
 		$this->assertSame( 'rgba(1,2,3,0.5)', $this->saved( array( 'caption_bg_color' => 'rgba(1,2,3,0.5)' ) )['caption_bg_color'] );
 	}
+
+	public function test_cube_shadow_opacity_becomes_a_color() {
+		// It was black at that opacity.
+		$settings = $this->saved( array( 'effect' => 'cube', 'cube_shadow' => true, 'cube_shadow_opacity' => 40 ) );
+		$this->assertSame( 'rgba(0,0,0,0.4)', $settings['cube_shadow_color'] );
+		$this->assertArrayNotHasKey( 'cube_shadow_opacity', $settings );
+		$this->assertSame( '#000000', $this->saved( array( 'cube_shadow_opacity' => 100 ) )['cube_shadow_color'] );
+		// Never saved: the default, the same black at 60%.
+		$this->assertSame( 'rgba(0,0,0,0.6)', $this->saved( array( 'effect' => 'cube' ) )['cube_shadow_color'] );
+		// In another effect's layout values too.
+		$layouts = $this->saved( array( 'effect' => 'slide', 'layouts' => array( 'cube' => array( 'cube_shadow_opacity' => 20 ) ) ) )['layouts'];
+		$this->assertSame( 'rgba(0,0,0,0.2)', $layouts['cube']['cube_shadow_color'] );
+		$this->assertArrayNotHasKey( 'cube_shadow_opacity', $layouts['cube'] );
+	}
+
+	public function test_thumbnail_switches_on_where_they_had_them() {
+		// A radius on any screen: Rounded corners on, the radius kept.
+		$settings = $this->saved( array( 'effect' => 'thumbs', 'thumbs_radius' => 0, 'thumbs_radius_tablet' => 8 ) );
+		$this->assertTrue( $settings['thumbs_rounded'] );
+		$this->assertSame( 8, $settings['thumbs_radius_tablet'] );
+		// None: off, the default radius waiting for it.
+		$settings = $this->saved( array( 'effect' => 'thumbs', 'thumbs_radius' => 0 ) );
+		$this->assertFalse( $settings['thumbs_rounded'] );
+		$this->assertSame( 6, $settings['thumbs_radius'] );
+
+		// A frame: on, its width kept; 0: off, the default width waiting for it.
+		$settings = $this->saved( array( 'effect' => 'thumbs', 'thumbs_border_width' => 3 ) );
+		$this->assertTrue( $settings['thumbs_border'] );
+		$this->assertSame( 3, $settings['thumbs_border_width'] );
+		$settings = $this->saved( array( 'effect' => 'thumbs', 'thumbs_border_width' => 0 ) );
+		$this->assertFalse( $settings['thumbs_border'] );
+		$this->assertSame( 1, $settings['thumbs_border_width'] );
+
+		// Saved since: as they are.
+		$settings = $this->saved( array( 'thumbs_rounded' => false, 'thumbs_radius' => 9, 'thumbs_border' => true, 'thumbs_border_width' => 2 ) );
+		$this->assertFalse( $settings['thumbs_rounded'] );
+		$this->assertSame( 9, $settings['thumbs_radius'] );
+		$this->assertTrue( $settings['thumbs_border'] );
+
+		// In another effect's layout values too.
+		$layouts = $this->saved( array( 'effect' => 'slide', 'layouts' => array( 'thumbs' => array( 'thumbs_radius' => 5, 'thumbs_border_width' => 0 ) ) ) )['layouts'];
+		$this->assertTrue( $layouts['thumbs']['thumbs_rounded'] );
+		$this->assertFalse( $layouts['thumbs']['thumbs_border'] );
+	}
 }

@@ -53,7 +53,8 @@ return array(
 	'cards'            => array( 'settings' => $slider + array( 'effect' => 'cards' ) ),
 	'creative'         => array( 'settings' => $slider + array( 'effect' => 'creative' ) ),
 	'creative-carousel' => array( 'settings' => $slider + array( 'effect' => 'creative', 'creative_style' => 'carousel' ) ),
-	'thumbs'           => array( 'settings' => $slider + array( 'effect' => 'thumbs' ) ),
+	// The frame as the thumbnails always had it (a missing checkbox is off, as in a form).
+	'thumbs'           => array( 'settings' => $slider + array( 'effect' => 'thumbs', 'thumbs_border' => '1' ) ),
 	'video'            => array(
 		'settings' => $slider + array( 'effect' => 'slide' ),
 		'video'    => true,

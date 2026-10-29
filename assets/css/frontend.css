@@ -2117,9 +2117,14 @@ html.wp-swiper-lightbox-open {
 	}
 }
 
-/* Cube: Swiper's black shadow under the cube, at the set opacity. */
+/* Cube: Swiper's shadow under the cube (black at 0.6), in the set color
+   with its own opacity. */
 .wp-swiper .swiper-cube .swiper-cube-shadow {
-	opacity: var(--wp-swiper-cube-shadow-opacity, 0.6);
+	opacity: 1;
+}
+
+.wp-swiper .swiper-cube .swiper-cube-shadow::before {
+	background: var(--wp-swiper-cube-shadow-color, rgba(0, 0, 0, 0.6));
 }
 
 /* Cube/flip keep the faces next to the active one visible and clickable all

@@ -254,6 +254,17 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * Until 3.0 the cube's shadow was black at an Opacity (%) of its own: one
+	 * color with its opacity now.
+	 *
+	 * @param array $saved A slider's saved settings.
+	 * @return array
+	 */
+	public static function merge_cube_shadow_opacity( $saved ) {
+		return self::merge_opacity( $saved, 'cube_shadow_opacity', 'cube_shadow_color' );
+	}
+
+	/**
 	 * An opacity field (%) and a plain color beside it as one color with its
 	 * opacity (no color saved: black, as both had by default).
 	 *
@@ -330,8 +341,48 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * The thumbnails' Rounded corners and Frame got their switches: on where
+	 * a slider saved before them had a radius above 0 on any device / a frame
+	 * wider than 0, so it shows as it did. Off, the radius and width are the
+	 * defaults, for when they are turned on.
+	 *
+	 * @param array $saved A slider's (or an effect's layout) saved settings.
+	 * @return array
+	 */
+	public static function merge_thumbs_switches( $saved ) {
+		if ( ! $saved ) {
+			return $saved;
+		}
+		if ( ! isset( $saved['thumbs_rounded'] ) ) {
+			$rounded = false;
+			foreach ( array( 'thumbs_radius', 'thumbs_radius_tablet', 'thumbs_radius_mobile' ) as $key ) {
+				if ( isset( $saved[ $key ] ) && '' !== (string) $saved[ $key ] && (int) $saved[ $key ] > 0 ) {
+					$rounded = true;
+				}
+			}
+			$saved['thumbs_rounded'] = $rounded;
+			if ( ! $rounded ) {
+				$saved['thumbs_radius']        = self::fields()['thumbs_radius']['default'];
+				$saved['thumbs_radius_tablet'] = '';
+				$saved['thumbs_radius_mobile'] = '';
+			}
+		}
+		if ( ! isset( $saved['thumbs_border'] ) ) {
+			// Never saved: the default 1px frame it had.
+			$framed                 = ! isset( $saved['thumbs_border_width'] ) || (int) $saved['thumbs_border_width'] > 0;
+			$saved['thumbs_border'] = $framed;
+			if ( ! $framed ) {
+				$saved['thumbs_border_width'] = self::fields()['thumbs_border_width']['default'];
+			}
+		}
+		return $saved;
+	}
+
+	/**
 	 * The settings as drawn: with Rounded corners off, no radius anywhere
-	 * on the slides (the lightbox has its own, lightbox_image_radius()).
+	 * on the slides (the lightbox has its own, lightbox_image_radius()); the
+	 * same for the thumbnails' (and so the lightbox's, which take theirs
+	 * unless they have their own), and with their Frame off, none.
 	 *
 	 * @param array $settings The slider's settings.
 	 * @return array
@@ -341,6 +392,14 @@ class WP_Swiper_Settings {
 			$settings['border_radius']        = 0;
 			$settings['border_radius_tablet'] = '';
 			$settings['border_radius_mobile'] = '';
+		}
+		if ( empty( $settings['thumbs_rounded'] ) ) {
+			$settings['thumbs_radius']        = 0;
+			$settings['thumbs_radius_tablet'] = '';
+			$settings['thumbs_radius_mobile'] = '';
+		}
+		if ( isset( $settings['thumbs_border'] ) && ! $settings['thumbs_border'] ) {
+			$settings['thumbs_border_width'] = 0;
 		}
 		return $settings;
 	}
@@ -1376,7 +1435,7 @@ class WP_Swiper_Settings {
 						'cube_shadow',
 						'cube_shadow_offset',
 						'cube_shadow_scale',
-						'cube_shadow_opacity',
+						'cube_shadow_color',
 						'cube_slide_shadows',
 						'cards_offset',
 						'cards_tilt',
@@ -1425,7 +1484,7 @@ class WP_Swiper_Settings {
 				),
 				'look'      => array(
 					'title'  => __( 'Look', 'wp-swiper' ),
-					'fields' => array( 'thumbs_radius', 'thumbs_border_width', 'thumbs_border_color', 'thumbs_active_color', 'thumbs_opacity' ),
+					'fields' => array( 'thumbs_opacity', 'thumbs_rounded', 'thumbs_radius', 'thumbs_border', 'thumbs_border_width', 'thumbs_border_color', 'thumbs_active_color' ),
 				),
 			),
 			// Block names stay apart from the other pages' (data-block).
@@ -1577,12 +1636,18 @@ class WP_Swiper_Settings {
 		$saved = self::merge_overlay_opacity( $saved );
 		// The caption background's: its opacity in its color too.
 		$saved = self::merge_caption_bg_opacity( $saved );
+		// The cube's shadow: its opacity in a color of its own.
+		$saved = self::merge_cube_shadow_opacity( $saved );
 		// Rounded corners: on where a radius was saved.
 		$saved = self::merge_rounded( $saved );
+		// The thumbnails' Rounded corners and Frame: on where they had them.
+		$saved = self::merge_thumbs_switches( $saved );
 		if ( ! empty( $saved['layouts'] ) && is_array( $saved['layouts'] ) ) {
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_ratio_fields' ), array_filter( $saved['layouts'], 'is_array' ) );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_overlay_opacity' ), $saved['layouts'] );
+			$saved['layouts'] = array_map( array( __CLASS__, 'merge_cube_shadow_opacity' ), $saved['layouts'] );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_rounded' ), $saved['layouts'] );
+			$saved['layouts'] = array_map( array( __CLASS__, 'merge_thumbs_switches' ), $saved['layouts'] );
 		}
 
 		// Version 6: the lightbox radii are numbers of their own, empty = the

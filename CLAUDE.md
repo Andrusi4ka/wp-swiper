@@ -56,7 +56,8 @@
   сайті вдома жоден слайдер його не мав) — не повертати. Блоки сторінок
   налаштувань (`.wp-swiper-block`) — сірі картки (`#f2f2f2`, рамка 1px `#e4e4e4`, радіус 6px,
   padding 12px, відступ між ними 5px) замість лінії над заголовком.
-  Прев'ю фону: блок 3:2 (desktop), 3:4 (tablet), 9:16 (mobile) — лише прев'ю;
+  Прев'ю фону: блок на весь екран пристрою, без відступів (`100vh`, клас
+  `wp-swiper-preview-page--background`; пропорції 3:2 / 3:4 / 9:16 прибрано) — лише прев'ю;
   приклад вмісту (заголовок, текст, кнопка) прибрано на прохання
   користувача, лишилась плашка «Background mode».
   Look: перемикач **Rounded corners** (`border_rounded`), під ним Radius (px)
@@ -80,6 +81,25 @@
   (`alpha_color`, за замовч. `rgba(0,0,0,0.65)`), він в одному ряду з
   Background style (група `caption_bg`). `merge_caption_bg_opacity()` у `get()`;
   вивід (і Art) — `WP_Swiper_Settings::caption_bg_colors()`.
+  Cube → Shadow under the cube: Offset (px), Scale і Color в одному ряду (група
+  `cube_shadow`); Color (`cube_shadow_color`, `alpha_color`, за замовч.
+  `rgba(0,0,0,0.6)`) замість Shadow opacity (%). `merge_cube_shadow_opacity()`
+  у `get()` (і в `layouts`); CSS фарбує `::before` тіні Swiper
+  (`--wp-swiper-cube-shadow-color`), `opacity: 1`. Blur не додавали (у Swiper
+  50px).
+  Coverflow: Depth (px) і Stretch (px) — для кожного екрана (вони в px, на
+  телефоні ті самі значення діють сильніше); Rotate і Side slides scale — одні
+  на всі (рішення користувача). `config.coverflow.depth|stretch` =
+  { desktop, tablet, mobile }, `slider.js coverflowAt()`: телефон — основа,
+  планшет і десктоп — у breakpoints.
+  Thumbnails → Look: першим Inactive thumbnail opacity (%), далі перемикачі
+  **Rounded corners** (`thumbs_rounded`, під ним Radius (px), за замовч. 6) і
+  **Frame** (`thumbs_border`, за замовч. увімкнено, під ним Width / Color / Active
+  color в одному ряду), як Image border. Вимкнено — 0 (`apply_rounded()`; і
+  мініатюри лайтбокса, що беруть радіус мініатюр). `merge_thumbs_switches()` у
+  `get()` (і в `layouts`): увімкнено, де був радіус > 0 / рамка > 0. У
+  `cases.php` випадок `thumbs` має `thumbs_border` (відсутній чекбокс = вимкнено,
+  як у формі).
   **Image shadow — назовні** (рішення користувача): місце під тінь більше не
   забирається з фото (був padding `--wp-swiper-shadow-room`, через нього при
   Contain фото меншали і проміжки між ними росли). Тепер фото того самого

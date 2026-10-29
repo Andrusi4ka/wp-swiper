@@ -33,12 +33,11 @@
 	 * Swiper options of the slider's effect. `config.shadows`: the depth shading
 	 * Swiper draws on slides, off unless "Effect shadows"; the effect's own
 	 * settings (Layout): `config.cube` { shadow, offset, scale, slideShadows },
-	 * `config.coverflow` { rotate, depth, stretch, scale }, `config.cards`
-	 * { offset, rotate, tilt }.
+	 * `config.coverflow` { rotate, depth, stretch, scale } (see coverflowAt()),
+	 * `config.cards` { offset, rotate, tilt }.
 	 */
 	function effectOptions( config ) {
 		var shadows = !! config.shadows;
-		var coverflow = config.coverflow;
 		var cards = config.cards;
 		var cube = config.cube || { shadow: false, offset: 20, scale: 0.94, slideShadows: false };
 
@@ -48,8 +47,8 @@
 			case 'cube':
 				return { cubeEffect: { shadow: !! cube.shadow, slideShadows: !! cube.slideShadows, shadowOffset: cube.offset, shadowScale: cube.scale } };
 			case 'coverflow':
-				coverflow = coverflow || { rotate: 50, depth: 100, stretch: 0, scale: 1 };
-				return { centeredSlides: true, coverflowEffect: { rotate: coverflow.rotate, stretch: coverflow.stretch, depth: coverflow.depth, scale: coverflow.scale, modifier: 1, slideShadows: shadows } };
+				// The phone's here; the larger screens' in their breakpoints (coverflowAt()).
+				return { centeredSlides: true, coverflowEffect: coverflowAt( config, 'mobile' ) };
 			case 'flip':
 				return { flipEffect: { slideShadows: shadows, limitRotation: true } };
 			case 'cards':
@@ -59,6 +58,19 @@
 				return { creativeEffect: creativePresets( config.creative || { style: 'push' }, shadows, config.direction === 'vertical' ) };
 		}
 		return {};
+	}
+
+	/**
+	 * Swiper's coverflowEffect on a device: depth and stretch are per device
+	 * ({ mobile, tablet, desktop }, a plain number in markup saved before:
+	 * the same everywhere), rotate and scale one for all.
+	 */
+	function coverflowAt( config, device ) {
+		var coverflow = config.coverflow || { rotate: 50, depth: 100, stretch: 0, scale: 1 };
+		var at = function ( value ) {
+			return 'object' === typeof value && null !== value ? value[ device ] : value;
+		};
+		return { rotate: coverflow.rotate, stretch: at( coverflow.stretch ), depth: at( coverflow.depth ), scale: coverflow.scale, modifier: 1, slideShadows: !! config.shadows };
 	}
 
 	/**
@@ -1274,6 +1286,10 @@
 		}
 
 		Object.assign( options, effectOptions( config ) );
+		if ( 'coverflow' === options.effect && ! single ) {
+			options.breakpoints[ BREAKPOINT_TABLET ].coverflowEffect = coverflowAt( config, 'tablet' );
+			options.breakpoints[ BREAKPOINT_DESKTOP ].coverflowEffect = coverflowAt( config, 'desktop' );
+		}
 		if ( config.thumbs && config.thumbs.fade ) {
 			options.fadeEffect = { crossFade: true };
 		}
