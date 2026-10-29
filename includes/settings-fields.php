@@ -562,7 +562,7 @@ return array(
 		'responsive'      => true,
 		'default'         => 6,
 		'device_defaults' => array( 'mobile' => 4 ),
-		'min'             => 2,
+		'min'             => 1,
 		'max'             => 30,
 		'step'            => 1,
 		'help'            => __( 'Grid, Justified rows, Masonry, Random mosaic, Scattered and Freeform; a template has its own number of places.', 'wp-swiper' ),

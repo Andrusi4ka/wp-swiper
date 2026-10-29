@@ -814,6 +814,19 @@
 			setColor( $pick, color.hex, color.alpha );
 		} );
 
+		// The settings' swatches show their inputs' colors again, after these
+		// were set without the picker (another effect's Layout, Undo / Redo).
+		function syncColorPicks() {
+			$( '#wp-swiper-settings ' + COLOR_PICK ).each( function () {
+				var $pick = $( this );
+				var $input = $pick.find( '.wp-swiper-color-pick__value' );
+				if ( $input.length ) {
+					var color = parseColor( $input.val() ) || pickDefault( $pick );
+					setColor( $pick, color.hex, color.alpha );
+				}
+			} );
+		}
+
 		// A size's device icons: which device's value the field shows.
 		$modal.on( 'click', '.wp-swiper-modal__size .wp-swiper-devices__btn', function () {
 			var $control = $( this ).closest( '.wp-swiper-modal__size' );
@@ -951,10 +964,11 @@
 			COLOR_PROPS.forEach( function ( prop ) {
 				showColor( prop, slideInput( $slide, prop ).val() );
 			} );
-			// A video slide has no link (a click on it is the player's).
-			$modal.find( '.wp-swiper-modal__link' ).prop( 'hidden', $slide.hasClass( 'wp-swiper-slide--video' ) );
 			$( '#wp-swiper-link-input' ).val( slideInput( $slide, 'link' ).val() );
 			$( '#wp-swiper-new-tab-input' ).prop( 'checked', slideInput( $slide, 'new_tab' ).val() === '1' );
+			// A video slide has no link (a click on it is the player's).
+			allowLink( ! $slide.hasClass( 'wp-swiper-slide--video' ) );
+			showTab( 'caption' );
 			$modal.prop( 'hidden', false );
 			$( document.body ).addClass( 'wp-swiper-modal-open' );
 
@@ -969,17 +983,82 @@
 					instance.focus();
 				}
 			}, 'strong,em' );
-			// The description: paragraph or heading (aligned), the inline styles (text color too), links and lists.
-			startEditor( DESCRIPTION_EDITOR, {
-				toolbar1: 'formatselect,bold,italic,underline,forecolor,alignleft,aligncenter,alignright,bullist,numlist,link,unlink,removeformat,undo,redo',
-				toolbar2: '',
-				block_formats: 'Paragraph=p;Heading 1=h1;Heading 2=h2;Heading 3=h3;Heading 4=h4;Heading 5=h5;Heading 6=h6',
-				height: 220
-			}, 'strong,em,link,ul,ol,li' );
 			if ( ! window.tinymce ) {
 				$( '#' + CAPTION_EDITOR ).trigger( 'focus' );
 			}
 		}
+
+		/*
+		 * The window's tabs (Caption, Description, Link): one part in view,
+		 * Caption on opening. The description's editor starts the first time
+		 * its tab is shown (an editor started out of view is drawn wrong). A
+		 * video slide has no Link tab. A dot on a tab: that part has something
+		 * in it (checked on opening and on each switch, the link as it is typed).
+		 */
+		var $modalTabs = $modal.find( '.wp-swiper-modal__tab' );
+		var descriptionStarted = false;
+
+		function markTabs() {
+			var filled = {
+				caption: hasText( editorValue( CAPTION_EDITOR ) ),
+				description: hasText( editorValue( DESCRIPTION_EDITOR ) ),
+				link: $.trim( $( '#wp-swiper-link-input' ).val() ) !== ''
+			};
+			$modalTabs.each( function () {
+				$( this ).toggleClass( 'has-value', !! filled[ $( this ).data( 'tab' ) ] );
+			} );
+		}
+
+		function showTab( tab ) {
+			$modalTabs.each( function () {
+				var on = $( this ).data( 'tab' ) === tab;
+				$( this ).attr( { 'aria-selected': on ? 'true' : 'false', tabindex: on ? null : '-1' } );
+			} );
+			$modal.find( '.wp-swiper-modal__section[role="tabpanel"]' ).each( function () {
+				this.hidden = $( this ).data( 'tab' ) !== tab;
+			} );
+			closeColorPickers();
+			// The description: paragraph or heading (aligned), the inline styles (text color too), links and lists.
+			if ( tab === 'description' && $editing && ! descriptionStarted ) {
+				descriptionStarted = true;
+				startEditor( DESCRIPTION_EDITOR, {
+					toolbar1: 'formatselect,bold,italic,underline,forecolor,alignleft,aligncenter,alignright,bullist,numlist,link,unlink,removeformat,undo,redo',
+					toolbar2: '',
+					block_formats: 'Paragraph=p;Heading 1=h1;Heading 2=h2;Heading 3=h3;Heading 4=h4;Heading 5=h5;Heading 6=h6',
+					height: 220
+				}, 'strong,em,link,ul,ol,li' );
+			}
+			markTabs();
+		}
+
+		// The Link tab, or none (a video slide): Caption instead if it was in view.
+		function allowLink( on ) {
+			var $tab = $modalTabs.filter( '[data-tab="link"]' ).prop( 'hidden', ! on );
+			if ( ! on && $tab.attr( 'aria-selected' ) === 'true' ) {
+				showTab( 'caption' );
+			}
+		}
+
+		$modal.on( 'click', '.wp-swiper-modal__tab', function () {
+			showTab( $( this ).data( 'tab' ) );
+		} );
+		// The arrows, Home and End move along the tabs shown (as tabs do).
+		$modal.on( 'keydown', '.wp-swiper-modal__tab', function ( e ) {
+			var steps = { ArrowRight: 1, ArrowLeft: -1 };
+			if ( ! ( e.key in steps ) && e.key !== 'Home' && e.key !== 'End' ) {
+				return;
+			}
+			var $shown = $modalTabs.filter( function () {
+				return ! this.hidden;
+			} );
+			var count = $shown.length;
+			var at = $shown.index( this );
+			var to = e.key === 'Home' ? 0 : ( e.key === 'End' ? count - 1 : ( at + steps[ e.key ] + count ) % count );
+			e.preventDefault();
+			$shown.eq( to ).trigger( 'focus' );
+			showTab( $shown.eq( to ).data( 'tab' ) );
+		} );
+		$( '#wp-swiper-link-input' ).on( 'input', markTabs );
 
 		/*
 		 * The window's Replace photo button (under its title) picks another image
@@ -1023,7 +1102,7 @@
 					$replacement = mediaRow( data );
 					showModalThumb( $replacement );
 					// A video slide has no link (a click on it is the player's).
-					$modal.find( '.wp-swiper-modal__link' ).prop( 'hidden', $replacement.hasClass( 'wp-swiper-slide--video' ) );
+					allowLink( ! $replacement.hasClass( 'wp-swiper-slide--video' ) );
 				} );
 			}
 			replaceFrame.open();
@@ -1090,8 +1169,11 @@
 			$replacement = null;
 			if ( editor() ) {
 				editor().remove( CAPTION_EDITOR );
-				editor().remove( DESCRIPTION_EDITOR );
+				if ( descriptionStarted ) {
+					editor().remove( DESCRIPTION_EDITOR );
+				}
 			}
+			descriptionStarted = false;
 			closeColorPickers();
 			$modal.prop( 'hidden', true );
 			$( document.body ).removeClass( 'wp-swiper-modal-open' );
@@ -1285,6 +1367,10 @@
 			return $( '.wp-swiper-field[data-field="' + name + '"]' );
 		}
 
+		// Every lock below, its state as Undo / Redo keeps it with the values
+		// (get(): the state; set( state ): back to it, the fields' values aside).
+		var lockStates = [];
+
 		/**
 		 * A checkbox that some other setting can make unavailable: disabled (not
 		 * hidden) and shown as `shown` (unchecked unless given) while locked,
@@ -1318,6 +1404,19 @@
 							$box.prop( { disabled: true, checked: showing } );
 						}
 					} );
+				}
+			} );
+
+			lockStates.push( {
+				get: function () {
+					return [ locked, wanted, showing ];
+				},
+				set: function ( state ) {
+					locked = state[ 0 ];
+					wanted = state[ 1 ];
+					showing = state[ 2 ];
+					$box.prop( 'disabled', locked );
+					field( name ).toggleClass( 'is-disabled', locked );
 				}
 			} );
 
@@ -1375,6 +1474,26 @@
 							setEditable( false );
 						}
 					} );
+				}
+			} );
+
+			lockStates.push( {
+				get: function () {
+					// A plain array: jQuery's map() would drop the nulls.
+					var wanted = [];
+					$inputs.each( function () {
+						var value = $( this ).data( 'wanted' );
+						wanted.push( undefined === value || null === value ? null : String( value ) );
+					} );
+					return [ locked, wanted ];
+				},
+				set: function ( state ) {
+					locked = state[ 0 ];
+					$inputs.each( function ( i ) {
+						$( this ).data( 'wanted', null === state[ 1 ][ i ] ? undefined : state[ 1 ][ i ] );
+					} );
+					setEditable( ! locked );
+					$field.toggleClass( 'is-disabled', locked );
 				}
 			} );
 
@@ -1543,6 +1662,9 @@
 			$( '.wp-swiper-field--tiles' ).each( function () {
 				syncTiles( $( this ) );
 			} );
+			// The color swatches show it too.
+			closeColorPickers();
+			syncColorPicks();
 		}
 
 		// Bound on the select itself: runs before syncFields, which then shows,
@@ -2544,70 +2666,280 @@
 			syncOrderButtons();
 
 			/*
-			 * Undo / redo (the buttons left of the preview's devices, Collage and
-			 * Art; Ctrl+Z / Ctrl+Shift+Z in the preview): what was done by hand
-			 * there (photos swapped or moved, sizes dragged) and the Order field's
-			 * Shuffle and Reset. Per device, as their values are: the buttons work
-			 * on the device shown. A step keeps the values before it; going back
-			 * puts them in again and the preview takes them at once
-			 * (wpSwiperRestoreCollage / wpSwiperRestoreArt in its frame). Until the
-			 * page is left: only the values are saved.
+			 * Undo / redo (the buttons left of the preview's devices; Ctrl+Z and
+			 * Ctrl+Shift+Z or Ctrl+Y, in the preview too, but not while typing in
+			 * a box: the browser undoes the typing there). Every setting of the
+			 * slider and, for Collage and Art, what was done by hand in the
+			 * preview (photos swapped or moved, sizes dragged, the Order field's
+			 * Shuffle and Reset); not the slides (their list, captions, links).
+			 * One history for the page, up to 50 steps, until the page is left.
+			 *
+			 * A step keeps the settings as they were before it and where it was
+			 * made: its page, and its device for a device's own value or an edit
+			 * in the preview. Going back or forth shows them first, puts the
+			 * values in (the locks' states with them) and lights up the fields
+			 * that changed. The preview is not drawn again (Update says it is
+			 * out of date, as after any change); an edit made in it is taken
+			 * back there at once.
+			 * Changes of one field close together (typing, dragging) are one step.
 			 */
-			var HISTORY_FIELDS = [ 'collage_order', 'collage_mosaic', 'collage_cuts', 'collage_manual', 'collage_count', 'art_order', 'art_ring_center' ];
 			var HISTORY_MAX = 50;
+			// Taken by the preview without drawing it again (wpSwiperRestoreCollage / -Art).
+			var PREVIEW_FIELDS = [ 'collage_order', 'collage_mosaic', 'collage_cuts', 'collage_manual', 'collage_count', 'art_order', 'art_ring_center' ];
 			var $history = $preview.find( '.wp-swiper-preview__history' );
 			var $undo = $history.find( '.wp-swiper-preview__undo' );
 			var $redo = $history.find( '.wp-swiper-preview__redo' );
-			var edits = {};
-			// A step still taking the messages of the same drag (a swap in Scattered sends two).
-			var stepOpen = {};
-			DEVICES.forEach( function ( device ) {
-				edits[ device ] = { undo: [], redo: [] };
-			} );
+			var undoSteps = [];
+			var redoSteps = [];
+			// The settings as they are: read again shortly after each change.
+			var baseline = null;
+			var baselineTimer = null;
+			// The step still taking changes (its key), until a pause.
+			var openKey = null;
+			var openTimer = null;
+			var redoKept = [];
+			var restoring = false;
+			var markTimer = null;
 
-			var snapshot = function ( device ) {
+			var settingInputs = function () {
+				return $( '#wp-swiper-settings' ).find( 'input[name^="wp_swiper_settings["], select[name^="wp_swiper_settings["], textarea[name^="wp_swiper_settings["]' ).not( $layouts );
+			};
+			// Each setting's input with its key: its name, and which one of that name.
+			var eachSetting = function ( fn ) {
+				var seen = {};
+				settingInputs().each( function () {
+					seen[ this.name ] = ( seen[ this.name ] || 0 ) + 1;
+					fn( this, this.name + '#' + seen[ this.name ] );
+				} );
+			};
+			var isBox = function ( el ) {
+				return el.type === 'checkbox' || el.type === 'radio';
+			};
+
+			var snapshot = function () {
+				saveSettingsEditors();
 				var values = {};
-				HISTORY_FIELDS.forEach( function ( name ) {
-					values[ name ] = input( name, device ).val() || '';
+				eachSetting( function ( el, key ) {
+					var value = $( el ).val();
+					values[ key ] = isBox( el ) ? el.checked : ( null === value ? '' : String( value ) );
+					// An image setting's thumbnail.
+					if ( el.hasAttribute( 'data-url' ) ) {
+						values[ key + '@url' ] = el.getAttribute( 'data-url' );
+					}
 				} );
-				return values;
+				// The other effects' Layout values (the chosen one's are the fields').
+				var others = $.extend( {}, layouts );
+				delete others[ layoutEffect ];
+				return {
+					values: values,
+					locks: lockStates.map( function ( lock ) {
+						return lock.get();
+					} ),
+					layouts: JSON.stringify( others ),
+					effect: layoutEffect,
+					// Art's SVG shape boxes: which file they say is in.
+					shapes: $( '#wp-swiper-settings .wp-swiper-shape' ).map( function () {
+						return this.innerHTML;
+					} ).get()
+				};
 			};
-			var sameValues = function ( a, b ) {
-				return HISTORY_FIELDS.every( function ( name ) {
-					return a[ name ] === b[ name ];
-				} );
-			};
-			var syncHistory = function () {
-				var on = [ 'collage', 'art' ].indexOf( $( '#wp-swiper-effect' ).val() ) !== -1;
-				var steps = edits[ currentDevice ];
-				$history.prop( 'hidden', ! on );
-				$undo.prop( 'disabled', ! steps.undo.length );
-				$redo.prop( 'disabled', ! steps.redo.length );
+			var sameState = function ( a, b ) {
+				return JSON.stringify( [ a.values, a.locks, a.layouts, a.effect ] ) === JSON.stringify( [ b.values, b.locks, b.layouts, b.effect ] );
 			};
 
-			// Before a change on `device`: its values as they are, a step to go back to.
-			var record = function ( device ) {
-				if ( ! edits[ device ] || stepOpen[ device ] ) {
+			// The values of `state` into the fields, and all that shows them.
+			var restoreState = function ( state ) {
+				closeColorPickers();
+				eachSetting( function ( el, key ) {
+					if ( ! ( key in state.values ) ) {
+						return;
+					}
+					if ( isBox( el ) ) {
+						el.checked = !! state.values[ key ];
+					} else {
+						$( el ).val( state.values[ key ] );
+						var editor = el.tagName === 'TEXTAREA' && window.tinymce ? window.tinymce.get( el.id ) : null;
+						if ( editor ) {
+							editor.setContent( el.value );
+						}
+					}
+					if ( ( key + '@url' ) in state.values ) {
+						el.setAttribute( 'data-url', state.values[ key + '@url' ] );
+					}
+				} );
+				state.locks.forEach( function ( lock, i ) {
+					if ( lockStates[ i ] ) {
+						lockStates[ i ].set( lock );
+					}
+				} );
+				layouts = JSON.parse( state.layouts );
+				layoutEffect = state.effect;
+				$( '#wp-swiper-settings .wp-swiper-shape' ).each( function ( i ) {
+					if ( undefined !== state.shapes[ i ] ) {
+						this.innerHTML = state.shapes[ i ];
+					}
+				} );
+				$( '.wp-swiper-field--responsive' ).each( function () {
+					syncResponsive( $( this ) );
+				} );
+				$( '.wp-swiper-field--image input[type="hidden"]' ).each( function () {
+					syncPicker( $( this ) );
+				} );
+				$( '.wp-swiper-field--tiles' ).each( function () {
+					syncTiles( $( this ) );
+				} );
+				syncColorPicks();
+				syncFields();
+				syncOrderButtons();
+			};
+
+			var syncHistory = function () {
+				$undo.prop( 'disabled', ! undoSteps.length );
+				$redo.prop( 'disabled', ! redoSteps.length );
+			};
+
+			var currentPage = function () {
+				return $menu.filter( '[aria-current="true"]' ).data( 'page' ) || '';
+			};
+
+			var readBaseline = function () {
+				clearTimeout( baselineTimer );
+				baselineTimer = null;
+				baseline = snapshot();
+			};
+
+			// The open step takes no more changes; if nothing changed after all, it goes.
+			var closeStep = function () {
+				clearTimeout( openTimer );
+				openTimer = null;
+				if ( null === openKey ) {
 					return;
 				}
-				var steps = edits[ device ];
-				var before = snapshot( device );
-				var redo = steps.redo;
-				steps.undo.push( before );
-				if ( steps.undo.length > HISTORY_MAX ) {
-					steps.undo.shift();
+				openKey = null;
+				if ( baselineTimer ) {
+					readBaseline();
 				}
-				steps.redo = [];
-				stepOpen[ device ] = setTimeout( function () {
-					stepOpen[ device ] = null;
-					// Nothing changed after all (an edge let go where it was): no step.
-					if ( steps.undo[ steps.undo.length - 1 ] === before && sameValues( before, snapshot( device ) ) ) {
-						steps.undo.pop();
-						steps.redo = redo;
-					}
-					syncHistory();
-				}, 300 );
+				var last = undoSteps[ undoSteps.length - 1 ];
+				if ( last && sameState( last.state, baseline ) ) {
+					undoSteps.pop();
+					redoSteps = redoKept;
+				}
+				redoKept = [];
 				syncHistory();
+			};
+
+			/*
+			 * A change, made already. `at`: { key (the field and its device), page,
+			 * device (a device's own value, an edit in the preview; '' for all) }.
+			 * The first change of a field starts a step with the settings read
+			 * before it; more of the same field, or any while the settings were
+			 * not read again yet (one action changing two), go into that step.
+			 */
+			var noteChange = function ( at ) {
+				if ( restoring || null === baseline ) {
+					return;
+				}
+				if ( ! baselineTimer && at.key !== openKey ) {
+					closeStep();
+					undoSteps.push( { state: baseline, at: at } );
+					if ( undoSteps.length > HISTORY_MAX ) {
+						undoSteps.shift();
+					}
+					redoKept = redoSteps;
+					redoSteps = [];
+					openKey = at.key;
+				}
+				clearTimeout( baselineTimer );
+				baselineTimer = setTimeout( readBaseline, 150 );
+				clearTimeout( openTimer );
+				openTimer = setTimeout( closeStep, 800 );
+				syncHistory();
+			};
+
+			// An edit in the preview (and the Order field's buttons), on `device`.
+			var record = function ( device, page ) {
+				noteChange( { key: 'preview:' + device, page: page || currentPage(), device: device } );
+			};
+
+			$( '#wp-swiper-settings' ).on( 'input change', 'input, select, textarea', function () {
+				if ( this.type === 'file' || $( this ).closest( '.wp-swiper-preview' ).length ) {
+					return;
+				}
+				var device = $( this ).closest( '[data-device]' ).data( 'device' ) || '';
+				noteChange( {
+					key: ( $( this ).closest( '.wp-swiper-field' ).data( 'field' ) || this.name || this.id ) + ':' + device,
+					page: $( this ).closest( '.wp-swiper-page' ).data( 'page' ) || currentPage(),
+					device: device
+				} );
+			} );
+
+			// A responsive field shows `device`'s value (as its icons do, without the focus).
+			var showFieldDevice = function ( $field, device ) {
+				if ( ! $field.find( '.wp-swiper-devices__btn[data-device="' + device + '"]' ).length ) {
+					return;
+				}
+				$field.find( '.wp-swiper-devices__btn' ).each( function () {
+					var on = $( this ).data( 'device' ) === device;
+					$( this ).toggleClass( 'is-active', on ).attr( 'aria-pressed', on ? 'true' : 'false' );
+				} );
+				$field.find( '.wp-swiper-devices__input' ).each( function () {
+					this.hidden = $( this ).data( 'device' ) !== device;
+				} );
+				if ( $field.is( '.wp-swiper-field--tiles' ) ) {
+					syncTiles( $field );
+				}
+			};
+
+			// The fields whose values went back or forth: shown, lit for a moment, in view.
+			var markChanged = function ( before, after ) {
+				var $fields = $();
+				eachSetting( function ( el, key ) {
+					if ( before.values[ key ] === after.values[ key ] && before.values[ key + '@url' ] === after.values[ key + '@url' ] ) {
+						return;
+					}
+					var $field = $( el ).closest( '.wp-swiper-field' );
+					var device = $( el ).closest( '[data-device]' ).data( 'device' );
+					if ( device ) {
+						showFieldDevice( $field, device );
+						// Sizes side by side: tablet and mobile shown.
+						if ( device !== 'desktop' ) {
+							$( el ).closest( '.wp-swiper-inline-devices' ).addClass( 'is-open' )
+								.find( '.wp-swiper-inline-devices__toggle' ).attr( 'aria-expanded', 'true' );
+						}
+					}
+					$fields = $fields.add( $field );
+				} );
+				syncOrderButtons();
+				$fields = $fields.filter( ':visible' );
+				clearTimeout( markTimer );
+				$( '.wp-swiper-field.is-restored' ).removeClass( 'is-restored' );
+				if ( ! $fields.length ) {
+					return;
+				}
+				// Reflow: the light starts again on a field lit already.
+				void $fields[ 0 ].offsetWidth;
+				$fields.addClass( 'is-restored' );
+				markTimer = setTimeout( function () {
+					$fields.removeClass( 'is-restored' );
+				}, 1600 );
+				var box = $fields[ 0 ].getBoundingClientRect();
+				if ( box.top < 40 || box.bottom > window.innerHeight ) {
+					$fields[ 0 ].scrollIntoView( { block: 'center', behavior: 'smooth' } );
+				}
+			};
+
+			// Only values the preview takes at once changed (an edit made in it).
+			var previewOnly = function ( before, after ) {
+				if ( before.layouts !== after.layouts || before.effect !== after.effect ) {
+					return false;
+				}
+				return Object.keys( after.values ).every( function ( key ) {
+					if ( before.values[ key ] === after.values[ key ] ) {
+						return true;
+					}
+					var name = /^wp_swiper_settings\[(.+)\]#\d+$/.exec( key );
+					return !! name && PREVIEW_FIELDS.indexOf( name[ 1 ].replace( /_(tablet|mobile)$/, '' ) ) !== -1;
+				} );
 			};
 
 			// A device's value as the slider takes it: its own, else the larger screen's.
@@ -2625,7 +2957,7 @@
 					return id > 0;
 				} );
 			};
-			// The preview takes the device's values at once; drawn again if it cannot.
+			// The preview takes the device's values at once; else Update says it is out of date.
 			var restorePreview = function ( device ) {
 				var win = previewFrame.contentWindow;
 				var center = parseFloat( resolved( 'art_ring_center', device ) );
@@ -2649,28 +2981,52 @@
 					}
 				} catch ( e ) {}
 				if ( ! done ) {
-					updatePreview();
+					$update.addClass( 'is-stale' );
 				}
 			};
 
 			var stepHistory = function ( back ) {
-				var device = currentDevice;
-				var steps = edits[ device ];
-				var from = back ? steps.undo : steps.redo;
-				if ( ! from.length ) {
+				closeStep();
+				if ( baselineTimer ) {
+					readBaseline();
+				}
+				var from = back ? undoSteps : redoSteps;
+				if ( ! from.length || null === baseline ) {
 					return;
 				}
-				clearTimeout( stepOpen[ device ] );
-				stepOpen[ device ] = null;
-				( back ? steps.redo : steps.undo ).push( snapshot( device ) );
-				var values = from.pop();
-				HISTORY_FIELDS.forEach( function ( name ) {
-					input( name, device ).val( values[ name ] );
+				var step = from.pop();
+				var before = baseline;
+				( back ? redoSteps : undoSteps ).push( { state: before, at: step.at } );
+
+				restoring = true;
+				// Where it was made: its device first (the preview's size, the fields' values)…
+				if ( step.at.device && step.at.device !== currentDevice ) {
+					setDevice( step.at.device );
+					try {
+						window.localStorage.setItem( DEVICE_KEY, currentDevice );
+					} catch ( e ) {}
+				}
+				restoreState( step.state );
+				// …its page once the values say which pages there are.
+				var $item = $menu.filter( '[data-page="' + step.at.page + '"]' ).filter( function () {
+					return this.style.display !== 'none';
 				} );
-				syncResponsive( $order );
-				syncResponsive( field( 'collage_count' ) );
-				syncOrderButtons();
-				restorePreview( device );
+				if ( $item.length ) {
+					showPage( step.at.page );
+					try {
+						window.localStorage.setItem( PAGE_KEY, step.at.page );
+					} catch ( e ) {}
+				}
+				startSettingsEditors();
+				baseline = snapshot();
+				restoring = false;
+
+				markChanged( before, baseline );
+				if ( previewOnly( before, baseline ) ) {
+					restorePreview( step.at.device || currentDevice );
+				} else {
+					$update.addClass( 'is-stale' );
+				}
 				syncHistory();
 			};
 
@@ -2680,23 +3036,37 @@
 			$redo.on( 'click', function () {
 				stepHistory( false );
 			} );
-			// The keys in the preview (by the key's place: any keyboard layout).
+
+			// The keys (by the key's place: any keyboard layout), on the page and in the preview.
+			var historyKey = function ( e ) {
+				if ( ! ( e.ctrlKey || e.metaKey ) || e.altKey || ( e.code !== 'KeyZ' && e.code !== 'KeyY' ) ) {
+					return;
+				}
+				var target = e.target || {};
+				// Typing in a box: the browser's own undo.
+				if ( target.isContentEditable || /^(TEXTAREA|SELECT)$/.test( target.tagName ) ||
+					( target.tagName === 'INPUT' && ! /^(checkbox|radio|button|submit|range|file)$/.test( target.type ) ) ) {
+					return;
+				}
+				// A window over the page (Slide info, the media library, a color picker).
+				if ( $modal.is( ':visible' ) || $( '.media-modal:visible' ).length || openPickr() ) {
+					return;
+				}
+				e.preventDefault();
+				stepHistory( e.code === 'KeyZ' && ! e.shiftKey );
+			};
+			document.addEventListener( 'keydown', historyKey );
+
 			$( previewFrame ).on( 'load', function () {
 				try {
-					previewFrame.contentWindow.document.addEventListener( 'keydown', function ( e ) {
-						if ( ! ( e.ctrlKey || e.metaKey ) || e.altKey || $history.prop( 'hidden' ) ) {
-							return;
-						}
-						if ( e.code === 'KeyZ' || e.code === 'KeyY' ) {
-							e.preventDefault();
-							stepHistory( e.code === 'KeyZ' && ! e.shiftKey );
-						}
-					} );
+					previewFrame.contentWindow.document.addEventListener( 'keydown', historyKey );
 				} catch ( e ) {}
 			} );
-			$( '#wp-swiper-effect' ).on( 'change', syncHistory );
-			deviceListeners.push( syncHistory );
+
 			syncHistory();
+			readBaseline();
+			// Again once the rest of the page has set its fields.
+			setTimeout( readBaseline );
 
 			$order.on( 'click', '.wp-swiper-shuffle', function () {
 				var $input = input( 'collage_order', orderDevice() );
@@ -2716,14 +3086,14 @@
 						shuffled[ j ] = swap;
 					}
 				} while ( shuffled.length > 1 && shuffled.join( ',' ) === $input.val() && ++tries < 10 );
-				record( orderDevice() );
+				record( orderDevice(), $order.closest( '.wp-swiper-page' ).data( 'page' ) );
 				setOrder( orderDevice(), shuffled );
 				updatePreview();
 			} );
 
 			// Reset: the order and the mosaic or template sizes, and that they were set by hand.
 			$order.on( 'click', '.wp-swiper-order-reset', function () {
-				record( orderDevice() );
+				record( orderDevice(), $order.closest( '.wp-swiper-page' ).data( 'page' ) );
 				setOrder( orderDevice(), [] );
 				setMosaic( orderDevice(), '' );
 				setCuts( orderDevice(), '' );
@@ -2743,7 +3113,7 @@
 					record( data.device );
 				}
 				// Scattered: a place taken out there, one photo fewer on screen on that device.
-				if ( data.wpSwiper === 'collage-count' && data.count >= 2 && data.count <= 30 ) {
+				if ( data.wpSwiper === 'collage-count' && data.count >= 1 && data.count <= 30 ) {
 					input( 'collage_count', data.device ).val( Math.round( data.count ) );
 					syncResponsive( field( 'collage_count' ) );
 				}

@@ -185,11 +185,11 @@ class WP_Swiper_Admin {
 		</script>
 
 		<?php
-		// A slide's caption, description and link: one window for all slides
-		// (admin.js fills it from the slide and starts its editors on opening,
-		// removes them on closing, so the slides stay plain fields that can be
-		// dragged). Its fields have no name: what is applied goes to the
-		// slide's own hidden ones.
+		// A slide's caption, description and link: one window for all slides,
+		// a tab each (admin.js fills it from the slide and starts its editors
+		// as their tabs show, removes them on closing, so the slides stay plain
+		// fields that can be dragged). Its fields have no name: what is applied
+		// goes to the slide's own hidden ones.
 		?>
 		<div class="wp-swiper-modal" id="wp-swiper-slide-modal" role="dialog" aria-modal="true" aria-labelledby="wp-swiper-slide-modal-title" hidden>
 			<div class="wp-swiper-modal__backdrop"></div>
@@ -207,9 +207,25 @@ class WP_Swiper_Admin {
 					</div>
 					<button type="button" class="wp-swiper-modal__close" aria-label="<?php esc_attr_e( 'Close', 'wp-swiper' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button>
 				</div>
+				<?php
+				// Its three parts, one tab each (admin.js switches them; Caption on
+				// opening). A dot on a tab: that part has something in it.
+				$tabs = array(
+					'caption'     => __( 'Caption', 'wp-swiper' ),
+					'description' => __( 'Description', 'wp-swiper' ),
+					'link'        => __( 'Link', 'wp-swiper' ),
+				);
+				?>
+				<div class="wp-swiper-modal__tabs" role="tablist" aria-label="<?php esc_attr_e( 'Slide info', 'wp-swiper' ); ?>">
+					<?php foreach ( $tabs as $tab => $tab_label ) : ?>
+						<button type="button" class="wp-swiper-modal__tab" id="wp-swiper-modal-tab-<?php echo esc_attr( $tab ); ?>" role="tab" data-tab="<?php echo esc_attr( $tab ); ?>" aria-controls="wp-swiper-modal-panel-<?php echo esc_attr( $tab ); ?>" aria-selected="<?php echo 'caption' === $tab ? 'true' : 'false'; ?>"<?php echo 'caption' === $tab ? '' : ' tabindex="-1"'; ?>>
+							<?php echo esc_html( $tab_label ); ?><span class="wp-swiper-modal__tab-dot" aria-hidden="true"></span>
+						</button>
+					<?php endforeach; ?>
+				</div>
 				<div class="wp-swiper-modal__body">
-					<div class="wp-swiper-modal__section">
-						<h3 class="wp-swiper-modal__label"><label for="wp-swiper-caption-editor"><?php esc_html_e( 'Caption', 'wp-swiper' ); ?></label></h3>
+					<div class="wp-swiper-modal__section" id="wp-swiper-modal-panel-caption" role="tabpanel" data-tab="caption" aria-labelledby="wp-swiper-modal-tab-caption">
+						<h3 class="wp-swiper-modal__label screen-reader-text"><label for="wp-swiper-caption-editor"><?php esc_html_e( 'Caption', 'wp-swiper' ); ?></label></h3>
 						<textarea id="wp-swiper-caption-editor" rows="3"></textarea>
 						<?php // Its font size, weight and color side by side. ?>
 						<div class="wp-swiper-modal__text-style">
@@ -218,8 +234,8 @@ class WP_Swiper_Admin {
 							<?php self::color_control( 'caption_color' ); ?>
 						</div>
 					</div>
-					<div class="wp-swiper-modal__section">
-						<h3 class="wp-swiper-modal__label"><label for="wp-swiper-description-editor"><?php esc_html_e( 'Description', 'wp-swiper' ); ?></label></h3>
+					<div class="wp-swiper-modal__section" id="wp-swiper-modal-panel-description" role="tabpanel" data-tab="description" aria-labelledby="wp-swiper-modal-tab-description" hidden>
+						<h3 class="wp-swiper-modal__label screen-reader-text"><label for="wp-swiper-description-editor"><?php esc_html_e( 'Description', 'wp-swiper' ); ?></label></h3>
 						<textarea id="wp-swiper-description-editor" rows="10"></textarea>
 						<div class="wp-swiper-modal__text-style">
 							<?php self::font_control( 'description_size' ); ?>
@@ -227,9 +243,9 @@ class WP_Swiper_Admin {
 							<?php self::color_control( 'description_color' ); ?>
 						</div>
 					</div>
-					<?php // Not for video slides (a click on one is the player's): admin.js hides it. ?>
-					<div class="wp-swiper-modal__section wp-swiper-modal__link">
-						<h3 class="wp-swiper-modal__label"><label for="wp-swiper-link-input"><?php esc_html_e( 'Link', 'wp-swiper' ); ?></label></h3>
+					<?php // Not for video slides (a click on one is the player's): admin.js hides its tab. ?>
+					<div class="wp-swiper-modal__section wp-swiper-modal__link" id="wp-swiper-modal-panel-link" role="tabpanel" data-tab="link" aria-labelledby="wp-swiper-modal-tab-link" hidden>
+						<h3 class="wp-swiper-modal__label screen-reader-text"><label for="wp-swiper-link-input"><?php esc_html_e( 'Link', 'wp-swiper' ); ?></label></h3>
 						<p class="description"><?php esc_html_e( 'A click on the image opens it. A slider with links has no lightbox.', 'wp-swiper' ); ?></p>
 						<input type="url" id="wp-swiper-link-input" class="large-text" placeholder="https://…" spellcheck="false">
 						<label class="wp-swiper-modal__new-tab">
@@ -699,11 +715,13 @@ class WP_Swiper_Admin {
 				echo '<p class="description wp-swiper-section-note" data-note="unavailable" hidden>' . esc_html__( 'Descriptions are not shown with a vertical slider, Continuous scroll, the Collage effect or when the slider is used as a background.', 'wp-swiper' ) . '</p>';
 			}
 			if ( 'video' === $page ) {
-				// The poster of each video slide: admin.js lists the video slides of
-				// the Slides box here; the poster itself stays in its slide's row.
+				// The poster of each video slide, in a block (a grey card) of its own
+				// before the settings' blocks: admin.js lists the video slides of the
+				// Slides box here; the poster itself stays in its slide's row.
+				echo '<div class="wp-swiper-block" data-block="video_posters"><h4 class="wp-swiper-subheading">' . esc_html__( 'Posters', 'wp-swiper' ) . '</h4>';
 				echo '<div class="wp-swiper-field wp-swiper-posters" data-field="video_posters"><div class="wp-swiper-field__head"><span class="wp-swiper-field__label">' . esc_html__( 'Poster images', 'wp-swiper' ) . '</span>';
 				self::help_tip( __( 'Shown before a video plays and as its thumbnail. Without one: the video’s featured image in the media library, else its first frame.', 'wp-swiper' ) );
-				echo '</div><ul class="wp-swiper-posters__list"></ul></div>';
+				echo '</div><ul class="wp-swiper-posters__list"></ul></div></div>';
 			}
 			if ( isset( $blocks[ $page ] ) ) {
 				self::render_blocks( $blocks[ $page ], $keys[ $page ], $fields, $values );

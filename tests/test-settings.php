@@ -107,6 +107,19 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( 6, $clean['_version'] );
 	}
 
+	public function test_collage_photos_on_screen_may_be_one() {
+		$this->assertSame( 1, WP_Swiper_Settings::fields()['collage_count']['min'] );
+		$clean = WP_Swiper_Settings::sanitize( array( 'collage_count' => '1', 'collage_count_tablet' => '0', 'collage_count_mobile' => '' ) );
+		$this->assertSame( 1, $clean['collage_count'] );
+		// Below one: one; an empty smaller screen still inherits.
+		$this->assertSame( 1, $clean['collage_count_tablet'] );
+		$this->assertSame( '', $clean['collage_count_mobile'] );
+		$this->assertSame( 1, WP_Swiper_Settings::sanitize( array( 'collage_count' => '0' ) )['collage_count'] );
+		// The collage's own limit (the × of Scattered and Freeform) and the editor's check: the same.
+		$this->assertStringContainsString( 'var COLLAGE_MIN_COUNT = 1;', file_get_contents( WP_SWIPER_DIR . 'assets/js/collage.js' ) );
+		$this->assertStringContainsString( "data.wpSwiper === 'collage-count' && data.count >= 1 && data.count <= 30", file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' ) );
+	}
+
 	public function test_sanitize_tablet_and_mobile_values_may_inherit() {
 		$clean = WP_Swiper_Settings::sanitize(
 			array(

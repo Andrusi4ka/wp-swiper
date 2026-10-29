@@ -1524,6 +1524,17 @@ class WP_Swiper_Settings {
 					'fields' => array( 'description_offset', 'description_transition' ),
 				),
 			),
+			// After the Posters block (the video slides' list, class-wp-swiper-admin.php).
+			'video'       => array(
+				'video_playback' => array(
+					'title'  => __( 'Playback', 'wp-swiper' ),
+					'fields' => array( 'video_autoplay', 'video_muted', 'video_loop', 'video_pause', 'video_wait' ),
+				),
+				'video_player'   => array(
+					'title'  => __( 'Player', 'wp-swiper' ),
+					'fields' => array( 'video_controls', 'video_preload' ),
+				),
+			),
 			'attributes'  => array(
 				'attributes' => array(
 					'title'  => __( 'HTML attributes', 'wp-swiper' ),

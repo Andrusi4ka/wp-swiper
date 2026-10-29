@@ -99,8 +99,8 @@ class WP_Swiper_Preview {
 						<span class="dashicons dashicons-editor-code" aria-hidden="true"></span>
 						<?php esc_html_e( 'Developer mode', 'wp-swiper' ); ?>
 					</button>
-					<?php // Collage and Art only (admin.js): undo / redo what was done in the preview, for the device shown. ?>
-					<span class="wp-swiper-preview__history" role="group" aria-label="<?php esc_attr_e( 'Changes made in the preview', 'wp-swiper' ); ?>" hidden>
+					<?php // Every effect (admin.js): undo / redo the settings' changes and what was done in the preview. ?>
+					<span class="wp-swiper-preview__history" role="group" aria-label="<?php esc_attr_e( 'Undo and redo changes', 'wp-swiper' ); ?>">
 						<button type="button" class="button wp-swiper-preview__undo" disabled title="<?php esc_attr_e( 'Undo (Ctrl+Z)', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Undo', 'wp-swiper' ); ?>">
 							<span class="dashicons dashicons-undo" aria-hidden="true"></span>
 						</button>
@@ -201,6 +201,21 @@ class WP_Swiper_Preview {
 	}
 
 	/**
+	 * The frame of a slider with no slides yet: a picture (assets/images/
+	 * no-image.svg) in the middle of the device's screen, in place of the
+	 * notice a page shows.
+	 *
+	 * @return string
+	 */
+	public static function empty_screen() {
+		return sprintf(
+			'<div class="wp-swiper-preview-empty"><img src="%s" alt="%s" width="256" height="256"></div>',
+			esc_url( WP_SWIPER_URL . 'assets/images/no-image.svg?ver=' . wp_swiper_asset_version( 'assets/images/no-image.svg' ) ),
+			esc_attr__( 'No images yet', 'wp-swiper' )
+		);
+	}
+
+	/**
 	 * The frame: the slider drawn from the posted form, with the plugin's
 	 * assets and no theme. The block around it is as tall as the frame, for
 	 * Height "Auto" to fill.
@@ -222,9 +237,12 @@ class WP_Swiper_Preview {
 
 		WP_Swiper_Render::register_assets();
 		WP_Swiper_Art::register_assets();
-		$slider = WP_Swiper_Render::render_slider( $post_id, WP_Swiper_Admin::posted_slides(), $settings );
-
-		$slider = self::background_block( $slider, $settings );
+		$slides = WP_Swiper_Admin::posted_slides();
+		if ( $slides ) {
+			$slider = self::background_block( WP_Swiper_Render::render_slider( $post_id, $slides, $settings ), $settings );
+		} else {
+			$slider = self::empty_screen();
+		}
 
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=' . get_option( 'blog_charset' ) );
@@ -267,6 +285,9 @@ class WP_Swiper_Preview {
 		   takes the pointer, so its photos can be dragged (preview-collage.js,
 		   preview-art.js). */
 		.wp-swiper-preview-block .wp-swiper.wp-swiper--background { pointer-events: auto; }
+		/* No slides yet: the picture in the middle of the screen, not too big. */
+		.wp-swiper-preview-empty { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+		.wp-swiper-preview-empty img { display: block; width: min(160px, 32vw); height: auto; }
 	</style>
 </head>
 <body>

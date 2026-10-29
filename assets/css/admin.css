@@ -615,7 +615,24 @@
 	cursor: not-allowed;
 }
 
-/* Undo / redo (Collage, Art): two icon buttons left of the devices, as tall. */
+/* Undo / redo: the fields whose values went back or forth, lit for a moment. */
+@keyframes wp-swiper-restored {
+	from {
+		background-color: rgba(34, 113, 177, 0.14);
+		box-shadow: 0 0 0 4px rgba(34, 113, 177, 0.14);
+	}
+	to {
+		background-color: rgba(34, 113, 177, 0);
+		box-shadow: 0 0 0 4px rgba(34, 113, 177, 0);
+	}
+}
+
+.wp-swiper-field.is-restored {
+	border-radius: 4px;
+	animation: wp-swiper-restored 1.6s ease-out;
+}
+
+/* Undo / redo (every effect): two icon buttons left of the devices, as tall. */
 .wp-swiper-preview__history:not([hidden]) {
 	display: inline-flex;
 	gap: 4px;
@@ -1296,9 +1313,94 @@ body.wp-swiper-modal-open {
 	padding: 16px 20px;
 }
 
-/* Its parts: caption, description, link (none for a video slide). */
-.wp-swiper-modal__section + .wp-swiper-modal__section {
-	margin-top: 20px;
+/* Its parts: caption, description, link (no Link tab for a video slide),
+   one tab each, under the title. The tab in view and its part are one grey
+   card (as the settings' blocks), the tab its top joined to it; a dot on a
+   tab whose part has something in it. */
+.wp-swiper-modal__tabs {
+	display: flex;
+	gap: 4px;
+	padding: 16px 20px 0;
+}
+
+.wp-swiper-modal__tab {
+	position: relative;
+	z-index: 1;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 -1px;
+	padding: 9px 14px 10px;
+	border: 1px solid transparent;
+	border-bottom: 0;
+	border-radius: 6px 6px 0 0;
+	background: none;
+	color: #50575e;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.wp-swiper-modal__tab[hidden] {
+	display: none;
+}
+
+.wp-swiper-modal__tab:hover {
+	background: #f6f7f7;
+	color: #1d2327;
+}
+
+.wp-swiper-modal__tab:focus-visible {
+	outline: 2px solid var(--wp-admin-theme-color, #2271b1);
+	outline-offset: -2px;
+}
+
+/* In view: grey, its bottom over the card's top line. */
+.wp-swiper-modal__tab[aria-selected="true"] {
+	border-color: #e4e4e4;
+	background: #f2f2f2;
+	color: #1d2327;
+}
+
+/* As tall as with the Description tab (its editor the tallest part), so
+   the window keeps its size from tab to tab; no taller than the screen. */
+#wp-swiper-slide-modal .wp-swiper-modal__box {
+	height: min(692px, 100%);
+}
+
+#wp-swiper-slide-modal .wp-swiper-modal__body {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+	padding: 0 20px 16px;
+}
+
+/* The part in view: the card, down to the window's foot. */
+#wp-swiper-slide-modal .wp-swiper-modal__section {
+	flex: 1 0 auto;
+	padding: 12px;
+	border: 1px solid #e4e4e4;
+	border-radius: 6px;
+	background: #f2f2f2;
+}
+
+/* Under the first tab: no round corner there. */
+#wp-swiper-slide-modal .wp-swiper-modal__tabs:has(> .wp-swiper-modal__tab:first-child[aria-selected="true"]) + .wp-swiper-modal__body .wp-swiper-modal__section {
+	border-top-left-radius: 0;
+}
+
+.wp-swiper-modal__tab-dot {
+	display: none;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--wp-admin-theme-color, #2271b1);
+}
+
+.wp-swiper-modal__tab.has-value .wp-swiper-modal__tab-dot {
+	display: block;
 }
 
 .wp-swiper-modal__section[hidden] {

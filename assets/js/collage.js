@@ -227,7 +227,7 @@
 	 */
 	var SCATTER_ARMS = 'TRBL';
 	// The fewest photos on screen (the Photos on screen field's min).
-	var COLLAGE_MIN_COUNT = 2;
+	var COLLAGE_MIN_COUNT = 1;
 	// Scattered: how many layouts are tried for one shuffle (the one filling its block most kept).
 	var SCATTER_TRIES = 80;
 

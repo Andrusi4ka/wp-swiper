@@ -344,6 +344,33 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '<input type="checkbox" id="wp-swiper-new-tab-input">', $html );
 	}
 
+	public function test_slide_window_has_a_tab_for_caption_description_and_link() {
+		$this->as_role( 'editor' );
+		ob_start();
+		WP_Swiper_Admin::render_slides_box( get_post( $this->slider( $this->slides( 1 ) ) ) );
+		$html = ob_get_clean();
+
+		// The tabs, in this order, under the title and over the parts; Caption chosen.
+		$this->assertSame( 1, substr_count( $html, 'class="wp-swiper-modal__tabs" role="tablist"' ) );
+		$this->assertSame( 1, preg_match_all( '#data-tab="(caption|description|link)" aria-controls#', $html, $order ) ? 1 : 0 );
+		$this->assertSame( array( 'caption', 'description', 'link' ), $order[1] );
+		$this->assertLessThan( strpos( $html, 'class="wp-swiper-modal__body"' ), strpos( $html, 'wp-swiper-modal__tabs' ) );
+		$this->assertGreaterThan( strpos( $html, 'id="wp-swiper-slide-modal-title"' ), strpos( $html, 'wp-swiper-modal__tabs' ) );
+		$this->assertSame( 1, substr_count( $html, 'aria-selected="true"' ) );
+		$this->assertSame( 1, preg_match( '#data-tab="caption" aria-controls="wp-swiper-modal-panel-caption" aria-selected="true">#', $html ) );
+		$this->assertSame( 2, substr_count( $html, 'aria-selected="false" tabindex="-1"' ) );
+		// Each part a panel of its tab: Caption shown, the others hidden at first.
+		foreach ( array( 'caption', 'description', 'link' ) as $tab ) {
+			$this->assertSame( 1, preg_match( '#<div class="wp-swiper-modal__section[^"]*" id="wp-swiper-modal-panel-' . $tab . '" role="tabpanel" data-tab="' . $tab . '" aria-labelledby="wp-swiper-modal-tab-' . $tab . '"( hidden)?>#', $html, $panel ), $tab );
+			$this->assertSame( 'caption' === $tab ? 0 : 1, isset( $panel[1] ) ? 1 : 0, $tab );
+		}
+		// The editors and the link field in their own panels; the old headings for screen readers only.
+		$this->assertLessThan( strpos( $html, 'id="wp-swiper-modal-panel-description"' ), strpos( $html, 'id="wp-swiper-caption-editor"' ) );
+		$this->assertGreaterThan( strpos( $html, 'id="wp-swiper-modal-panel-link"' ), strpos( $html, 'id="wp-swiper-link-input"' ) );
+		$this->assertSame( 3, substr_count( $html, '<h3 class="wp-swiper-modal__label screen-reader-text">' ) );
+		$this->assertSame( 3, substr_count( $html, '<span class="wp-swiper-modal__tab-dot" aria-hidden="true"></span>' ) );
+	}
+
 	public function test_a_video_slide_shows_no_link_mark() {
 		$this->as_role( 'editor' );
 		$id = $this->slider(
@@ -396,10 +423,10 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 				$last = $at;
 			}
 		}
-		// Lightbox, Caption, Description and Custom: every field in a block (a grey card), block names never shared between pages.
+		// Lightbox, Caption, Description, Video and Custom: every field in a block (a grey card), block names never shared between pages.
 		$fields = WP_Swiper_Settings::fields();
 		$blocks = WP_Swiper_Settings::blocks();
-		foreach ( array( 'lightbox', 'caption', 'description', 'attributes' ) as $page ) {
+		foreach ( array( 'lightbox', 'caption', 'description', 'video', 'attributes' ) as $page ) {
 			$in = array();
 			foreach ( $blocks[ $page ] as $block ) {
 				$in = array_merge( $in, $block['fields'] );
@@ -418,11 +445,19 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertArrayNotHasKey( 'group', $fields['description_lightbox_width'] );
 		$this->assertArrayNotHasKey( 'group', $fields['description_lightbox_max'] );
 		$counts = array_count_values( $names );
-		foreach ( array( 'lightbox', 'caption', 'description', 'attributes' ) as $page ) {
+		foreach ( array( 'lightbox', 'caption', 'description', 'video', 'attributes' ) as $page ) {
 			foreach ( array_keys( $blocks[ $page ] ) as $name ) {
 				$this->assertSame( 1, $counts[ $name ], "$page/$name only once" );
 			}
 		}
+		// Video: Posters (the video slides' list) a block of its own, first;
+		// then Playback and Player.
+		$this->assertSame( array( 'video_autoplay', 'video_muted', 'video_loop', 'video_pause', 'video_wait' ), $blocks['video']['video_playback']['fields'] );
+		$this->assertSame( array( 'video_controls', 'video_preload' ), $blocks['video']['video_player']['fields'] );
+		$this->assertArrayNotHasKey( 'video_posters', $counts );
+		preg_match( '#<fieldset[^>]*id="wp-swiper-page-video"[^>]*>(.*?)</fieldset>#s', $html, $match );
+		$this->assertSame( 1, preg_match( '#^\s*<legend>[^<]*</legend>\s*<div class="wp-swiper-block" data-block="video_posters"><h4 class="wp-swiper-subheading">Posters</h4><div class="wp-swiper-field wp-swiper-posters" data-field="video_posters">#', $match[1] ) );
+		$this->assertLessThan( strpos( $match[1], 'data-block="video_playback"' ), strpos( $match[1], 'data-block="video_posters"' ) );
 		// The effects a field belongs to, for admin.js.
 		$this->assertStringContainsString( 'data-field="background" data-effects="slide fade collage"', $html );
 		// Use as background: no page of its own, the last block of Layout.
@@ -474,9 +509,9 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		// The collage's hint, hidden until admin.js sees that effect.
 		$this->assertStringContainsString( '<p class="description wp-swiper-preview__hint" data-effect="collage" hidden>', $html );
 		$this->assertStringContainsString( '<p class="description wp-swiper-preview__hint" data-effect="mosaic" hidden>', $html );
-		// Undo / redo: hidden until admin.js sees Collage or Art, greyed with
-		// nothing to go back to, before the device switch.
-		$this->assertStringContainsString( '<span class="wp-swiper-preview__history" role="group" aria-label="Changes made in the preview" hidden>', $html );
+		// Undo / redo: shown for every effect (the settings' changes too),
+		// greyed with nothing to go back to, before the device switch.
+		$this->assertStringContainsString( '<span class="wp-swiper-preview__history" role="group" aria-label="Undo and redo changes">', $html );
 		$this->assertSame( 1, preg_match( '#<button type="button" class="button wp-swiper-preview__undo" disabled[^>]*aria-label="Undo">#', $html ) );
 		$this->assertSame( 1, preg_match( '#<button type="button" class="button wp-swiper-preview__redo" disabled[^>]*aria-label="Redo">#', $html ) );
 		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__devices' ), strpos( $html, 'wp-swiper-preview__history' ) );
@@ -598,6 +633,20 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'WP_Swiper_Settings::is_background( $settings ) ? \' wp-swiper-preview-page--background\'', $source );
 		$this->assertStringNotContainsString( 'aspect-ratio', $source );
 		$this->assertStringNotContainsString( 'wp-swiper-preview-block__content', $source );
+	}
+
+	public function test_preview_without_slides_shows_the_no_image_picture_in_the_middle() {
+		$html = WP_Swiper_Preview::empty_screen();
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/no-image.svg' );
+		$this->assertSame( 1, preg_match( '#^<div class="wp-swiper-preview-empty"><img src="[^"]*/assets/images/no-image\.svg\?ver=[^"]+" alt="No images yet" width="256" height="256"></div>$#', $html ), $html );
+		// Its place and size (the frame's styles), and the frame uses it with no slides only.
+		$source = file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' );
+		$this->assertStringContainsString( '.wp-swiper-preview-empty { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }', $source );
+		$this->assertStringContainsString( '.wp-swiper-preview-empty img { display: block; width: min(160px, 32vw); height: auto; }', $source );
+		$this->assertSame( 1, preg_match( '#if \( \$slides \) \{\s*\$slider = self::background_block\( WP_Swiper_Render::render_slider\( \$post_id, \$slides, \$settings \), \$settings \);\s*\} else \{\s*\$slider = self::empty_screen\(\);#', $source ) );
+		// The SVG: shapes only (nothing that runs or loads).
+		$svg = file_get_contents( WP_SWIPER_DIR . 'assets/images/no-image.svg' );
+		$this->assertDoesNotMatchRegularExpression( '#<script|<foreignObject|\son\w+=|href=#i', $svg );
 	}
 
 	public function test_preview_refuses_a_bad_nonce() {

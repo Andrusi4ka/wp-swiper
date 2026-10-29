@@ -67,7 +67,7 @@
   (`merge_rounded()` у `get()`, і в `layouts`). Art має свій `art_radius`.
   Блоки (картки) і на Lightbox (Lightbox / Thumbnails / Descriptions),
   Caption (Text / Background), Description (Text / Placement and transition),
-  Custom (HTML attributes); Video — ще без блоків.
+  Custom (HTML attributes); Video (Posters — картка в розмітці `render_settings_box()`, не поле схеми; Playback; Player).
   Lightbox: перемикач **Rounded corners** (`lightbox_border_rounded`), під ним
   Radius (px) (`lightbox_radius`, за замовч. 12). «As the slides» (порожньо =
   радіус слайдера / Art) прибрано на прохання користувача — радіус лайтбокса
@@ -164,8 +164,17 @@
   розкладка, Reset — перша; Gap — «магніт».
 - Кнопка × «прибрати місце» — лише Scattered і Freeform; для інших стилів —
   коли попросить.
-- Undo / Redo в прев'ю — окремо для кожного пристрою, до 50 кроків, до
-  перезавантаження сторінки.
+- Undo / Redo (кнопки біля пристроїв прев'ю, Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y
+  поза текстовими полями) — для всіх ефектів: усі налаштування слайдера +
+  правки руками в прев'ю Collage/Art. Одна історія на сторінку (не окремо
+  для пристроїв), до 50 кроків, до перезавантаження. Список слайдів і тексти
+  слайдів — ні (можливо, другим кроком). Крок пам'ятає сторінку й пристрій:
+  відкат спершу показує їх, потім підсвічує змінені поля. Прев'ю при відкаті
+  НЕ перезавантажувати (рішення користувача): лише Update «застарілий»;
+  правки руками в прев'ю Collage/Art повертаються там одразу
+  (`wpSwiperRestoreCollage/Art`). Знімок — значення полів + стани
+  блокувань (`lockStates` у `lockable()`/`lockableValue()`) + `layouts` інших
+  ефектів. Новий lock = через ці дві функції, інакше відкат його не поверне.
 
 ## Відомі обмеження
 
@@ -213,6 +222,11 @@
     (`"feature-left:V0.5[0,H0.5[1,2]]"`), Scattered —
     `"scatter:1.2x1.6;T0.9x0.6;R1x0.7,a0.8x0.8"`, Freeform —
     `"freeform:2.3077;x,y,w,h;…"` (в одиницях висоти кадру, ≤ 100 місць).
+- Вікно Slide info — вкладки Caption / Description / Link (Link немає для
+  відео-слайда), при відкритті завжди Caption, крапка на вкладці = там щось
+  є; висота вікна стала (за Description). Редактор опису стартує при
+  першому показі його вкладки (TinyMCE, запущений у прихованому блоці,
+  малюється криво).
 - `includes/class-wp-swiper-admin.php`: адмінка, вікно Slide info, рядки
   слайдів (значення слайду в прихованих `wp_swiper_slides[...]`),
   `posted_slides()`, плитки `tiles()`. Іконки інлайн через `svg_icon()`;
@@ -242,7 +256,9 @@
     Нова спільна функція = додати її туди. Обидва, якщо прийшли пізніше за
     `frontend.js`, самі ще раз викликають `wpSwiperInit()`.
 - Прев'ю — iframe (`class-wp-swiper-preview.php`, свій список скриптів у
-  `wp_print_scripts()`; новий скрипт сайту — додати й туди):
+  `wp_print_scripts()`; новий скрипт сайту — додати й туди). Без слайдів —
+  `empty_screen()`: `assets/images/no-image.svg` (малюнок користувача) по
+  центру екрана, 160px (на телефоні 32vw), замість напису «no slides yet»:
   - `preview-collage.js`: обмін фото, лінії-ручки, Scattered, Freeform;
   - `preview-art.js`;
   - `preview-dev.js`: Developer mode.
