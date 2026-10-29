@@ -100,6 +100,10 @@
   `get()` (і в `layouts`): увімкнено, де був радіус > 0 / рамка > 0. У
   `cases.php` випадок `thumbs` має `thumbs_border` (відсутній чекбокс = вимкнено,
   як у формі).
+  Direction — не в Advanced, а першим у блоці Effect сторінки Layout, лише для
+  Slide, Cube, Coverflow, Flip, Cards, Creative і Thumbnails (не з переходом
+  Fade, `admin.js fixedDirection`). Як поле Layout зберігається окремо для
+  кожного ефекту (`layouts`); старі слайдери: поточний ефект зберіг свій.
   **Image shadow — назовні** (рішення користувача): місце під тінь більше не
   забирається з фото (був padding `--wp-swiper-shadow-room`, через нього при
   Contain фото меншали і проміжки між ними росли). Тепер фото того самого

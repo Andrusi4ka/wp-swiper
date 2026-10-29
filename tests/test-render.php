@@ -566,7 +566,9 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 
 		// The editor shows their settings once on.
 		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' );
-		$this->assertStringContainsString( "field( 'thumbs_radius' ).toggle( $( '#wp-swiper-thumbs_rounded' ).is( ':checked' ) );", $js );
+		// Their effect only: elsewhere the page (and its menu item) has nothing left in view.
+		$this->assertStringContainsString( "field( 'thumbs_radius' ).toggle( effect === 'thumbs' && $( '#wp-swiper-thumbs_rounded' ).is( ':checked' ) );", $js );
+		$this->assertStringContainsString( "var thumbsFrame = effect === 'thumbs' && $( '#wp-swiper-thumbs_border' ).is( ':checked' );", $js );
 		$this->assertStringContainsString( "field( 'thumbs_border_width' ).toggle( thumbsFrame );", $js );
 	}
 
@@ -924,6 +926,31 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( "coverflowEffect: coverflowAt( config, 'mobile' )", $js );
 		$this->assertStringContainsString( "options.breakpoints[ BREAKPOINT_TABLET ].coverflowEffect = coverflowAt( config, 'tablet' );", $js );
 		$this->assertStringContainsString( "options.breakpoints[ BREAKPOINT_DESKTOP ].coverflowEffect = coverflowAt( config, 'desktop' );", $js );
+	}
+
+	public function test_direction_in_layout_for_the_effects_that_move_up_and_down() {
+		$field = WP_Swiper_Settings::fields()['direction'];
+		$this->assertSame( 'layout', $field['section'] );
+		$this->assertSame( array( 'slide', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'thumbs' ), $field['effects'] );
+		// First in the Effect block.
+		$this->assertSame( 'direction', WP_Swiper_Settings::blocks()['layout']['effect']['fields'][0] );
+		// Kept per effect, as every Layout field.
+		$this->assertContains( 'direction', WP_Swiper_Settings::layout_keys() );
+		$layouts = WP_Swiper_Settings::layouts( $this->settings( array( 'effect' => 'cube', 'direction' => 'vertical' ) ), array( 'slide' => array( 'direction' => 'horizontal' ) ) );
+		$this->assertSame( 'vertical', $layouts['cube']['direction'] );
+		$this->assertSame( 'horizontal', $layouts['slide']['direction'] );
+		$this->assertSame( 'horizontal', $layouts['flip']['direction'] );
+
+		// Where it applies, it is used; Fade, Collage and Art stay horizontal.
+		$this->assertSame( 'vertical', $this->config( $this->render( array( 'effect' => 'cube', 'direction' => 'vertical' ) ) )['direction'] );
+		$this->assertSame( 'horizontal', $this->config( $this->render( array( 'effect' => 'fade', 'direction' => 'vertical' ) ) )['direction'] );
+		$this->assertSame( 'horizontal', $this->config( $this->render( array( 'effect' => 'thumbs', 'thumbs_transition' => 'fade', 'direction' => 'vertical' ) ) )['direction'] );
+
+		// The editor hides it where the slides only fade (Thumbnails with Fade) and unlocks it for the effect change.
+		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' );
+		$this->assertStringContainsString( "var fixedDirection = effect === 'fade' || collage || effect === 'art' || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' );", $js );
+		$this->assertStringContainsString( "field( 'direction' ).hide();", $js );
+		$this->assertMatchesRegularExpression( '#// The own values, not the fixed ones locked Layout fields show\.\s*lockDirection\( false \);#', $js );
 	}
 
 	public function test_cube_shadow_color_with_its_opacity() {

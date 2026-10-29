@@ -35,8 +35,13 @@ return array(
 			'art'       => __( 'Art', 'wp-swiper' ),
 		),
 	),
+	// Layout (its Effect block, first): for the effects that can move up and
+	// down only. Fade, Collage and Art (and Thumbnails with the Fade
+	// transition, admin.js) are always horizontal (render_slider()). Kept per
+	// effect, as every Layout field.
 	'direction'             => array(
-		'section'   => 'advanced',
+		'section'   => 'layout',
+		'effects'   => array( 'slide', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'thumbs' ),
 		'label'     => __( 'Direction', 'wp-swiper' ),
 		'type'      => 'select',
 		// Shown as a row of buttons (admin.js keeps the select behind them).

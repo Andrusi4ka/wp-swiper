@@ -1422,6 +1422,7 @@ class WP_Swiper_Settings {
 				'effect'      => array(
 					'title'  => __( 'Effect', 'wp-swiper' ),
 					'fields' => array(
+						'direction',
 						'creative_style',
 						'creative_neighbours',
 						'creative_offset',

@@ -1553,6 +1553,7 @@
 				return;
 			}
 			// The own values, not the fixed ones locked Layout fields show.
+			lockDirection( false );
 			lockFit( false );
 			lockCentered( false );
 			lockCubeFaces( false );
@@ -1647,7 +1648,8 @@
 
 			// Before reading Direction: locked, it shows the fixed value.
 			// Fading slides: the Fade effect, or Thumbnails with the Fade transition.
-			lockDirection( effect === 'fade' || collage || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' ) );
+			var fixedDirection = effect === 'fade' || collage || effect === 'art' || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' );
+			lockDirection( fixedDirection );
 			var vertical = $( '#wp-swiper-direction' ).val() === 'vertical';
 			var cover = $( '#wp-swiper-image_fit' ).val() === 'cover';
 
@@ -1663,6 +1665,11 @@
 			$( '.wp-swiper-field[data-effects]' ).each( function () {
 				$( this ).toggle( $( this ).data( 'effects' ).split( ' ' ).indexOf( effect ) !== -1 );
 			} );
+			// Direction: not where the slides only fade (Thumbnails with the Fade
+			// transition; its other effects are left out above).
+			if ( fixedDirection ) {
+				field( 'direction' ).hide();
+			}
 
 			// Background: its settings once it is on (data-effects above: the effects that can be one).
 			[ 'background_class', 'background_overlay_color' ].forEach( function ( name ) {
@@ -1743,9 +1750,9 @@
 			var border = $( '#wp-swiper-image_border' ).is( ':checked' );
 			field( 'image_border_width' ).toggle( border );
 			field( 'image_border_color' ).toggle( border );
-			// Thumbnails: the same, their radius and their frame once on.
-			field( 'thumbs_radius' ).toggle( $( '#wp-swiper-thumbs_rounded' ).is( ':checked' ) );
-			var thumbsFrame = $( '#wp-swiper-thumbs_border' ).is( ':checked' );
+			// Thumbnails (their effect only): the same, their radius and their frame once on.
+			field( 'thumbs_radius' ).toggle( effect === 'thumbs' && $( '#wp-swiper-thumbs_rounded' ).is( ':checked' ) );
+			var thumbsFrame = effect === 'thumbs' && $( '#wp-swiper-thumbs_border' ).is( ':checked' );
 			field( 'thumbs_border_width' ).toggle( thumbsFrame );
 			field( 'thumbs_border_color' ).toggle( thumbsFrame );
 			field( 'thumbs_active_color' ).toggle( thumbsFrame );
