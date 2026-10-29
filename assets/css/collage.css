@@ -1,12 +1,8 @@
 /* WP Swiper: the Collage effect. Loaded after frontend.css, only where a
    collage is shown (render.php). */
 
-/* Image shadow (frontend.css): under each place, room for it around them. */
-.wp-swiper--shadow > .wp-swiper-collage {
-	box-sizing: border-box;
-	padding: var(--wp-swiper-shadow-room, 0px);
-}
-
+/* Image shadow (frontend.css): under each place, out of the collage's box
+   (no room taken from the photos). */
 .wp-swiper--shadow .wp-swiper-collage__cell {
 	box-shadow: var(--wp-swiper-shadow, none);
 }

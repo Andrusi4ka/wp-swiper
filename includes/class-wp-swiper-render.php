@@ -331,6 +331,8 @@ class WP_Swiper_Render {
 	 * @return string
 	 */
 	public static function render_slider( $post_id, $slides, $settings, $class = '' ) {
+		// Rounded corners off: no radius on the slides (the lightbox has its own switch).
+		$settings = WP_Swiper_Settings::apply_rounded( $settings );
 		// Images and videos from the media library (ones deleted since are skipped)
 		// and YouTube / Vimeo links ("embed": the parsed link). A video slide has
 		// no link: a click on it is the player's.
@@ -541,7 +543,7 @@ class WP_Swiper_Render {
 			) : false,
 			'lightbox'      => $settings['lightbox'] ? array(
 				// Corners of the image and of the strip's thumbnails, per device.
-				'radius'      => self::lightbox_radius( $settings, 'lightbox_radius', 'border_radius' ),
+				'radius'      => WP_Swiper_Settings::lightbox_image_radius( $settings ),
 				'thumbRadius' => self::lightbox_radius( $settings, 'lightbox_thumbs_radius', 'thumbs_radius' ),
 				// The strip again under the lightbox image (sized like `thumbs` above).
 				'thumbs' => WP_Swiper_Settings::is_thumbs( $settings ) && ! empty( $settings['lightbox_thumbs'] ),
@@ -938,7 +940,7 @@ class WP_Swiper_Render {
 			$settings['caption_shadow'] ? 'wp-swiper--caption-shadow' : '',
 			// The block's background (frontend.js background()), with a color over it.
 			$background ? 'wp-swiper--background' : '',
-			$background && $settings['background_overlay_opacity'] > 0 ? 'wp-swiper--bg-overlay' : '',
+			$background && '' !== WP_Swiper_Settings::background_overlay( $settings ) ? 'wp-swiper--bg-overlay' : '',
 			// "Zoom the main image" (frontend.js zoom()).
 			$zoom ? 'wp-swiper--zoom' : '',
 		);
@@ -1125,12 +1127,11 @@ class WP_Swiper_Render {
 		$style = array_merge( $style, WP_Swiper_Settings::font_size_vars( WP_Swiper_Settings::caption_sizes( $settings ), 'wp-swiper-caption-size' ) );
 		$style[] = '--wp-swiper-caption-color:' . $settings['caption_color'];
 		if ( $settings['caption_bg'] ) {
-			// The background color at its opacity, and fully transparent for the
+			// The background color with its opacity, and fully transparent for the
 			// gradient's far end (same hue, so the fade does not go grey).
-			list( $r, $g, $b ) = sscanf( $settings['caption_bg_color'], '#%02x%02x%02x' );
-			$alpha              = max( 0, min( 100, (int) $settings['caption_bg_opacity'] ) ) / 100;
-			$style[]            = sprintf( '--wp-swiper-caption-bg-from:rgba(%d,%d,%d,%s)', $r, $g, $b, $alpha );
-			$style[]            = sprintf( '--wp-swiper-caption-bg-to:rgba(%d,%d,%d,0)', $r, $g, $b );
+			list( $from, $to ) = WP_Swiper_Settings::caption_bg_colors( $settings );
+			$style[]           = '--wp-swiper-caption-bg-from:' . $from;
+			$style[]           = '--wp-swiper-caption-bg-to:' . $to;
 		}
 		$style = array_merge( $style, WP_Swiper_Settings::font_weight_vars( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ), 'wp-swiper-caption-weight' ) );
 		// Desktop 0 needs no variable (the CSS falls back to 0); tablet/mobile
@@ -1150,10 +1151,13 @@ class WP_Swiper_Render {
 			}
 			$style[] = '--wp-swiper-border-color:' . $settings['image_border_color'];
 		}
-		// Image shadow: as CSS box-shadow, and the room on each side (top,
-		// right, bottom, left) kept around the photos for it.
+		// Image shadow: as CSS box-shadow, out of the slider's box (no room
+		// taken from the photos): how far the slider shows past its sides for
+		// it (the farthest it reaches, frontend.css: overflow-clip-margin);
+		// where a browser cannot, the room kept inside (top right bottom left).
 		if ( $shadow ) {
 			$style[] = '--wp-swiper-shadow:' . $shadow['x'] . 'px ' . $shadow['y'] . 'px ' . $shadow['blur'] . 'px ' . $shadow['spread'] . 'px ' . $shadow['color'];
+			$style[] = '--wp-swiper-shadow-reach:' . max( $shadow['room'] ) . 'px';
 			$style[] = '--wp-swiper-shadow-room:' . implode( 'px ', $shadow['room'] ) . 'px';
 		}
 		if ( $expand ) {
@@ -1168,17 +1172,11 @@ class WP_Swiper_Render {
 			$style[] = '--wp-swiper-zoom-from:' . self::zoom_scales( $settings )[0];
 		}
 
-		// Background: the overlay, and the block's minimum height per device where
-		// set (frontend.js hands these to the block).
+		// Background: the overlay (the block's height is the page builder's).
 		if ( $background ) {
-			if ( $settings['background_overlay_opacity'] > 0 ) {
-				list( $r, $g, $b ) = sscanf( $settings['background_overlay_color'], '#%02x%02x%02x' );
-				$style[]            = sprintf( '--wp-swiper-bg-overlay:rgba(%d,%d,%d,%s)', $r, $g, $b, max( 0, min( 100, (int) $settings['background_overlay_opacity'] ) ) / 100 );
-			}
-			foreach ( WP_Swiper_Settings::responsive( $settings, 'background_min_height' ) as $device => $height ) {
-				if ( '' !== $height ) {
-					$style[] = '--wp-swiper-bg-min-height' . self::SUFFIX[ $device ] . ':' . (int) $height . 'px';
-				}
+			$overlay = WP_Swiper_Settings::background_overlay( $settings );
+			if ( '' !== $overlay ) {
+				$style[] = '--wp-swiper-bg-overlay:' . $overlay;
 			}
 		}
 
@@ -1357,8 +1355,11 @@ class WP_Swiper_Render {
 
 		$style = array(
 			'--wp-swiper-speed:' . (int) $settings['speed'] . 'ms',
-			'--wp-swiper-description-offset:' . (int) $settings['description_offset'] . 'px',
 		);
+		// The gap to the slider, per device (each set: a smaller screen inherits).
+		foreach ( WP_Swiper_Settings::responsive( $settings, 'description_offset' ) as $device => $offset ) {
+			$style[] = '--wp-swiper-description-offset' . self::SUFFIX[ $device ] . ':' . (int) $offset . 'px';
+		}
 		// Each paragraph has its own alignment; a slider saved with an Alignment
 		// field keeps it for the ones without, until it is saved again.
 		if ( WP_Swiper_Settings::legacy_description_align( $settings ) ) {
@@ -1433,7 +1434,7 @@ class WP_Swiper_Render {
 			// proportions. Per device (false: none).
 			'fill'      => WP_Swiper_Settings::fill_config( $settings ),
 			'lightbox'  => $settings['lightbox'] ? array(
-				'radius' => self::lightbox_radius( $settings, 'lightbox_radius', 'border_radius' ),
+				'radius' => WP_Swiper_Settings::lightbox_image_radius( $settings ),
 			) : false,
 		);
 

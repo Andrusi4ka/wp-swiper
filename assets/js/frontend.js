@@ -880,15 +880,6 @@
 		if ( getComputedStyle( block ).position === 'static' ) {
 			block.classList.add( 'wp-swiper-bg-host--static' );
 		}
-		// "Minimum block height", on the devices it is set for.
-		[ '', '-tablet', '-mobile' ].forEach( function ( suffix ) {
-			var name = '--wp-swiper-bg-min-height' + suffix;
-			var value = wrapper.style.getPropertyValue( name );
-			if ( value ) {
-				block.style.setProperty( name, value );
-				block.classList.add( 'wp-swiper-bg-host--min' );
-			}
-		} );
 		block.insertBefore( wrapper, block.firstChild );
 	}
 

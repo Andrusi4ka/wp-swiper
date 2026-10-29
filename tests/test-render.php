@@ -607,29 +607,95 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringNotContainsString( 'swiper-button', $html );
 	}
 
-	public function test_background_overlay_and_minimum_heights() {
+	public function test_background_overlay() {
 		$html  = $this->render(
 			array(
-				'background'                   => true,
-				'background_class'             => 'hero',
-				'background_overlay_opacity'   => 40,
-				'background_overlay_color'     => '#102030',
-				'background_min_height'        => '',
-				'background_min_height_tablet' => 500,
-				'background_min_height_mobile' => '',
+				'background'               => true,
+				'background_class'         => 'hero',
+				'background_overlay_color' => 'rgba(16,32,48,0.4)',
 			)
 		);
 		$style = $this->root_style( $html );
 
 		$this->assertContains( 'wp-swiper--bg-overlay', $this->root_classes( $html ) );
 		$this->assertStringContainsString( '--wp-swiper-bg-overlay:rgba(16,32,48,0.4)', $style );
-		$this->assertStringNotContainsString( '--wp-swiper-bg-min-height:', $style );
-		$this->assertStringContainsString( '--wp-swiper-bg-min-height-tablet:500px', $style );
-		// Mobile inherits the tablet's.
-		$this->assertStringContainsString( '--wp-swiper-bg-min-height-mobile:500px', $style );
 
 		$plain = $this->render( array( 'background' => true, 'background_class' => 'hero' ) );
 		$this->assertNotContains( 'wp-swiper--bg-overlay', $this->root_classes( $plain ) );
+		$this->assertStringNotContainsString( '--wp-swiper-bg-overlay', $this->root_style( $plain ) );
+
+		// A plain color: full.
+		$solid = $this->render( array( 'background' => true, 'background_class' => 'hero', 'background_overlay_color' => '#102030' ) );
+		$this->assertContains( 'wp-swiper--bg-overlay', $this->root_classes( $solid ) );
+		$this->assertStringContainsString( '--wp-swiper-bg-overlay:#102030', $this->root_style( $solid ) );
+		// Opacity 0: none.
+		$clear = $this->render( array( 'background' => true, 'background_class' => 'hero', 'background_overlay_color' => 'rgba(16,32,48,0)' ) );
+		$this->assertNotContains( 'wp-swiper--bg-overlay', $this->root_classes( $clear ) );
+	}
+
+	public function test_background_overlay_color_has_opacity_and_no_field_of_its_own() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertArrayNotHasKey( 'background_overlay_opacity', $fields );
+		$this->assertSame( 'alpha_color', $fields['background_overlay_color']['type'] );
+		$this->assertSame( 'rgba(0,0,0,0)', $fields['background_overlay_color']['default'] );
+		$this->assertArrayNotHasKey( 'group', $fields['background_overlay_color'] );
+	}
+
+	public function test_rounded_corners_only_while_on() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertSame( 'checkbox', $fields['border_rounded']['type'] );
+		$this->assertFalse( $fields['border_rounded']['default'] );
+		$this->assertSame( 12, $fields['border_radius']['default'] );
+
+		// On: the radius per device; the lightbox's not (its own switch, off).
+		$html   = $this->render( array( 'border_rounded' => true, 'border_radius' => 16, 'border_radius_mobile' => 6, 'lightbox' => true ) );
+		$style  = $this->root_style( $html );
+		$config = $this->config( $html );
+		$this->assertStringContainsString( '--wp-swiper-radius:16px', $style );
+		$this->assertStringContainsString( '--wp-swiper-radius-mobile:6px', $style );
+		$this->assertSame( array( 'desktop' => 0, 'tablet' => 0, 'mobile' => 0 ), $config['lightbox']['radius'] );
+
+		// Off: none anywhere, whatever radius is kept.
+		$html   = $this->render( array( 'border_rounded' => false, 'border_radius' => 16, 'border_radius_mobile' => 6, 'lightbox' => true ) );
+		$config = $this->config( $html );
+		$this->assertStringNotContainsString( '--wp-swiper-radius', $this->root_style( $html ) );
+		$this->assertSame( array( 'desktop' => 0, 'tablet' => 0, 'mobile' => 0 ), $config['lightbox']['radius'] );
+
+		// The lightbox's own switch: its own radius, whatever the slides'.
+		$html = $this->render( array( 'border_rounded' => false, 'lightbox' => true, 'lightbox_border_rounded' => true, 'lightbox_radius' => 24, 'lightbox_radius_mobile' => 8 ) );
+		$this->assertSame( array( 'desktop' => 24, 'tablet' => 24, 'mobile' => 8 ), $this->config( $html )['lightbox']['radius'] );
+		// A collage's lightbox too.
+		$html = $this->render( array( 'effect' => 'collage', 'lightbox' => true, 'lightbox_border_rounded' => true, 'lightbox_radius' => 24 ) );
+		$this->assertSame( 24, $this->config( $html, 'data-wp-swiper-collage' )['lightbox']['radius']['desktop'] );
+	}
+
+	public function test_width_from_image_under_space_between_slides() {
+		$slides = WP_Swiper_Settings::blocks()['layout']['slides']['fields'];
+		$this->assertSame( array_search( 'space_between', $slides, true ) + 1, array_search( 'auto_width', $slides, true ) );
+	}
+
+	public function test_rounded_corners_switch_before_its_radius_in_look() {
+		$look = WP_Swiper_Settings::blocks()['layout']['look']['fields'];
+		$this->assertSame( array( 'border_rounded', 'border_radius', 'image_border' ), array_slice( $look, 0, 3 ) );
+	}
+
+	public function test_background_has_no_minimum_block_height() {
+		// The block's height is the page builder's: no field, nothing on the slider,
+		// even for a slider saved with one.
+		$this->assertArrayNotHasKey( 'background_min_height', WP_Swiper_Settings::fields() );
+		$id = $this->slider(
+			$this->slides( 1 ),
+			array(
+				'background'                   => true,
+				'background_class'             => 'hero',
+				'background_min_height'        => 600,
+				'background_min_height_tablet' => 500,
+			)
+		);
+		$html = WP_Swiper_Render::render_slider( $id, WP_Swiper_Settings::get_slides( $id ), WP_Swiper_Settings::get( $id ) );
+		$this->assertStringNotContainsString( 'bg-min-height', $html );
+		$this->assertStringNotContainsString( 'bg-host--min', file_get_contents( WP_SWIPER_DIR . 'assets/js/frontend.js' ) );
+		$this->assertStringNotContainsString( 'bg-host--min', file_get_contents( WP_SWIPER_DIR . 'assets/css/frontend.css' ) );
 	}
 
 	public function test_background_notice_for_editors_only() {
@@ -772,6 +838,46 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'wp-swiper-descriptions--weight wp-swiper-descriptions--color', $own );
 		$this->assertStringContainsString( '--wp-swiper-description-weight:600', $own );
 		$this->assertStringContainsString( '--wp-swiper-description-color:#123456', $own );
+	}
+
+	public function test_description_gap_per_device() {
+		$this->assertTrue( WP_Swiper_Settings::fields()['description_offset']['responsive'] );
+		// Tablet's own, mobile inherits it.
+		$block = $this->descriptions_block( $this->render( array( 'description_offset' => 24, 'description_offset_tablet' => 10, 'description_offset_mobile' => '' ), $this->described_slides() ) );
+		foreach ( array( '--wp-swiper-description-offset:24px', '--wp-swiper-description-offset-tablet:10px', '--wp-swiper-description-offset-mobile:10px' ) as $value ) {
+			$this->assertStringContainsString( $value, $block );
+		}
+		// Saved before it was per device: the one gap on every screen.
+		$id    = $this->slider( $this->described_slides(), array( 'description_offset' => 30 ) );
+		$saved = get_post_meta( $id, WP_Swiper_Settings::META_SETTINGS, true );
+		unset( $saved['description_offset_tablet'], $saved['description_offset_mobile'] );
+		update_post_meta( $id, WP_Swiper_Settings::META_SETTINGS, $saved );
+		$this->assertSame( array( 'desktop' => 30, 'tablet' => 30, 'mobile' => 30 ), WP_Swiper_Settings::responsive( WP_Swiper_Settings::get( $id ), 'description_offset' ) );
+		// The CSS takes each device's.
+		$css = file_get_contents( WP_SWIPER_DIR . 'assets/css/frontend.css' );
+		$this->assertStringContainsString( 'margin-top: var(--wp-swiper-description-offset-tablet, var(--wp-swiper-description-offset, 16px));', $css );
+		$this->assertStringContainsString( 'margin-top: var(--wp-swiper-description-offset-mobile, var(--wp-swiper-description-offset-tablet, var(--wp-swiper-description-offset, 16px)));', $css );
+	}
+
+	public function test_caption_background_color_with_its_opacity() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertArrayNotHasKey( 'caption_bg_opacity', $fields );
+		$this->assertSame( 'alpha_color', $fields['caption_bg_color']['type'] );
+		$this->assertSame( 'rgba(0,0,0,0.65)', $fields['caption_bg_color']['default'] );
+		// Style and color on one row.
+		$this->assertSame( 'caption_bg', $fields['caption_bg_style']['group'] );
+		$this->assertSame( 'caption_bg', $fields['caption_bg_color']['group'] );
+		$this->assertSame( array( 'caption_bg', 'caption_bg_style', 'caption_bg_color' ), WP_Swiper_Settings::blocks()['caption']['caption_background']['fields'] );
+
+		// Its color with its opacity; the far end of the gradient the same color, clear.
+		$style = $this->root_style( $this->render( array( 'caption_bg' => true, 'caption_bg_color' => 'rgba(16,32,48,0.4)' ) ) );
+		$this->assertStringContainsString( '--wp-swiper-caption-bg-from:rgba(16,32,48,0.4)', $style );
+		$this->assertStringContainsString( '--wp-swiper-caption-bg-to:rgba(16,32,48,0)', $style );
+		// A plain color: full.
+		$style = $this->root_style( $this->render( array( 'caption_bg' => true, 'caption_bg_color' => '#ffffff' ) ) );
+		$this->assertStringContainsString( '--wp-swiper-caption-bg-from:rgba(255,255,255,1)', $style );
+		// The default, as before (black at 65%).
+		$this->assertStringContainsString( '--wp-swiper-caption-bg-from:rgba(0,0,0,0.65)', $this->root_style( $this->render( array( 'caption_bg' => true ) ) ) );
 	}
 
 	public function test_description_motion_class() {
@@ -1153,7 +1259,17 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 
 		$this->assertContains( 'wp-swiper--shadow', $this->root_classes( $html ) );
 		$this->assertStringContainsString( '--wp-swiper-shadow:0px 8px 20px 0px rgba(0,0,0,0.3)', $style );
+		// Out of the slider's box, the photos keep their size: it cuts as far past its sides as the shadow reaches at most;
+		// the room per side (top right bottom left) for a browser that cannot (Safari: kept inside).
+		$this->assertStringContainsString( '--wp-swiper-shadow-reach:28px', $style );
 		$this->assertStringContainsString( '--wp-swiper-shadow-room:12px 20px 28px 20px', $style );
+		$css = file_get_contents( WP_SWIPER_DIR . 'assets/css/frontend.css' );
+		$this->assertStringContainsString( '@supports (overflow-clip-margin: 1px)', $css );
+		$this->assertStringContainsString( 'overflow-clip-margin: var(--wp-swiper-shadow-reach, 0px);', $css );
+		// overflow: clip, never visible: the slides waiting past the edges make the page no wider.
+		$this->assertStringNotContainsString( 'clip-path: var(--wp-swiper-shadow-clip', $css );
+		// A collage keeps no room: nothing of it is cut off.
+		$this->assertStringNotContainsString( '--wp-swiper-shadow-room', file_get_contents( WP_SWIPER_DIR . 'assets/css/collage.css' ) );
 
 		$this->assertContains( 'wp-swiper--shadow', $this->root_classes( $this->render( $on + array( 'effect' => 'coverflow' ) ) ) );
 		// Fade: its one photo, the class the CSS frames it by too.

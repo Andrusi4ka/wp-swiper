@@ -709,6 +709,26 @@
 	transform-origin: 0 0;
 }
 
+/* Tablet, Mobile: the frame in the device's screen (its corners, admin.js), the drawing
+   over it: its camera or bar over the page as on a real one; clicks go through. */
+.wp-swiper-preview--device .wp-swiper-preview__frame {
+	box-shadow: none;
+}
+
+.wp-swiper-preview__device {
+	position: absolute;
+	top: 0;
+	z-index: 1;
+	display: block;
+	max-width: none;
+	pointer-events: none;
+	user-select: none;
+}
+
+.wp-swiper-preview__device[hidden] {
+	display: none;
+}
+
 .wp-swiper-page[hidden] {
 	display: none;
 }
@@ -1069,25 +1089,36 @@
 	gap: 6px;
 }
 
-/* A title over a group of fields on a page (Thumbnails: Placement, Size, Look). */
+/* A page's blocks of fields (Movement, Arrows and keyboard…): each on a grey
+   card with its title, close to the next one. */
+.wp-swiper-block {
+	margin-top: 5px;
+	padding: 12px;
+	border: 1px solid #e4e4e4;
+	border-radius: 6px;
+	background: #f2f2f2;
+}
+
+/* The first block left on a page (admin.js; before it runs, the first one). */
+.wp-swiper-page > legend + .wp-swiper-block,
+.wp-swiper-block.is-first {
+	margin-top: 4px;
+}
+
+/* Fields after the blocks (in none): apart from the last card. */
+.wp-swiper-block + .wp-swiper-field,
+.wp-swiper-block + .wp-swiper-field-group {
+	margin-top: 14px;
+}
+
+/* A block's title (Thumbnails: Placement, Size, Look). */
 .wp-swiper-subheading {
-	margin: 20px 0 10px;
-	padding-top: 14px;
-	border-top: 1px solid #f0f0f1;
+	margin: 0 0 10px;
 	color: #646970;
 	font-size: 11px;
 	font-weight: 600;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
-}
-
-/* The first block left on a page (admin.js; before it runs, the first one):
-   no line over it. */
-.wp-swiper-page > legend + .wp-swiper-block > .wp-swiper-subheading,
-.wp-swiper-block.is-first > .wp-swiper-subheading {
-	margin-top: 4px;
-	padding-top: 0;
-	border-top: 0;
 }
 
 /* The preview's device buttons: icon and name. */
@@ -1352,115 +1383,119 @@ body.wp-swiper-modal-open {
 	display: none;
 }
 
-/* A text's own color: after Custom, a swatch (the color over a checkerboard,
-   so a see-through one shows as such, and a pipette) that opens the picker
-   under it, and an arrow back to the default color. */
+/* Every color field (color_pick()): a swatch, the color over a checkerboard
+   (so a see-through one shows as such), that opens the picker (Pickr). As
+   tall as the selects next to it; smaller on a field's row (compact) and in
+   the Slide info window. */
 .wp-swiper-color-pick {
-	position: relative;
 	display: inline-flex;
-	align-items: center;
-	gap: 6px;
+	vertical-align: middle;
 }
 
-.wp-swiper-color-pick[hidden],
-.wp-swiper-color-pick__pop[hidden] {
+.wp-swiper-color-pick[hidden] {
 	display: none;
 }
 
 .wp-swiper-color-pick__swatch {
-	display: inline-flex;
-	align-items: stretch;
-	height: 30px;
-	padding: 0;
-	overflow: hidden;
+	display: block;
+	width: 64px;
+	height: 40px;
+	padding: 3px;
 	border: 1px solid #8c8f94;
 	border-radius: 4px;
 	background: #fff;
 	cursor: pointer;
 }
 
-.wp-swiper-color-pick__swatch:focus-visible {
-	border-color: var(--wp-admin-theme-color);
+.wp-swiper-color-pick__swatch:hover {
+	border-color: #2c3338;
+}
+
+.wp-swiper-color-pick__swatch:focus-visible,
+.wp-swiper-color-pick__swatch[aria-expanded="true"] {
+	border-color: var(--wp-admin-theme-color, #2271b1);
 	outline: none;
-	box-shadow: 0 0 0 1px var(--wp-admin-theme-color);
+	box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #2271b1);
 }
 
 .wp-swiper-color-pick__chip {
-	width: 40px;
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 2px;
 	background: repeating-conic-gradient(#dcdcde 0% 25%, #fff 0% 50%) 0 0 / 10px 10px;
 }
 
-.wp-swiper-color-pick__swatch .dashicons {
-	width: 30px;
-	height: auto;
-	border-left: 1px solid #dcdcde;
-	background: #f6f7f7;
-	color: #50575e;
-	font-size: 16px;
-	line-height: 28px;
+.wp-swiper-color-pick--compact .wp-swiper-color-pick__swatch {
+	width: 36px;
+	height: 24px;
+	padding: 2px;
 }
 
-.wp-swiper-color-pick__reset {
-	padding: 0;
+.wp-swiper-modal__color .wp-swiper-color-pick__swatch {
+	height: 30px;
+}
+
+/* The picker (Pickr's classic theme, in the body): over the Slide info
+   window (z-index 100050), under the editor's link window (100105). */
+.pcr-app.wp-swiper-pcr {
+	z-index: 100060;
+}
+
+/* Squarer than Pickr's own (28.5em wide, the palette 8em tall): narrower,
+   the palette taller; the color's code on a row of its own, taller too. */
+.pcr-app.wp-swiper-pcr[data-theme="classic"] {
+	width: 20em;
+}
+
+.pcr-app.wp-swiper-pcr[data-theme="classic"] .pcr-selection .pcr-color-palette {
+	height: 11em;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-result {
+	flex: 1 0 100%;
+	height: 2.6em;
+	font-size: 0.85em;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-type,
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-cancel,
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-clear {
+	flex: 1 1 auto;
+}
+
+/* Closing (it fades out): a click there goes through, it changes no color. */
+.pcr-app.wp-swiper-pcr:not(.visible) {
+	pointer-events: none;
+}
+
+/* Cancel grey, as the format buttons; Default red (Pickr's Clear). */
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-cancel {
+	background: #f1f3f4;
+	color: #75797e;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-cancel:hover {
+	filter: brightness(0.92);
+}
+
+/* WordPress's own input styles off Pickr's: its sizes as its theme has them. */
+.pcr-app.wp-swiper-pcr .pcr-interaction input {
+	min-height: 0;
+	box-shadow: none;
+	line-height: normal;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-result {
+	padding: 0 0.6em;
 	border: 0;
-	background: none;
-	color: #50575e;
-	cursor: pointer;
+	border-radius: 0.15em;
+	background: #f1f3f4;
+	color: #75797e;
 }
 
-.wp-swiper-color-pick__reset:hover,
-.wp-swiper-color-pick__reset:focus-visible {
-	color: var(--wp-admin-theme-color);
-}
-
-/* A color setting with its arrow back to the default color beside it. */
-.wp-swiper-color-field {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-}
-
-/* The picker: the color's field, Iris (square, hue, palette), Opacity. */
-.wp-swiper-color-pick__pop {
-	position: absolute;
-	top: calc(100% + 6px);
-	right: 0;
-	z-index: 10;
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	width: 248px;
-	box-sizing: border-box;
-	padding: 12px;
-	border: 1px solid #dcdcde;
-	border-radius: 4px;
-	background: #fff;
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.wp-swiper-color-pick__hex {
-	width: 100%;
-}
-
-.wp-swiper-color-pick__pop .iris-picker {
-	border: 0;
-}
-
-.wp-swiper-color-pick__opacity {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.wp-swiper-color-pick__opacity output {
-	display: inline-block;
-	min-width: 3.2em;
-}
-
-.wp-swiper-color-pick__opacity input {
-	flex: 1;
-	min-width: 0;
-	margin: 0;
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-result:focus {
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 0 3px rgba(66, 133, 244, 0.75);
 }
 
 .wp-swiper-modal__size-unit {
@@ -1612,10 +1647,14 @@ body.wp-swiper-modal-open {
 	cursor: not-allowed;
 }
 
-/* A color swatch draws over its background: fade the swatch itself. */
-.wp-swiper-field.is-disabled input[type="color"],
-.wp-swiper-field.is-unused input[type="color"] {
+/* A color swatch draws over its background: fade the swatch itself; it
+   opens no picker. */
+.wp-swiper-field.is-disabled .wp-swiper-color-pick__swatch,
+.wp-swiper-field.is-unused .wp-swiper-color-pick__swatch,
+.wp-swiper-color-pick__swatch:disabled {
 	opacity: 0.4;
+	cursor: not-allowed;
+	pointer-events: none;
 }
 
 /* .is-unused: the Controls fields the Thumbnails effect does not use (all but the arrows). */
@@ -1684,18 +1723,6 @@ body.wp-swiper-modal-open {
 	max-width: none;
 }
 
-/* Color field (native picker). */
-/* Same height as the selects next to it. */
-.wp-swiper-field .wp-swiper-color {
-	width: 64px;
-	height: 40px;
-	padding: 2px;
-	border: 1px solid #8c8f94;
-	border-radius: 4px;
-	background: #fff;
-	cursor: pointer;
-}
-
 /* Fields sharing a "group": one row; the first takes the free width. */
 .wp-swiper-field-group {
 	display: flex;
@@ -1757,13 +1784,6 @@ body.wp-swiper-modal-open {
 
 .wp-swiper-field-group > .wp-swiper-field:first-child:has(+ .wp-swiper-field--compact) {
 	flex: 0 0 auto;
-}
-
-.wp-swiper-field--compact .wp-swiper-color {
-	display: block;
-	width: 36px;
-	height: 24px;
-	padding: 1px;
 }
 
 /* Label of a field whose control is not a single input (button rows). */

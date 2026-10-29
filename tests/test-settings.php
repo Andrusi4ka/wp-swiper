@@ -102,7 +102,7 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( 'hero-sliderb', $clean['css_id'] );
 		$this->assertSame( '16x9', $clean['thumbs_ratio_custom'] );
 		$this->assertSame( 1, $clean['collage_seed'] );
-		$this->assertSame( '', $clean['lightbox_radius'] );
+		$this->assertSame( 0, $clean['lightbox_radius'] );
 		$this->assertSame( 120, $clean['navigation_size'] );
 		$this->assertSame( 6, $clean['_version'] );
 	}

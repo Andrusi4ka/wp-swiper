@@ -216,6 +216,135 @@ class WP_Swiper_Settings {
 	 * @param mixed $value Raw input.
 	 * @return string
 	 */
+	/**
+	 * The background's overlay: its color ("#rrggbb" or "rgba(r,g,b,a)"), or
+	 * '' for none (opacity 0, or no color).
+	 *
+	 * @param array $settings The slider's settings.
+	 * @return string
+	 */
+	public static function background_overlay( $settings ) {
+		$color = self::sanitize_slide_color( isset( $settings['background_overlay_color'] ) ? $settings['background_overlay_color'] : '' );
+		if ( '' === $color || preg_match( '/,0\)$/', $color ) ) {
+			return '';
+		}
+		return $color;
+	}
+
+	/**
+	 * Until 3.0 the overlay's opacity was a field of its own (Overlay opacity
+	 * (%), 0 = none) beside a plain color: both as one color with its opacity.
+	 *
+	 * @param array $saved A slider's saved settings.
+	 * @return array
+	 */
+	public static function merge_overlay_opacity( $saved ) {
+		return self::merge_opacity( $saved, 'background_overlay_opacity', 'background_overlay_color' );
+	}
+
+	/**
+	 * Until 3.0 the caption background's opacity was a field of its own
+	 * (Background opacity (%)) beside a plain color: one color with it now.
+	 *
+	 * @param array $saved A slider's saved settings.
+	 * @return array
+	 */
+	public static function merge_caption_bg_opacity( $saved ) {
+		return self::merge_opacity( $saved, 'caption_bg_opacity', 'caption_bg_color' );
+	}
+
+	/**
+	 * An opacity field (%) and a plain color beside it as one color with its
+	 * opacity (no color saved: black, as both had by default).
+	 *
+	 * @param array  $saved   A slider's saved settings.
+	 * @param string $opacity The opacity's key (dropped).
+	 * @param string $color   The color's key.
+	 * @return array
+	 */
+	private static function merge_opacity( $saved, $opacity, $color ) {
+		if ( ! isset( $saved[ $opacity ] ) ) {
+			return $saved;
+		}
+		$hex = isset( $saved[ $color ] ) ? sanitize_hex_color( (string) $saved[ $color ] ) : '';
+		$hex = $hex ? strtolower( $hex ) : '#000000';
+		if ( 4 === strlen( $hex ) ) {
+			$hex = '#' . $hex[1] . $hex[1] . $hex[2] . $hex[2] . $hex[3] . $hex[3];
+		}
+		$percent           = max( 0, min( 100, (int) $saved[ $opacity ] ) );
+		list( $r, $g, $b ) = sscanf( $hex, '#%02x%02x%02x' );
+		$saved[ $color ]   = self::sanitize_slide_color( sprintf( 'rgba(%d,%d,%d,%s)', $r, $g, $b, $percent >= 100 ? '1' : self::alpha_text( $percent / 100 ) ) );
+		unset( $saved[ $opacity ] );
+		return $saved;
+	}
+
+	// An opacity as CSS writes it: "0.4", a dot whatever the locale.
+	private static function alpha_text( $alpha ) {
+		return rtrim( rtrim( number_format( (float) $alpha, 2, '.', '' ), '0' ), '.' ) ?: '0';
+	}
+
+	/**
+	 * The caption background's two ends: its color, and the same color
+	 * see-through (where the gradient fades out).
+	 *
+	 * @param array $settings The slider's settings.
+	 * @return string[] [ from, to ], as "rgba(r,g,b,a)".
+	 */
+	public static function caption_bg_colors( $settings ) {
+		$color = self::sanitize_slide_color( isset( $settings['caption_bg_color'] ) ? $settings['caption_bg_color'] : '' );
+		if ( '' === $color ) {
+			$color = self::fields()['caption_bg_color']['default'];
+		}
+		if ( preg_match( '/^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/', $color, $m ) ) {
+			list( , $r, $g, $b, $a ) = $m;
+		} else {
+			list( $r, $g, $b ) = sscanf( $color, '#%02x%02x%02x' );
+			$a                 = 1;
+		}
+		return array(
+			sprintf( 'rgba(%d,%d,%d,%s)', $r, $g, $b, self::alpha_text( $a ) ),
+			sprintf( 'rgba(%d,%d,%d,0)', $r, $g, $b ),
+		);
+	}
+
+	/**
+	 * Rounded corners got their switch (as Image border): a slider saved
+	 * before it with a radius above 0 on any device has it on, so it shows
+	 * as it did; one saved without keeps it off.
+	 *
+	 * @param array $saved A slider's saved settings.
+	 * @return array
+	 */
+	public static function merge_rounded( $saved ) {
+		if ( ! $saved || isset( $saved['border_rounded'] ) ) {
+			return $saved;
+		}
+		$rounded = false;
+		foreach ( array( 'border_radius', 'border_radius_tablet', 'border_radius_mobile' ) as $key ) {
+			if ( isset( $saved[ $key ] ) && '' !== (string) $saved[ $key ] && (int) $saved[ $key ] > 0 ) {
+				$rounded = true;
+			}
+		}
+		$saved['border_rounded'] = $rounded;
+		return $saved;
+	}
+
+	/**
+	 * The settings as drawn: with Rounded corners off, no radius anywhere
+	 * on the slides (the lightbox has its own, lightbox_image_radius()).
+	 *
+	 * @param array $settings The slider's settings.
+	 * @return array
+	 */
+	public static function apply_rounded( $settings ) {
+		if ( empty( $settings['border_rounded'] ) ) {
+			$settings['border_radius']        = 0;
+			$settings['border_radius_tablet'] = '';
+			$settings['border_radius_mobile'] = '';
+		}
+		return $settings;
+	}
+
 	public static function sanitize_slide_color( $value ) {
 		$value = strtolower( preg_replace( '/\s+/', '', (string) $value ) );
 		$hex   = sanitize_hex_color( $value );
@@ -1261,7 +1390,7 @@ class WP_Swiper_Settings {
 				),
 				'slides'      => array(
 					'title'  => __( 'Slides', 'wp-swiper' ),
-					'fields' => array( 'slides_per_view', 'auto_width', 'slides_per_group', 'space_between', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_direction', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),
+					'fields' => array( 'slides_per_view', 'slides_per_group', 'space_between', 'auto_width', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_direction', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),
 				),
 				'size'        => array(
 					'title'  => __( 'Size and fit', 'wp-swiper' ),
@@ -1271,7 +1400,7 @@ class WP_Swiper_Settings {
 				// shadow under it on both.
 				'look'        => array(
 					'title'  => __( 'Look', 'wp-swiper' ),
-					'fields' => array( 'border_radius', 'image_border', 'image_border_width', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
+					'fields' => array( 'border_rounded', 'border_radius', 'image_border', 'image_border_width', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
 				),
 				'zoom'        => array(
 					'title'  => __( 'Zoom', 'wp-swiper' ),
@@ -1282,7 +1411,7 @@ class WP_Swiper_Settings {
 				// the checkbox while it is on (admin.js).
 				'background'  => array(
 					'title'  => __( 'Background', 'wp-swiper' ),
-					'fields' => array( 'background', 'background_class', 'background_overlay_opacity', 'background_overlay_color', 'background_min_height' ),
+					'fields' => array( 'background', 'background_class', 'background_overlay_color' ),
 				),
 			),
 			'thumbs'   => array(
@@ -1297,6 +1426,48 @@ class WP_Swiper_Settings {
 				'look'      => array(
 					'title'  => __( 'Look', 'wp-swiper' ),
 					'fields' => array( 'thumbs_radius', 'thumbs_border_width', 'thumbs_border_color', 'thumbs_active_color', 'thumbs_opacity' ),
+				),
+			),
+			// Block names stay apart from the other pages' (data-block).
+			'lightbox'    => array(
+				'lightbox_main'         => array(
+					'title'  => __( 'Lightbox', 'wp-swiper' ),
+					'fields' => array( 'lightbox', 'lightbox_videos', 'lightbox_border_rounded', 'lightbox_radius' ),
+				),
+				// The Thumbnails effect's strip in it (the block shows for that effect only).
+				'lightbox_thumbs'       => array(
+					'title'  => __( 'Thumbnails', 'wp-swiper' ),
+					'fields' => array( 'lightbox_thumbs', 'lightbox_thumbs_radius' ),
+				),
+				'lightbox_descriptions' => array(
+					'title'  => __( 'Descriptions', 'wp-swiper' ),
+					'fields' => array( 'description_lightbox', 'description_lightbox_place', 'description_lightbox_width', 'description_lightbox_max' ),
+				),
+			),
+			'caption'     => array(
+				'caption_text'       => array(
+					'title'  => __( 'Text', 'wp-swiper' ),
+					'fields' => array( 'art_caption_middle', 'caption_size', 'caption_color', 'caption_orientation', 'caption_shadow' ),
+				),
+				'caption_background' => array(
+					'title'  => __( 'Background', 'wp-swiper' ),
+					'fields' => array( 'caption_bg', 'caption_bg_style', 'caption_bg_color' ),
+				),
+			),
+			'description' => array(
+				'description_text'  => array(
+					'title'  => __( 'Text', 'wp-swiper' ),
+					'fields' => array( 'description_own_color', 'description_color' ),
+				),
+				'description_place' => array(
+					'title'  => __( 'Placement and transition', 'wp-swiper' ),
+					'fields' => array( 'description_offset', 'description_transition' ),
+				),
+			),
+			'attributes'  => array(
+				'attributes' => array(
+					'title'  => __( 'HTML attributes', 'wp-swiper' ),
+					'fields' => array( 'css_class', 'css_id' ),
 				),
 			),
 		);
@@ -1402,8 +1573,16 @@ class WP_Swiper_Settings {
 
 		// Custom thumbnail proportions: one field instead of two.
 		$saved = self::merge_ratio_fields( $saved );
+		// The background's overlay: its opacity in its color.
+		$saved = self::merge_overlay_opacity( $saved );
+		// The caption background's: its opacity in its color too.
+		$saved = self::merge_caption_bg_opacity( $saved );
+		// Rounded corners: on where a radius was saved.
+		$saved = self::merge_rounded( $saved );
 		if ( ! empty( $saved['layouts'] ) && is_array( $saved['layouts'] ) ) {
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_ratio_fields' ), array_filter( $saved['layouts'], 'is_array' ) );
+			$saved['layouts'] = array_map( array( __CLASS__, 'merge_overlay_opacity' ), $saved['layouts'] );
+			$saved['layouts'] = array_map( array( __CLASS__, 'merge_rounded' ), $saved['layouts'] );
 		}
 
 		// Version 6: the lightbox radii are numbers of their own, empty = the
@@ -1471,7 +1650,59 @@ class WP_Swiper_Settings {
 			}
 		}
 
+		// The lightbox image's Rounded corners got their switch, its radius no
+		// "As the slides" (merge_lightbox_rounded()).
+		if ( $saved && ! isset( $saved['lightbox_border_rounded'] ) ) {
+			$settings = self::merge_lightbox_rounded( $settings );
+		}
+
 		return $settings;
+	}
+
+	/**
+	 * Until 3.0 the lightbox image's radius was a number per device, empty
+	 * for the slider's own there (Art's Rounded corners for Art). Now a
+	 * switch and a radius of its own: the corners it showed, as its own
+	 * radius (a smaller screen with the same as the larger one inherits),
+	 * the switch on where any is above 0.
+	 *
+	 * @param array $settings A slider's settings (over the defaults).
+	 * @return array
+	 */
+	public static function merge_lightbox_rounded( $settings ) {
+		$fallback = 'art' === $settings['effect'] ? 'art_radius' : 'border_radius';
+		$own      = self::responsive( $settings, 'lightbox_radius' );
+		$slider   = self::responsive( self::apply_rounded( $settings ), $fallback );
+		$shown    = array();
+		foreach ( $own as $device => $radius ) {
+			$shown[ $device ] = (int) ( '' === $radius ? $slider[ $device ] : $radius );
+		}
+		$settings['lightbox_border_rounded'] = max( $shown ) > 0;
+		if ( $settings['lightbox_border_rounded'] ) {
+			$settings['lightbox_radius']        = $shown['desktop'];
+			$settings['lightbox_radius_tablet'] = $shown['tablet'] !== $shown['desktop'] ? $shown['tablet'] : '';
+			$settings['lightbox_radius_mobile'] = $shown['mobile'] !== $shown['tablet'] ? $shown['mobile'] : '';
+		} else {
+			$settings['lightbox_radius']        = self::fields()['lightbox_radius']['default'];
+			$settings['lightbox_radius_tablet'] = '';
+			$settings['lightbox_radius_mobile'] = '';
+		}
+		return $settings;
+	}
+
+	/**
+	 * The lightbox image's corners per device: its own radius while Rounded
+	 * corners is on, else none.
+	 *
+	 * @param array $settings A slider's settings.
+	 * @return int[] device => px.
+	 */
+	public static function lightbox_image_radius( $settings ) {
+		$radius = self::responsive( $settings, 'lightbox_radius' );
+		foreach ( $radius as $device => $px ) {
+			$radius[ $device ] = empty( $settings['lightbox_border_rounded'] ) ? 0 : (int) $px;
+		}
+		return $radius;
 	}
 
 	/**

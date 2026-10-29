@@ -39,6 +39,72 @@
   тінь показував сусідній слайд (місце під тінь > проміжку); тепер слайди
   цілком поза кадром згасають (`slider.js hideOutside()`, клас
   `wp-swiper-slide--outside`, перевірка щокадру, поки щось рухається).
+- 2026-10-29: усі поля кольору однакові — **Pickr 1.9.1** (MIT,
+  `assets/vendor/pickr/`, лише в адмінці, як у WPBakery). Замість
+  `<input type="color">` і Iris: `WP_Swiper_Admin::color_pick()` (квадратик
+  + прихований input), `admin.js` створює Pickr при першому кліку. Без
+  прозорості для `color`, з нею для `alpha_color` і Slide info (рішення
+  користувача, варіант А). Внизу Cancel (колір на момент відкриття) і Default
+  (наша кнопка в `.pcr-interaction`); стрілку «за замовчуванням» прибрано.
+  Палітра — та сама, що «Text color». Вікно вужче й квадратніше за Pickr
+  (20em, палітра 11em, поле коду окремим рядком, `admin.css`).
+  Overlay opacity (%) фону прибрано: прозорість — у самому Overlay color
+  (`alpha_color`, за замовч. `rgba(0,0,0,0)` = немає);
+  `merge_overlay_opacity()` у `get()` переносить старе, вивід —
+  `WP_Swiper_Settings::background_overlay()`. Minimum block height (px) фону
+  прибрано повністю (рішення користувача: висоту блоку задає конструктор; на
+  сайті вдома жоден слайдер його не мав) — не повертати. Блоки сторінок
+  налаштувань (`.wp-swiper-block`) — сірі картки (`#f2f2f2`, рамка 1px `#e4e4e4`, радіус 6px,
+  padding 12px, відступ між ними 5px) замість лінії над заголовком.
+  Прев'ю фону: блок 3:2 (desktop), 3:4 (tablet), 9:16 (mobile) — лише прев'ю;
+  приклад вмісту (заголовок, текст, кнопка) прибрано на прохання
+  користувача, лишилась плашка «Background mode».
+  Look: перемикач **Rounded corners** (`border_rounded`), під ним Radius (px)
+  (`border_radius`, за замовч. тепер 12), як Image border. Вимкнено —
+  радіуса немає ніде (`apply_rounded()` у `render_slider()`, і лайтбокс, що
+  бере радіус слайдера). Старі слайдери з радіусом > 0 — увімкнено
+  (`merge_rounded()` у `get()`, і в `layouts`). Art має свій `art_radius`.
+  Блоки (картки) і на Lightbox (Lightbox / Thumbnails / Descriptions),
+  Caption (Text / Background), Description (Text / Placement and transition),
+  Custom (HTML attributes); Video — ще без блоків.
+  Lightbox: перемикач **Rounded corners** (`lightbox_border_rounded`), під ним
+  Radius (px) (`lightbox_radius`, за замовч. 12). «As the slides» (порожньо =
+  радіус слайдера / Art) прибрано на прохання користувача — радіус лайтбокса
+  лише свій; вимкнено — 0 скрізь (`lightbox_image_radius()`).
+  `merge_lightbox_rounded()` у `get()` переносить радіус, який лайтбокс
+  реально мав. Thumbnail border radius лайтбокса ще бере радіус мініатюр.
+  Description → Gap to the slider (`description_offset`) — для кожного екрана
+  (`--wp-swiper-description-offset[-tablet|-mobile]`); старі слайдери — той
+  самий відступ скрізь.
+  Caption → Background opacity (%) прибрано: прозорість у Background color
+  (`alpha_color`, за замовч. `rgba(0,0,0,0.65)`), він в одному ряду з
+  Background style (група `caption_bg`). `merge_caption_bg_opacity()` у `get()`;
+  вивід (і Art) — `WP_Swiper_Settings::caption_bg_colors()`.
+  **Image shadow — назовні** (рішення користувача): місце під тінь більше не
+  забирається з фото (був padding `--wp-swiper-shadow-room`, через нього при
+  Contain фото меншали і проміжки між ними росли). Тепер фото того самого
+  розміру, що без тіні; тінь виходить за межі слайдера на сторінку. Swiper:
+  `.swiper` `overflow: clip` + `overflow-clip-margin:
+  var(--wp-swiper-shadow-reach)` (найбільший вихід тіні, у `@supports`),
+  крім Cards. НЕ `overflow: visible` + `clip-path` — так слайди в черзі за
+  краєм розширювали сторінку (горизонтальна прокрутка, перевірено:
+  1280 → 3156px). Без підтримки (Safari): старий padding
+  `--wp-swiper-shadow-room`, фото трохи менші. `hideOutside()` ховає слайди
+  за краєм. Колаж і Art — без padding. Знімки тестів з тінню оновлено вдома
+  (2026-10-29). Safari не перевіряли.
+  **Прев'ю у пристроях** (усі три): `assets/images/preview/desktop.svg` (iMac),
+  `tablet.svg`, `phone.svg` (малюнки користувача, прозорий екран), розміри в
+  `WP_Swiper_Preview::DEVICES` (одиниці viewBox; екран має пропорції фрейму,
+  тож `SIZES` підігнано під малюнки, рішення користувача: Desktop 1280×721
+  (1.775, був 1280×800), Tablet 820×1101 (0.745, а не iPad Air 820×1180),
+  Mobile 390×844), `data-devices` (`device_frames()`); `admin.js fitPreview()`
+  ставить фрейм в екран (радіус кутів), малюнок поверх (`pointer-events:
+  none`), масштабує разом. Тонка смуга прокрутки у фреймі до 1024px. Новий
+  пристрій = малюнок + рядок у `DEVICES` (+ `SIZES` під пропорції екрана).
+  `random.svg` з кореня видалено (не потрібен). Назви блоків
+  (`data-block`) не повторюються між сторінками, крім старих `look`/`size`.
+  Перевірено на тестовій сторінці в Chrome
+  (стилі WP + admin.css + блок з admin.js); справжню адмінку — руками.
 
 ## Наступний реліз (на прохання)
 
@@ -179,6 +245,10 @@
 
 **У браузері** — `tests/browser/` (Playwright 1.48.2, встановлений Chrome),
 див. `tests/browser/README.md`. Лише локально, у CI не ходять (потрібен сайт).
+Знімки записані на роботі, з її медіатекою. Вдома (2026-10-29) у медіатеці
+немає відео, тож `video` не збігається зі знімком (156 інших проходять);
+знімки вдома не оновлювати. Видаляючи рядки за номерами (sed), звіряй
+`git diff` — так одного разу пропав селектор `.wp-swiper.wp-swiper--background`.
 `fixture.php` показує слайдер з налаштувань `cases.php` на фото з медіатеки,
 нічого не зберігає, відкривається лише з 127.x. Перевіряє 26 випадків
 (усі ефекти, стилі колажу й Art) на desktop і mobile: без помилок у консолі,

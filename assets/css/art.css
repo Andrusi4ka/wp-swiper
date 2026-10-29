@@ -282,13 +282,8 @@
 }
 
 /* Image shadow (WP_Swiper_Settings::shadow()): on the stage, so it follows
-   each piece's shape (CSS drop-shadow, no spread); room kept around the
-   stage for it (--wp-swiper-shadow-room: top right bottom left). */
-.wp-swiper-art--shadow {
-	box-sizing: border-box;
-	padding: var(--wp-swiper-shadow-room, 0px);
-}
-
+   each piece's shape (CSS drop-shadow, no spread), out of its box (no room
+   taken from the photos). */
 .wp-swiper-art--shadow .wp-swiper-art__stage {
 	filter: var(--wp-swiper-art-shadow, none);
 }

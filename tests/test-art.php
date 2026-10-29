@@ -50,7 +50,9 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'wp-swiper-art--shadow', $html );
 		// drop-shadow: no spread.
 		$this->assertStringContainsString( '--wp-swiper-art-shadow:drop-shadow(2px 6px 12px #112233)', $html );
-		$this->assertStringContainsString( '--wp-swiper-shadow-room:6px 14px 18px 10px', $html );
+		// Out of the stage's box: no room taken from it.
+		$this->assertStringNotContainsString( 'shadow-room', $html );
+		$this->assertStringNotContainsString( 'shadow-room', file_get_contents( WP_SWIPER_DIR . 'assets/css/art.css' ) );
 
 		$this->assertStringNotContainsString( 'wp-swiper-art--shadow', $this->render( array( 'effect' => 'art' ), $this->slides( 3 ) ) );
 	}
@@ -185,7 +187,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 	public function test_captions_on_the_photos() {
 		$slides               = $this->slides( 2 );
 		$slides[0]['caption'] = 'Hannah <b>x</b><script>y</script>';
-		$html                 = $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3', 'caption_shadow' => true, 'caption_bg_style' => 'solid', 'caption_bg_opacity' => 40, 'caption_font' => 'custom', 'caption_font_size_mobile' => 12 ), $slides );
+		$html                 = $this->render( array( 'effect' => 'art', 'caption_tag' => 'h3', 'caption_shadow' => true, 'caption_bg_style' => 'solid', 'caption_bg_color' => 'rgba(0,0,0,0.4)', 'caption_font' => 'custom', 'caption_font_size_mobile' => 12 ), $slides );
 
 		// In the first photo only, sanitized as a slider's; saved before in the
 		// slider's Tag (until 2.8): in that tag still.
@@ -310,15 +312,15 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$slides                   = $this->slides( 2 );
 		$slides[1]['description'] = 'Second';
 		wp_dequeue_script( 'wp-swiper' );
-		$html   = $this->render( array( 'effect' => 'art', 'lightbox' => true, 'art_radius_mobile' => '4', 'lightbox_radius_tablet' => '20', 'description_lightbox_place' => 'under' ), $slides );
+		$html   = $this->render( array( 'effect' => 'art', 'lightbox' => true, 'art_radius_mobile' => '4', 'lightbox_border_rounded' => true, 'lightbox_radius_tablet' => '20', 'description_lightbox_place' => 'under' ), $slides );
 		$config = $this->config( $html, 'data-wp-swiper-art' );
 
 		$this->assertStringContainsString( 'wp-swiper-art--lightbox', $html );
 		// Each photo with its full size for it.
 		$this->assertSame( 2, substr_count( $html, 'data-wp-swiper-full="' ) );
 		$this->assertStringContainsString( ' data-wp-swiper-full="' . wp_get_attachment_image_url( $slides[0]['id'], 'full' ) . '"', $html );
-		// Its corners: its own (tablet; mobile inherits it), else Art's Rounded corners.
-		$this->assertSame( array( 'desktop' => 14, 'tablet' => 20, 'mobile' => 20 ), $config['lightbox']['radius'] );
+		// Its corners: its own radius (12 by default; tablet's own, mobile inherits it), not Art's Rounded corners.
+		$this->assertSame( array( 'desktop' => 12, 'tablet' => 20, 'mobile' => 20 ), $config['lightbox']['radius'] );
 		// Descriptions in it, under the image.
 		$this->assertTrue( $config['lightbox']['descriptions'] );
 		$this->assertSame( 800, $config['lightbox']['text']['max'] );

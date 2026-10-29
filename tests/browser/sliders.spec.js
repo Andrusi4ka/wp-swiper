@@ -3,7 +3,8 @@
 // and lightbox work.
 const { test, expect } = require( '@playwright/test' );
 
-const FIXTURE = '/wp-content/plugins/wp-swiper/tests/browser/fixture.php';
+// The plugin's own folder name (wp-swiper, wp-swiper-main…).
+const FIXTURE = '/wp-content/plugins/' + require( 'path' ).basename( require( 'path' ).resolve( __dirname, '../..' ) ) + '/tests/browser/fixture.php';
 
 const CASES = [
 	'slide', 'slide-loop', 'slide-captions', 'expand', 'auto-width', 'marquee',

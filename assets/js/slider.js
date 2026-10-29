@@ -1768,9 +1768,9 @@
 	/* ------------------------------------------------------------------ *
 	 * Image shadow, Slide: the slides out of view hidden
 	 *
-	 * Room is kept around the slides for the shadow (frontend.css: padding
-	 * of the .swiper), and Swiper only clips at its outer edge, so a slide a
-	 * gap away from those in view would show in that room. A slide wholly
+	 * The slider shows past its edges for the shadow (frontend.css:
+	 * overflow-clip-margin, or in Safari its padding), so a slide a gap away
+	 * from those in view would show there. A slide wholly
 	 * outside the slides' area gets OUTSIDE_CLASS (frontend.css fades it
 	 * out); checked frame by frame while anything in the slider moves (the
 	 * strip, the wider active slide's widths, the marquee), so a slide

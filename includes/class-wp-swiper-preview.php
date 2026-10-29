@@ -21,10 +21,57 @@ class WP_Swiper_Preview {
 	 * is drawn this size and scaled down to fit (admin.js).
 	 */
 	const SIZES = array(
-		'desktop' => array( 1280, 800 ),
-		'tablet'  => array( 820, 1180 ),
+		// As the screens in DEVICES: the iMac's (1.775, ~16:9), the tablet's
+		// (0.745, not iPad Air's 820×1180), the phone's.
+		'desktop' => array( 1280, 721 ),
+		'tablet'  => array( 820, 1101 ),
 		'mobile'  => array( 390, 844 ),
 	);
+
+	/**
+	 * The devices drawn around the frame (assets/images/preview/, the user's
+	 * drawings): each one's size and its screen's box and corner radius, in
+	 * the drawing's units (its viewBox). Each screen has its frame's
+	 * proportions (SIZES): iMac 1.775 = 1280×721, tablet 0.745 = 820×1101,
+	 * phone 0.462 = 390×844.
+	 */
+	const DEVICES = array(
+		'desktop' => array(
+			'src'    => 'assets/images/preview/desktop.svg',
+			'width'  => 1000.2,
+			'height' => 793.1,
+			'screen' => array( 22.89, 23.39, 954.91, 537.91 ),
+			'radius' => 0,
+		),
+		'tablet'  => array(
+			'src'    => 'assets/images/preview/tablet.svg',
+			'width'  => 1379.63,
+			'height' => 1789.88,
+			'screen' => array( 78.02, 84.23, 1214.8, 1631.04 ),
+			'radius' => 17.15,
+		),
+		'mobile' => array(
+			'src'    => 'assets/images/preview/phone.svg',
+			'width'  => 213.04,
+			'height' => 429.61,
+			'screen' => array( 12.01, 10.13, 188.99, 409.35 ),
+			'radius' => 24.05,
+		),
+	);
+
+	/**
+	 * DEVICES for admin.js: each one's size, screen and radius (no file).
+	 *
+	 * @return array device => [ 'width', 'height', 'screen', 'radius' ].
+	 */
+	public static function device_frames() {
+		$frames = array();
+		foreach ( self::DEVICES as $device => $drawing ) {
+			unset( $drawing['src'] );
+			$frames[ $device ] = $drawing;
+		}
+		return $frames;
+	}
 
 	public static function init() {
 		add_action( 'wp_ajax_' . self::ACTION, array( __CLASS__, 'render_frame' ) );
@@ -43,7 +90,8 @@ class WP_Swiper_Preview {
 				data-action="<?php echo esc_attr( self::ACTION ); ?>"
 				data-post="<?php echo (int) $post->ID; ?>"
 				data-nonce="<?php echo esc_attr( wp_create_nonce( self::ACTION . '_' . $post->ID ) ); ?>"
-				data-sizes="<?php echo esc_attr( wp_json_encode( self::SIZES ) ); ?>">
+				data-sizes="<?php echo esc_attr( wp_json_encode( self::SIZES ) ); ?>"
+				data-devices="<?php echo esc_attr( wp_json_encode( self::device_frames() ) ); ?>">
 				<div class="wp-swiper-preview__bar">
 					<span class="wp-swiper-preview__title"><?php esc_html_e( 'Preview', 'wp-swiper' ); ?></span>
 					<?php // Developer mode: the slides', images' and empty spaces' boxes over the preview (assets/js/preview-dev.js). ?>
@@ -119,6 +167,10 @@ class WP_Swiper_Preview {
 				</p>
 				<div class="wp-swiper-preview__stage">
 					<iframe class="wp-swiper-preview__frame" name="wp-swiper-preview-<?php echo (int) $post->ID; ?>" title="<?php esc_attr_e( 'Slider preview', 'wp-swiper' ); ?>" src="about:blank"></iframe>
+					<?php // Tablet and Mobile: the frame in the device's screen (admin.js fitPreview()); over it, it takes no clicks. ?>
+					<?php foreach ( self::DEVICES as $device => $drawing ) : ?>
+						<img class="wp-swiper-preview__device" data-device="<?php echo esc_attr( $device ); ?>" src="<?php echo esc_url( WP_SWIPER_URL . $drawing['src'] ); ?>" alt="" hidden>
+					<?php endforeach; ?>
 				</div>
 			</div>
 		</div>
@@ -126,10 +178,11 @@ class WP_Swiper_Preview {
 	}
 
 	/**
-	 * Background: the slider in a block with its class and some content over
-	 * it, as on a page (without a class there is no such block: the notice
-	 * says so), and a label in its corner saying the mode is on (the preview
-	 * only, never on a page). Otherwise the slider as it is.
+	 * Background: the slider in a block with its class, as on a page (without
+	 * a class there is no such block: the notice says so), and a label in its
+	 * corner saying the mode is on (the preview only, never on a page). No
+	 * example content over it: it only drew the eye. Otherwise the slider as
+	 * it is.
 	 *
 	 * @param string $slider   The slider's markup.
 	 * @param array  $settings Slider settings.
@@ -140,12 +193,9 @@ class WP_Swiper_Preview {
 			return $slider;
 		}
 		return sprintf(
-			'<div class="wp-swiper-preview-block %1$s"><span class="wp-swiper-preview-block__mode">%2$s</span><div class="wp-swiper-preview-block__content"><h2>%3$s</h2><p>%4$s</p><span class="wp-swiper-preview-block__button">%5$s</span></div>%6$s</div>',
+			'<div class="wp-swiper-preview-block %1$s"><span class="wp-swiper-preview-block__mode">%2$s</span>%3$s</div>',
 			esc_attr( $settings['background_class'] ),
 			esc_html__( 'Background mode', 'wp-swiper' ),
-			esc_html__( 'The block’s content', 'wp-swiper' ),
-			esc_html__( 'Text, buttons and other elements of the row or column sit over the slider.', 'wp-swiper' ),
-			esc_html__( 'Button', 'wp-swiper' ),
 			$slider
 		);
 	}
@@ -194,28 +244,31 @@ class WP_Swiper_Preview {
 	<style>
 		html, body { margin: 0; background: #fff; }
 		body { font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+		/* Tablet and Mobile (in the device): its scroll bar, thin, rounded, see-through, no track. */
+		@media (max-width: 1024px) {
+			html::-webkit-scrollbar { width: 4px; height: 4px; }
+			html::-webkit-scrollbar-track { background: transparent; }
+			html::-webkit-scrollbar-thumb { border-radius: 4px; background: rgba(0, 0, 0, 0.35); }
+			html::-webkit-scrollbar-corner { background: transparent; }
+			@supports not selector(::-webkit-scrollbar) {
+				html { scrollbar-width: thin; scrollbar-color: rgba(0, 0, 0, 0.35) transparent; }
+			}
+		}
 		.wp-swiper-preview-page { box-sizing: border-box; min-height: 100vh; padding: 24px; }
 		@media (max-width: 767px) { .wp-swiper-preview-page { padding: 12px; } }
 		.wp-swiper-preview-block { position: relative; background: #f0f0f1; }
-		/* "Background mode": a small label in the block's corner, over the slider and its content. */
+		/* "Background mode": a small label in the block's corner, over the slider. */
 		.wp-swiper-preview-block__mode { position: absolute; top: 12px; left: 12px; z-index: 3; padding: 3px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 12px; line-height: 18px; font-weight: 600; pointer-events: none; }
-		/* Its content in the middle of the block, as an example of what sits over the slider. */
-		.wp-swiper-preview-block { display: flex; align-items: center; justify-content: center; }
-		/* Background: the block at a screen's usual proportions per device, unless
-		   it has a minimum height of its own (shown as set; more content makes it taller). */
-		.wp-swiper-preview-block.wp-swiper-bg-host:not(.wp-swiper-bg-host--min) { aspect-ratio: 16 / 9; }
-		@media (max-width: 1024px) { .wp-swiper-preview-block.wp-swiper-bg-host:not(.wp-swiper-bg-host--min) { aspect-ratio: 4 / 3; } }
-		@media (max-width: 767px) { .wp-swiper-preview-block.wp-swiper-bg-host:not(.wp-swiper-bg-host--min) { aspect-ratio: 3 / 4; } }
-		.wp-swiper-preview-block__content { box-sizing: border-box; max-width: 640px; padding: 72px 40px; color: #fff; text-align: center; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+		/* Background: a usual shape per device, the preview only (on the site the
+		   block's height is the page builder's): a large monitor 3:2, a tablet
+		   4:3 upright, a phone 16:9 upright. */
+		.wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 3 / 2; }
+		@media (max-width: 1024px) { .wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 3 / 4; } }
+		@media (max-width: 767px) { .wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 9 / 16; } }
 		/* Here only (on a page the content takes the clicks): the background slider
-		   takes the pointer, the example content lets it through, so its photos can
-		   be dragged (preview-collage.js, preview-art.js) under it too. */
+		   takes the pointer, so its photos can be dragged (preview-collage.js,
+		   preview-art.js). */
 		.wp-swiper-preview-block .wp-swiper.wp-swiper--background { pointer-events: auto; }
-		.wp-swiper-preview-block__content { pointer-events: none; }
-		.wp-swiper-preview-block__content h2 { margin: 0 0 12px; font-size: 32px; line-height: 1.2; }
-		.wp-swiper-preview-block__content p { margin: 0 0 24px; }
-		.wp-swiper-preview-block__button { display: inline-block; padding: 10px 24px; border-radius: 4px; background: #fff; color: #1d2327; text-shadow: none; font-weight: 600; }
-		@media (max-width: 767px) { .wp-swiper-preview-block__content { padding: 40px 20px; } .wp-swiper-preview-block__content h2 { font-size: 24px; } }
 	</style>
 </head>
 <body>

@@ -112,21 +112,26 @@ return array(
 		'default' => true,
 		'help'    => __( 'A click on a video slide opens it in the lightbox, with sound and controls. Off: the lightbox shows the images only.', 'wp-swiper' ),
 	),
-	// Per device; empty (desktop too, `empty`) takes the slider's own
-	// radius on that device (see WP_Swiper_Render::lightbox_radius()).
+	// The lightbox image's rounded corners, as the slider's (Look): its own
+	// radius per device once on; off, none. Until 3.0 an empty radius took
+	// the slider's (merge_lightbox_rounded(), get()).
+	'lightbox_border_rounded' => array(
+		'section' => 'advanced',
+		'panel'   => 'lightbox',
+		'label'   => __( 'Rounded corners', 'wp-swiper' ),
+		'type'    => 'checkbox',
+		'default' => false,
+	),
 	'lightbox_radius'       => array(
-		'section'     => 'advanced',
-		'panel'       => 'lightbox',
-		'label'       => __( 'Image border radius (px)', 'wp-swiper' ),
-		'type'        => 'number',
-		'responsive'  => true,
-		'empty'       => true,
-		'default'     => '',
-		'min'         => 0,
-		'max'         => 200,
-		'step'        => 1,
-		'placeholder' => __( 'As the slides', 'wp-swiper' ),
-		'help'        => __( 'Empty: the slide border radius (Layout).', 'wp-swiper' ),
+		'section'    => 'advanced',
+		'panel'      => 'lightbox',
+		'label'      => __( 'Radius (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 12,
+		'min'        => 0,
+		'max'        => 200,
+		'step'       => 1,
 	),
 	// Thumbnails effect: its strip in the lightbox too, always under the
 	// image, as many in view as in the slider.
@@ -179,11 +184,10 @@ return array(
 		),
 		'help'      => __( 'Under the image: the image gets smaller to leave room for the text (at most 40% of the window; longer text scrolls).', 'wp-swiper' ),
 	),
-	// One row: the text's width under the image, per device, and its limit.
+	// The text's width under the image, per device; its limit on its own row under it.
 	'description_lightbox_width' => array(
 		'section'         => 'advanced',
 		'panel'           => 'lightbox',
-		'group'           => 'description_lightbox_width',
 		'label'           => __( 'Text width (% of the window)', 'wp-swiper' ),
 		'type'            => 'number',
 		'responsive'      => true,
@@ -197,7 +201,6 @@ return array(
 	'description_lightbox_max' => array(
 		'section' => 'advanced',
 		'panel'   => 'lightbox',
-		'group'   => 'description_lightbox_width',
 		'label'   => __( 'At most (px)', 'wp-swiper' ),
 		'type'    => 'number',
 		'default' => 800,
@@ -708,12 +711,20 @@ return array(
 		'max'        => 200,
 		'step'       => 1,
 	),
+	// Rounded corners, as Image border: the radius once it is on. A slider
+	// saved before with a radius keeps it on (merge_rounded(), get()).
+	'border_rounded'        => array(
+		'section' => 'layout',
+		'label'   => __( 'Rounded corners', 'wp-swiper' ),
+		'type'    => 'checkbox',
+		'default' => false,
+	),
 	'border_radius'         => array(
 		'section'    => 'layout',
-		'label'      => __( 'Slide border radius (px)', 'wp-swiper' ),
+		'label'      => __( 'Radius (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
-		'default'    => 0,
+		'default'    => 12,
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
@@ -1526,8 +1537,11 @@ return array(
 		'type'    => 'checkbox',
 		'default' => true,
 	),
+	// One row: the style and the color (with its opacity; until 3.0 the
+	// opacity was a field of its own, merge_caption_bg_opacity(), get()).
 	'caption_bg_style'      => array(
 		'section' => 'caption',
+		'group'   => 'caption_bg',
 		'label'   => __( 'Background style', 'wp-swiper' ),
 		'type'    => 'select',
 		'default' => 'gradient',
@@ -1537,23 +1551,12 @@ return array(
 		),
 		'help'    => __( 'The gradient runs from the image edge where the text is.', 'wp-swiper' ),
 	),
-	// One row, like Font weight and Color.
-	'caption_bg_opacity'    => array(
-		'section' => 'caption',
-		'group'   => 'caption_bg',
-		'label'   => __( 'Background opacity (%)', 'wp-swiper' ),
-		'type'    => 'number',
-		'default' => 65,
-		'min'     => 0,
-		'max'     => 100,
-		'step'    => 5,
-	),
 	'caption_bg_color'      => array(
 		'section' => 'caption',
 		'group'   => 'caption_bg',
 		'label'   => __( 'Background color', 'wp-swiper' ),
-		'type'    => 'color',
-		'default' => '#000000',
+		'type'    => 'alpha_color',
+		'default' => 'rgba(0,0,0,0.65)',
 	),
 	'caption_shadow'        => array(
 		'section' => 'caption',
@@ -1584,15 +1587,17 @@ return array(
 		),
 		'help'    => __( 'As the slider: the text moves the way the slides do (slides, turns with a cube, flips...), at the same speed, once a slide is let go.', 'wp-swiper' ),
 	),
+	// Per device (empty: the larger screen's).
 	'description_offset'    => array(
-		'section' => 'description',
-		'label'   => __( 'Gap to the slider (px)', 'wp-swiper' ),
-		'type'    => 'number',
-		'default' => 16,
-		'min'     => 0,
-		'max'     => 200,
-		'step'    => 1,
-		'help'    => __( 'Under the slider and its pagination, if that is outside.', 'wp-swiper' ),
+		'section'    => 'description',
+		'label'      => __( 'Gap to the slider (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 16,
+		'min'        => 0,
+		'max'        => 200,
+		'step'       => 1,
+		'help'       => __( 'Under the slider and its pagination, if that is outside.', 'wp-swiper' ),
 	),
 	'description_own_color' => array(
 		'section' => 'description',
@@ -1714,43 +1719,15 @@ return array(
 		'placeholder' => 'hero-block',
 		'help'        => __( 'Give this class to the row or column the slider is in (WPBakery: “Extra class name”) and enter it here. The nearest block around the slider with it is used; without one, the slider shows as usual.', 'wp-swiper' ),
 	),
-	// One row: how dark, and in what color.
-	'background_overlay_opacity' => array(
-		'section' => 'advanced',
-		'panel'   => 'layout',
-		'effects' => self::BACKGROUND_EFFECTS,
-		'group'   => 'background_overlay',
-		'label'   => __( 'Overlay opacity (%)', 'wp-swiper' ),
-		'type'    => 'number',
-		'default' => 0,
-		'min'     => 0,
-		'max'     => 100,
-		'step'    => 5,
-		'help'    => __( 'A color over the slides, so that the content on them reads well. 0 = none.', 'wp-swiper' ),
-	),
+	// The color with its opacity (how dark); opacity 0 = none. Until 3.0 the
+	// opacity was a field of its own (background_overlay_opacity, get()).
 	'background_overlay_color' => array(
 		'section' => 'advanced',
 		'panel'   => 'layout',
 		'effects' => self::BACKGROUND_EFFECTS,
-		'group'   => 'background_overlay',
 		'label'   => __( 'Overlay color', 'wp-swiper' ),
-		'type'    => 'color',
-		'default' => '#000000',
-	),
-	// Per device; empty (desktop too) = none: the block as tall as its content.
-	'background_min_height' => array(
-		'section'     => 'advanced',
-		'panel'       => 'layout',
-		'effects'     => self::BACKGROUND_EFFECTS,
-		'label'       => __( 'Minimum block height (px)', 'wp-swiper' ),
-		'type'        => 'number',
-		'responsive'  => true,
-		'empty'       => true,
-		'default'     => '',
-		'min'         => 0,
-		'max'         => 2000,
-		'step'        => 1,
-		'placeholder' => __( 'None', 'wp-swiper' ),
-		'help'        => __( 'The block is as tall as its content (or as the page builder makes it); this keeps it at least this tall. Empty: no minimum.', 'wp-swiper' ),
+		'type'    => 'alpha_color',
+		'default' => 'rgba(0,0,0,0)',
+		'help'    => __( 'A color over the slides, so that the content on them reads well. Its opacity says how much; at Opacity 0 there is none.', 'wp-swiper' ),
 	),
 );

@@ -989,7 +989,6 @@ class WP_Swiper_Art {
 			self::border_style( $settings ),
 			$shadow ? array(
 				'--wp-swiper-art-shadow:drop-shadow(' . $shadow['x'] . 'px ' . $shadow['y'] . 'px ' . $shadow['blur'] . 'px ' . $shadow['color'] . ')',
-				'--wp-swiper-shadow-room:' . implode( 'px ', $shadow['room'] ) . 'px',
 			) : array()
 		);
 
@@ -1013,7 +1012,7 @@ class WP_Swiper_Art {
 			WP_Swiper_Render::enqueue( false );
 			$texts              = '' !== $descriptions && $settings['description_lightbox'];
 			$config['lightbox'] = array(
-				'radius'       => WP_Swiper_Render::lightbox_radius( $settings, 'lightbox_radius', 'art_radius' ),
+				'radius'       => WP_Swiper_Settings::lightbox_image_radius( $settings ),
 				'descriptions' => $texts,
 				'text'         => $texts && 'under' === $settings['description_lightbox_place'] ? array(
 					'width' => array_map( 'intval', WP_Swiper_Settings::responsive( $settings, 'description_lightbox_width' ) ),
@@ -1236,10 +1235,9 @@ class WP_Swiper_Art {
 		$style = array_merge( $style, WP_Swiper_Settings::font_size_vars( WP_Swiper_Settings::caption_sizes( $settings ), 'wp-swiper-caption-size' ) );
 		$style[] = '--wp-swiper-caption-color:' . $settings['caption_color'];
 		if ( $settings['caption_bg'] ) {
-			list( $r, $g, $b ) = sscanf( $settings['caption_bg_color'], '#%02x%02x%02x' );
-			$alpha              = max( 0, min( 100, (int) $settings['caption_bg_opacity'] ) ) / 100;
-			$style[]            = sprintf( '--wp-swiper-caption-bg-from:rgba(%d,%d,%d,%s)', $r, $g, $b, $alpha );
-			$style[]            = sprintf( '--wp-swiper-caption-bg-to:rgba(%d,%d,%d,0)', $r, $g, $b );
+			list( $from, $to ) = WP_Swiper_Settings::caption_bg_colors( $settings );
+			$style[]           = '--wp-swiper-caption-bg-from:' . $from;
+			$style[]           = '--wp-swiper-caption-bg-to:' . $to;
 		}
 		$style = array_merge( $style, WP_Swiper_Settings::font_weight_vars( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ), 'wp-swiper-caption-weight' ) );
 		return $style;

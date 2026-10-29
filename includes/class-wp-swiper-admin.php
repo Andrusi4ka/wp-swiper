@@ -45,9 +45,10 @@ class WP_Swiper_Admin {
 			wp_enqueue_media();
 			// The slide descriptions' editor (admin.js starts it in its window, wp.editor).
 			wp_enqueue_editor();
-			// Iris: the color picker of a slide's text color (Slide info window).
-			wp_enqueue_style( 'wp-color-picker' );
-			wp_enqueue_script( 'wp-swiper-admin', WP_SWIPER_URL . 'assets/js/admin.js', array( 'jquery', 'jquery-ui-sortable', 'iris' ), wp_swiper_asset_version( 'assets/js/admin.js' ), true );
+			// Pickr 1.9.1 (MIT): every color field's picker (color_pick(), admin.js).
+			wp_enqueue_style( 'wp-swiper-pickr', WP_SWIPER_URL . 'assets/vendor/pickr/classic.min.css', array(), '1.9.1' );
+			wp_enqueue_script( 'wp-swiper-pickr', WP_SWIPER_URL . 'assets/vendor/pickr/pickr.min.js', array(), '1.9.1', true );
+			wp_enqueue_script( 'wp-swiper-admin', WP_SWIPER_URL . 'assets/js/admin.js', array( 'jquery', 'jquery-ui-sortable', 'wp-swiper-pickr' ), wp_swiper_asset_version( 'assets/js/admin.js' ), true );
 			wp_localize_script(
 				'wp-swiper-admin',
 				'wpSwiperAdmin',
@@ -91,8 +92,23 @@ class WP_Swiper_Admin {
 					'legacyDescriptionAlign' => get_post() ? WP_Swiper_Settings::legacy_description_align( WP_Swiper_Settings::get( get_post()->ID ) ) : '',
 					// Developer mode with an effect that is no slider (Collage, Art).
 					'devUnavailable' => __( 'Not available for this effect: it shows the boxes of a slider\'s slides, and this effect has none.', 'wp-swiper' ),
-					// The slide text editors' "Text color" palette (TinyMCE's forecolor_map).
+					// The slide text editors' "Text color" palette (TinyMCE's forecolor_map);
+					// the color fields' palette too.
 					'textColors'  => WP_Swiper_Palette::tinymce_map(),
+					// The color fields' picker (Pickr).
+					'colorPicker' => array(
+						'ui:dialog'       => __( 'Color picker', 'wp-swiper' ),
+						'btn:toggle'      => __( 'Choose a color', 'wp-swiper' ),
+						'btn:swatch'      => __( 'Color', 'wp-swiper' ),
+						'btn:cancel'      => __( 'Cancel', 'wp-swiper' ),
+						'aria:btn:cancel' => __( 'Back to the color it had when opened', 'wp-swiper' ),
+						'aria:input'      => __( 'Color value', 'wp-swiper' ),
+						'aria:palette'    => __( 'Color and brightness', 'wp-swiper' ),
+						'aria:hue'        => __( 'Hue', 'wp-swiper' ),
+						'aria:opacity'    => __( 'Opacity', 'wp-swiper' ),
+						'default'         => __( 'Default', 'wp-swiper' ),
+						'defaultLabel'    => __( 'Back to the default color', 'wp-swiper' ),
+					),
 					'singleSlide' => WP_Swiper_Settings::SINGLE_SLIDE_EFFECTS,
 					// Effects that can be their block's background ("Use as background").
 					'backgroundEffects' => WP_Swiper_Settings::BACKGROUND_EFFECTS,
@@ -266,20 +282,6 @@ class WP_Swiper_Admin {
 	}
 
 	/**
-	 * A color setting's arrow back to its default color (as the Slide info
-	 * window's): admin.js puts data-default into the color input beside it.
-	 *
-	 * @param array $field The field.
-	 */
-	private static function color_reset( $field ) {
-		?>
-		<button type="button" class="wp-swiper-color-pick__reset wp-swiper-color-reset" data-default="<?php echo esc_attr( $field['default'] ); ?>" title="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>">
-			<span class="dashicons dashicons-image-rotate" aria-hidden="true"></span>
-		</button>
-		<?php
-	}
-
-	/**
 	 * In the Slide info window, under a text's editor: its font size, one
 	 * field with the desktop / tablet / mobile icons that pick which device's
 	 * value it shows (as a responsive setting does; empty: the plugin's 16px
@@ -356,43 +358,81 @@ class WP_Swiper_Admin {
 	}
 
 	/**
-	 * A color picker with its opacity, as a swatch that opens it (Iris: the
-	 * color and a palette, then an Opacity slider), and an arrow back to the
-	 * default color (admin.js). In the Slide info window (color_control())
-	 * and for a setting of type alpha_color.
+	 * A color field, the same everywhere: a swatch (the color over a
+	 * checkerboard, so a see-through one shows as such) that opens the picker
+	 * (Pickr, admin.js: the color, hue, opacity where it is allowed, the
+	 * palette, HEX / RGB / HSL, Cancel and Default). A setting keeps the color
+	 * in its hidden input ("#rrggbb", or "rgba(r,g,b,a)" with opacity); in the
+	 * Slide info window (color_control()) admin.js keeps it on the field.
 	 *
-	 * @param bool   $hidden Hidden at first (the window's Default).
-	 * @param string $id     The swatch's id (a setting's label points to it); '': none.
+	 * @param array $args {
+	 *     @type string $id      The swatch's id (a label points to it); '': none.
+	 *     @type string $name    The input's name; '': no input (Slide info).
+	 *     @type string $value   The color kept.
+	 *     @type string $default What Default goes back to; '': admin.js says.
+	 *     @type bool   $alpha   With opacity.
+	 *     @type bool   $hidden  Hidden at first (the window's Default).
+	 *     @type bool   $compact The small swatch of a field on one row.
+	 *     @type string $label   Its name, when no label beside it says it.
+	 * }
 	 */
-	private static function color_pick( $hidden, $id = '' ) {
+	private static function color_pick( $args ) {
+		$args  = wp_parse_args(
+			$args,
+			array(
+				'id'      => '',
+				'name'    => '',
+				'value'   => '',
+				'default' => '',
+				'alpha'   => false,
+				'hidden'  => false,
+				'compact' => false,
+				'label'   => '',
+			)
+		);
+		$label = '' !== $args['label'] ? $args['label'] : __( 'Choose a color', 'wp-swiper' );
 		?>
-		<span class="wp-swiper-color-pick"<?php echo $hidden ? ' hidden' : ''; ?>>
-			<button type="button" class="wp-swiper-color-pick__swatch"<?php echo $id ? ' id="' . esc_attr( $id ) . '"' : ''; ?> aria-expanded="false" aria-label="<?php esc_attr_e( 'Choose a color', 'wp-swiper' ); ?>">
+		<span class="wp-swiper-color-pick<?php echo $args['compact'] ? ' wp-swiper-color-pick--compact' : ''; ?>" data-alpha="<?php echo $args['alpha'] ? '1' : '0'; ?>"<?php echo '' !== $args['default'] ? ' data-default="' . esc_attr( $args['default'] ) . '"' : ''; ?><?php echo $args['hidden'] ? ' hidden' : ''; ?>>
+			<?php if ( '' !== $args['name'] ) : ?>
+				<input type="hidden" class="wp-swiper-color-pick__value" name="<?php echo esc_attr( $args['name'] ); ?>" value="<?php echo esc_attr( $args['value'] ); ?>">
+			<?php endif; ?>
+			<button type="button" class="wp-swiper-color-pick__swatch"<?php echo $args['id'] ? ' id="' . esc_attr( $args['id'] ) . '"' : ''; ?> aria-label="<?php echo esc_attr( $label ); ?>"<?php echo '' !== $args['label'] ? ' title="' . esc_attr( $args['label'] ) . '"' : ''; ?>>
 				<span class="wp-swiper-color-pick__chip" aria-hidden="true"></span>
-				<span class="dashicons dashicons-color-picker" aria-hidden="true"></span>
 			</button>
-			<button type="button" class="wp-swiper-color-pick__reset" title="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Back to the default color', 'wp-swiper' ); ?>">
-				<span class="dashicons dashicons-image-rotate" aria-hidden="true"></span>
-			</button>
-			<span class="wp-swiper-color-pick__pop" hidden>
-				<?php // Iris goes right after this field (admin.js). ?>
-				<input type="text" class="wp-swiper-color-pick__hex" spellcheck="false" aria-label="<?php esc_attr_e( 'Hex color', 'wp-swiper' ); ?>">
-				<label class="wp-swiper-color-pick__opacity">
-					<span><?php esc_html_e( 'Opacity', 'wp-swiper' ); ?>: <output>100%</output></span>
-					<input type="range" min="0" max="100" step="1" value="100">
-				</label>
-			</span>
 		</span>
 		<?php
 	}
 
 	/**
+	 * A color setting (color: "#rrggbb"; alpha_color: with opacity).
+	 *
+	 * @param array  $field   The field.
+	 * @param string $id      The swatch's id.
+	 * @param string $name    The input's name.
+	 * @param string $value   The color kept.
+	 * @param bool   $compact On one row with another field: its label as the swatch's name.
+	 */
+	private static function color_field( $field, $id, $name, $value, $compact ) {
+		self::color_pick(
+			array(
+				'id'      => $id,
+				'name'    => $name,
+				'value'   => $value,
+				'default' => $field['default'],
+				'alpha'   => 'alpha_color' === $field['type'],
+				'compact' => $compact,
+				'label'   => $compact ? $field['label'] : '',
+			)
+		);
+	}
+
+	/**
 	 * In the Slide info window, under a text's editor (after its font rows):
 	 * its color, Default (the Caption page's; the Description page's or the
-	 * page's text) or Custom: a swatch that opens a picker under it (Iris: the
-	 * color and a palette, then an Opacity slider) and an arrow back to the
-	 * default color. No names: admin.js puts what is applied into the slide's
-	 * own hidden value of the same name ("#rrggbb" or "rgba(r,g,b,a)").
+	 * page's text) or Custom: a color field (color_pick(), with opacity; its
+	 * Default goes back to that color). No names: admin.js puts what is
+	 * applied into the slide's own hidden value of the same name ("#rrggbb"
+	 * or "rgba(r,g,b,a)").
 	 *
 	 * @param string $prop caption_color | description_color.
 	 */
@@ -408,7 +448,14 @@ class WP_Swiper_Admin {
 					<option value=""><?php esc_html_e( 'Default', 'wp-swiper' ); ?></option>
 					<option value="custom"><?php esc_html_e( 'Custom', 'wp-swiper' ); ?></option>
 				</select>
-				<?php self::color_pick( true ); ?>
+				<?php
+				self::color_pick(
+					array(
+						'alpha'  => true,
+						'hidden' => true,
+					)
+				);
+				?>
 			</span>
 		</div>
 		<?php
@@ -927,12 +974,7 @@ class WP_Swiper_Admin {
 					<?php endforeach; ?>
 				</div>
 			<?php elseif ( ! empty( $field['compact'] ) && 'color' === $field['type'] ) : ?>
-				<span class="wp-swiper-color-field">
-					<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
-						value="<?php echo esc_attr( $value ); ?>"
-						title="<?php echo esc_attr( $field['label'] ); ?>" aria-label="<?php echo esc_attr( $field['label'] ); ?>">
-					<?php self::color_reset( $field ); ?>
-				</span>
+				<?php self::color_field( $field, $id, $name, $value, true ); ?>
 			<?php elseif ( 'checkbox' === $field['type'] ) : ?>
 				<label for="<?php echo esc_attr( $id ); ?>">
 					<input type="checkbox" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( $value ); ?>>
@@ -965,18 +1007,8 @@ class WP_Swiper_Admin {
 					</div>
 				<?php elseif ( 'svg_shape' === $field['type'] ) : ?>
 					<?php self::shape_box( $id, $name, $value, 'desktop' ); ?>
-				<?php elseif ( 'color' === $field['type'] ) : ?>
-					<span class="wp-swiper-color-field">
-						<input type="color" class="wp-swiper-color" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
-							value="<?php echo esc_attr( $value ); ?>">
-						<?php self::color_reset( $field ); ?>
-					</span>
-				<?php elseif ( 'alpha_color' === $field['type'] ) : ?>
-					<?php // A color with its opacity, as in the Slide info window: the value kept, the picker (admin.js). ?>
-					<span class="wp-swiper-alpha-color" data-default="<?php echo esc_attr( $field['default'] ); ?>">
-						<input type="hidden" class="wp-swiper-alpha-color__value" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
-						<?php self::color_pick( false, $id ); ?>
-					</span>
+				<?php elseif ( in_array( $field['type'], array( 'color', 'alpha_color' ), true ) ) : ?>
+					<?php self::color_field( $field, $id, $name, $value, false ); ?>
 				<?php elseif ( 'editor' === $field['type'] ) : ?>
 					<?php // WordPress's editor (admin.js starts it once the field is in view), as a slide's description's. ?>
 					<textarea class="wp-swiper-settings-editor" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" rows="6"><?php echo esc_textarea( $value ); ?></textarea>

@@ -240,8 +240,9 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertLessThan( $description, strpos( $html, 'data-prop="caption_color"' ) );
 		$this->assertGreaterThan( strpos( $html, 'data-prop="description_weight"' ), strpos( $html, 'data-prop="description_color"' ) );
 		$this->assertSame( 2, substr_count( $html, 'class="wp-swiper-modal__color-mode"' ) );
-		$this->assertSame( 2, substr_count( $html, 'class="wp-swiper-color-pick__hex"' ) );
-		$this->assertSame( 2, substr_count( $html, '<input type="range" min="0" max="100" step="1" value="100">' ) );
+		// The same color field as the settings', with opacity, hidden until Custom; no input of its own.
+		$this->assertSame( 2, substr_count( $html, '<span class="wp-swiper-color-pick" data-alpha="1" hidden>' ) );
+		$this->assertStringNotContainsString( 'wp-swiper-color-pick__value', $html );
 		// The slide's own values kept with it.
 		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[caption_color][]" value="rgba(255,0,0,0.25)">', $html );
 		$this->assertStringContainsString( '<input type="hidden" name="wp_swiper_slides[description_color][]" value="">', $html );
@@ -395,6 +396,33 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 				$last = $at;
 			}
 		}
+		// Lightbox, Caption, Description and Custom: every field in a block (a grey card), block names never shared between pages.
+		$fields = WP_Swiper_Settings::fields();
+		$blocks = WP_Swiper_Settings::blocks();
+		foreach ( array( 'lightbox', 'caption', 'description', 'attributes' ) as $page ) {
+			$in = array();
+			foreach ( $blocks[ $page ] as $block ) {
+				$in = array_merge( $in, $block['fields'] );
+			}
+			foreach ( $fields as $key => $field ) {
+				if ( ( isset( $field['panel'] ) ? $field['panel'] : $field['section'] ) === $page ) {
+					$this->assertContains( $key, $in, "$page/$key in a block" );
+				}
+			}
+		}
+		$names = array();
+		foreach ( $blocks as $page_blocks ) {
+			$names = array_merge( $names, array_keys( $page_blocks ) );
+		}
+		// The lightbox text's width and its limit: each on its own row.
+		$this->assertArrayNotHasKey( 'group', $fields['description_lightbox_width'] );
+		$this->assertArrayNotHasKey( 'group', $fields['description_lightbox_max'] );
+		$counts = array_count_values( $names );
+		foreach ( array( 'lightbox', 'caption', 'description', 'attributes' ) as $page ) {
+			foreach ( array_keys( $blocks[ $page ] ) as $name ) {
+				$this->assertSame( 1, $counts[ $name ], "$page/$name only once" );
+			}
+		}
 		// The effects a field belongs to, for admin.js.
 		$this->assertStringContainsString( 'data-field="background" data-effects="slide fade collage"', $html );
 		// Use as background: no page of its own, the last block of Layout.
@@ -402,7 +430,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringNotContainsString( 'data-page="background"', $html );
 		$layout = WP_Swiper_Settings::blocks()['layout'];
 		$this->assertSame( 'background', array_key_last( $layout ) );
-		$this->assertSame( array( 'background', 'background_class', 'background_overlay_opacity', 'background_overlay_color', 'background_min_height' ), $layout['background']['fields'] );
+		$this->assertSame( array( 'background', 'background_class', 'background_overlay_color' ), $layout['background']['fields'] );
 		preg_match( '#<fieldset[^>]*id="wp-swiper-page-layout"[^>]*>(.*?)</fieldset>#s', $html, $match );
 		$this->assertStringContainsString( 'data-block="background"', $match[1] );
 		// Description: its two notes (no description yet, or none shown).
@@ -505,13 +533,54 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( 1, $clean['collage_manual_mobile'] );
 	}
 
+	public function test_preview_tablet_and_mobile_in_their_devices() {
+		$this->assertSame( array( 'desktop', 'tablet', 'mobile' ), array_keys( WP_Swiper_Preview::DEVICES ) );
+		foreach ( WP_Swiper_Preview::DEVICES as $device => $drawing ) {
+			$file = WP_SWIPER_DIR . $drawing['src'];
+			$this->assertFileExists( $file, $device );
+			$svg = file_get_contents( $file );
+			// The drawing's size is its viewBox; no script, nothing loaded from elsewhere.
+			$this->assertStringContainsString( 'viewBox="0 0 ' . $drawing['width'] . ' ' . $drawing['height'] . '"', $svg, $device );
+			$this->assertStringNotContainsString( '<script', $svg, $device );
+			$this->assertDoesNotMatchRegularExpression( '#href="https?:#', $svg, $device );
+			// Its screen, inside it, as the device's frame (SIZES): the same proportions.
+			list( $x, $y, $w, $h ) = $drawing['screen'];
+			$this->assertLessThanOrEqual( $drawing['width'], $x + $w, $device );
+			$this->assertLessThanOrEqual( $drawing['height'], $y + $h, $device );
+			$this->assertEqualsWithDelta( WP_Swiper_Preview::SIZES[ $device ][0] / WP_Swiper_Preview::SIZES[ $device ][1], $w / $h, 0.002, $device );
+		}
+		// The tablet's frame as its screen (not iPad Air's 1180): still a tablet's width.
+		$this->assertSame( array( 820, 1101 ), WP_Swiper_Preview::SIZES['tablet'] );
+
+		// The panel: each drawing hidden until its device (admin.js), their sizes for it (no file).
+		ob_start();
+		WP_Swiper_Preview::render_panel( get_post( $this->slider( $this->slides( 1 ) ) ) );
+		$html = ob_get_clean();
+		foreach ( WP_Swiper_Preview::DEVICES as $device => $drawing ) {
+			$this->assertStringContainsString( '<img class="wp-swiper-preview__device" data-device="' . $device . '" src="' . esc_url( WP_SWIPER_URL . $drawing['src'] ) . '" alt="" hidden>', $html );
+		}
+		// The iMac: a desktop's width, its screen's square corners.
+		$this->assertSame( array( 1280, 721 ), WP_Swiper_Preview::SIZES['desktop'] );
+		$this->assertGreaterThan( 1024, WP_Swiper_Preview::SIZES['desktop'][0] );
+		$this->assertSame( 1, preg_match( '#data-devices="([^"]+)"#', $html, $match ) );
+		$data = json_decode( html_entity_decode( $match[1] ), true );
+		$this->assertSame( array( 'desktop', 'tablet', 'mobile' ), array_keys( $data ) );
+		$this->assertSame( array( 'width', 'height', 'screen', 'radius' ), array_keys( $data['mobile'] ) );
+		$this->assertSame( 17.15, $data['tablet']['radius'] );
+
+		// In a device, its thin scroll bar (the frame's own styles, tablet and mobile widths).
+		$source = file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' );
+		$this->assertMatchesRegularExpression( '#@media \(max-width: 1024px\) \{\s*html::-webkit-scrollbar \{ width: 4px; height: 4px; \}#', $source );
+		$this->assertStringContainsString( 'scrollbar-width: thin;', $source );
+	}
+
 	public function test_preview_labels_the_background_mode() {
 		$slider = '<div class="wp-swiper">slider</div>';
 
-		// On: the block with the label, before the content and the slider.
+		// On: the block with the label, then the slider; no example content.
 		$html = WP_Swiper_Preview::background_block( $slider, $this->settings( array( 'background' => true, 'background_class' => 'hero' ) ) );
-		$this->assertStringStartsWith( '<div class="wp-swiper-preview-block hero"><span class="wp-swiper-preview-block__mode">Background mode</span>', $html );
-		$this->assertStringContainsString( $slider, $html );
+		$this->assertSame( '<div class="wp-swiper-preview-block hero"><span class="wp-swiper-preview-block__mode">Background mode</span>' . $slider . '</div>', $html );
+		$this->assertStringNotContainsString( 'wp-swiper-preview-block__content', $html );
 
 		// Off, or an effect that cannot be one: the slider alone, no label.
 		$this->assertSame( $slider, WP_Swiper_Preview::background_block( $slider, $this->settings() ) );
@@ -519,6 +588,15 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 
 		// Never on a page.
 		$this->assertStringNotContainsString( 'Background mode', $this->render( array( 'background' => true, 'background_class' => 'hero' ) ) );
+	}
+
+	public function test_preview_background_block_shapes_per_device() {
+		// The preview's own styles: a large monitor 3:2, a tablet 4:3 upright, a phone 16:9 upright.
+		$source = file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' );
+		$this->assertStringContainsString( '.wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 3 / 2; }', $source );
+		$this->assertStringContainsString( '@media (max-width: 1024px) { .wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 3 / 4; } }', $source );
+		$this->assertStringContainsString( '@media (max-width: 767px) { .wp-swiper-preview-block.wp-swiper-bg-host { aspect-ratio: 9 / 16; } }', $source );
+		$this->assertStringNotContainsString( 'wp-swiper-preview-block__content', $source );
 	}
 
 	public function test_preview_refuses_a_bad_nonce() {
@@ -777,7 +855,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'slide links, captions, descriptions, the lightbox and Height are not used', $html );
 	}
 
-	public function test_each_color_setting_has_an_arrow_back_to_its_default() {
+	public function test_a_color_setting_is_the_shared_color_field_without_opacity() {
 		$this->as_role( 'editor' );
 		$id = $this->slider( $this->slides( 1 ), array( 'caption_color' => '#ff0000' ) );
 
@@ -785,16 +863,46 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
 		$html = ob_get_clean();
 
-		// The Caption's color: the one set, its arrow back to white beside it.
-		$this->assertMatchesRegularExpression( '#<span class="wp-swiper-color-field">\s*<input type="color" class="wp-swiper-color" id="wp-swiper-caption_color" name="wp_swiper_settings\[caption_color\]"\s+value="\#ff0000">\s*<button type="button" class="wp-swiper-color-pick__reset wp-swiper-color-reset" data-default="\#ffffff"#', $html );
-		// One for every color setting.
+		// The Caption's color: the one set in a hidden input, its default (white) for the picker's Default, the swatch its label points to.
+		$this->assertMatchesRegularExpression( '#<span class="wp-swiper-color-pick" data-alpha="0" data-default="\#ffffff">\s*<input type="hidden" class="wp-swiper-color-pick__value" name="wp_swiper_settings\[caption_color\]" value="\#ff0000">\s*<button type="button" class="wp-swiper-color-pick__swatch" id="wp-swiper-caption_color" aria-label="Choose a color">#', $html );
+		$this->assertStringContainsString( '<label for="wp-swiper-caption_color">Color</label>', $html );
+		// No browser picker, no arrow beside it any more.
+		$this->assertStringNotContainsString( 'type="color"', $html );
+		$this->assertStringNotContainsString( 'wp-swiper-color-reset', $html );
+	}
+
+	public function test_every_color_setting_has_the_shared_color_field() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 1 ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
 		$colors = array_filter(
 			WP_Swiper_Settings::fields(),
 			function ( $field ) {
-				return 'color' === $field['type'];
+				return in_array( $field['type'], array( 'color', 'alpha_color' ), true );
 			}
 		);
-		$this->assertSame( count( $colors ), substr_count( $html, 'wp-swiper-color-reset"' ) );
+		$this->assertGreaterThan( 10, count( $colors ) );
+		foreach ( $colors as $key => $field ) {
+			$alpha = 'alpha_color' === $field['type'] ? '1' : '0';
+			$this->assertMatchesRegularExpression( '#<span class="wp-swiper-color-pick[^"]*" data-alpha="' . $alpha . '" data-default="' . preg_quote( esc_attr( $field['default'] ), '#' ) . '">\s*<input type="hidden" class="wp-swiper-color-pick__value" name="wp_swiper_settings\[' . $key . '\]"#', $html, $key );
+		}
+		$this->assertSame( count( $colors ), substr_count( $html, 'class="wp-swiper-color-pick__value"' ) );
+	}
+
+	public function test_a_compact_color_setting_has_a_small_swatch_named_by_its_label() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 1 ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// The arrows' color, on one row with Show arrows: no label of its own.
+		$this->assertMatchesRegularExpression( '#<span class="wp-swiper-color-pick wp-swiper-color-pick--compact" data-alpha="0" data-default="\#[0-9a-f]{6}">\s*<input type="hidden" class="wp-swiper-color-pick__value" name="wp_swiper_settings\[navigation_color\]" value="\#[0-9a-f]{6}">\s*<button type="button" class="wp-swiper-color-pick__swatch" id="wp-swiper-navigation_color" aria-label="Arrow color" title="Arrow color">#', $html );
 	}
 
 	public function test_shadow_color_has_a_picker_with_opacity() {
@@ -805,9 +913,33 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
 		$html = ob_get_clean();
 
-		// The value kept in a hidden input; the picker as in the Slide info window (shown), its label on the swatch.
-		$this->assertMatchesRegularExpression( '#<span class="wp-swiper-alpha-color" data-default="rgba\(0,0,0,0.3\)">\s*<input type="hidden" class="wp-swiper-alpha-color__value" name="wp_swiper_settings\[image_shadow_color\]" value="rgba\(0,0,0,0.5\)">\s*<span class="wp-swiper-color-pick">\s*<button type="button" class="wp-swiper-color-pick__swatch" id="wp-swiper-image_shadow_color"#', $html );
+		// The value kept in a hidden input; the same field, with opacity; its label on the swatch.
+		$this->assertMatchesRegularExpression( '#<span class="wp-swiper-color-pick" data-alpha="1" data-default="rgba\(0,0,0,0.3\)">\s*<input type="hidden" class="wp-swiper-color-pick__value" name="wp_swiper_settings\[image_shadow_color\]" value="rgba\(0,0,0,0.5\)">\s*<button type="button" class="wp-swiper-color-pick__swatch" id="wp-swiper-image_shadow_color"#', $html );
 		$this->assertStringContainsString( '<label for="wp-swiper-image_shadow_color">Color</label>', $html );
+	}
+
+	public function test_color_fields_load_pickr_not_iris() {
+		$this->as_role( 'editor' );
+		$id = $this->slider( $this->slides( 1 ) );
+		$GLOBALS['post'] = get_post( $id );
+		set_current_screen( 'post' );
+		get_current_screen()->post_type = WP_Swiper_Settings::POST_TYPE;
+
+		WP_Swiper_Admin::enqueue( 'post.php' );
+
+		$this->assertTrue( wp_script_is( 'wp-swiper-pickr', 'enqueued' ) );
+		$this->assertTrue( wp_style_is( 'wp-swiper-pickr', 'enqueued' ) );
+		$this->assertContains( 'wp-swiper-pickr', wp_scripts()->registered['wp-swiper-admin']->deps );
+		$this->assertNotContains( 'iris', wp_scripts()->registered['wp-swiper-admin']->deps );
+		$this->assertFalse( wp_style_is( 'wp-color-picker', 'enqueued' ) );
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/vendor/pickr/pickr.min.js' );
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/vendor/pickr/classic.min.css' );
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/vendor/pickr/LICENSE' );
+		// Its words, translatable.
+		$data = wp_scripts()->get_data( 'wp-swiper-admin', 'data' );
+		$this->assertStringContainsString( '"colorPicker":{', $data );
+		$this->assertStringContainsString( '"btn:cancel":"Cancel"', $data );
+		$this->assertStringContainsString( '"default":"Default"', $data );
 	}
 
 	public function test_art_opening_text_has_an_editor() {

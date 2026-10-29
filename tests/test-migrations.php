@@ -98,13 +98,14 @@ class Test_WP_Swiper_Migrations extends WP_Swiper_TestCase {
 	}
 
 	public function test_v6_lightbox_radii() {
-		// "Rounded corners in the lightbox" on: the slider's (empty).
-		$rounded = $this->saved( array( '_version' => 5, 'lightbox_rounded' => true, 'lightbox_radius' => 30 ) );
-		$this->assertSame( '', $rounded['lightbox_radius'] );
+		// "Rounded corners in the lightbox" on: the slider's (its radius, then its own since 3.0).
+		$rounded = $this->saved( array( '_version' => 5, 'lightbox_rounded' => true, 'lightbox_radius' => 30, 'border_radius' => 10 ) );
+		$this->assertTrue( $rounded['lightbox_border_rounded'] );
+		$this->assertSame( 10, $rounded['lightbox_radius'] );
 		$this->assertSame( '', $rounded['lightbox_thumbs_radius'] );
 		// Off: square.
-		$square = $this->saved( array( '_version' => 5 ) );
-		$this->assertSame( 0, $square['lightbox_radius'] );
+		$square = $this->saved( array( '_version' => 5, 'border_radius' => 10 ) );
+		$this->assertFalse( $square['lightbox_border_rounded'] );
 		$this->assertSame( '', $square['lightbox_radius_mobile'] );
 	}
 
@@ -116,5 +117,74 @@ class Test_WP_Swiper_Migrations extends WP_Swiper_TestCase {
 		$this->assertSame( 'feature-center', $settings['collage_layout'] );
 		$this->assertFalse( WP_Swiper_Settings::is_background( $settings ) );
 		$this->assertFalse( WP_Swiper_Settings::is_zoom( $settings ) );
+	}
+
+	public function test_overlay_opacity_becomes_the_overlay_colors_own() {
+		// Overlay opacity (%) beside a plain color, until 3.0.
+		$settings = $this->saved( array( 'background_overlay_opacity' => 40, 'background_overlay_color' => '#102030' ) );
+		$this->assertSame( 'rgba(16,32,48,0.4)', $settings['background_overlay_color'] );
+		$this->assertArrayNotHasKey( 'background_overlay_opacity', $settings );
+		// 0 was none: still none.
+		$settings = $this->saved( array( 'background_overlay_opacity' => 0, 'background_overlay_color' => '#ffffff' ) );
+		$this->assertSame( 'rgba(255,255,255,0)', $settings['background_overlay_color'] );
+		$this->assertSame( '', WP_Swiper_Settings::background_overlay( $settings ) );
+		// 100: the plain color; its default color (black) when none was saved.
+		$this->assertSame( '#000000', $this->saved( array( 'background_overlay_opacity' => 100 ) )['background_overlay_color'] );
+		// Saved since: as it is.
+		$this->assertSame( 'rgba(1,2,3,0.5)', $this->saved( array( 'background_overlay_color' => 'rgba(1,2,3,0.5)' ) )['background_overlay_color'] );
+	}
+
+	public function test_a_saved_radius_turns_rounded_corners_on() {
+		// Saved before the switch with a radius: on, the radius kept.
+		$settings = $this->saved( array( 'border_radius' => 16 ) );
+		$this->assertTrue( $settings['border_rounded'] );
+		$this->assertSame( 16, $settings['border_radius'] );
+		// A radius on a smaller screen only: on too.
+		$this->assertTrue( $this->saved( array( 'border_radius' => 0, 'border_radius_mobile' => 8 ) )['border_rounded'] );
+		// No radius (0 everywhere): off.
+		$this->assertFalse( $this->saved( array( 'border_radius' => 0, 'border_radius_tablet' => '' ) )['border_rounded'] );
+		// Saved since: as it is.
+		$this->assertFalse( $this->saved( array( 'border_rounded' => false, 'border_radius' => 20 ) )['border_rounded'] );
+		// Each effect's own layout too.
+		$settings = $this->saved( array( 'border_radius' => 0, 'layouts' => array( 'fade' => array( 'border_radius' => 9 ) ) ) );
+		$this->assertTrue( $settings['layouts']['fade']['border_rounded'] );
+		$this->assertFalse( $settings['border_rounded'] );
+	}
+
+	public function test_lightbox_radius_as_the_slides_becomes_its_own() {
+		// Empty ("As the slides"): the slider's radius, now the lightbox's own, switch on.
+		$settings = $this->saved( array( '_version' => 6, 'border_radius' => 16, 'border_radius_mobile' => 6, 'lightbox_radius' => '' ) );
+		$this->assertTrue( $settings['lightbox_border_rounded'] );
+		$this->assertSame( array( 16, '', 6 ), array( $settings['lightbox_radius'], $settings['lightbox_radius_tablet'], $settings['lightbox_radius_mobile'] ) );
+		$this->assertSame( array( 'desktop' => 16, 'tablet' => 16, 'mobile' => 6 ), WP_Swiper_Settings::lightbox_image_radius( $settings ) );
+		// Its own radius on desktop, the slider's on mobile.
+		$settings = $this->saved( array( '_version' => 6, 'border_radius' => 0, 'border_radius_mobile' => 8, 'lightbox_radius' => 20, 'lightbox_radius_mobile' => '' ) );
+		$this->assertSame( array( 'desktop' => 20, 'tablet' => 20, 'mobile' => 20 ), WP_Swiper_Settings::lightbox_image_radius( $settings ) );
+		// Square slides, "As the slides": square, switch off (its radius back to the default).
+		$settings = $this->saved( array( '_version' => 6, 'border_radius' => 0, 'lightbox_radius' => '' ) );
+		$this->assertFalse( $settings['lightbox_border_rounded'] );
+		$this->assertSame( 12, $settings['lightbox_radius'] );
+		$this->assertSame( array( 'desktop' => 0, 'tablet' => 0, 'mobile' => 0 ), WP_Swiper_Settings::lightbox_image_radius( $settings ) );
+		// A radius of 0 of its own: square too.
+		$this->assertFalse( $this->saved( array( '_version' => 6, 'border_radius' => 16, 'lightbox_radius' => 0 ) )['lightbox_border_rounded'] );
+		// Art: its Rounded corners were the lightbox's.
+		$settings = $this->saved( array( '_version' => 6, 'effect' => 'art', 'art_radius' => 14, 'lightbox_radius' => '' ) );
+		$this->assertTrue( $settings['lightbox_border_rounded'] );
+		$this->assertSame( 14, $settings['lightbox_radius'] );
+		// Saved since: as it is.
+		$settings = $this->saved( array( '_version' => 6, 'lightbox_border_rounded' => false, 'lightbox_radius' => 30, 'border_radius' => 16 ) );
+		$this->assertFalse( $settings['lightbox_border_rounded'] );
+		$this->assertSame( 30, $settings['lightbox_radius'] );
+	}
+
+	public function test_caption_bg_opacity_becomes_the_colors_own() {
+		$settings = $this->saved( array( 'caption_bg_opacity' => 40, 'caption_bg_color' => '#102030' ) );
+		$this->assertSame( 'rgba(16,32,48,0.4)', $settings['caption_bg_color'] );
+		$this->assertArrayNotHasKey( 'caption_bg_opacity', $settings );
+		// Full: the plain color; none saved: black, as before.
+		$this->assertSame( '#ffffff', $this->saved( array( 'caption_bg_opacity' => 100, 'caption_bg_color' => '#ffffff' ) )['caption_bg_color'] );
+		$this->assertSame( 'rgba(0,0,0,0.65)', $this->saved( array( 'caption_bg_opacity' => 65 ) )['caption_bg_color'] );
+		// Saved since: as it is.
+		$this->assertSame( 'rgba(1,2,3,0.5)', $this->saved( array( 'caption_bg_color' => 'rgba(1,2,3,0.5)' ) )['caption_bg_color'] );
 	}
 }

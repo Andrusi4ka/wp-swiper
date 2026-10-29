@@ -560,18 +560,31 @@
 		}
 
 		/*
-		 * A slide's own text color, for its caption and its description:
-		 * "#rrggbb", or "rgba(r,g,b,a)" below full opacity; none: Default (the
-		 * Caption page's color; the Description page's or the page's text).
-		 * Custom shows a swatch that opens a picker (Iris, WordPress's: the color,
-		 * a palette) with an Opacity slider; the arrow beside it goes back to the
-		 * default color. Each row (.wp-swiper-modal__color) keeps what is chosen
-		 * as its data: hex and alpha (0–100). A setting of a color with its
-		 * opacity (.wp-swiper-alpha-color: Image shadow's) has the same picker,
-		 * always shown, and keeps what is chosen in its hidden input too.
+		 * Every color field (color_pick() in class-wp-swiper-admin.php): a
+		 * swatch that opens Pickr (the color, hue, opacity where the field has
+		 * it, the palette: the theme's colors, black, white and greys; HEX /
+		 * RGB / HSL; Cancel: back to the color it had when opened; Default).
+		 * Each field (.wp-swiper-color-pick) keeps what is chosen as its data:
+		 * hex and alpha (0–100). A setting's field writes it into its hidden
+		 * input too: "#rrggbb", or "rgba(r,g,b,a)" below full opacity.
+		 *
+		 * A slide's own text color, for its caption and its description
+		 * (.wp-swiper-modal__color): Default (the Caption page's color; the
+		 * Description page's or the page's text) or Custom, which shows the
+		 * field; its Default goes back to that page's color.
 		 */
 		var COLOR_PROPS = [ 'caption_color', 'description_color' ];
-		var COLOR_CONTROL = '.wp-swiper-modal__color, .wp-swiper-alpha-color';
+		var COLOR_PICK = '.wp-swiper-color-pick';
+		var colorI18n = $.extend( {}, i18n.colorPicker || {} );
+		// The palette's colors and names (TinyMCE's map: "RRGGBB", name, …).
+		var colorSwatches = [];
+		var colorNames = [];
+		( $.isArray( i18n.textColors ) ? i18n.textColors : [] ).forEach( function ( item, i, map ) {
+			if ( i % 2 === 0 && /^[0-9a-f]{6}$/i.test( item ) ) {
+				colorSwatches.push( '#' + item.toLowerCase() );
+				colorNames.push( String( map[ i + 1 ] || '' ) );
+			}
+		} );
 
 		function colorControl( prop ) {
 			return $( '.wp-swiper-modal__color[data-prop="' + prop + '"]' );
@@ -610,117 +623,195 @@
 			} ).join( ',' ) + ',' + ( alpha / 100 ) + ')';
 		}
 
-		// The swatch and the slider say what is chosen.
-		function paintColor( $control ) {
-			var alpha = $control.data( 'alpha' );
-			// Over the chip's checkerboard (admin.css).
-			$control.find( '.wp-swiper-color-pick__chip' ).css( 'box-shadow', 'inset 0 0 0 40px ' + colorValue( $control.data( 'hex' ), alpha ) );
-			$control.find( '.wp-swiper-color-pick__opacity output' ).text( alpha + '%' );
-			$control.find( '.wp-swiper-color-pick__opacity input' ).val( alpha );
-		}
-
-		function setColor( $control, hex, alpha ) {
-			$control.data( { hex: hex, alpha: alpha } );
-			var $hex = $control.find( '.wp-swiper-color-pick__hex' ).val( hex );
-			if ( $control.data( 'iris' ) ) {
-				$hex.iris( 'color', hex );
+		// What Default goes back to.
+		function pickDefault( $pick ) {
+			var $row = $pick.closest( '.wp-swiper-modal__color' );
+			if ( $row.length ) {
+				return { hex: defaultColor( $row.attr( 'data-prop' ) ), alpha: 100 };
 			}
-			paintColor( $control );
+			return parseColor( $pick.attr( 'data-default' ) ) || { hex: '#000000', alpha: 100 };
 		}
 
-		// A setting's picker: what is chosen into its input (the preview and
+		// The swatch says what is chosen (over its checkerboard, admin.css).
+		function paintColor( $pick ) {
+			$pick.find( '.wp-swiper-color-pick__chip' ).css( 'box-shadow', 'inset 0 0 0 60px ' + colorValue( $pick.data( 'hex' ), $pick.data( 'alpha' ) ) );
+		}
+
+		// Into Pickr (no event of its own), in the format it shows.
+		function pickrShow( $pick ) {
+			var pickr = $pick.data( 'pickr' );
+			if ( ! pickr || ! $pick.data( 'pickrReady' ) ) {
+				return;
+			}
+			var shown = pickr.getColorRepresentation() || 'HEXA';
+			// Its format buttons say "change" too: not a new color.
+			$pick.data( 'pickrSync', true );
+			pickr.setColor( colorValue( $pick.data( 'hex' ), $pick.data( 'alpha' ) ), true );
+			pickr.setColorRepresentation( shown );
+			$pick.data( 'pickrSync', false );
+			// What Cancel goes back to.
+			pickr.applyColor( true );
+		}
+
+		function setColor( $pick, hex, alpha ) {
+			$pick.data( { hex: hex, alpha: alpha } );
+			paintColor( $pick );
+		}
+
+		// A setting's field: what is chosen into its input (the preview and
 		// the "unsaved" warning take it as any other change).
-		function colorPicked( $control ) {
-			if ( $control.hasClass( 'wp-swiper-alpha-color' ) ) {
-				$control.find( '.wp-swiper-alpha-color__value' ).val( colorValue( $control.data( 'hex' ), $control.data( 'alpha' ) ) ).trigger( 'change' );
+		function colorPicked( $pick ) {
+			var $input = $pick.find( '.wp-swiper-color-pick__value' );
+			var value = colorValue( $pick.data( 'hex' ), $pick.data( 'alpha' ) );
+			if ( $input.length && $input.val() !== value ) {
+				$input.val( value ).trigger( 'change' );
 			}
+		}
+
+		// From Pickr: the color it shows, as the field keeps it. Only a new
+		// one counts (Pickr says "change" for a format button too).
+		function fromPickr( $pick, color ) {
+			if ( ! color || $pick.data( 'pickrSync' ) ) {
+				return;
+			}
+			var rgba = color.toRGBA();
+			var hex = '#' + [ 0, 1, 2 ].map( function ( i ) {
+				return ( '0' + Math.max( 0, Math.min( 255, Math.round( rgba[ i ] ) ) ).toString( 16 ) ).slice( -2 );
+			} ).join( '' );
+			var alpha = $pick.attr( 'data-alpha' ) === '1' ? Math.max( 0, Math.min( 100, Math.round( rgba[ 3 ] * 100 ) ) ) : 100;
+			if ( hex === $pick.data( 'hex' ) && alpha === $pick.data( 'alpha' ) ) {
+				return;
+			}
+			setColor( $pick, hex, alpha );
+			colorPicked( $pick );
+		}
+
+		function openPickr() {
+			var open = null;
+			$( COLOR_PICK ).each( function () {
+				var pickr = $( this ).data( 'pickr' );
+				if ( pickr && pickr.isOpen() ) {
+					open = pickr;
+				}
+			} );
+			return open;
 		}
 
 		function closeColorPickers() {
-			$( '.wp-swiper-color-pick__pop' ).prop( 'hidden', true );
-			$( '.wp-swiper-color-pick__swatch' ).attr( 'aria-expanded', 'false' );
+			$( COLOR_PICK ).each( function () {
+				var pickr = $( this ).data( 'pickr' );
+				if ( pickr ) {
+					pickr.hide();
+				}
+			} );
+		}
+
+		// Pickr the first time a field opens (one app each, in the body).
+		function makePickr( $pick ) {
+			var button = $pick.find( '.wp-swiper-color-pick__swatch' )[ 0 ];
+			var alpha = $pick.attr( 'data-alpha' ) === '1';
+			var pickr = window.Pickr.create( {
+				el: button,
+				useAsButton: true,
+				theme: 'classic',
+				appClass: 'wp-swiper-pcr',
+				position: 'bottom-start',
+				default: colorValue( $pick.data( 'hex' ), $pick.data( 'alpha' ) ),
+				defaultRepresentation: 'HEXA',
+				lockOpacity: ! alpha,
+				swatches: colorSwatches,
+				i18n: $.extend( {}, colorI18n, { 'btn:toggle': button.getAttribute( 'aria-label' ) } ),
+				components: {
+					preview: false,
+					opacity: alpha,
+					hue: true,
+					interaction: {
+						hex: true,
+						rgba: true,
+						hsla: true,
+						input: true,
+						cancel: true
+					}
+				}
+			} );
+			$pick.data( 'pickr', pickr );
+			pickr.on( 'init', function ( instance ) {
+				var $app = $( instance.getRoot().app );
+				// The palette's names on hover.
+				$app.find( '.pcr-swatches > button' ).each( function ( i ) {
+					if ( colorNames[ i ] ) {
+						this.setAttribute( 'title', colorNames[ i ] );
+						this.setAttribute( 'aria-label', colorNames[ i ] );
+					}
+				} );
+				// Default, after Cancel: red, as Pickr's own Clear (classic theme).
+				$( '<input type="button" class="pcr-clear wp-swiper-pcr__default">' )
+					.val( colorI18n[ 'default' ] || 'Default' )
+					.attr( 'aria-label', colorI18n.defaultLabel || '' )
+					.appendTo( $app.find( '.pcr-interaction' ) )
+					.on( 'click', function () {
+						var color = pickDefault( $pick );
+						setColor( $pick, color.hex, color.alpha );
+						colorPicked( $pick );
+						pickrShow( $pick );
+					} );
+				$pick.data( 'pickrReady', true );
+				instance.show();
+			} );
+			pickr.on( 'show', function () {
+				pickrShow( $pick );
+				button.setAttribute( 'aria-expanded', 'true' );
+			} );
+			pickr.on( 'hide', function () {
+				button.setAttribute( 'aria-expanded', 'false' );
+			} );
+			pickr.on( 'change', function ( color ) {
+				fromPickr( $pick, color );
+			} );
+			pickr.on( 'cancel', function ( instance ) {
+				fromPickr( $pick, instance.getColor() );
+				instance.hide();
+			} );
 		}
 
 		function showColor( prop, value ) {
 			var $control = colorControl( prop );
 			var color = parseColor( value );
 			$control.find( '.wp-swiper-modal__color-mode' ).val( color ? 'custom' : '' );
-			$control.find( '.wp-swiper-color-pick' ).prop( 'hidden', ! color );
+			$control.find( COLOR_PICK ).prop( 'hidden', ! color );
 			color = color || { hex: defaultColor( prop ), alpha: 100 };
-			setColor( $control, color.hex, color.alpha );
+			setColor( $control.find( COLOR_PICK ), color.hex, color.alpha );
 			closeColorPickers();
 		}
 
 		// What the row says, as stored ("" for Default); render.php checks it again.
 		function readColor( prop ) {
 			var $control = colorControl( prop );
+			var $pick = $control.find( COLOR_PICK );
 			if ( $control.find( '.wp-swiper-modal__color-mode' ).val() !== 'custom' ) {
 				return '';
 			}
-			return colorValue( $control.data( 'hex' ), $control.data( 'alpha' ) );
+			return colorValue( $pick.data( 'hex' ), $pick.data( 'alpha' ) );
 		}
 
 		$modal.on( 'change', '.wp-swiper-modal__color-mode', function () {
-			$( this ).closest( '.wp-swiper-modal__color' ).find( '.wp-swiper-color-pick' ).prop( 'hidden', $( this ).val() !== 'custom' );
+			$( this ).closest( '.wp-swiper-modal__color' ).find( COLOR_PICK ).prop( 'hidden', $( this ).val() !== 'custom' );
 			closeColorPickers();
 		} );
+		// Pickr made on the first click; it opens and closes the picker after
+		// that (its own click on the swatch).
 		$( document ).on( 'click', '.wp-swiper-color-pick__swatch', function () {
-			var $control = $( this ).closest( COLOR_CONTROL );
-			var $pop = $control.find( '.wp-swiper-color-pick__pop' );
-			var open = $pop.prop( 'hidden' );
-			closeColorPickers();
-			if ( ! open ) {
-				return;
-			}
-			$pop.prop( 'hidden', false );
-			$( this ).attr( 'aria-expanded', 'true' );
-			// Iris the first time it opens (it goes right after the field).
-			if ( ! $control.data( 'iris' ) && $.fn.iris ) {
-				$control.find( '.wp-swiper-color-pick__hex' ).iris( {
-					hide: false,
-					palettes: true,
-					width: 222,
-					color: $control.data( 'hex' ),
-					change: function ( event, ui ) {
-						$control.data( 'hex', ui.color.toString() );
-						paintColor( $control );
-						colorPicked( $control );
-					}
-				} );
-				$control.data( 'iris', true );
+			var $pick = $( this ).closest( COLOR_PICK );
+			if ( ! $pick.data( 'pickr' ) && window.Pickr ) {
+				makePickr( $pick );
 			}
 		} );
-		$( document ).on( 'input change', '.wp-swiper-color-pick__opacity input', function () {
-			var $control = $( this ).closest( COLOR_CONTROL );
-			$control.data( 'alpha', Math.max( 0, Math.min( 100, parseInt( this.value, 10 ) || 0 ) ) );
-			paintColor( $control );
-			colorPicked( $control );
-		} );
-		// A color typed in that is none: the field shows the chosen one again.
-		$( document ).on( 'change', '.wp-swiper-color-pick__hex', function () {
-			$( this ).val( $( this ).closest( COLOR_CONTROL ).data( 'hex' ) );
-		} );
-		$( document ).on( 'click', '.wp-swiper-color-pick__reset', function () {
-			var $control = $( this ).closest( COLOR_CONTROL );
-			if ( $control.hasClass( 'wp-swiper-alpha-color' ) ) {
-				var color = parseColor( $control.attr( 'data-default' ) ) || { hex: '#000000', alpha: 100 };
-				setColor( $control, color.hex, color.alpha );
-				colorPicked( $control );
-				return;
-			}
-			setColor( $control, defaultColor( $control.attr( 'data-prop' ) ), 100 );
-		} );
-		// The settings' pickers show their saved color.
-		$( '.wp-swiper-alpha-color' ).each( function () {
-			var $control = $( this );
-			var color = parseColor( $control.find( '.wp-swiper-alpha-color__value' ).val() ) || parseColor( $control.attr( 'data-default' ) ) || { hex: '#000000', alpha: 100 };
-			setColor( $control, color.hex, color.alpha );
-		} );
-		// A click anywhere else closes the picker.
-		$( document ).on( 'mousedown', function ( e ) {
-			if ( ! $( e.target ).closest( '.wp-swiper-color-pick' ).length ) {
-				closeColorPickers();
-			}
+		// The fields show their saved color.
+		$( COLOR_PICK ).each( function () {
+			var $pick = $( this );
+			var color = parseColor( $pick.find( '.wp-swiper-color-pick__value' ).val() ) || pickDefault( $pick );
+			$pick.find( '.wp-swiper-color-pick__swatch' ).attr( 'aria-expanded', 'false' );
+			setColor( $pick, color.hex, color.alpha );
 		} );
 
 		// A size's device icons: which device's value the field shows.
@@ -1030,7 +1121,7 @@
 			// Nor while the media library is open over it (for a replacement).
 			if ( e.key === 'Escape' && $editing && ! $( '#wp-link-wrap' ).is( ':visible' ) && ! $( '.media-modal' ).is( ':visible' ) ) {
 				// An open color picker first.
-				if ( $modal.find( '.wp-swiper-color-pick__pop' ).is( ':visible' ) ) {
+				if ( openPickr() ) {
 					closeColorPickers();
 					return;
 				}
@@ -1574,7 +1665,7 @@
 			} );
 
 			// Background: its settings once it is on (data-effects above: the effects that can be one).
-			[ 'background_class', 'background_overlay_opacity', 'background_overlay_color', 'background_min_height' ].forEach( function ( name ) {
+			[ 'background_class', 'background_overlay_color' ].forEach( function ( name ) {
 				field( name ).toggle( background );
 			} );
 
@@ -1646,6 +1737,8 @@
 			// The arrows' color and height, once they are on.
 			field( 'navigation_color' ).toggle( $( '#wp-swiper-navigation' ).is( ':checked' ) );
 			field( 'navigation_size' ).toggle( $( '#wp-swiper-navigation' ).is( ':checked' ) );
+			// Rounded corners: the radius once it is on (as Image border).
+			field( 'border_radius' ).toggle( $( '#wp-swiper-border_rounded' ).is( ':checked' ) );
 			// Image border: its width and color once it is on.
 			var border = $( '#wp-swiper-image_border' ).is( ':checked' );
 			field( 'image_border_width' ).toggle( border );
@@ -1706,11 +1799,13 @@
 			$list.toggleClass( 'wp-swiper-slides--positions', cover && ! autoWidth );
 			// Caption background options, only with a background.
 			var captionBg = $( '#wp-swiper-caption_bg' ).is( ':checked' );
-			[ 'caption_bg_style', 'caption_bg_color', 'caption_bg_opacity' ].forEach( function ( name ) {
+			[ 'caption_bg_style', 'caption_bg_color' ].forEach( function ( name ) {
 				field( name ).toggle( captionBg );
 			} );
 			var lightbox = $( '#wp-swiper-lightbox' ).is( ':checked' );
-			field( 'lightbox_radius' ).toggle( lightbox );
+			// Rounded corners of the image: the radius once on (as the slider's).
+			field( 'lightbox_border_rounded' ).toggle( lightbox );
+			field( 'lightbox_radius' ).toggle( lightbox && $( '#wp-swiper-lightbox_border_rounded' ).is( ':checked' ) );
 			field( 'lightbox_thumbs' ).toggle( lightbox && effect === 'thumbs' );
 			field( 'lightbox_thumbs_radius' ).toggle( lightbox && effect === 'thumbs' && $( '#wp-swiper-lightbox_thumbs' ).is( ':checked' ) );
 
@@ -1813,7 +1908,7 @@
 			// lightbox's (images only, no strip), and the Caption and Description
 			// pages (all as the toggles above left them; vertical captions
 			// excepted). Last, over the toggles above: none of the others applies to it.
-			var ART_SHARED = [ 'effect', 'css_class', 'css_id', 'lightbox', 'lightbox_radius', 'description_lightbox', 'description_lightbox_place', 'description_lightbox_width', 'description_lightbox_max' ];
+			var ART_SHARED = [ 'effect', 'css_class', 'css_id', 'lightbox', 'lightbox_border_rounded', 'lightbox_radius', 'description_lightbox', 'description_lightbox_place', 'description_lightbox_width', 'description_lightbox_max' ];
 			if ( effect === 'art' ) {
 				var artStyle = $( '#wp-swiper-art_style' ).val();
 				$( '.wp-swiper-field' ).each( function () {
@@ -2196,10 +2291,6 @@
 			syncTiles( $( this ) );
 		} );
 
-		// A color setting's arrow: back to its default color (as if picked there).
-		$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-color-reset', function () {
-			$( this ).siblings( 'input[type="color"]' ).val( $( this ).data( 'default' ) ).trigger( 'input' ).trigger( 'change' );
-		} );
 
 		$( '#wp-swiper-settings' )
 			// Not a Style to come (greyed, no value).
@@ -2261,20 +2352,47 @@
 			var $update = $preview.find( '.wp-swiper-preview__update' );
 			var previewFrame = $preview.find( '.wp-swiper-preview__frame' )[ 0 ];
 			var sizes = $preview.data( 'sizes' );
+			var drawings = $preview.data( 'devices' ) || {};
+			var $drawings = $preview.find( '.wp-swiper-preview__device' );
 
-			// At the size of the device being edited (setDevice()).
+			/*
+			 * At the size of the device being edited (setDevice()). Tablet and
+			 * Mobile: in the device drawn for it (WP_Swiper_Preview::DEVICES), the
+			 * frame in its screen with its rounded corners; the drawing over it
+			 * (a camera or bar over the page, as on a real one), letting the
+			 * clicks through. Drawing and frame scale as one.
+			 */
 			var fitPreview = function () {
 				var size = sizes[ currentDevice ];
+				var device = drawings[ currentDevice ];
+				var image = $drawings.filter( '[data-device="' + currentDevice + '"]' )[ 0 ];
+				var inDevice = !! ( device && image );
+				// px of the frame per unit of the drawing; the whole device's size, and the screen's place in it.
+				var unit = inDevice ? size[ 0 ] / device.screen[ 2 ] : 1;
+				var outer = inDevice ? [ device.width * unit, device.height * unit ] : size;
+				var offset = inDevice ? [ device.screen[ 0 ] * unit, device.screen[ 1 ] * unit ] : [ 0, 0 ];
 				var width = $stage.width();
 				// The whole frame in view: no taller than the window leaves room for.
 				var height = Math.max( 300, window.innerHeight - 180 );
-				var scale = Math.min( 1, width / size[ 0 ], height / size[ 1 ] );
+				var scale = Math.min( 1, width / outer[ 0 ], height / outer[ 1 ] );
+				var left = Math.max( 0, ( width - outer[ 0 ] * scale ) / 2 );
 
 				previewFrame.style.width = size[ 0 ] + 'px';
 				previewFrame.style.height = size[ 1 ] + 'px';
 				previewFrame.style.transform = 'scale(' + scale + ')';
-				previewFrame.style.left = Math.max( 0, ( width - size[ 0 ] * scale ) / 2 ) + 'px';
-				$stage.css( 'height', Math.ceil( size[ 1 ] * scale ) + 'px' );
+				previewFrame.style.left = ( left + offset[ 0 ] * scale ) + 'px';
+				previewFrame.style.top = ( offset[ 1 ] * scale ) + 'px';
+				previewFrame.style.borderRadius = inDevice ? ( device.radius * unit ) + 'px' : '';
+				$preview.toggleClass( 'wp-swiper-preview--device', inDevice );
+				$drawings.each( function () {
+					this.hidden = this !== image || ! inDevice;
+				} );
+				if ( inDevice ) {
+					image.style.left = left + 'px';
+					image.style.width = ( outer[ 0 ] * scale ) + 'px';
+					image.style.height = ( outer[ 1 ] * scale ) + 'px';
+				}
+				$stage.css( 'height', Math.ceil( outer[ 1 ] * scale ) + 'px' );
 			};
 
 			var updatePreview = function () {
