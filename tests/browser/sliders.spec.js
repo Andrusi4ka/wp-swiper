@@ -13,7 +13,7 @@ const CASES = [
 	'thumbs', 'video', 'background',
 	'collage-scatter', 'collage-freeform', 'collage-grid', 'collage-masonry',
 	'collage-justified', 'collage-random', 'collage-feature',
-	'art-ring', 'art-ring-text', 'art-grid-circle',
+	'art-ring', 'art-ring-text', 'art-grid-circle', 'art-grid-circle-text', 'art-grid-square', 'art-grid-square-text',
 ];
 
 // Ones with arrows that move the slides (a marquee runs on its own).

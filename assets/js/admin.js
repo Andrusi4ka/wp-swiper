@@ -2066,6 +2066,10 @@
 						$field.hide();
 					}
 				} );
+				// Rounded corners: the radius only while it is on (as a slider's).
+				if ( ! $( '#wp-swiper-art_rounded' ).is( ':checked' ) ) {
+					field( 'art_radius' ).hide();
+				}
 				// Image border: its width and color only while it is on (as a slider's).
 				if ( ! $( '#wp-swiper-art_border' ).is( ':checked' ) ) {
 					field( 'art_border_width' ).hide();
@@ -2083,37 +2087,24 @@
 						field( name ).hide();
 					} );
 				}
-				// Ring: what is in the opening, its own settings (image or text) and the gap.
 				// SVG shape: the order windows show a new photo in, only where they all change at once.
 				if ( [ 'one', 'advance' ].indexOf( $( '#wp-swiper-art_shape_target' ).val() ) === -1 ) {
 					field( 'art_shape_appear' ).hide();
 				}
-				var opening = $( '#wp-swiper-art_opening_content' ).val();
-				if ( opening !== 'image' ) {
-					field( 'art_opening_image' ).hide();
-					field( 'art_opening_image_size' ).hide();
+				// Opening: its size and content (image and text, either or both) only
+				// while it is on (as Content in the middle).
+				if ( ! $( '#wp-swiper-art_opening' ).is( ':checked' ) ) {
+					[ 'art_ring_opening', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ].forEach( function ( name ) {
+						field( name ).hide();
+					} );
 				}
-				if ( opening !== 'text' ) {
-					field( 'art_opening_text' ).hide();
-					field( 'art_opening_font_size' ).hide();
-				}
-				if ( opening === 'none' ) {
-					field( 'art_opening_gap' ).hide();
-				}
-				// Size "Auto" on a device (its unit, else the larger screen's): its
-				// number does not apply there (greyed, kept).
-				var sizeUnit = 'px';
+				// Height "Auto" on a device (its unit, else the larger screen's): its
+				// number does not apply there (greyed, kept), as a slider's.
+				var heightUnit = 'px';
 				[ 'desktop', 'tablet', 'mobile' ].forEach( function ( device ) {
 					var suffix = device === 'desktop' ? '' : '_' + device;
-					sizeUnit = $( '#wp-swiper-art_size_unit' + suffix ).val() || sizeUnit;
-					$( '#wp-swiper-art_size' + suffix ).prop( 'readOnly', sizeUnit === 'auto' ).toggleClass( 'is-unused', sizeUnit === 'auto' );
-				} );
-				// Grid + circle, Height Auto (square photos): the same.
-				var gridUnit = 'px';
-				[ 'desktop', 'tablet', 'mobile' ].forEach( function ( device ) {
-					var suffix = device === 'desktop' ? '' : '_' + device;
-					gridUnit = $( '#wp-swiper-art_grid_height_unit' + suffix ).val() || gridUnit;
-					$( '#wp-swiper-art_grid_height' + suffix ).prop( 'readOnly', gridUnit === 'auto' ).toggleClass( 'is-unused', gridUnit === 'auto' );
+					heightUnit = $( '#wp-swiper-art_height_unit' + suffix ).val() || heightUnit;
+					$( '#wp-swiper-art_height' + suffix ).prop( 'readOnly', heightUnit === 'auto' ).toggleClass( 'is-unused', heightUnit === 'auto' );
 				} );
 			}
 

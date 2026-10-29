@@ -42,6 +42,14 @@ class WP_Swiper_Art {
 			// A square grid (its Columns per device) with a circle over its
 			// middle: the cells around it cut by it (those it covers left out).
 			'grid-circle' => __( 'Grid + circle', 'wp-swiper' ),
+			// The same grid without a photo in the circle: an image and/or text
+			// there instead, as Ring + text's (center()).
+			'grid-circle-text' => __( 'Grid + circle + text', 'wp-swiper' ),
+			// The grid with a square over its middle instead: the cells around it
+			// cut by it (an L at a corner, a notch at a side), its photo in it.
+			'grid-square'      => __( 'Grid + square', 'wp-swiper' ),
+			// The same with an image and/or text in the square (center()).
+			'grid-square-text' => __( 'Grid + square + text', 'wp-swiper' ),
 			// The shapes of an SVG file, each a window for a photo
 			// (WP_Swiper_Svg_Shape): the current one in the main window, the next
 			// ones in the others, moving on window by window.
@@ -97,26 +105,26 @@ class WP_Swiper_Art {
 	}
 
 	/**
-	 * Whether a Style has a photo in the middle (Ring, Grid + circle), else
-	 * (Ring + text) the image and text of center().
+	 * Whether a Style has a photo in the middle (Ring, Grid + circle, Grid +
+	 * square), else (the "+ text" ones) the image and text of center().
 	 *
 	 * @param string $style Style.
 	 * @return bool
 	 */
 	public static function has_middle_photo( $style ) {
 		// SVG shape: its main window.
-		return in_array( $style, array( 'ring', 'grid-circle', 'shape' ), true );
+		return in_array( $style, array( 'ring', 'grid-circle', 'grid-square', 'shape' ), true );
 	}
 
 	/**
-	 * Whether it is as wide as the column (Grid + circle), not a square of its
+	 * Whether it is as wide as the column (the grids), not a square of its
 	 * Size (the rings).
 	 *
 	 * @param array $settings Slider settings.
 	 * @return bool
 	 */
 	public static function is_wide( $settings ) {
-		return 'grid-circle' === self::style_of( $settings );
+		return in_array( self::style_of( $settings ), array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ), true );
 	}
 
 	/**
@@ -192,34 +200,36 @@ class WP_Swiper_Art {
 				'default' => false,
 				'help'    => __( 'Off: the slider is as large as its shapes. On: the whole drawing, with the space around them.', 'wp-swiper' ),
 			),
-			'art_size'           => array(
+			// Height for every Style, as a slider's: its number and unit per device
+			// (tablet and mobile empty: the larger screen's). A ring is as wide as
+			// it is tall, an SVG shape as its drawing; a grid as wide as the column.
+			// Until 3.1 the rings' Size (their width) and the grids' Height (px or
+			// square photos), merge_art_height().
+			'art_height'         => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring', 'ring-text', 'shape' ),
-				'label'      => __( 'Size', 'wp-swiper' ),
+				'label'      => __( 'Height', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
-				'unit'       => 'art_size_unit',
+				'unit'       => 'art_height_unit',
 				'default'    => 560,
 				'min'        => 1,
 				'max'        => 2000,
 				'step'       => 1,
-				'help'       => __( 'Its width (a ring is square; an SVG shape keeps the proportions of its drawing), never wider than the column. px: the most it gets (160 at least). %: of the column\'s width. vh: of the screen\'s height. Auto: as large as the free space of the column allows (its width, and its height where the row gives it one).', 'wp-swiper' ),
+				'help'       => __( 'px: its height (a ring as wide, an SVG shape as its drawing, never wider than the column; a grid as wide as the column). vh: of the screen\'s height. %: of the parent block\'s height. Auto: fills the free height of the parent column; where there is none, a ring or shape as wide as the column, a grid 500px.', 'wp-swiper' ),
 			),
-			// Size's unit, per device (tablet and mobile empty: the larger screen's).
-			'art_size_unit'      => array(
+			'art_height_unit'    => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring', 'ring-text', 'shape' ),
-				'label'      => __( 'Size unit', 'wp-swiper' ),
+				'label'      => __( 'Height unit', 'wp-swiper' ),
 				'type'       => 'select',
 				'responsive' => true,
-				'inline_in'  => 'art_size',
+				'inline_in'  => 'art_height',
 				'default'    => 'px',
 				'choices'    => array(
 					'px'   => 'px',
-					'%'    => '%',
 					'vh'   => 'vh',
+					'%'    => '%',
 					'auto' => __( 'Auto', 'wp-swiper' ),
 				),
 			),
@@ -258,7 +268,7 @@ class WP_Swiper_Art {
 			'art_grid_count'     => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'grid-circle' ),
+				'styles'     => array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
 				'label'      => __( 'Photos in the grid', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -271,7 +281,7 @@ class WP_Swiper_Art {
 			'art_grid_columns'   => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'grid-circle' ),
+				'styles'     => array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
 				'label'      => __( 'Columns', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -281,42 +291,13 @@ class WP_Swiper_Art {
 				'step'       => 1,
 				'help'       => __( 'As many rows as the photos make; the last one\'s photos in the middle.', 'wp-swiper' ),
 			),
-			'art_grid_height'    => array(
-				'section'    => 'layout',
-				'effects'    => $art,
-				'styles'     => array( 'grid-circle' ),
-				'label'      => __( 'Height', 'wp-swiper' ),
-				'type'       => 'number',
-				'responsive' => true,
-				'unit'       => 'art_grid_height_unit',
-				'default'    => 500,
-				'min'        => 120,
-				'max'        => 2000,
-				'step'       => 10,
-				'help'       => __( 'px: the grid\'s height, the photos stretched to it. Auto: square photos, as tall as they make it.', 'wp-swiper' ),
-			),
-			// Height's unit, per device (tablet and mobile empty: the larger screen's).
-			'art_grid_height_unit' => array(
-				'section'    => 'layout',
-				'effects'    => $art,
-				'styles'     => array( 'grid-circle' ),
-				'label'      => __( 'Height unit', 'wp-swiper' ),
-				'type'       => 'select',
-				'responsive' => true,
-				'inline_in'  => 'art_grid_height',
-				'default'    => 'auto',
-				'choices'    => array(
-					'px'   => 'px',
-					'auto' => __( 'Auto', 'wp-swiper' ),
-				),
-			),
 			// Ring: the middle circle's size in percent of the whole, per device
 			// ('' on tablet and mobile: the larger screen's). Set by dragging its
 			// edge in the preview (preview-art.js); no field to show.
 			'art_ring_center'    => array(
 				'section'       => 'layout',
 				'effects'       => $art,
-				'styles'        => array( 'ring', 'ring-text', 'grid-circle' ),
+				'styles'        => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
 				'label'         => __( 'Middle circle (%)', 'wp-swiper' ),
 				'type'          => 'float',
 				'responsive'    => true,
@@ -327,6 +308,19 @@ class WP_Swiper_Art {
 				'max'           => 75,
 				'step'          => 0.1,
 			),
+			// Ring: a gap at the bottom of the ring, for an image or text (In the
+			// opening), a block of its own: the switch, then its size and content.
+			// Off (by default): the photos evenly all around. Saved before the
+			// switch: on where an Opening above 0 was (merge_art_opening(), get()).
+			'art_opening'        => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'ring' ),
+				'label'   => __( 'Opening', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => false,
+				'help'    => __( 'A gap at the bottom of the ring, for an image or text. Off: the photos evenly all around the circle.', 'wp-swiper' ),
+			),
 			'art_ring_opening'   => array(
 				'section'    => 'layout',
 				'effects'    => $art,
@@ -334,17 +328,17 @@ class WP_Swiper_Art {
 				'label'      => __( 'Opening (degrees)', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
-				'default'    => 0,
+				'default'    => 90,
 				'min'        => 0,
 				'max'        => 180,
 				'step'       => 1,
-				'help'       => __( '0: the photos evenly all around the circle. More: a gap at the bottom of the ring.', 'wp-swiper' ),
+				'help'       => __( 'How wide the gap at the bottom is; 0 on a device: none there.', 'wp-swiper' ),
 			),
 			// Not for SVG shape: its windows are as drawn.
 			'art_gap'            => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring', 'ring-text', 'grid-circle' ),
+				'styles'     => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
 				'label'      => __( 'Gap (px)', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -353,11 +347,22 @@ class WP_Swiper_Art {
 				'max'        => 40,
 				'step'       => 1,
 			),
+			// Rounded corners, as a slider's: the radius once it is on (on by
+			// default, as Art always had them). Saved before the switch: on
+			// where a radius above 0 was (merge_rounded(), get()).
+			'art_rounded'        => array(
+				'section' => 'layout',
+				'effects' => $art,
+				'styles'  => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
+				'label'   => __( 'Rounded corners', 'wp-swiper' ),
+				'type'    => 'checkbox',
+				'default' => true,
+			),
 			'art_radius'         => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring', 'ring-text', 'grid-circle' ),
-				'label'      => __( 'Rounded corners (px)', 'wp-swiper' ),
+				'styles'     => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
+				'label'      => __( 'Radius (px)', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
 				'default'    => 14,
@@ -401,7 +406,7 @@ class WP_Swiper_Art {
 			'art_center'         => array(
 				'section' => 'layout',
 				'effects' => $art,
-				'styles'  => array( 'ring-text' ),
+				'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 				'label'   => __( 'Content in the middle', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => true,
@@ -410,7 +415,7 @@ class WP_Swiper_Art {
 			'art_center_image'   => array(
 				'section' => 'layout',
 				'effects' => $art,
-				'styles'  => array( 'ring-text' ),
+				'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 				'label'   => __( 'Image in the middle', 'wp-swiper' ),
 				'type'    => 'image',
 				'default' => 0,
@@ -418,7 +423,7 @@ class WP_Swiper_Art {
 			'art_center_image_size' => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring-text' ),
+				'styles'     => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 				'label'      => __( 'Image size (%)', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -431,7 +436,7 @@ class WP_Swiper_Art {
 			'art_center_text'    => array(
 				'section' => 'layout',
 				'effects' => $art,
-				'styles'  => array( 'ring-text' ),
+				'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 				'label'   => __( 'Text in the middle', 'wp-swiper' ),
 				'type'    => 'editor',
 				'default' => '',
@@ -439,7 +444,7 @@ class WP_Swiper_Art {
 			'art_center_font_size' => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring-text' ),
+				'styles'     => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 				'label'      => __( 'Font size (px)', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -452,7 +457,7 @@ class WP_Swiper_Art {
 			'art_center_padding' => array(
 				'section'    => 'layout',
 				'effects'    => $art,
-				'styles'     => array( 'ring-text' ),
+				'styles'     => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 				'label'      => __( 'Padding (px)', 'wp-swiper' ),
 				'type'       => 'number',
 				'responsive' => true,
@@ -465,34 +470,21 @@ class WP_Swiper_Art {
 			'art_center_bg'      => array(
 				'section' => 'layout',
 				'effects' => $art,
-				'styles'  => array( 'ring-text' ),
+				'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 				'label'   => __( 'Middle background', 'wp-swiper' ),
 				'type'    => 'alpha_color',
 				'default' => 'rgba(255,255,255,0)',
 				'help'    => __( 'The circle\'s color under the image and text; at Opacity 0 there is none.', 'wp-swiper' ),
 			),
 			// Ring: what sits in the opening at the bottom (art.js places it in
-			// the free space there, a gap from the photos): nothing, an image,
-			// or text from the editor (with links).
-			'art_opening_content' => array(
-				'section' => 'layout',
-				'effects' => $art,
-				'styles'  => array( 'ring' ),
-				'label'   => __( 'In the opening', 'wp-swiper' ),
-				'type'    => 'select',
-				'default' => 'none',
-				'choices' => array(
-					'none'  => __( 'Nothing', 'wp-swiper' ),
-					'image' => __( 'Image', 'wp-swiper' ),
-					'text'  => __( 'Text', 'wp-swiper' ),
-				),
-				'help'    => __( 'Placed in the middle of the free space in the opening, as large as it allows; not shown on a device whose Opening is 0.', 'wp-swiper' ),
-			),
+			// the free space there, a gap from the photos): an image over text from
+			// the editor (with links), either or both, as Ring + text's middle. Until
+			// then one or the other (art_opening_content, merge_opening_content()).
 			'art_opening_image'  => array(
 				'section' => 'layout',
 				'effects' => $art,
 				'styles'  => array( 'ring' ),
-				'label'   => __( 'Image', 'wp-swiper' ),
+				'label'   => __( 'Image in the opening', 'wp-swiper' ),
 				'type'    => 'image',
 				'default' => 0,
 			),
@@ -507,13 +499,13 @@ class WP_Swiper_Art {
 				'min'        => 10,
 				'max'        => 100,
 				'step'       => 5,
-				'help'       => __( 'Of the free space in the opening; the image keeps its proportions.', 'wp-swiper' ),
+				'help'       => __( 'Of the free space in the opening; the image keeps its proportions. With text under it: at most half the height.', 'wp-swiper' ),
 			),
 			'art_opening_text'   => array(
 				'section' => 'layout',
 				'effects' => $art,
 				'styles'  => array( 'ring' ),
-				'label'   => __( 'Text', 'wp-swiper' ),
+				'label'   => __( 'Text in the opening', 'wp-swiper' ),
 				'type'    => 'editor',
 				'default' => '',
 			),
@@ -546,7 +538,7 @@ class WP_Swiper_Art {
 			'art_caption_middle' => array(
 				'section' => 'caption',
 				'effects' => $art,
-				'styles'  => array( 'ring', 'grid-circle', 'shape' ),
+				'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
 				'label'   => __( 'Only on the middle photo', 'wp-swiper' ),
 				'type'    => 'checkbox',
 				'default' => false,
@@ -571,7 +563,7 @@ class WP_Swiper_Art {
 				'section' => 'advanced',
 				'panel'   => 'controls',
 				'effects' => $art,
-				'styles'  => array( 'ring', 'grid-circle' ),
+				'styles'  => array( 'ring', 'grid-circle', 'grid-square' ),
 				'label'   => __( 'What changes', 'wp-swiper' ),
 				'type'    => 'select',
 				'default' => 'any',
@@ -659,18 +651,30 @@ class WP_Swiper_Art {
 
 	/**
 	 * Art's blocks, per page (before the other effects' blocks there): its
-	 * shape on the Layout page (its Image border is in the Look block, over
-	 * the Image shadow: WP_Swiper_Settings::blocks()), Photo swapping on the
-	 * Controls page.
+	 * shape on the Layout page, Ring + text's Content in the middle a block
+	 * after it (its Rounded corners and Image border are in the Look block,
+	 * where a slider's are, over the Image shadow: WP_Swiper_Settings::blocks()),
+	 * Photo swapping on the Controls page.
 	 *
 	 * @return array page => [ block => [ 'title' => string, 'fields' => string[] ] ]
 	 */
 	public static function blocks() {
 		return array(
 			'layout'   => array(
-				'art' => array(
+				'art'        => array(
 					'title'  => __( 'Art', 'wp-swiper' ),
-					'fields' => array( 'art_style', 'art_shape', 'art_shape_margins', 'art_size', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_grid_height', 'art_ring_opening', 'art_gap', 'art_radius', 'art_center', 'art_center_image', 'art_center_image_size', 'art_center_text', 'art_center_font_size', 'art_center_padding', 'art_center_bg', 'art_opening_content', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
+					'fields' => array( 'art_style', 'art_shape', 'art_shape_margins', 'art_height', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ),
+				),
+				// Ring + text: what is in the middle, a block of its own (shown
+				// for that Style only, as its fields are).
+				'art_middle' => array(
+					'title'  => __( 'Content in the middle', 'wp-swiper' ),
+					'fields' => array( 'art_center', 'art_center_image', 'art_center_image_size', 'art_center_text', 'art_center_font_size', 'art_center_padding', 'art_center_bg' ),
+				),
+				// Ring: its opening at the bottom and what is in it, a block of its own too.
+				'art_opening' => array(
+					'title'  => __( 'Opening', 'wp-swiper' ),
+					'fields' => array( 'art_opening', 'art_ring_opening', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
 				),
 			),
 			// As the Collage's own (the same block and fields).
@@ -705,7 +709,8 @@ class WP_Swiper_Art {
 	/**
 	 * How many photos a Style shows on each device (Ring: the ring's, and
 	 * one in the middle; Ring + text: the ring's; Grid + circle: its Photos in
-	 * the grid and the circle's, art.js leaves out the cells it covers).
+	 * the grid and the circle's, art.js leaves out the cells it covers; Grid +
+	 * circle + text: the grid's).
 	 *
 	 * @param array $settings Slider settings.
 	 * @return array device => int
@@ -721,10 +726,11 @@ class WP_Swiper_Art {
 				self::shapes( $settings )
 			);
 		}
-		if ( 'grid-circle' === $style ) {
+		if ( self::is_wide( $settings ) ) {
+			$middle = self::has_middle_photo( $style ) ? 1 : 0;
 			return array_map(
-				function ( $photos ) {
-					return $photos + 1;
+				function ( $photos ) use ( $middle ) {
+					return $photos + $middle;
 				},
 				self::per_device( $settings, 'art_grid_count', 2, 36 )
 			);
@@ -739,42 +745,86 @@ class WP_Swiper_Art {
 	}
 
 	/**
-	 * Size's unit on each device (tablet and mobile empty: the larger screen's).
+	 * Height's unit on each device (tablet and mobile empty: the larger screen's).
 	 *
 	 * @param array $settings Slider settings.
-	 * @return array device => 'px' | '%' | 'vh' | 'auto'
+	 * @return array device => 'px' | 'vh' | '%' | 'auto'
 	 */
-	public static function size_units( $settings ) {
+	public static function height_units( $settings ) {
 		return array_map(
 			function ( $unit ) {
-				return in_array( $unit, array( 'px', '%', 'vh', 'auto' ), true ) ? $unit : 'px';
+				return in_array( $unit, array( 'px', 'vh', '%', 'auto' ), true ) ? $unit : 'px';
 			},
-			WP_Swiper_Settings::responsive( $settings, 'art_size_unit' )
+			WP_Swiper_Settings::responsive( $settings, 'art_height_unit' )
 		);
 	}
 
 	/**
-	 * The stage's width on each device as CSS (art.css keeps it within the
-	 * column): px from 160, % and vh up to 100; Auto: the column's width, which
-	 * art.js makes smaller to fit the free height.
+	 * The stage's width on each device as CSS for a ring or an SVG shape
+	 * (art.css keeps it within the column): its Height times its proportions
+	 * (a ring 1, a shape its drawing's, `ratios`), px from 160, vh up to 100.
+	 * % and Auto: the column's width, art.js makes it smaller to fit the
+	 * parent's height or the column's free height.
+	 *
+	 * @param array $settings Slider settings.
+	 * @param array $ratios   device => width / height (1 for a ring).
+	 * @return array device => string
+	 */
+	public static function sizes( $settings, $ratios = array() ) {
+		$values = WP_Swiper_Settings::responsive( $settings, 'art_height' );
+		$sizes  = array();
+		foreach ( self::height_units( $settings ) as $device => $unit ) {
+			$ratio = isset( $ratios[ $device ] ) && (float) $ratios[ $device ] > 0 ? (float) $ratios[ $device ] : 1;
+			$value = max( 1, (int) $values[ $device ] );
+			if ( 'px' === $unit ) {
+				$sizes[ $device ] = round( max( 160, min( 2000, $value ) ) * $ratio, 2 ) . 'px';
+			} elseif ( 'vh' === $unit ) {
+				$sizes[ $device ] = round( min( 100, $value ) * $ratio, 2 ) . 'vh';
+			} else {
+				$sizes[ $device ] = '100%';
+			}
+		}
+		return $sizes;
+	}
+
+	/**
+	 * A grid's height on each device as CSS (art.css): px from 120, vh up to
+	 * 100; % the outer block's (whose height is the % of its parent,
+	 * block_heights()); Auto: art.js fills the column's free height.
 	 *
 	 * @param array $settings Slider settings.
 	 * @return array device => string
 	 */
-	public static function sizes( $settings ) {
-		$values = WP_Swiper_Settings::responsive( $settings, 'art_size' );
-		$sizes  = array();
-		foreach ( self::size_units( $settings ) as $device => $unit ) {
+	public static function grid_heights( $settings ) {
+		$values  = WP_Swiper_Settings::responsive( $settings, 'art_height' );
+		$heights = array();
+		foreach ( self::height_units( $settings ) as $device => $unit ) {
 			$value = max( 1, (int) $values[ $device ] );
-			if ( 'auto' === $unit ) {
-				$sizes[ $device ] = '100%';
-			} elseif ( 'px' === $unit ) {
-				$sizes[ $device ] = max( 160, min( 2000, $value ) ) . 'px';
+			if ( 'px' === $unit ) {
+				$heights[ $device ] = max( 120, min( 2000, $value ) ) . 'px';
+			} elseif ( 'vh' === $unit ) {
+				$heights[ $device ] = min( 100, $value ) . 'vh';
 			} else {
-				$sizes[ $device ] = min( 100, $value ) . $unit;
+				$heights[ $device ] = '%' === $unit ? '100%' : 'auto';
 			}
 		}
-		return $sizes;
+		return $heights;
+	}
+
+	/**
+	 * The outer block's height on each device (art.css): Height in % there,
+	 * of its parent's (as a slider's); else as tall as it is.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array device => string
+	 */
+	public static function block_heights( $settings ) {
+		$values  = WP_Swiper_Settings::responsive( $settings, 'art_height' );
+		$heights = array();
+		foreach ( self::height_units( $settings ) as $device => $unit ) {
+			$heights[ $device ] = '%' === $unit ? min( 100, max( 1, (int) $values[ $device ] ) ) . '%' : 'auto';
+		}
+		return $heights;
 	}
 
 	/**
@@ -835,7 +885,6 @@ class WP_Swiper_Art {
 		}
 		$middle  = self::has_middle_photo( $style );
 		$count   = self::count( $settings );
-		$sizes   = self::sizes( $settings );
 		// Alignment per device: the side margins that put it there.
 		$margins = array_map(
 			function ( $align ) {
@@ -851,7 +900,7 @@ class WP_Swiper_Art {
 		$config = array(
 			'style'   => $style,
 			'gap'     => self::per_device( $settings, 'art_gap', 0, 40 ),
-			'radius'  => self::per_device( $settings, 'art_radius', 0, 60 ),
+			'radius'  => self::per_device( WP_Swiper_Settings::apply_rounded( $settings ), 'art_radius', 0, 60 ),
 			'count'   => self::per_device( $settings, 'art_ring_count', 3, 16 ),
 			// Ring: the middle circle's size per device (% of the whole).
 			'center'  => array_map(
@@ -861,18 +910,14 @@ class WP_Swiper_Art {
 				WP_Swiper_Settings::responsive( $settings, 'art_ring_center' )
 			),
 			// Ring only (Ring + text goes all around; no ring in a grid).
-			'opening' => 'ring' === $style ? self::per_device( $settings, 'art_ring_opening', 0, 180 ) : 0,
+			// Ring: its opening per device, none (0) with Opening off.
+			'opening' => 'ring' === $style ? ( empty( $settings['art_opening'] ) ? array_fill_keys( array( 'desktop', 'tablet', 'mobile' ), 0 ) : self::per_device( $settings, 'art_ring_opening', 0, 180 ) ) : 0,
 			// The photos' order per device (slide indexes; false: the slides'
 			// order), and each slide's photo ID for the preview to tell one by.
 			'order'   => self::orders( $settings, $slides ),
 			'ids'     => array_map( 'intval', wp_list_pluck( $slides, 'id' ) ),
-			// Size "Auto" per device: art.js fits it to the column's free height.
-			'auto'    => array_map(
-				function ( $unit ) {
-					return 'auto' === $unit;
-				},
-				self::size_units( $settings )
-			),
+			// Height's unit per device: with % and Auto art.js sizes it there.
+			'height'  => self::height_units( $settings ),
 			// Photo swapping (art.js): how often, and whether the pointer over it pauses it.
 			'swap'    => $settings['art_swap'] ? array(
 				'delay'  => max( 1000, min( 30000, (int) $settings['art_swap_delay'] ) ),
@@ -886,21 +931,12 @@ class WP_Swiper_Art {
 			) : false,
 		);
 
-		// Grid + circle: the grid's columns (and rows) per device.
-		// Grid + circle: as wide as the column (no Size, so no Size Auto), its
-		// photos, columns and, per device, Height "Auto" (square photos).
+		// The grids: as wide as the column, their photos and columns per device.
 		$wide = self::is_wide( $settings );
 		if ( $wide ) {
 			$config['wide']    = true;
-			$config['auto']    = array_fill_keys( array( 'desktop', 'tablet', 'mobile' ), false );
 			$config['columns'] = self::per_device( $settings, 'art_grid_columns', 2, 6 );
 			$config['cells']   = self::per_device( $settings, 'art_grid_count', 2, 36 );
-			$config['square']  = array_map(
-				function ( $unit ) {
-					return 'px' !== $unit;
-				},
-				WP_Swiper_Settings::responsive( $settings, 'art_grid_height_unit' )
-			);
 		}
 
 		// SVG shape: its windows (paths and boxes in numbers of the stage, the
@@ -933,13 +969,22 @@ class WP_Swiper_Art {
 		}
 
 		$shadow  = WP_Swiper_Settings::shadow( $settings );
+		// A ring's or shape's width per device: its Height times its proportions.
+		$ratios = array();
+		if ( $shape ) {
+			foreach ( isset( $config['shapeDevices'] ) ? $config['shapeDevices'] : array_fill_keys( array( 'desktop', 'tablet', 'mobile' ), $shape ) as $device => $drawing ) {
+				$ratios[ $device ] = $drawing['ratio'];
+			}
+		}
+		$sizes  = self::sizes( $settings, $ratios );
+		$blocks = self::block_heights( $settings );
 		// Ring: an image or text in its opening (art.js places it, a gap from the photos).
-		$opening = 'ring' === $style ? self::opening( $settings ) : '';
+		$opening = 'ring' === $style && ! empty( $settings['art_opening'] ) ? self::opening( $settings ) : '';
 		if ( '' !== $opening ) {
 			$config['openingGap'] = self::per_device( $settings, 'art_opening_gap', 0, 200 );
 		}
 		// Ring + text: the image and text in the middle (art.js places them).
-		$center = 'ring-text' === $style && $settings['art_center'] ? self::center( $settings ) : '';
+		$center = in_array( $style, array( 'ring-text', 'grid-circle-text', 'grid-square-text' ), true ) && $settings['art_center'] ? self::center( $settings ) : '';
 
 		$classes = array_filter(
 			array_merge(
@@ -968,6 +1013,10 @@ class WP_Swiper_Art {
 				'--wp-swiper-art-size:' . $sizes['desktop'],
 				'--wp-swiper-art-size-tablet:' . $sizes['tablet'],
 				'--wp-swiper-art-size-mobile:' . $sizes['mobile'],
+				// Height in %: the outer block's, of its parent (art.css).
+				'--wp-swiper-art-block-height:' . $blocks['desktop'],
+				'--wp-swiper-art-block-height-tablet:' . $blocks['tablet'],
+				'--wp-swiper-art-block-height-mobile:' . $blocks['mobile'],
 				// Alignment per device (art.css): the stage's side margins.
 				'--wp-swiper-art-margin:' . $margins['desktop'],
 				'--wp-swiper-art-margin-tablet:' . $margins['tablet'],
@@ -1085,30 +1134,29 @@ class WP_Swiper_Art {
 	}
 
 	/**
-	 * Ring: what sits in its opening (art_opening_content), hidden until
-	 * art.js places it (beside the stage, not in it: the photos' shadow is
-	 * not for it). An image (the size that fits the largest Art) or the
-	 * editor's text; '' for none, or an image or text not there.
+	 * Ring: what sits in its opening, an image over the editor's text (either
+	 * or both, as Ring + text's middle), hidden until art.js places it
+	 * (beside the stage, not in it: the photos' shadow is not for it). The
+	 * image the size that fits the largest Art; '' when neither is there.
 	 *
 	 * @param array $settings Slider settings.
 	 * @return string Markup.
 	 */
 	public static function opening( $settings ) {
-		$content = $settings['art_opening_content'];
-		if ( 'image' === $content ) {
-			$image = wp_get_attachment_image( (int) $settings['art_opening_image'], 'large', false, array( 'class' => 'wp-swiper-art__opening-image', 'loading' => 'lazy' ) );
-			return '' === $image ? '' : '<div class="wp-swiper-art__opening wp-swiper-art__opening--image" hidden>' . $image . '</div>';
+		$image = wp_get_attachment_image( (int) $settings['art_opening_image'], 'large', false, array( 'class' => 'wp-swiper-art__opening-image', 'loading' => 'lazy' ) );
+		$text  = WP_Swiper_Settings::sanitize_description( $settings['art_opening_text'] );
+		if ( '' === $image && '' === $text ) {
+			return '';
 		}
-		if ( 'text' === $content ) {
-			$text = WP_Swiper_Settings::sanitize_description( $settings['art_opening_text'] );
-			return '' === $text ? '' : '<div class="wp-swiper-art__opening wp-swiper-art__opening--text" hidden><div class="wp-swiper-art__opening-text">' . $text . '</div></div>';
-		}
-		return '';
+		return '<div class="wp-swiper-art__opening" hidden><div class="wp-swiper-art__opening-inner">'
+			. $image
+			. ( '' === $text ? '' : '<div class="wp-swiper-art__opening-text">' . $text . '</div>' )
+			. '</div></div>';
 	}
 
 	/**
 	 * The opening's CSS variables per device: the image's size (% of the free
-	 * space) or the text's font size; none without content.
+	 * space) and the text's font size; none without content.
 	 *
 	 * @param string $opening  The markup (opening()).
 	 * @param array  $settings Slider settings.
@@ -1118,36 +1166,34 @@ class WP_Swiper_Art {
 		if ( '' === $opening ) {
 			return array();
 		}
-		$style = array();
-		$image = 'image' === $settings['art_opening_content'];
-		$key   = $image ? 'art_opening_image_size' : 'art_opening_font_size';
-		$name  = $image ? '--wp-swiper-art-opening-size' : '--wp-swiper-art-opening-font';
-		$unit  = $image ? '%' : 'px';
-		$range = $image ? array( 10, 100 ) : array( 8, 120 );
+		$style  = array();
+		$vars   = array(
+			'art_opening_image_size' => array( '--wp-swiper-art-opening-size', '%', 10, 100 ),
+			'art_opening_font_size'  => array( '--wp-swiper-art-opening-font', 'px', 8, 120 ),
+		);
 		$suffix = array(
 			'desktop' => '',
 			'tablet'  => '-tablet',
 			'mobile'  => '-mobile',
 		);
-		foreach ( self::per_device( $settings, $key, $range[0], $range[1] ) as $device => $value ) {
-			$style[] = $name . $suffix[ $device ] . ':' . $value . $unit;
+		foreach ( $vars as $key => $var ) {
+			foreach ( self::per_device( $settings, $key, $var[2], $var[3] ) as $device => $value ) {
+				$style[] = $var[0] . $suffix[ $device ] . ':' . $value . $var[1];
+			}
 		}
 		return $style;
 	}
 
 	/**
-	 * Grid + circle: the stage's height per device (art.css); "auto" where its
-	 * unit is Auto (art.js makes it as tall as its square photos).
+	 * The grids: the stage's height per device (art.css, grid_heights()).
 	 *
 	 * @param array $settings Slider settings.
 	 * @return string[]
 	 */
 	private static function height_style( $settings ) {
-		$style   = array();
-		$units   = WP_Swiper_Settings::responsive( $settings, 'art_grid_height_unit' );
-		$heights = self::per_device( $settings, 'art_grid_height', 120, 2000 );
-		foreach ( $heights as $device => $height ) {
-			$style[] = '--wp-swiper-art-height' . WP_Swiper_Render::SUFFIX[ $device ] . ':' . ( 'px' === $units[ $device ] ? $height . 'px' : 'auto' );
+		$style = array();
+		foreach ( self::grid_heights( $settings ) as $device => $height ) {
+			$style[] = '--wp-swiper-art-height' . WP_Swiper_Render::SUFFIX[ $device ] . ':' . $height;
 		}
 		return $style;
 	}

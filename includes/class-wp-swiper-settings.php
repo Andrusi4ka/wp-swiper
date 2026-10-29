@@ -321,22 +321,181 @@ class WP_Swiper_Settings {
 	/**
 	 * Rounded corners got their switch (as Image border): a slider saved
 	 * before it with a radius above 0 on any device has it on, so it shows
-	 * as it did; one saved without keeps it off.
+	 * as it did; one saved without keeps it off. Art's too (art_rounded): it
+	 * always had a radius (14px unless set), so on unless it was 0 on every
+	 * device; off, its radius the default again, for when it is turned on.
 	 *
-	 * @param array $saved A slider's saved settings.
+	 * @param array $saved A slider's (or an effect's layout) saved settings.
 	 * @return array
 	 */
 	public static function merge_rounded( $saved ) {
-		if ( ! $saved || isset( $saved['border_rounded'] ) ) {
+		if ( ! $saved ) {
 			return $saved;
 		}
-		$rounded = false;
-		foreach ( array( 'border_radius', 'border_radius_tablet', 'border_radius_mobile' ) as $key ) {
-			if ( isset( $saved[ $key ] ) && '' !== (string) $saved[ $key ] && (int) $saved[ $key ] > 0 ) {
-				$rounded = true;
+		if ( ! isset( $saved['border_rounded'] ) ) {
+			$rounded = false;
+			foreach ( array( 'border_radius', 'border_radius_tablet', 'border_radius_mobile' ) as $key ) {
+				if ( isset( $saved[ $key ] ) && '' !== (string) $saved[ $key ] && (int) $saved[ $key ] > 0 ) {
+					$rounded = true;
+				}
+			}
+			$saved['border_rounded'] = $rounded;
+		}
+		if ( ! isset( $saved['art_rounded'] ) ) {
+			// Never saved: the default radius, above 0.
+			$rounded = ! isset( $saved['art_radius'] ) || '' === (string) $saved['art_radius'] || (int) $saved['art_radius'] > 0;
+			foreach ( array( 'art_radius_tablet', 'art_radius_mobile' ) as $key ) {
+				if ( isset( $saved[ $key ] ) && '' !== (string) $saved[ $key ] && (int) $saved[ $key ] > 0 ) {
+					$rounded = true;
+				}
+			}
+			$saved['art_rounded'] = $rounded;
+			if ( ! $rounded ) {
+				$saved['art_radius']        = WP_Swiper_Art::fields()['art_radius']['default'];
+				$saved['art_radius_tablet'] = '';
+				$saved['art_radius_mobile'] = '';
 			}
 		}
-		$saved['border_rounded'] = $rounded;
+		return $saved;
+	}
+
+	/**
+	 * Art's Ring opening got its switch (Opening, a block of its own): on
+	 * where a slider saved before it had an Opening above 0 on any device,
+	 * so it shows as it did; else off (the photos evenly all around, as
+	 * before), the size the default again, for when it is turned on.
+	 *
+	 * @param array $saved A slider's (or an effect's layout) saved settings.
+	 * @return array
+	 */
+	public static function merge_art_opening( $saved ) {
+		if ( ! $saved || isset( $saved['art_opening'] ) ) {
+			return $saved;
+		}
+		$open = false;
+		foreach ( array( 'art_ring_opening', 'art_ring_opening_tablet', 'art_ring_opening_mobile' ) as $key ) {
+			if ( isset( $saved[ $key ] ) && '' !== (string) $saved[ $key ] && (int) $saved[ $key ] > 0 ) {
+				$open = true;
+			}
+		}
+		$saved['art_opening'] = $open;
+		if ( ! $open ) {
+			$saved['art_ring_opening']        = WP_Swiper_Art::fields()['art_ring_opening']['default'];
+			$saved['art_ring_opening_tablet'] = '';
+			$saved['art_ring_opening_mobile'] = '';
+		}
+		return $saved;
+	}
+
+	/**
+	 * The column widths a saved grid's square photos are measured for
+	 * (merge_art_height()): a typical desktop, tablet and phone.
+	 */
+	const OLD_ART_WIDTHS = array(
+		'desktop' => 1200,
+		'tablet'  => 768,
+		'mobile'  => 390,
+	);
+
+	/**
+	 * Until 3.1 the rings and SVG shape had a Size (their width: px, % of the
+	 * column, vh or Auto) and the grids a Height (px, or Auto: square photos);
+	 * now one Height (px, vh, %, Auto) for every Style. A saved one, as its
+	 * Style used it: a ring's Size is its height (it is square), a shape's
+	 * its width over its drawing's proportions; % of the column (a ring as
+	 * wide as the column) is Auto now. A grid's px stays; its square photos
+	 * are the height they made in a column OLD_ART_WIDTHS wide.
+	 *
+	 * @param array $saved A slider's (or an effect's layout) saved settings.
+	 * @return array
+	 */
+	public static function merge_art_height( $saved ) {
+		if ( ! $saved || isset( $saved['art_height'] ) || ! ( isset( $saved['art_size'] ) || isset( $saved['art_size_unit'] ) || isset( $saved['art_grid_height'] ) || isset( $saved['art_grid_height_unit'] ) ) ) {
+			return $saved;
+		}
+		$suffixes = array(
+			'desktop' => '',
+			'tablet'  => '_tablet',
+			'mobile'  => '_mobile',
+		);
+		// An old setting per device as it applied (an empty one: the larger screen's).
+		$old = function ( $key, $default ) use ( $saved, $suffixes ) {
+			$values = array();
+			$last   = $default;
+			foreach ( $suffixes as $device => $suffix ) {
+				if ( isset( $saved[ $key . $suffix ] ) && '' !== (string) $saved[ $key . $suffix ] ) {
+					$last = $saved[ $key . $suffix ];
+				}
+				$values[ $device ] = $last;
+			}
+			return $values;
+		};
+		$style   = isset( $saved['art_style'] ) ? (string) $saved['art_style'] : 'ring';
+		$heights = array();
+		$units   = array();
+		if ( 0 === strpos( $style, 'grid-' ) ) {
+			$height  = $old( 'art_grid_height', 500 );
+			$unit    = $old( 'art_grid_height_unit', 'auto' );
+			$count   = $old( 'art_grid_count', 9 );
+			$columns = $old( 'art_grid_columns', 3 );
+			$gap     = $old( 'art_gap', 8 );
+			foreach ( $suffixes as $device => $suffix ) {
+				$units[ $device ] = 'px';
+				if ( 'px' === $unit[ $device ] ) {
+					$heights[ $device ] = max( 120, min( 2000, (int) $height[ $device ] ) );
+					continue;
+				}
+				$cols = max( 2, min( 6, (int) $columns[ $device ] ) );
+				$rows = (int) ceil( max( 2, min( 36, (int) $count[ $device ] ) ) / $cols );
+				$step = max( 0, min( 40, (int) $gap[ $device ] ) );
+				$cell = ( self::OLD_ART_WIDTHS[ $device ] - ( $cols - 1 ) * $step ) / $cols;
+				$heights[ $device ] = max( 120, min( 2000, (int) round( $rows * $cell + ( $rows - 1 ) * $step ) ) );
+			}
+		} else {
+			$size  = $old( 'art_size', 560 );
+			$unit  = $old( 'art_size_unit', 'px' );
+			$ratio = 1;
+			if ( 'shape' === $style ) {
+				$shape = WP_Swiper_Art::shape( wp_parse_args( $saved, self::defaults() ) );
+				$ratio = $shape && $shape['ratio'] > 0 ? (float) $shape['ratio'] : 1;
+			}
+			foreach ( $suffixes as $device => $suffix ) {
+				$fixed              = in_array( $unit[ $device ], array( 'px', 'vh' ), true );
+				$units[ $device ]   = $fixed ? $unit[ $device ] : 'auto';
+				$heights[ $device ] = $fixed ? max( 1, (int) round( (int) $size[ $device ] / $ratio ) ) : 560;
+			}
+		}
+		// Tablet and mobile: empty where the same as the larger screen's (they inherit it).
+		$saved['art_height']      = $heights['desktop'];
+		$saved['art_height_unit'] = $units['desktop'];
+		$saved['art_height_tablet']      = $heights['tablet'] !== $heights['desktop'] ? $heights['tablet'] : '';
+		$saved['art_height_unit_tablet'] = $units['tablet'] !== $units['desktop'] ? $units['tablet'] : '';
+		$saved['art_height_mobile']      = $heights['mobile'] !== $heights['tablet'] ? $heights['mobile'] : '';
+		$saved['art_height_unit_mobile'] = $units['mobile'] !== $units['tablet'] ? $units['mobile'] : '';
+		return $saved;
+	}
+
+	/**
+	 * Until the Ring's opening took an image and text together, In the
+	 * opening (art_opening_content) showed one: Image, Text or Nothing. The
+	 * other one, kept from an earlier choice, is cleared, so it shows as it
+	 * did (not something left out then).
+	 *
+	 * @param array $saved A slider's (or an effect's layout) saved settings.
+	 * @return array
+	 */
+	public static function merge_opening_content( $saved ) {
+		if ( ! $saved || ! array_key_exists( 'art_opening_content', $saved ) ) {
+			return $saved;
+		}
+		$content = $saved['art_opening_content'];
+		unset( $saved['art_opening_content'] );
+		if ( 'image' !== $content ) {
+			$saved['art_opening_image'] = 0;
+		}
+		if ( 'text' !== $content ) {
+			$saved['art_opening_text'] = '';
+		}
 		return $saved;
 	}
 
@@ -392,6 +551,12 @@ class WP_Swiper_Settings {
 			$settings['border_radius']        = 0;
 			$settings['border_radius_tablet'] = '';
 			$settings['border_radius_mobile'] = '';
+		}
+		// Art's photos (and so the lightbox's that take theirs).
+		if ( isset( $settings['art_rounded'] ) && ! $settings['art_rounded'] ) {
+			$settings['art_radius']        = 0;
+			$settings['art_radius_tablet'] = '';
+			$settings['art_radius_mobile'] = '';
 		}
 		if ( empty( $settings['thumbs_rounded'] ) ) {
 			$settings['thumbs_radius']        = 0;
@@ -1456,11 +1621,11 @@ class WP_Swiper_Settings {
 					'title'  => __( 'Size and fit', 'wp-swiper' ),
 					'fields' => array( 'height', 'slide_ratio', 'slide_ratio_custom', 'slide_distribution', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
 				),
-				// Art's Image border here too (its own fields, as a slider's): the
-				// shadow under it on both.
+				// Art's Rounded corners and Image border here too (its own fields,
+				// where a slider's are): the shadow under them on both.
 				'look'        => array(
 					'title'  => __( 'Look', 'wp-swiper' ),
-					'fields' => array( 'border_rounded', 'border_radius', 'image_border', 'image_border_width', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
+					'fields' => array( 'border_rounded', 'border_radius', 'art_rounded', 'art_radius', 'image_border', 'image_border_width', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
 				),
 				'zoom'        => array(
 					'title'  => __( 'Zoom', 'wp-swiper' ),
@@ -1654,12 +1819,20 @@ class WP_Swiper_Settings {
 		$saved = self::merge_rounded( $saved );
 		// The thumbnails' Rounded corners and Frame: on where they had them.
 		$saved = self::merge_thumbs_switches( $saved );
+		// Art's Ring opening: on where it had one; what was in it, image or text.
+		$saved = self::merge_art_opening( $saved );
+		$saved = self::merge_opening_content( $saved );
+		// Art: one Height for every Style (the rings' Size, the grids' Height until 3.1).
+		$saved = self::merge_art_height( $saved );
 		if ( ! empty( $saved['layouts'] ) && is_array( $saved['layouts'] ) ) {
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_ratio_fields' ), array_filter( $saved['layouts'], 'is_array' ) );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_overlay_opacity' ), $saved['layouts'] );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_cube_shadow_opacity' ), $saved['layouts'] );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_rounded' ), $saved['layouts'] );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_thumbs_switches' ), $saved['layouts'] );
+			$saved['layouts'] = array_map( array( __CLASS__, 'merge_art_opening' ), $saved['layouts'] );
+			$saved['layouts'] = array_map( array( __CLASS__, 'merge_opening_content' ), $saved['layouts'] );
+			$saved['layouts'] = array_map( array( __CLASS__, 'merge_art_height' ), $saved['layouts'] );
 		}
 
 		// Version 6: the lightbox radii are numbers of their own, empty = the

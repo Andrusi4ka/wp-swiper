@@ -210,10 +210,16 @@
 	var MIN_RING = 20; // px.
 	var resize = null;
 
-	// The Ring (Ring + text, Grid + circle) under the pointer and how far from its middle, if at its edge.
+	// How far a point is from the middle: round a circle; along the axes for
+	// a square (Grid + square), whose edge is at the same distance all along.
+	function reach( ring, dx, dy ) {
+		return ring.square ? Math.max( Math.abs( dx ), Math.abs( dy ) ) : Math.hypot( dx, dy );
+	}
+
+	// The Ring (Ring + text, the grids) under the pointer and how far from its middle, if at its edge.
 	function edgeAt( e ) {
 		var node = document.elementFromPoint( e.clientX, e.clientY );
-		var block = node && node.closest( '.wp-swiper-art--ring, .wp-swiper-art--ring-text, .wp-swiper-art--grid-circle' );
+		var block = node && node.closest( '.wp-swiper-art--ring, .wp-swiper-art--ring-text, .wp-swiper-art--grid-circle, .wp-swiper-art--grid-circle-text, .wp-swiper-art--grid-square, .wp-swiper-art--grid-square-text' );
 		var api = block && block.wpSwiperArt;
 		var ring = block && block.wpSwiperArtRing;
 		if ( ! api || ! api.setCenter || ! ring ) {
@@ -223,7 +229,7 @@
 		var rect = stage.getBoundingClientRect();
 		var dx = e.clientX - rect.left - ring.cx;
 		var dy = e.clientY - rect.top - ring.cy;
-		var distance = Math.hypot( dx, dy );
+		var distance = reach( ring, dx, dy );
 		var edge = ring.middle + ring.gap / 2;
 		if ( Math.abs( distance - edge ) > Math.max( 8, ring.gap / 2 + 4 ) ) {
 			return null;
@@ -257,6 +263,7 @@
 		line.style.left = ( ring.cx - radius ) + 'px';
 		line.style.top = ( ring.cy - radius ) + 'px';
 		line.style.width = line.style.height = ( radius * 2 ) + 'px';
+		line.classList.toggle( 'is-square', !! ring.square );
 		line.classList.toggle( 'is-shown', on );
 	}
 
@@ -297,7 +304,7 @@
 			var dx = e.clientX - rect.left - ring.cx;
 			var dy = e.clientY - rect.top - ring.cy;
 			var max = Math.min( MAX_CENTER, ( ring.outer - ring.gap - MIN_RING ) / ring.outer * 100 );
-			var share = ( Math.hypot( dx, dy ) - ring.gap / 2 ) / ring.outer * 100;
+			var share = ( reach( ring, dx, dy ) - ring.gap / 2 ) / ring.outer * 100;
 			share = Math.round( Math.max( MIN_CENTER, Math.min( max, share ) ) * 10 ) / 10;
 			if ( share !== resize.share ) {
 				resize.share = share;

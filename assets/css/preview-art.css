@@ -83,6 +83,11 @@
 	opacity: 1;
 }
 
+/* Grid + square: a square line. */
+.wp-swiper-art__edge.is-square {
+	border-radius: 4px;
+}
+
 :root.wp-swiper-art-edge,
 :root.wp-swiper-art-edge .wp-swiper-art *,
 :root.wp-swiper-art-resizing,

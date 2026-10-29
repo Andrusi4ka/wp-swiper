@@ -179,7 +179,7 @@ class WP_Swiper_Preview {
 				<?php // Art only too: the middle circle's edge resizes it (preview-art.js). ?>
 				<p class="description wp-swiper-preview__hint" data-effect="art" hidden>
 					<span class="dashicons dashicons-image-filter" aria-hidden="true"></span>
-					<?php esc_html_e( 'Drag the edge of the middle circle to resize it.', 'wp-swiper' ); ?>
+					<?php esc_html_e( 'Drag the edge of the middle circle or square to resize it.', 'wp-swiper' ); ?>
 				</p>
 				<?php // Random mosaic only (admin.js): the lines between its photos resize them. ?>
 				<p class="description wp-swiper-preview__hint" data-effect="mosaic" hidden>

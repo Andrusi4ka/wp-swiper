@@ -25,7 +25,8 @@
 	'use strict';
 
 	var SAMPLES = 24; // Points along an arc to find a piece's box.
-	var FIT_MIN = 120; // Size "Auto": less free height than this, the column's width instead.
+	var FIT_MIN = 120; // Height % or "Auto": less height than this, the fallback instead.
+	var GRID_FALLBACK = 500; // A grid's height (px) where % or Auto gives it none.
 
 	// A point at `radius` and `angle` (radians, clockwise from the right) from the middle.
 	function polar( cx, cy, radius, angle ) {
@@ -198,6 +199,7 @@
 		if ( first ) {
 			place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
 			pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
+			pieces[ 0 ].style.clipPath = '';
 			captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 * 0.85 } );
 			outline( block, pieces[ 0 ], 'M 0 ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 ' + ( middle * 2 ) + ' ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 0 ' + middle + ' Z' );
 		}
@@ -222,7 +224,7 @@
 	}
 
 	/**
-	 * Ring: the image or text in its opening (class-wp-swiper-art.php
+	 * Ring: the image and text in its opening (class-wp-swiper-art.php
 	 * opening()), in the largest box that fits the free space there: under
 	 * the middle circle, between the ring's two ends, down to the bottom of
 	 * the stage, its Gap from the photos. The opening widens downwards, so
@@ -263,20 +265,21 @@
 		box.style.top = ( stage.offsetTop + ring.cy + top ) + 'px';
 		box.style.width = ( halfWidth * 2 ) + 'px';
 		box.style.height = height + 'px';
+		// The image over the text: the text cut with "…" where both do not fit.
+		fitText( box.firstElementChild, '.wp-swiper-art__opening-text' );
 	}
 
 	/**
 	 * Ring + text: the image and text in the middle circle
 	 * (class-wp-swiper-art.php center()), over it: a circle as large as the
 	 * middle one (its Middle background), its content within the square that
-	 * fits in it, less the Padding (art.css). Text too large for it gets
-	 * smaller here, down to FONT_MIN.
+	 * fits in it, less the Padding (art.css). Text too long for it is cut
+	 * with "…" here (fitText()).
 	 *
 	 * @param {Element} block The Art block (the content is placed in it, beside the stage).
 	 * @param {Element} stage The stage.
 	 * @param {Object}  ring  { cx, cy, middle } in stage px.
 	 */
-	var FONT_MIN = 8;
 	function centerContent( block, stage, ring ) {
 		var box = block.querySelector( ':scope > .wp-swiper-art__center' );
 		if ( ! box ) {
@@ -286,28 +289,144 @@
 		box.style.left = ( stage.offsetLeft + ring.cx - ring.middle ) + 'px';
 		box.style.top = ( stage.offsetTop + ring.cy - ring.middle ) + 'px';
 		box.style.width = box.style.height = ( ring.middle * 2 ) + 'px';
+		// Grid + square + text: a square (art.css), its corners as the photos'.
+		box.classList.toggle( 'wp-swiper-art__center--square', !! ring.square );
+		box.style.borderRadius = ring.square ? Math.min( ring.round || 0, ring.middle ) + 'px' : '';
 
-		// The Font size of this device first (art.css), then smaller while it
-		// does not fit (the image keeps its share, the text takes the rest).
-		var inner = box.firstElementChild;
-		var text = inner && inner.querySelector( '.wp-swiper-art__center-text' );
+		fitText( box.firstElementChild, '.wp-swiper-art__center-text' );
+	}
+
+	/**
+	 * The text as it is set (its Font size, the theme's headings and colors):
+	 * where the image and text do not fit their box, as much of the text as
+	 * fits from the top, cut at a word with "…" (the image keeps its share;
+	 * no text at all where not even a word fits). Done again from the whole
+	 * text each time Art is laid out (a resize too), so a wider screen shows
+	 * more of it. The middle's and the opening's.
+	 *
+	 * @param {Element} inner    The box the image and text are in.
+	 * @param {string}  selector The text's.
+	 */
+	var ELLIPSIS = '\u2026';
+	function fitText( inner, selector ) {
+		var text = inner && inner.querySelector( selector );
 		if ( ! text ) {
 			return;
 		}
-		text.style.fontSize = '';
-		var size = parseFloat( getComputedStyle( text ).fontSize ) || 16;
+		if ( undefined === text.wpSwiperFull ) {
+			text.wpSwiperFull = text.innerHTML;
+		}
+		text.innerHTML = text.wpSwiperFull;
+		text.hidden = false;
+		// All of it inside the box (centred in it, what does not fit goes over both edges).
 		var fits = function () {
-			return inner.scrollHeight <= inner.clientHeight + 1 && inner.scrollWidth <= inner.clientWidth + 1;
+			var box = inner.getBoundingClientRect();
+			var first = inner.firstElementChild.getBoundingClientRect();
+			var last = inner.lastElementChild.getBoundingClientRect();
+			return first.top >= box.top - 1 && last.bottom <= box.bottom + 1 && inner.scrollWidth <= inner.clientWidth + 1;
 		};
-		while ( ! fits() && size > FONT_MIN ) {
-			size = Math.max( FONT_MIN, Math.floor( size * 0.9 ) );
-			text.style.fontSize = size + 'px';
+		if ( fits() ) {
+			return;
+		}
+		// The most characters that fit (binary search), then back to a word.
+		var low = 0;
+		var high = textLength( text ) - 1;
+		while ( low < high ) {
+			var mid = Math.ceil( ( low + high ) / 2 );
+			cutText( text, mid, false );
+			if ( fits() ) {
+				low = mid;
+			} else {
+				high = mid - 1;
+			}
+		}
+		if ( ! cutText( text, low, true ) || ! fits() ) {
+			text.innerHTML = '';
+			text.hidden = true;
 		}
 	}
 
-	// Ring: a photo in the middle circle; Ring + text: its image and text there.
+	function textNodes( root ) {
+		var walker = document.createTreeWalker( root, NodeFilter.SHOW_TEXT );
+		var nodes = [];
+		while ( walker.nextNode() ) {
+			nodes.push( walker.currentNode );
+		}
+		return nodes;
+	}
+
+	function textLength( root ) {
+		return textNodes( root ).reduce( function ( sum, node ) {
+			return sum + node.nodeValue.length;
+		}, 0 );
+	}
+
+	/*
+	 * The whole text (text.wpSwiperFull) cut after `count` characters (at a
+	 * word: back to the last space before it), "…" at its end, everything
+	 * after it left out (its tags closed as they are). False if nothing is left.
+	 */
+	function cutText( text, count, atWord ) {
+		text.innerHTML = text.wpSwiperFull;
+		var nodes = textNodes( text );
+		if ( atWord ) {
+			var all = nodes.map( function ( node ) {
+				return node.nodeValue;
+			} ).join( '' );
+			var space = all.slice( 0, count + 1 ).search( /\s\S*$/ );
+			count = space > 0 ? space : count;
+		}
+		var before = 0;
+		for ( var i = 0; i < nodes.length; i++ ) {
+			var node = nodes[ i ];
+			var length = node.nodeValue.length;
+			if ( before + length < count ) {
+				before += length;
+				continue;
+			}
+			var kept = node.nodeValue.slice( 0, count - before ).replace( /[\s.,;:!?\u2026\-\u2013\u2014]+$/, '' );
+			// Nothing of this one: the "…" after the text before it.
+			while ( '' === kept && i > 0 ) {
+				node = nodes[ --i ];
+				kept = node.nodeValue.replace( /[\s.,;:!?\u2026\-\u2013\u2014]+$/, '' );
+			}
+			if ( '' === kept ) {
+				return false;
+			}
+			node.nodeValue = kept + ELLIPSIS;
+			dropAfter( node, text );
+			return true;
+		}
+		return true;
+	}
+
+	// Takes out everything after `node` inside `root` (its tags stay closed).
+	function dropAfter( node, root ) {
+		var at = node;
+		while ( at && at !== root ) {
+			while ( at.nextSibling ) {
+				at.parentNode.removeChild( at.nextSibling );
+			}
+			at = at.parentNode;
+		}
+	}
+
+	// Ring, Grid + circle, Grid + square: a photo in the middle; the "+ text"
+	// ones: its image and text there.
 	function hasMiddlePhoto( config ) {
-		return config.style !== 'ring-text';
+		return ! /-text$/.test( config.style );
+	}
+
+	// Grid + square (+ text): a square in the middle, not a circle.
+	function isSquare( config ) {
+		return /^grid-square/.test( config.style );
+	}
+
+	// A square `size` px, its corners rounded `round` px as the cells' (Q curves).
+	function roundedSquare( size, round ) {
+		var r = Math.max( 0, Math.min( round, size / 2 - 0.5 ) );
+		var e = Math.round( size * 100 ) / 100;
+		return [ 'M', r, 0, 'L', e - r, 0, 'Q', e, 0, e, r, 'L', e, e - r, 'Q', e, e, e - r, e, 'L', r, e, 'Q', 0, e, 0, e - r, 'L', 0, r, 'Q', 0, 0, r, 0, 'Z' ].join( ' ' );
 	}
 
 	/*
@@ -343,15 +462,28 @@
 
 	/**
 	 * One grid cell (its box at `x0`, `y0`, `w` × `h`) less the circle of
-	 * radius `cut` round (cx, cy): its shape (an SVG path relative to the
-	 * box), its box, and where its caption goes; null when too little of it
-	 * is left.
+	 * radius `cut` round (cx, cy), or (`square`) the square of half-side
+	 * `cut`: its shape (an SVG path relative to the box), its box, and where
+	 * its caption goes; null when too little of it is left.
 	 */
-	function gridCell( cx, cy, cut, x0, y0, w, h, round ) {
-		// The circle's middle in the cell: its place is the circle's (gridCircle()).
+	function gridCell( cx, cy, cut, x0, y0, w, h, round, square ) {
+		// The middle in the cell: its place is the circle's or square's (gridCircle()).
 		if ( cx > x0 && cx < x0 + w && cy > y0 && cy < y0 + h ) {
 			return null;
 		}
+		var nodes = square ? squareNodes( cx, cy, cut, x0, y0, w, h ) : circleNodes( cx, cy, cut, x0, y0, w, h );
+		if ( ! nodes ) {
+			return null;
+		}
+		return cellShape( nodes, cx, cy, cut, x0, y0, w, h, round );
+	}
+
+	/*
+	 * A cell's outline less the circle, clockwise: the corners outside it and
+	 * where the sides cross it; from a crossing into the circle the outline
+	 * follows the circle (node.arc) to where it comes out. Null if it covers all.
+	 */
+	function circleNodes( cx, cy, cut, x0, y0, w, h ) {
 		var corners = [ { x: x0, y: y0 }, { x: x0 + w, y: y0 }, { x: x0 + w, y: y0 + h }, { x: x0, y: y0 + h } ];
 		var inside = function ( p ) {
 			return Math.hypot( p.x - cx, p.y - cy ) < cut;
@@ -359,10 +491,6 @@
 		if ( corners.every( inside ) ) {
 			return null;
 		}
-
-		// The outline clockwise: the corners outside the circle and where the
-		// sides cross it. From a crossing into the circle the outline follows
-		// the circle (an arc) to where it comes out.
 		var nodes = [];
 		for ( var i = 0; i < 4; i++ ) {
 			var a = corners[ i ];
@@ -390,10 +518,107 @@
 				}
 			}
 		}
-		var n = nodes.length;
-		if ( n < 3 ) {
+		return nodes.length < 3 ? null : nodes;
+	}
+
+	/*
+	 * A cell's outline less the square (half-side `cut` round the middle),
+	 * clockwise, all straight. The middle is not in the cell, so the square
+	 * reaches in from its sides: a notch from one (a U), a corner (an L), or
+	 * all but one side (a shorter box). Null if it covers all.
+	 */
+	var EPS = 0.01;
+	function squareNodes( cx, cy, cut, x0, y0, w, h ) {
+		var x1 = x0 + w;
+		var y1 = y0 + h;
+		var n = { x0: Math.max( x0, cx - cut ), x1: Math.min( x1, cx + cut ), y0: Math.max( y0, cy - cut ), y1: Math.min( y1, cy + cut ) };
+		var corners = [ { x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 } ];
+		if ( n.x1 - n.x0 <= EPS || n.y1 - n.y0 <= EPS ) {
+			return corners.map( function ( p ) {
+				return { p: p, arc: false };
+			} );
+		}
+		var touch = { top: n.y0 <= y0 + EPS, right: n.x1 >= x1 - EPS, bottom: n.y1 >= y1 - EPS, left: n.x0 <= x0 + EPS };
+		if ( touch.top && touch.right && touch.bottom && touch.left ) {
 			return null;
 		}
+		// Each side, clockwise: whether its starting corner is in the square,
+		// which way it runs, the square's span on it and the square's edge inside the cell along it.
+		var sides = [
+			{ touched: touch.top, start: touch.top && touch.left, from: x0, to: x1, lo: n.x0, hi: n.x1, at: function ( v ) {
+				return { x: v, y: y0 };
+			}, inner: function ( v ) {
+				return { x: v, y: n.y1 };
+			} },
+			{ touched: touch.right, start: touch.right && touch.top, from: y0, to: y1, lo: n.y0, hi: n.y1, at: function ( v ) {
+				return { x: x1, y: v };
+			}, inner: function ( v ) {
+				return { x: n.x0, y: v };
+			} },
+			{ touched: touch.bottom, start: touch.bottom && touch.right, from: x1, to: x0, lo: n.x0, hi: n.x1, at: function ( v ) {
+				return { x: v, y: y1 };
+			}, inner: function ( v ) {
+				return { x: v, y: n.y0 };
+			} },
+			{ touched: touch.left, start: touch.left && touch.bottom, from: y1, to: y0, lo: n.y0, hi: n.y1, at: function ( v ) {
+				return { x: x0, y: v };
+			}, inner: function ( v ) {
+				return { x: n.x1, y: v };
+			} }
+		];
+		var points = [];
+		sides.forEach( function ( side, i ) {
+			if ( ! side.start ) {
+				points.push( corners[ i ] );
+			}
+			if ( ! side.touched ) {
+				return;
+			}
+			var forward = side.to > side.from;
+			var enter = forward ? side.lo : side.hi;
+			var leave = forward ? side.hi : side.lo;
+			if ( Math.abs( enter - side.from ) > EPS ) {
+				points.push( side.at( enter ), side.inner( enter ) );
+			}
+			if ( Math.abs( leave - side.to ) > EPS ) {
+				points.push( side.inner( leave ), side.at( leave ) );
+			}
+		} );
+		points = tidyOutline( points );
+		return points.length < 3 ? null : points.map( function ( p ) {
+			return { p: p, arc: false };
+		} );
+	}
+
+	// An outline without repeated points, spikes (out and back) or points on a straight line.
+	function tidyOutline( points ) {
+		var same = function ( a, b ) {
+			return Math.abs( a.x - b.x ) < EPS && Math.abs( a.y - b.y ) < EPS;
+		};
+		var changed = true;
+		while ( changed && points.length > 2 ) {
+			changed = false;
+			for ( var i = 0; i < points.length && points.length > 2; i++ ) {
+				var prev = points[ ( i - 1 + points.length ) % points.length ];
+				var here = points[ i ];
+				var next = points[ ( i + 1 ) % points.length ];
+				var cross = ( here.x - prev.x ) * ( next.y - here.y ) - ( here.y - prev.y ) * ( next.x - here.x );
+				if ( same( here, next ) || same( prev, next ) || Math.abs( cross ) < EPS ) {
+					points.splice( i, 1 );
+					changed = true;
+					break;
+				}
+			}
+		}
+		return points;
+	}
+
+	/*
+	 * A cell's shape from its outline (circleNodes() or squareNodes()): its
+	 * area and caption spot, each corner rounded, as a path in its box.
+	 */
+	function cellShape( nodes, cx, cy, cut, x0, y0, w, h, round ) {
+		var n = nodes.length;
 		// node.arc: the edge from it to the next one follows the circle.
 		nodes.forEach( function ( node ) {
 			node.angle = angleOf( cx, cy, node.p );
@@ -490,19 +715,14 @@
 		// As the Collage's Grid: its photos in rows of Columns, as many rows as
 		// they make; the last one's in the middle of it.
 		var columns = Math.max( 2, Math.min( 6, Math.round( Number( forDevice( config.columns ) ) || 3 ) ) );
-		var count = Math.max( 2, Math.min( pieces.length - 1, Math.round( Number( forDevice( config.cells ) ) || pieces.length - 1 ) ) );
+		// The circle's photo first (Grid + circle); Grid + circle + text has
+		// none there (its image and text instead, centerContent()).
+		var first = hasMiddlePhoto( config ) ? 1 : 0;
+		var count = Math.max( 2, Math.min( pieces.length - first, Math.round( Number( forDevice( config.cells ) ) || pieces.length - first ) ) );
 		var rows = Math.ceil( count / columns );
 		var cellW = ( width - ( columns - 1 ) * gap ) / columns;
-		// Height "Auto": square photos, the stage as tall as they make it; else
-		// its Height (art.css), the photos stretched to it.
-		var height;
-		if ( forDevice( config.square ) ) {
-			height = rows * cellW + ( rows - 1 ) * gap;
-			stage.style.height = height + 'px';
-		} else {
-			stage.style.height = '';
-			height = stage.clientHeight;
-		}
+		// Its Height (art.css; % and Auto: fit()), the photos stretched to it.
+		var height = stage.clientHeight;
 		if ( ! height ) {
 			return;
 		}
@@ -520,34 +740,49 @@
 			cells.push( { x: shift + ( i % columns ) * ( cellW + gap ), y: row * ( cellH + gap ) } );
 		}
 
-		// The circle: its size (Middle circle), at least covering the cell its
-		// middle is in (that cell is the circle's place, gridCell()), within
-		// the grid's smaller side.
+		// The circle (Grid + square: the square, `middle` its half-side): its
+		// size (Middle circle), at least covering the cell its middle is in
+		// (that cell is its place, gridCell()), within the grid's smaller side.
+		var square = isSquare( config );
 		var middle = outer * ( Number( forDevice( config.center ) ) || 46 ) / 100;
 		cells.forEach( function ( cell ) {
 			if ( cx > cell.x && cx < cell.x + cellW && cy > cell.y && cy < cell.y + cellH ) {
 				// Its farthest corner.
-				var far = Math.hypot( Math.max( cx - cell.x, cell.x + cellW - cx ), Math.max( cy - cell.y, cell.y + cellH - cy ) );
+				var fx = Math.max( cx - cell.x, cell.x + cellW - cx );
+				var fy = Math.max( cy - cell.y, cell.y + cellH - cy );
+				var far = square ? Math.max( fx, fy ) : Math.hypot( fx, fy );
 				middle = Math.max( middle, far - gap + 1 );
 			}
 		} );
 		middle = Math.max( 4, Math.min( middle, outer - gap - 4 ) );
 		var cut = middle + gap;
 
-		// For the preview (preview-art.js): where the middle circle's edge is.
-		block.wpSwiperArtRing = { cx: cx, cy: cy, outer: outer, middle: middle, gap: gap };
+		// For the preview (preview-art.js): where the middle circle's (or square's) edge is.
+		block.wpSwiperArtRing = { cx: cx, cy: cy, outer: outer, middle: middle, gap: gap, square: square };
 
-		// The circle.
-		pieces[ 0 ].hidden = false;
-		place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
-		pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
-		captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 * 0.85 } );
-		outline( block, pieces[ 0 ], 'M 0 ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 ' + ( middle * 2 ) + ' ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 0 ' + middle + ' Z' );
+		// The circle or square: its photo, or its image and text.
+		if ( first ) {
+			pieces[ 0 ].hidden = false;
+			place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
+			if ( square ) {
+				var box = roundedSquare( middle * 2, round );
+				pieces[ 0 ].classList.remove( 'wp-swiper-art__piece--circle' );
+				pieces[ 0 ].style.clipPath = 'path("' + box + '")';
+				captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 } );
+				outline( block, pieces[ 0 ], box );
+			} else {
+				pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
+			pieces[ 0 ].style.clipPath = '';
+				captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 * 0.85 } );
+				outline( block, pieces[ 0 ], 'M 0 ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 ' + ( middle * 2 ) + ' ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 0 ' + middle + ' Z' );
+			}
+		}
+		centerContent( block, stage, { cx: cx, cy: cy, middle: middle, square: square, round: round } );
 
 		// The cells in turn, those left in the pieces after it.
-		var used = 1;
+		var used = first;
 		cells.forEach( function ( cell ) {
-			var shape = gridCell( cx, cy, cut, cell.x, cell.y, cellW, cellH, round );
+			var shape = gridCell( cx, cy, cut, cell.x, cell.y, cellW, cellH, round, square );
 			if ( ! shape || used >= pieces.length ) {
 				return;
 			}
@@ -689,7 +924,7 @@
 	// No motion wanted: no wave either.
 	var STILL = !! ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches );
 
-	var STYLES = { ring: ring, 'ring-text': ring, 'grid-circle': gridCircle, shape: shape };
+	var STYLES = { ring: ring, 'ring-text': ring, 'grid-circle': gridCircle, 'grid-circle-text': gridCircle, 'grid-square': gridCircle, 'grid-square-text': gridCircle, shape: shape };
 
 	/**
 	 * The slides' descriptions (render.php descriptions()): the block right
@@ -1151,28 +1386,44 @@
 			lightbox( block, stage, pieces, photos, config.lightbox );
 		}
 		/*
-		 * Size "Auto" on this device: the stage as large as the column's free
-		 * height allows (and no wider than the column, art.css). As a slider's
-		 * Height "Auto" (frontend.js fillHeight()): with the stage collapsed the
+		 * Height % or "Auto" on this device (px and vh: art.css). Auto: as a
+		 * slider's (frontend.js fillHeight()): with the stage collapsed the
 		 * column keeps the height its row gives it; the stage is made that tall,
 		 * and whatever the column grew beyond it (its padding, the descriptions,
-		 * other content) is taken back off. Too little free height (a column of
-		 * its own, stacked columns on phones): the column's width.
+		 * other content) is taken back off. %: the outer block is that share of
+		 * its parent (art.css), the stage as tall as the block. A ring or shape
+		 * gets that height by its width (its proportions, no wider than the
+		 * column); a grid by its own. Too little height (a column of its own,
+		 * a parent with none): a ring or shape as wide as the column, a grid
+		 * GRID_FALLBACK px.
 		 */
 		var column = block.closest( '.wpb_column, .vc_column_container' ) || block.parentElement;
-		var autoSize = config.auto && Object.keys( config.auto ).some( function ( name ) {
-			return config.auto[ name ];
+		var fitted = config.height && Object.keys( config.height ).some( function ( name ) {
+			return '%' === config.height[ name ] || 'auto' === config.height[ name ];
 		} );
 		function fit() {
-			if ( ! forDevice( config.auto ) || ! column ) {
-				stage.style.width = '';
+			var unit = forDevice( config.height );
+			var wide = !! config.wide;
+			var side = wide ? 'height' : 'width';
+			if ( ( 'auto' !== unit && '%' !== unit ) || ! column ) {
+				stage.style[ side ] = '';
 				return;
 			}
-			stage.style.width = '0px';
-			var collapsed = column.getBoundingClientRect().height;
-			stage.style.width = collapsed + 'px';
-			var free = Math.floor( collapsed - ( column.getBoundingClientRect().height - collapsed ) );
-			// As tall as the free height: square, or (SVG shape) its proportions.
+			var free;
+			if ( '%' === unit ) {
+				stage.style[ side ] = '';
+				free = Math.floor( block.clientHeight );
+			} else {
+				stage.style[ side ] = '0px';
+				var collapsed = column.getBoundingClientRect().height;
+				stage.style[ side ] = collapsed + 'px';
+				free = Math.floor( collapsed - ( column.getBoundingClientRect().height - collapsed ) );
+			}
+			if ( wide ) {
+				stage.style.height = ( free >= FIT_MIN ? free : GRID_FALLBACK ) + 'px';
+				return;
+			}
+			// As tall as that: square, or (SVG shape) its proportions.
 			var ratio = Number( config.ratio ) || 1;
 			stage.style.width = free >= FIT_MIN ? 'min(100%, ' + Math.floor( free * ratio ) + 'px)' : '';
 		}
@@ -1189,7 +1440,7 @@
 				config.ratio = own.ratio;
 			}
 			fill( false );
-			if ( autoSize ) {
+			if ( fitted ) {
 				fit();
 			}
 			// Again at another size, or on another device (its own values).
@@ -1227,7 +1478,11 @@
 			// "Auto": the neighbour columns' content sets the row's height (their
 			// images load, their text wraps). Their content, not the row: once
 			// this is the tallest in the row, the row would not shrink with them.
-			if ( autoSize && column && column.parentElement ) {
+			// %: the block's own height (its parent's changes it).
+			if ( fitted ) {
+				new ResizeObserver( redraw ).observe( block );
+			}
+			if ( fitted && column && column.parentElement ) {
 				var watch = new ResizeObserver( redraw );
 				[].forEach.call( column.parentElement.children, function ( sibling ) {
 					if ( sibling !== column ) {
@@ -1237,7 +1492,7 @@
 			}
 		}
 		window.addEventListener( 'resize', redraw );
-		if ( autoSize ) {
+		if ( fitted ) {
 			window.addEventListener( 'load', redraw );
 		}
 

@@ -81,4 +81,18 @@ return array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-circle', 'lightbox' => '1' ),
 		'photos'   => 10,
 	),
+	// No photo in the circle: an image and text there, cut with an ellipsis where it does not fit.
+	'art-grid-circle-text' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-circle-text', 'art_center' => '1', 'art_center_text' => '<h3>Hello</h3><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>', 'lightbox' => '1' ),
+		'photos'   => 10,
+	),
+	// A square over the grid's middle: the cells cut by it (an L at a corner, a notch at a side).
+	'art-grid-square' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-square', 'lightbox' => '1' ),
+		'photos'   => 10,
+	),
+	'art-grid-square-text' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-square-text', 'art_center' => '1', 'art_center_text' => '<h3>Hello</h3><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', 'lightbox' => '1' ),
+		'photos'   => 10,
+	),
 );
