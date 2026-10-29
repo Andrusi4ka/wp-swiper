@@ -231,4 +231,44 @@ class Test_WP_Swiper_Migrations extends WP_Swiper_TestCase {
 		$this->assertTrue( $layouts['thumbs']['thumbs_rounded'] );
 		$this->assertFalse( $layouts['thumbs']['thumbs_border'] );
 	}
+
+	public function test_version_7_the_phone_inherits_what_had_an_old_phone_default() {
+		// No phone defaults of their own any more: empty, inheriting.
+		foreach ( array_keys( WP_Swiper_Settings::OLD_MOBILE_DEFAULTS ) as $key ) {
+			$this->assertArrayNotHasKey( 'device_defaults', WP_Swiper_Settings::fields()[ $key ], $key );
+			$this->assertSame( '', WP_Swiper_Settings::defaults()[ $key . '_mobile' ], $key );
+		}
+		// Saved at the old default: inherits now (Style, numbers, the lightbox text width).
+		$settings = $this->saved(
+			array(
+				'_version'                          => 6,
+				'effect'                            => 'collage',
+				'collage_layout'                    => 'grid',
+				'collage_layout_mobile'             => 'masonry',
+				'collage_count'                     => 8,
+				'collage_count_mobile'              => 4,
+				'collage_columns_mobile'            => 2,
+				'collage_row_height_mobile'         => 140,
+				'collage_gap_mobile'                => 6,
+				'active_width_mobile'               => 70,
+				'thumbs_per_view_mobile'            => 4,
+				'description_lightbox_width_mobile' => 100,
+				'layouts'                           => array( 'thumbs' => array( 'thumbs_per_view_mobile' => 4, 'collage_layout_mobile' => 'masonry' ) ),
+			)
+		);
+		foreach ( array_keys( WP_Swiper_Settings::OLD_MOBILE_DEFAULTS ) as $key ) {
+			$this->assertSame( '', $settings[ $key . '_mobile' ], $key );
+		}
+		$this->assertSame( 'grid', WP_Swiper_Settings::responsive( $settings, 'collage_layout' )['mobile'] );
+		$this->assertSame( 8, WP_Swiper_Settings::responsive( $settings, 'collage_count' )['mobile'] );
+		$this->assertSame( '', $settings['layouts']['thumbs']['thumbs_per_view_mobile'] );
+		$this->assertSame( '', $settings['layouts']['thumbs']['collage_layout_mobile'] );
+		// A phone value of its own (not the old default) stays.
+		$own = $this->saved( array( '_version' => 6, 'collage_layout_mobile' => 'justified', 'collage_count_mobile' => 3, 'thumbs_per_view_mobile' => '' ) );
+		$this->assertSame( 'justified', $own['collage_layout_mobile'] );
+		$this->assertSame( 3, $own['collage_count_mobile'] );
+		// Saved since (version 7): as saved, the old default too (chosen then).
+		$this->assertSame( 'masonry', $this->saved( array( '_version' => 7, 'collage_layout_mobile' => 'masonry' ) )['collage_layout_mobile'] );
+		$this->assertSame( 7, WP_Swiper_Settings::sanitize( array() )['_version'] );
+	}
 }

@@ -1254,13 +1254,13 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		);
 		$config = $this->config( $this->render( $values, $this->described_slides() ) );
 
-		// Tablet inherits the desktop's; mobile has its own default (the whole width).
+		// Tablet and mobile inherit the desktop's (the phone had a default of its own until version 7).
 		$this->assertSame(
 			array(
 				'width' => array(
 					'desktop' => 60,
 					'tablet'  => 60,
-					'mobile'  => 100,
+					'mobile'  => 60,
 				),
 				'max'   => 700,
 				'align' => 'center',

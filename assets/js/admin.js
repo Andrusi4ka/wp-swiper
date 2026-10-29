@@ -107,6 +107,8 @@
 			$( '.wp-swiper-preview__update' ).addClass( 'is-stale' );
 			// Nor the Video page its list of posters.
 			syncPosters();
+			// The preview's Developer mode (none without slides).
+			$list.trigger( 'wpswiperslides' );
 		}
 
 		function escapeAttr( value ) {
@@ -2496,16 +2498,44 @@
 			 * frame in its screen with its rounded corners; the drawing over it
 			 * (a camera or bar over the page, as on a real one), letting the
 			 * clicks through. Drawing and frame scale as one.
+			 *
+			 * Turned sideways (Tablet, Mobile; the button by the devices): the
+			 * frame's sides swapped, the drawing a quarter turn clockwise round
+			 * it. The slider then takes the settings of the device its width
+			 * falls in, as on the site (the note under the bar says which). Kept
+			 * per device for the next visit (this browser only).
 			 */
+			var TURN_KEY = 'wpSwiperTurned';
+			var turned = {};
+			try {
+				turned = JSON.parse( window.localStorage.getItem( TURN_KEY ) ) || {};
+			} catch ( e ) {}
+			var $turn = $preview.find( '.wp-swiper-preview__rotate' );
+			var canTurn = function () {
+				return currentDevice !== 'desktop' && !! drawings[ currentDevice ];
+			};
+			var isTurned = function () {
+				return canTurn() && !! turned[ currentDevice ];
+			};
+
 			var fitPreview = function () {
-				var size = sizes[ currentDevice ];
+				var turn = isTurned();
+				var size = turn ? [ sizes[ currentDevice ][ 1 ], sizes[ currentDevice ][ 0 ] ] : sizes[ currentDevice ];
 				var device = drawings[ currentDevice ];
 				var image = $drawings.filter( '[data-device="' + currentDevice + '"]' )[ 0 ];
 				var inDevice = !! ( device && image );
-				// px of the frame per unit of the drawing; the whole device's size, and the screen's place in it.
-				var unit = inDevice ? size[ 0 ] / device.screen[ 2 ] : 1;
-				var outer = inDevice ? [ device.width * unit, device.height * unit ] : size;
-				var offset = inDevice ? [ device.screen[ 0 ] * unit, device.screen[ 1 ] * unit ] : [ 0, 0 ];
+				// px of the frame per unit of the drawing (its screen as wide as the
+				// upright frame); the whole device's size, and the screen's place in it.
+				var unit = inDevice ? sizes[ currentDevice ][ 0 ] / device.screen[ 2 ] : 1;
+				var upright = inDevice ? [ device.width * unit, device.height * unit ] : size;
+				var outer = turn ? [ upright[ 1 ], upright[ 0 ] ] : upright;
+				var offset = [ 0, 0 ];
+				if ( inDevice ) {
+					// A quarter turn clockwise takes a point ( x, y ) of the drawing to ( height - y, x ).
+					offset = turn ?
+						[ ( device.height - device.screen[ 1 ] - device.screen[ 3 ] ) * unit, device.screen[ 0 ] * unit ] :
+						[ device.screen[ 0 ] * unit, device.screen[ 1 ] * unit ];
+				}
 				var width = $stage.width();
 				// The whole frame in view: no taller than the window leaves room for.
 				var height = Math.max( 300, window.innerHeight - 180 );
@@ -2523,12 +2553,69 @@
 					this.hidden = this !== image || ! inDevice;
 				} );
 				if ( inDevice ) {
-					image.style.left = left + 'px';
-					image.style.width = ( outer[ 0 ] * scale ) + 'px';
-					image.style.height = ( outer[ 1 ] * scale ) + 'px';
+					// Turned: drawn upright, then turned round its top left corner,
+					// which goes to the right of its box.
+					image.style.left = ( left + ( turn ? outer[ 0 ] * scale : 0 ) ) + 'px';
+					image.style.width = ( upright[ 0 ] * scale ) + 'px';
+					image.style.height = ( upright[ 1 ] * scale ) + 'px';
+					image.style.transform = turn ? 'rotate(90deg)' : '';
 				}
 				$stage.css( 'height', Math.ceil( outer[ 1 ] * scale ) + 'px' );
+				// The button (Tablet, Mobile) and the note of the device turned.
+				$turn.prop( 'disabled', ! canTurn() ).attr( 'aria-pressed', turn ? 'true' : 'false' );
+				$preview.find( '.wp-swiper-preview__turned' ).each( function () {
+					this.hidden = ! turn || $( this ).data( 'device' ) !== currentDevice;
+				} );
 			};
+
+			/*
+			 * The turn itself, seen: the device as it was (its box on screen)
+			 * turned a quarter round into its new place and size (the stage
+			 * drawn turned back, then let go). Not with reduced motion.
+			 */
+			var shownBox = function () {
+				var image = $drawings.filter( function () {
+					return ! this.hidden;
+				} )[ 0 ];
+				return ( image || previewFrame ).getBoundingClientRect();
+			};
+			$turn.on( 'click', function () {
+				if ( ! canTurn() ) {
+					return;
+				}
+				var from = shownBox();
+				turned[ currentDevice ] = ! turned[ currentDevice ];
+				try {
+					window.localStorage.setItem( TURN_KEY, JSON.stringify( turned ) );
+				} catch ( e ) {}
+				var stage = $stage[ 0 ];
+				stage.style.transition = 'none';
+				stage.style.transform = '';
+				fitPreview();
+				if ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches ) {
+					return;
+				}
+				var to = shownBox();
+				var origin = stage.getBoundingClientRect();
+				// Round the new box's middle: back the other way, its sides as they were, where it was.
+				var middle = [ to.left + to.width / 2 - origin.left, to.top + to.height / 2 - origin.top ];
+				var shift = [ from.left + from.width / 2 - ( to.left + to.width / 2 ), from.top + from.height / 2 - ( to.top + to.height / 2 ) ];
+				var size = to.width ? from.height / to.width : 1;
+				$stage.addClass( 'is-turning' );
+				stage.style.transformOrigin = middle[ 0 ] + 'px ' + middle[ 1 ] + 'px';
+				stage.style.transform = 'translate(' + shift[ 0 ] + 'px, ' + shift[ 1 ] + 'px) rotate(' + ( turned[ currentDevice ] ? -90 : 90 ) + 'deg) scale(' + size + ')';
+				// Drawn so, then let go.
+				void stage.offsetWidth;
+				stage.style.transition = 'transform 0.5s ease';
+				stage.style.transform = '';
+				var done = function () {
+					$stage.removeClass( 'is-turning' );
+					stage.style.transition = '';
+					stage.style.transformOrigin = '';
+				};
+				$stage.one( 'transitionend', done );
+				setTimeout( done, 700 );
+			} );
 
 			var updatePreview = function () {
 				prepareForm();
@@ -2565,19 +2652,15 @@
 			try {
 				devOn = window.localStorage.getItem( DEV_KEY ) === '1';
 			} catch ( e ) {}
-			// It draws a slider's slides only: nothing to show for the effects
-			// that are no slider (Collage, Art). Greyed there, with a note why;
-			// the choice is kept for the others.
-			var devTitle = $dev.attr( 'title' );
+			// It draws a slider's slides only: hidden where there are none to
+			// draw (Collage, Art; a slider with no slides yet), its place kept (the
+			// bar stays as it is); the choice is kept for when it is back.
 			var devAvailable = function () {
-				return [ 'collage', 'art' ].indexOf( $( '#wp-swiper-effect' ).val() ) === -1;
+				return [ 'collage', 'art' ].indexOf( $( '#wp-swiper-effect' ).val() ) === -1 && $list.children().length > 0;
 			};
 			var applyDev = function () {
 				var available = devAvailable();
-				$dev.toggleClass( 'is-unavailable', ! available )
-					.attr( 'aria-disabled', available ? null : 'true' )
-					.attr( 'title', available ? devTitle : ( i18n.devUnavailable || devTitle ) )
-					.attr( 'aria-pressed', devOn && available ? 'true' : 'false' );
+				$dev.prop( 'hidden', ! available ).attr( 'aria-pressed', devOn && available ? 'true' : 'false' );
 				var win = previewFrame.contentWindow;
 				try {
 					if ( win && win.wpSwiperDev ) {
@@ -2586,6 +2669,8 @@
 				} catch ( e ) {}
 			};
 			$( '#wp-swiper-effect' ).on( 'change', applyDev );
+			// A slide added or removed (toggleEmpty()).
+			$list.on( 'wpswiperslides', applyDev );
 			$dev.on( 'click', function () {
 				if ( ! devAvailable() ) {
 					return;
@@ -3018,6 +3103,8 @@
 					} catch ( e ) {}
 				}
 				startSettingsEditors();
+				// What follows the effect without its "change" event (put back quietly).
+				applyDev();
 				baseline = snapshot();
 				restoring = false;
 

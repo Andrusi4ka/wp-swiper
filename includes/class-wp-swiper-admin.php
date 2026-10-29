@@ -90,8 +90,6 @@ class WP_Swiper_Admin {
 					// A slider saved with the old Description Alignment (center, right):
 					// admin.js moves it into each description's paragraphs.
 					'legacyDescriptionAlign' => get_post() ? WP_Swiper_Settings::legacy_description_align( WP_Swiper_Settings::get( get_post()->ID ) ) : '',
-					// Developer mode with an effect that is no slider (Collage, Art).
-					'devUnavailable' => __( 'Not available for this effect: it shows the boxes of a slider\'s slides, and this effect has none.', 'wp-swiper' ),
 					// The slide text editors' "Text color" palette (TinyMCE's forecolor_map);
 					// the color fields' palette too.
 					'textColors'  => WP_Swiper_Palette::tinymce_map(),
@@ -505,7 +503,7 @@ class WP_Swiper_Admin {
 	 * @param string $fallback A dashicon without the file.
 	 * @return string
 	 */
-	private static function svg_icon( $file, $class, $fallback ) {
+	public static function svg_icon( $file, $class, $fallback ) {
 		static $icons = array();
 		if ( ! isset( $icons[ $file ] ) ) {
 			$path = WP_SWIPER_DIR . 'assets/images/' . $file;

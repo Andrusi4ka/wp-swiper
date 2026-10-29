@@ -73,7 +73,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		WP_Swiper_Admin::save( $id );
 		$saved = get_post_meta( $id, WP_Swiper_Settings::META_SETTINGS, true );
 
-		$this->assertSame( 6, $saved['_version'] );
+		$this->assertSame( 7, $saved['_version'] );
 		$this->assertSame( 'fade', $saved['effect'] );
 		$this->assertSame( 700, $saved['height'] );
 		$this->assertSame( 'ab', $saved['css_class'] );
@@ -633,6 +633,42 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'WP_Swiper_Settings::is_background( $settings ) ? \' wp-swiper-preview-page--background\'', $source );
 		$this->assertStringNotContainsString( 'aspect-ratio', $source );
 		$this->assertStringNotContainsString( 'wp-swiper-preview-block__content', $source );
+	}
+
+	public function test_preview_turns_tablet_and_mobile_sideways() {
+		// The device a screen this wide takes, as the plugin's breakpoints.
+		$this->assertSame( 'mobile', WP_Swiper_Preview::device_at( 390 ) );
+		$this->assertSame( 'mobile', WP_Swiper_Preview::device_at( 767 ) );
+		$this->assertSame( 'tablet', WP_Swiper_Preview::device_at( 768 ) );
+		$this->assertSame( 'tablet', WP_Swiper_Preview::device_at( 1024 ) );
+		$this->assertSame( 'desktop', WP_Swiper_Preview::device_at( 1025 ) );
+		// Turned: the phone (844px wide) a tablet, the tablet (1101px) a desktop.
+		$notes = WP_Swiper_Preview::turned_notes();
+		$this->assertSame( array( 'tablet', 'mobile' ), array_keys( $notes ) );
+		$this->assertSame( 'Turned sideways the screen is 844px wide: the slider takes the Tablet settings, as it does on the site.', $notes['mobile'] );
+		$this->assertSame( 'Turned sideways the screen is 1101px wide: the slider takes the Desktop settings, as it does on the site.', $notes['tablet'] );
+
+		$this->as_role( 'editor' );
+		ob_start();
+		WP_Swiper_Preview::render_panel( get_post( $this->slider() ) );
+		$html = ob_get_clean();
+		// The button between the title and Developer mode, always there (the bar
+		// does not move), greyed until admin.js sees Tablet or Mobile; its icon inline.
+		$button = strpos( $html, '<button type="button" class="button wp-swiper-preview__rotate" aria-pressed="false" title="Turn the tablet or phone sideways" aria-label="Turn the tablet or phone sideways" disabled>' );
+		$this->assertNotFalse( $button );
+		$this->assertGreaterThan( strpos( $html, 'wp-swiper-preview__title' ), $button );
+		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__dev"' ), $button );
+		$this->assertSame( 1, substr_count( $html, 'wp-swiper-preview__rotate"' ) );
+		$this->assertSame( 1, preg_match( '#<svg class="wp-swiper-preview__rotate-icon" aria-hidden="true" focusable="false"[^>]*viewBox="0 0 417.11 311.33">#', $html ) );
+		// The notes, hidden at first, one per device.
+		foreach ( array( 'tablet', 'mobile' ) as $device ) {
+			$this->assertSame( 1, substr_count( $html, '<p class="description wp-swiper-preview__hint wp-swiper-preview__turned" data-device="' . $device . '" hidden>' ), $device );
+		}
+		$this->assertStringContainsString( esc_html( $notes['mobile'] ), $html );
+		// The icon: shapes in its button's color only (nothing that runs or loads).
+		$svg = file_get_contents( WP_SWIPER_DIR . 'assets/images/rotate.svg' );
+		$this->assertDoesNotMatchRegularExpression( '~<script|<foreignObject|<style|\son\w+=|href=|#333~i', $svg );
+		$this->assertStringContainsString( 'currentColor', $svg );
 	}
 
 	public function test_preview_without_slides_shows_the_no_image_picture_in_the_middle() {

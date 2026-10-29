@@ -1676,6 +1676,16 @@ class WP_Swiper_Settings {
 			}
 		}
 
+		// Version 7: the phone inherits these from the larger screen (it had a
+		// value of its own by default). One saved still at that old default
+		// inherits now, in the other effects' Layout values too.
+		if ( $saved && ( empty( $saved['_version'] ) || $saved['_version'] < 7 ) ) {
+			$saved = self::inherit_old_mobile_defaults( $saved );
+			if ( ! empty( $saved['layouts'] ) && is_array( $saved['layouts'] ) ) {
+				$saved['layouts'] = array_map( array( __CLASS__, 'inherit_old_mobile_defaults' ), array_filter( $saved['layouts'], 'is_array' ) );
+			}
+		}
+
 		// Font size of the whole slider (until 2.8 just a size, then "Default" or
 		// "Custom"; now each slide's own): a slider saved with a size of its own
 		// (not 16px, or one on tablet or mobile) keeps it as Custom, read by
@@ -1734,6 +1744,37 @@ class WP_Swiper_Settings {
 		}
 
 		return $settings;
+	}
+
+	/**
+	 * The phone's own defaults until version 7 (the field's mobile value then
+	 * started as this, not inheriting): field => value.
+	 */
+	const OLD_MOBILE_DEFAULTS = array(
+		'description_lightbox_width' => 100,
+		'collage_layout'             => 'masonry',
+		'collage_count'              => 4,
+		'collage_columns'            => 2,
+		'collage_row_height'         => 140,
+		'collage_gap'                => 6,
+		'active_width'               => 70,
+		'thumbs_per_view'            => 4,
+	);
+
+	/**
+	 * A phone value still at its old default (OLD_MOBILE_DEFAULTS) made empty:
+	 * the phone then inherits the larger screen's.
+	 *
+	 * @param array $values Saved settings, or an effect's Layout values.
+	 * @return array
+	 */
+	public static function inherit_old_mobile_defaults( $values ) {
+		foreach ( self::OLD_MOBILE_DEFAULTS as $key => $old ) {
+			if ( isset( $values[ $key . '_mobile' ] ) && (string) $old === (string) $values[ $key . '_mobile' ] ) {
+				$values[ $key . '_mobile' ] = '';
+			}
+		}
+		return $values;
 	}
 
 	/**
@@ -2067,7 +2108,7 @@ class WP_Swiper_Settings {
 	 * @return array
 	 */
 	public static function sanitize( $input ) {
-		$clean = array( '_version' => 6 ) + self::sanitize_fields( $input );
+		$clean = array( '_version' => 7 ) + self::sanitize_fields( $input );
 
 		// Layout values of every effect (see layouts()), sent by the editor as
 		// JSON; the chosen effect's are the ones posted as fields.

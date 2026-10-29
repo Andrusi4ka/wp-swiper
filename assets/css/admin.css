@@ -577,7 +577,9 @@
 	font-weight: 600;
 }
 
-/* Developer mode: right of the title, the rest of the bar on the right. */
+/* Developer mode: right of the turn button, the rest of the bar on the right.
+   Hidden where it has nothing to draw (admin.js), its place kept, so the bar
+   (and where it wraps) stays as it is. */
 #wp-swiper-settings .wp-swiper-preview__dev {
 	display: inline-flex;
 	align-items: center;
@@ -586,6 +588,10 @@
 	margin-right: auto;
 	padding: 0 12px;
 	line-height: 1;
+}
+
+#wp-swiper-settings .wp-swiper-preview__dev[hidden] {
+	visibility: hidden;
 }
 
 #wp-swiper-settings .wp-swiper-preview__dev .dashicons {
@@ -601,18 +607,6 @@
 	border-color: var(--wp-swiper-accent, #2271b1);
 	background: var(--wp-swiper-accent, #2271b1);
 	color: #fff;
-}
-
-/* Not for this effect (Collage, Art): greyed like a disabled button, its
-   title still says why (aria-disabled, not disabled, so it shows). */
-#wp-swiper-settings .wp-swiper-preview__dev.is-unavailable,
-#wp-swiper-settings .wp-swiper-preview__dev.is-unavailable:hover,
-#wp-swiper-settings .wp-swiper-preview__dev.is-unavailable:focus {
-	border-color: #dcdcde;
-	background: #f6f7f7;
-	color: #a7aaad;
-	box-shadow: none;
-	cursor: not-allowed;
 }
 
 /* Undo / redo: the fields whose values went back or forth, lit for a moment. */
@@ -657,6 +651,31 @@
 
 .wp-swiper-preview__devices {
 	background: #fff;
+}
+
+/* Turn the device: an icon button right of the title, as tall as the bar's
+   buttons; greyed for Desktop (WordPress's disabled button), pressed while
+   the tablet or phone is turned. */
+#wp-swiper-settings .wp-swiper-preview__rotate {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 32px;
+	min-height: 32px;
+	padding: 0 6px;
+	line-height: 1;
+}
+
+.wp-swiper-preview__rotate-icon {
+	display: block;
+	width: 22px;
+	height: auto;
+}
+
+#wp-swiper-settings .wp-swiper-preview__rotate[aria-pressed="true"] {
+	border-color: var(--wp-swiper-accent, #2271b1);
+	background: var(--wp-swiper-accent, #2271b1);
+	color: #fff;
 }
 
 .wp-swiper-preview__devices .wp-swiper-segmented__btn {
@@ -715,6 +734,12 @@
 	overflow: hidden;
 }
 
+/* While the device turns (admin.js): all of it seen, past the stage too. */
+.wp-swiper-preview__stage.is-turning {
+	z-index: 2;
+	overflow: visible;
+}
+
 /* Drawn at the device's size, scaled down to the column (admin.js). */
 .wp-swiper-preview__frame {
 	position: absolute;
@@ -740,6 +765,8 @@
 	max-width: none;
 	pointer-events: none;
 	user-select: none;
+	/* Turned sideways round this corner (admin.js). */
+	transform-origin: 0 0;
 }
 
 .wp-swiper-preview__device[hidden] {
@@ -1396,7 +1423,7 @@ body.wp-swiper-modal-open {
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	background: var(--wp-admin-theme-color, #2271b1);
+	background: #00a32a;
 }
 
 .wp-swiper-modal__tab.has-value .wp-swiper-modal__tab-dot {

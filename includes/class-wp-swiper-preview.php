@@ -60,6 +60,46 @@ class WP_Swiper_Preview {
 	);
 
 	/**
+	 * The device whose settings a screen this wide takes, as the plugin's
+	 * breakpoints (frontend.css, slider.js, collage.js, art.js): below 768px
+	 * Mobile, up to 1024px Tablet, wider Desktop.
+	 *
+	 * @param int $width Screen width (px).
+	 * @return string desktop | tablet | mobile
+	 */
+	public static function device_at( $width ) {
+		if ( $width <= 767 ) {
+			return 'mobile';
+		}
+		return $width <= 1024 ? 'tablet' : 'desktop';
+	}
+
+	/**
+	 * Tablet and Mobile turned sideways (the preview's turn button): what the
+	 * note under the bar says, where the screen then takes another device's
+	 * settings (its width the portrait height: a phone 844px wide is a tablet).
+	 *
+	 * @return array device => note text, for the devices that change.
+	 */
+	public static function turned_notes() {
+		$labels = WP_Swiper_Admin::devices();
+		$notes  = array();
+		foreach ( array( 'tablet', 'mobile' ) as $device ) {
+			$width = self::SIZES[ $device ][1];
+			$takes = self::device_at( $width );
+			if ( $takes !== $device ) {
+				$notes[ $device ] = sprintf(
+					/* translators: 1: screen width in px, 2: a device's name (Tablet, Desktop). */
+					__( 'Turned sideways the screen is %1$dpx wide: the slider takes the %2$s settings, as it does on the site.', 'wp-swiper' ),
+					$width,
+					$labels[ $takes ][0]
+				);
+			}
+		}
+		return $notes;
+	}
+
+	/**
 	 * DEVICES for admin.js: each one's size, screen and radius (no file).
 	 *
 	 * @return array device => [ 'width', 'height', 'screen', 'radius' ].
@@ -94,6 +134,10 @@ class WP_Swiper_Preview {
 				data-devices="<?php echo esc_attr( wp_json_encode( self::device_frames() ) ); ?>">
 				<div class="wp-swiper-preview__bar">
 					<span class="wp-swiper-preview__title"><?php esc_html_e( 'Preview', 'wp-swiper' ); ?></span>
+					<?php // Turn the device sideways and back: always here (the bar stays as it is), greyed for Desktop (admin.js). ?>
+					<button type="button" class="button wp-swiper-preview__rotate" aria-pressed="false" title="<?php esc_attr_e( 'Turn the tablet or phone sideways', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Turn the tablet or phone sideways', 'wp-swiper' ); ?>" disabled>
+						<?php echo WP_Swiper_Admin::svg_icon( 'rotate.svg', 'wp-swiper-preview__rotate-icon', 'dashicons-image-rotate' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
+					</button>
 					<?php // Developer mode: the slides', images' and empty spaces' boxes over the preview (assets/js/preview-dev.js). ?>
 					<button type="button" class="button wp-swiper-preview__dev" aria-pressed="false" title="<?php esc_attr_e( 'Show the boxes of the slides and images and the empty space around them, with their sizes', 'wp-swiper' ); ?>">
 						<span class="dashicons dashicons-editor-code" aria-hidden="true"></span>
@@ -115,6 +159,13 @@ class WP_Swiper_Preview {
 						<?php esc_html_e( 'Update', 'wp-swiper' ); ?>
 					</button>
 				</div>
+				<?php // A device turned sideways whose screen then takes another device's settings (admin.js shows it). ?>
+				<?php foreach ( self::turned_notes() as $device => $note ) : ?>
+					<p class="description wp-swiper-preview__hint wp-swiper-preview__turned" data-device="<?php echo esc_attr( $device ); ?>" hidden>
+						<span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
+						<?php echo esc_html( $note ); ?>
+					</p>
+				<?php endforeach; ?>
 				<?php // Collage only (admin.js): its photos swap places by dragging here (preview-collage.js). ?>
 				<p class="description wp-swiper-preview__hint" data-effect="collage" hidden>
 					<span class="dashicons dashicons-move" aria-hidden="true"></span>

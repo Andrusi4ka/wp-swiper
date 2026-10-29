@@ -104,7 +104,7 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( 1, $clean['collage_seed'] );
 		$this->assertSame( 0, $clean['lightbox_radius'] );
 		$this->assertSame( 120, $clean['navigation_size'] );
-		$this->assertSame( 6, $clean['_version'] );
+		$this->assertSame( 7, $clean['_version'] );
 	}
 
 	public function test_collage_photos_on_screen_may_be_one() {
