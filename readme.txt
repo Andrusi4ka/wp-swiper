@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.0.0
+Stable tag: 3.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,20 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.1.0 =
+* Art: a new Style, Grid shapes — a grid of Columns x Rows whose cells you join into shapes in the preview: drag across cells to make one shape, click a shape for its corners, split it into its cells or empty them. Outward corners are rounded, inward ones too, so the gap between the shapes stays even, and a shape can go round a hole. Each corner can have a radius of its own (click its dot). The shapes are drawn at the size of the page, so the grid stretches to any column and Height. Its windows change as an SVG shape's do, one photo through all of them included.
+* Art: three more grid Styles — Grid + circle + text, Grid + square and Grid + square + text — and the Content in the middle and Opening settings in blocks of their own. One Height for every Style, as a slider's (px, vh, %, Auto).
+* Art as a background (Use as background): a grid stretches to the block; a ring or an SVG shape keeps its proportions, with a Background size (Contain: all of it; Cover: the block filled) and a Background position, per device.
+* Zoom on hover (Layout, Look): the photo under the pointer zooms in a little — for Slide, Fade, Creative, Thumbnails, Collage and Art (on for Art, which always had it). Not on touch screens.
+* Image shadow: outside the photos, which keep their size; for Fade too.
+* Rounded corners and Frame are switches now (slides, lightbox, thumbnails); Overlay, caption background and the cube's shadow take a color with its opacity.
+* Coverflow Depth and Stretch, and the descriptions' Gap to the slider, per device. Direction is in Layout, for the effects that use it.
+* The phone takes the larger screen's values unless it has its own.
+* Editor: one color picker everywhere, settings in grey cards, the Slide info window in tabs (Caption, Description, Link), Undo and Redo for every setting (Ctrl+Z, Ctrl+Shift+Z), and in the preview the devices drawn, tablet and phone turning sideways, a background filling the screen.
+* Collage: Photos on screen from 1.
+* Faster pages: a collage's or Art's page loads no styles of the sliders, and the Thumbnails strip's styles load only where it is shown.
+* Security: captions and descriptions keep their editor's styles only (color, underline, alignment); links opening a new tab get rel="noopener"; the updates' build steps are pinned.
 
 = 3.0.0 =
 * Collage: a new Style, Freeform — the photos at random places and sizes, a Gap apart and never over each other. In the preview drag a photo anywhere (it stops a Gap away from the others and snaps to their edges), drag its corners or edges to resize it, drop it on another photo to swap the two, or take its place out with its ×. Everything is in shares of the Height, so a new Height scales it all, gaps too. Shuffle gives a new layout, Reset the first one.
