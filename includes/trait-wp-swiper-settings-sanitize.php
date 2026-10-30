@@ -54,7 +54,8 @@ trait WP_Swiper_Settings_Sanitize {
 			}
 			// Tablet/mobile values of responsive fields: empty inherits.
 			foreach ( array_slice( self::device_keys( $key, $field ), 1 ) as $storage_key ) {
-				$value = isset( $input[ $storage_key ] ) ? trim( (string) $input[ $storage_key ] ) : '';
+				// One value each (a list, from a form made by hand, is none).
+				$value = isset( $input[ $storage_key ] ) && is_scalar( $input[ $storage_key ] ) ? trim( (string) $input[ $storage_key ] ) : '';
 				if ( 'select' === $field['type'] ) {
 					$value = array_key_exists( $value, $field['choices'] ) ? $value : '';
 				} elseif ( 'ratio' === $field['type'] ) {
@@ -75,7 +76,7 @@ trait WP_Swiper_Settings_Sanitize {
 				$clean[ $storage_key ] = $value;
 			}
 
-			$value = isset( $input[ $key ] ) ? $input[ $key ] : null;
+			$value = isset( $input[ $key ] ) && is_scalar( $input[ $key ] ) ? $input[ $key ] : null;
 
 			switch ( $field['type'] ) {
 				case 'checkbox':
@@ -268,7 +269,29 @@ trait WP_Swiper_Settings_Sanitize {
 			},
 			(string) $html
 		);
-		return self::sanitize_rich_text( $html, self::description_tags() );
+		return self::noopener( self::sanitize_rich_text( $html, self::description_tags() ) );
+	}
+
+	/**
+	 * A link opening in another tab (target) with "noopener" in its rel, so
+	 * the page it opens cannot reach this one (as browsers now do anyway;
+	 * wp_targeted_link_rel() is deprecated since WordPress 6.7).
+	 *
+	 * @param string $html Sanitized markup (wp_kses(): attributes in double quotes).
+	 * @return string
+	 */
+	private static function noopener( $html ) {
+		return preg_replace_callback(
+			'#<a\s[^>]*\btarget="[^"]*"[^>]*>#i',
+			function ( $match ) {
+				$tag = $match[0];
+				if ( preg_match( '#\brel="([^"]*)"#i', $tag, $rel ) ) {
+					return preg_match( '#(^|\s)noopener(\s|$)#i', $rel[1] ) ? $tag : str_replace( $rel[0], 'rel="' . trim( $rel[1] . ' noopener' ) . '"', $tag );
+				}
+				return substr( $tag, 0, -1 ) . ' rel="noopener">';
+			},
+			$html
+		);
 	}
 
 	/**
@@ -311,26 +334,30 @@ trait WP_Swiper_Settings_Sanitize {
 			$html
 		);
 		$html = preg_replace( '#\s*</(?:div|li|blockquote)>\s*#i', '<br>', $html );
-		// Those spans keep their display: WordPress allows it in a style from 6.1
-		// only (safe_style_css); here on older ones too, for this caption only.
-		$display = function ( $styles ) {
-			return array_merge( (array) $styles, array( 'display' ) );
-		};
-		add_filter( 'safe_style_css', $display );
-		$html = self::sanitize_rich_text( $html, self::caption_tags() );
-		remove_filter( 'safe_style_css', $display );
+		// Those spans keep their display (WordPress allows it in a style from
+		// 6.1 only): with the text's own styles, for a caption only.
+		$html = self::sanitize_rich_text( $html, self::caption_tags(), array( 'display' ) );
 		return preg_replace( '#^(?:\s*<br\s*/?>)+|(?:<br\s*/?>\s*)+$#i', '', $html );
 	}
 
 	/**
 	 * Editor HTML with the given tags only, trimmed; '' when no text is left.
+	 * Their styles keep what the editor makes only (TEXT_STYLES: a color,
+	 * underline, alignment), not every property WordPress allows, so a text
+	 * cannot be laid out over the page.
 	 *
-	 * @param string $html Raw input.
-	 * @param array  $tags wp_kses() allowed tags.
+	 * @param string $html   Raw input.
+	 * @param array  $tags   wp_kses() allowed tags.
+	 * @param array  $styles CSS properties allowed besides TEXT_STYLES.
 	 * @return string
 	 */
-	private static function sanitize_rich_text( $html, $tags ) {
+	private static function sanitize_rich_text( $html, $tags, $styles = array() ) {
+		$only = function () use ( $styles ) {
+			return array_merge( self::TEXT_STYLES, $styles );
+		};
+		add_filter( 'safe_style_css', $only, 999 );
 		$html = trim( wp_kses( (string) $html, $tags ) );
+		remove_filter( 'safe_style_css', $only, 999 );
 		// The editor's empty paragraph is "<p>&nbsp;</p>": no-break spaces count as none.
 		$text = preg_replace( '/[\s\x{00A0}]+/u', '', html_entity_decode( wp_strip_all_tags( $html ), ENT_QUOTES, 'UTF-8' ) );
 		return '' === (string) $text ? '' : $html;

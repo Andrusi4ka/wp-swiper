@@ -793,4 +793,62 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( 'reverse', WP_Swiper_Settings::sanitize( array( 'marquee_direction' => 'reverse' ) )['marquee_direction'] );
 		$this->assertSame( 'normal', WP_Swiper_Settings::sanitize( array( 'marquee_direction' => 'sideways' ) )['marquee_direction'] );
 	}
+
+	public function test_texts_keep_their_editors_styles_only() {
+		// A color, underline and alignment (the editor's buttons) stay...
+		$kept = WP_Swiper_Settings::sanitize_description( '<p style="text-align: center">A <span style="color: #ff0000; text-decoration: underline;">word</span></p>' );
+		$this->assertStringContainsString( 'color: #ff0000', $kept );
+		$this->assertStringContainsString( 'text-decoration: underline', $kept );
+		$this->assertStringContainsString( 'text-align: center', $kept );
+		// ...any other style goes: the text cannot be laid out over the page.
+		$html = WP_Swiper_Settings::sanitize_description( '<p>A <span style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: #000; color: #fff">word</span></p>' );
+		foreach ( array( 'position', 'top:', 'width', 'height', 'z-index', 'background' ) as $property ) {
+			$this->assertStringNotContainsString( $property, $html, $property );
+		}
+		$this->assertStringContainsString( 'color: #fff', $html );
+		// A caption the same, its aligned blocks shown as blocks (display) too.
+		$caption = WP_Swiper_Settings::sanitize_caption( '<div style="text-align: right">Right</div><span style="margin: 40px; color: #00ff00">x</span>' );
+		$this->assertStringContainsString( 'display: block', $caption );
+		$this->assertStringContainsString( 'color: #00ff00', $caption );
+		$this->assertStringNotContainsString( 'margin', $caption );
+		// A description's span: no display.
+		$this->assertStringNotContainsString( 'display', WP_Swiper_Settings::sanitize_description( '<p><span style="display: none">x</span> y</p>' ) );
+		// Other plugins' styles are not touched by it (the filter is only on while sanitizing).
+		$this->assertSame( 'position: relative', safecss_filter_attr( 'position: relative' ) );
+	}
+
+	public function test_description_links_to_a_new_tab_get_noopener() {
+		$html = WP_Swiper_Settings::sanitize_description( '<p><a href="https://example.com" target="_blank">Link</a></p>' );
+		$this->assertMatchesRegularExpression( '/<a [^>]*rel="[^"]*noopener[^"]*"/', $html );
+		// Its own rel kept, noopener added once.
+		$this->assertStringContainsString( 'rel="nofollow noopener"', WP_Swiper_Settings::sanitize_description( '<p><a href="https://example.com" target="_blank" rel="nofollow">Link</a></p>' ) );
+		$this->assertSame( 1, substr_count( WP_Swiper_Settings::sanitize_description( '<p><a href="https://example.com" target="_blank" rel="noopener">Link</a></p>' ), 'noopener' ) );
+		// A link in the same tab: no rel added.
+		$this->assertStringNotContainsString( 'rel=', WP_Swiper_Settings::sanitize_description( '<p><a href="https://example.com">Link</a></p>' ) );
+	}
+
+	public function test_lists_sent_for_single_values_are_none() {
+		// A form made by hand: lists where one value goes are left out, no notice.
+		$clean = WP_Swiper_Settings::sanitize(
+			array(
+				'effect'          => array( 'cube' ),
+				'height'          => array( 1, 2 ),
+				'height_tablet'   => array( 3 ),
+				'css_class'       => array( 'x' ),
+				'loop'            => array( 1 ),
+				'caption_color'   => array( '#fff' ),
+			)
+		);
+		$defaults = WP_Swiper_Settings::defaults();
+		$this->assertSame( $defaults['effect'], $clean['effect'] );
+		$this->assertSame( $defaults['height'], $clean['height'] );
+		$this->assertSame( '', $clean['height_tablet'] );
+		$this->assertSame( '', $clean['css_class'] );
+		$this->assertFalse( $clean['loop'] );
+		$this->assertSame( $defaults['caption_color'], $clean['caption_color'] );
+	}
+
+	public function test_preview_words_cannot_close_their_script() {
+		$this->assertStringContainsString( 'wp_json_encode( self::preview_words(), JSON_HEX_TAG | JSON_HEX_AMP )', file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' ) );
+	}
 }

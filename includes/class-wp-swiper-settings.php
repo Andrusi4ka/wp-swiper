@@ -77,6 +77,12 @@ class WP_Swiper_Settings {
 	const HOVER_ZOOM_EFFECTS = array( 'slide', 'fade', 'creative', 'thumbs', 'collage', 'art' );
 
 	/**
+	 * The CSS a caption's or description's markup may keep (its editor's: a
+	 * color, underline, alignment): sanitize_rich_text().
+	 */
+	const TEXT_STYLES = array( 'color', 'text-decoration', 'text-decoration-line', 'text-align' );
+
+	/**
 	 * The column widths a saved grid's square photos are measured for
 	 * (merge_art_height()): a typical desktop, tablet and phone.
 	 */

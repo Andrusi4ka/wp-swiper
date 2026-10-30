@@ -377,7 +377,7 @@ class WP_Swiper_Preview {
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-dev.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-dev.js' ) ); ?>"></script>
 	<?php // Collage: a photo dragged onto another place swaps with it (the editor stores the order); its words. ?>
 	<?php // And Art's Grid shapes: the buttons and the selected shape's panel (preview-art.js). ?>
-	<script>window.wpSwiperPreviewI18n = <?php echo wp_json_encode( self::preview_words() ); ?>;</script>
+	<script>window.wpSwiperPreviewI18n = <?php echo wp_json_encode( self::preview_words(), JSON_HEX_TAG | JSON_HEX_AMP ); ?>;</script>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-collage.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-collage.js' ) ); ?>"></script>
 	<?php // Art: the same for its pieces, its own script (the editor stores its order apart). ?>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-art.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-art.js' ) ); ?>"></script>
