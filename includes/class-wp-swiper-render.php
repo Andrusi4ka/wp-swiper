@@ -960,6 +960,8 @@ class WP_Swiper_Render {
 			$background && '' !== WP_Swiper_Settings::background_overlay( $settings ) ? 'wp-swiper--bg-overlay' : '',
 			// "Zoom the main image" (frontend.js zoom()).
 			$zoom ? 'wp-swiper--zoom' : '',
+			// "Zoom on hover" (frontend.css): the photo under the pointer.
+			WP_Swiper_Settings::hover_zoom( $settings ) ? 'wp-swiper--hover-zoom' : '',
 		);
 		// Thumbnails: where the strip sits on each device ("--thumbs-left",
 		// "--thumbs-tablet-top", "--thumbs-mobile-bottom"; one set of CSS rules per device).

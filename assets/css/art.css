@@ -132,14 +132,21 @@
 	outline: none;
 }
 
+/* The photo in focus (keyboard): brighter, and zoomed with Zoom on hover. */
 .wp-swiper-art__piece:focus-visible .wp-swiper-art__image {
-	transform: scale(1.06);
 	filter: brightness(1.12);
 }
 
-/* A gentle zoom of the photo under the pointer. */
-.wp-swiper-art__piece:hover .wp-swiper-art__image {
+.wp-swiper-art--hover-zoom .wp-swiper-art__piece:focus-visible .wp-swiper-art__image {
 	transform: scale(1.06);
+}
+
+/* "Zoom on hover" (WP_Swiper_Settings::hover_zoom()): a gentle zoom of the
+   photo under the pointer, where there is one (not on touch screens). */
+@media (hover: hover) {
+	.wp-swiper-art--hover-zoom .wp-swiper-art__piece:hover .wp-swiper-art__image {
+		transform: scale(1.06);
+	}
 }
 
 /* SVG shape: another file on tablet or mobile, its proportions there. */
@@ -171,12 +178,14 @@
 	transform: none;
 }
 
-.wp-swiper-art--one .wp-swiper-art__stage:hover .wp-swiper-art__piece .wp-swiper-art__image {
-	transform: scale(1.06);
+@media (hover: hover) {
+	.wp-swiper-art--one.wp-swiper-art--hover-zoom .wp-swiper-art__stage:hover .wp-swiper-art__piece .wp-swiper-art__image {
+		transform: scale(1.06);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.wp-swiper-art--one .wp-swiper-art__stage:hover .wp-swiper-art__piece .wp-swiper-art__image {
+	.wp-swiper-art--one.wp-swiper-art--hover-zoom .wp-swiper-art__stage:hover .wp-swiper-art__piece .wp-swiper-art__image {
 		transform: none;
 	}
 
@@ -186,7 +195,8 @@
 		transition: none;
 	}
 
-	.wp-swiper-art__piece:hover .wp-swiper-art__image {
+	.wp-swiper-art--hover-zoom .wp-swiper-art__piece:hover .wp-swiper-art__image,
+	.wp-swiper-art--hover-zoom .wp-swiper-art__piece:focus-visible .wp-swiper-art__image {
 		transform: none;
 	}
 }

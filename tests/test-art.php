@@ -35,7 +35,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		// No other field is Art's, but the Image shadow, shared with the effects whose photos stand apart,
 		// and the Background, shared with the effects that can be one.
 		foreach ( $fields as $key => $field ) {
-			if ( 0 !== strpos( $key, 'art_' ) && 0 !== strpos( $key, 'image_shadow' ) && 0 !== strpos( $key, 'background' ) && ! empty( $field['effects'] ) ) {
+			if ( 0 !== strpos( $key, 'art_' ) && 0 !== strpos( $key, 'image_shadow' ) && 'image_hover_zoom' !== $key && 0 !== strpos( $key, 'background' ) && ! empty( $field['effects'] ) ) {
 				$this->assertNotContains( 'art', $field['effects'], $key );
 			}
 		}
@@ -773,13 +773,13 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 
 	public function test_image_border_over_the_shadow_in_the_look_block() {
 		$blocks = WP_Swiper_Settings::blocks()['layout'];
-		// Not in the Art block: in Look, right before the Image shadow.
+		// Not in the Art block: in Look, right before Zoom on hover and the Image shadow.
 		foreach ( array( 'art_border', 'art_border_width', 'art_border_color' ) as $key ) {
 			$this->assertNotContains( $key, $blocks['art']['fields'], $key );
 		}
 		$look = $blocks['look']['fields'];
 		$at   = array_search( 'art_border', $look, true );
-		$this->assertSame( array( 'art_border', 'art_border_width', 'art_border_color', 'image_shadow' ), array_slice( $look, $at, 4 ) );
+		$this->assertSame( array( 'art_border', 'art_border_width', 'art_border_color', 'image_hover_zoom', 'image_shadow' ), array_slice( $look, $at, 5 ) );
 
 		// On the screen: the Look title, Image border, then Image shadow.
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );

@@ -197,6 +197,14 @@
   за місцем на сітці, тож не залежить від номерів шматків; кути, що зникли
   після зміни шматка, забуваються (`preview-art.js send()`).
   Іконка `assets/images/art/grid-shapes.svg` — малюнок користувача.
+- **Zoom on hover** (2026-10-30, `image_hover_zoom`): перемикач у Layout → Look
+  (не в Lightbox — це вигляд фото, а не поведінка після кліку), без поля
+  сили — фіксовано 106% (рішення користувача). Slide, Fade, Creative,
+  Thumbnails, Collage, Art; не для Cube / Flip / Coverflow / Cards (3D,
+  рішення користувача), не у фоні, не з Zoom the main image
+  (`hover_zoom()`), лише `@media (hover: hover)`. Art мав збільшення завжди:
+  старі слайдери Art — увімкнено (`merge_hover_zoom()`), для Art за
+  замовчуванням увімкнено (`layouts()`), для решти — вимкнено.
 - **Art як фон** (Use as background): лише стилі, що розтягуються — сітки
   (`is_wide()`: Grid + circle/square і Grid shapes); кільця й SVG shape — ні
   (свої пропорції). `is_background()` це перевіряє; поля фону мають
@@ -366,7 +374,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 347 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 349 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` і `art-effect` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.

@@ -271,4 +271,22 @@ class Test_WP_Swiper_Migrations extends WP_Swiper_TestCase {
 		$this->assertSame( 'masonry', $this->saved( array( '_version' => 7, 'collage_layout_mobile' => 'masonry' ) )['collage_layout_mobile'] );
 		$this->assertSame( 7, WP_Swiper_Settings::sanitize( array() )['_version'] );
 	}
+
+	public function test_art_saved_before_zoom_on_hover_keeps_it() {
+		// Art's photos always zoomed under the pointer: an Art slider saved before keeps it.
+		$this->assertTrue( $this->saved( array( '_version' => 7, 'effect' => 'art' ) )['image_hover_zoom'] );
+		// The others had none.
+		$this->assertFalse( $this->saved( array( '_version' => 7, 'effect' => 'slide' ) )['image_hover_zoom'] );
+		// Saved since: as set.
+		$this->assertFalse( $this->saved( array( '_version' => 7, 'effect' => 'art', 'image_hover_zoom' => false ) )['image_hover_zoom'] );
+		// Art's saved Layout values too.
+		$merged = WP_Swiper_Settings::merge_hover_zoom( array( 'effect' => 'slide', 'layouts' => array( 'art' => array( 'art_style' => 'ring' ), 'fade' => array() ) ) );
+		$this->assertTrue( $merged['layouts']['art']['image_hover_zoom'] );
+		$this->assertArrayNotHasKey( 'image_hover_zoom', $merged['layouts']['fade'] );
+		$this->assertArrayNotHasKey( 'image_hover_zoom', $merged );
+		// Art never chosen: its Layout values the defaults, with it on.
+		$layouts = WP_Swiper_Settings::layouts( $this->settings( array( 'effect' => 'slide' ) ), array() );
+		$this->assertTrue( $layouts['art']['image_hover_zoom'] );
+		$this->assertFalse( $layouts['fade']['image_hover_zoom'] );
+	}
 }

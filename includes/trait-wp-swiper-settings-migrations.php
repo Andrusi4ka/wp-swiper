@@ -408,4 +408,25 @@ trait WP_Swiper_Settings_Migrations {
 		}
 		return $settings;
 	}
+
+	/**
+	 * Until Zoom on hover was a setting, Art's photos always zoomed under the
+	 * pointer: an Art slider saved before keeps it (and so do its saved
+	 * Layout values, layouts['art']).
+	 *
+	 * @param array $saved A slider's saved settings.
+	 * @return array
+	 */
+	public static function merge_hover_zoom( $saved ) {
+		if ( ! is_array( $saved ) || ! $saved ) {
+			return $saved;
+		}
+		if ( ! array_key_exists( 'image_hover_zoom', $saved ) && isset( $saved['effect'] ) && 'art' === $saved['effect'] ) {
+			$saved['image_hover_zoom'] = true;
+		}
+		if ( isset( $saved['layouts']['art'] ) && is_array( $saved['layouts']['art'] ) && ! array_key_exists( 'image_hover_zoom', $saved['layouts']['art'] ) ) {
+			$saved['layouts']['art']['image_hover_zoom'] = true;
+		}
+		return $saved;
+	}
 }

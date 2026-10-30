@@ -340,6 +340,34 @@
 	justify-content: var(--wp-swiper-justify, center);
 }
 
+/* "Zoom on hover" (WP_Swiper_Settings::hover_zoom(): a slider or collage;
+   Art's in art.css): the image under the pointer zooms a little in its box,
+   which clips it (its corners and frame stay); only where there is a
+   pointer, not with reduced motion. Images only, not a video's player. */
+.wp-swiper--hover-zoom .wp-swiper__media {
+	overflow: hidden;
+}
+
+.wp-swiper--hover-zoom img.wp-swiper__image {
+	transition: transform 0.6s ease;
+}
+
+@media (hover: hover) {
+	.wp-swiper--hover-zoom .wp-swiper__media:hover img.wp-swiper__image {
+		transform: scale(1.06);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wp-swiper--hover-zoom img.wp-swiper__image {
+		transition: none;
+	}
+
+	.wp-swiper--hover-zoom .wp-swiper__media:hover img.wp-swiper__image {
+		transform: none;
+	}
+}
+
 /* Image border: a frame over the image box (.wp-swiper__media), so it takes
    no room, follows the corners, and with "Contain" frames the image itself.
    Over the caption (z-index 2) too, whose background would darken it; the

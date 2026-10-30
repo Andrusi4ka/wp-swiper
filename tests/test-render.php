@@ -1595,4 +1595,38 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$slides[0]['position'] = '20% 75%;color:red';
 		$this->assertSame( '--wp-swiper-img-ratio:2', $this->slide_style( $this->render( array(), $slides ) ) );
 	}
+
+	public function test_zoom_on_hover() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertSame( 'checkbox', $fields['image_hover_zoom']['type'] );
+		$this->assertFalse( $fields['image_hover_zoom']['default'] );
+		$this->assertSame( WP_Swiper_Settings::HOVER_ZOOM_EFFECTS, $fields['image_hover_zoom']['effects'] );
+		// In the Look block, before the Image shadow.
+		$look = WP_Swiper_Settings::blocks()['layout']['look']['fields'];
+		$this->assertSame( array_search( 'image_shadow', $look, true ) - 1, array_search( 'image_hover_zoom', $look, true ) );
+
+		$on = array( 'image_hover_zoom' => true );
+		foreach ( array( 'slide', 'fade', 'creative', 'thumbs', 'collage', 'art' ) as $effect ) {
+			$this->assertTrue( WP_Swiper_Settings::hover_zoom( $this->settings( array( 'effect' => $effect ) + $on ) ), $effect );
+		}
+		// Not the effects turning in 3D.
+		foreach ( array( 'cube', 'flip', 'coverflow', 'cards' ) as $effect ) {
+			$this->assertFalse( WP_Swiper_Settings::hover_zoom( $this->settings( array( 'effect' => $effect ) + $on ) ), $effect );
+		}
+		// Not off, not as a background, not with the main image zooming.
+		$this->assertFalse( WP_Swiper_Settings::hover_zoom( $this->settings( array( 'effect' => 'slide' ) ) ) );
+		$this->assertFalse( WP_Swiper_Settings::hover_zoom( $this->settings( array( 'effect' => 'fade', 'background' => true, 'background_class' => 'hero' ) + $on ) ) );
+		$this->assertFalse( WP_Swiper_Settings::hover_zoom( $this->settings( array( 'effect' => 'fade', 'zoom' => true ) + $on ) ) );
+
+		// The class it shows by (frontend.css, art.css).
+		$this->assertContains( 'wp-swiper--hover-zoom', $this->root_classes( $this->render( $on ) ) );
+		$this->assertNotContains( 'wp-swiper--hover-zoom', $this->root_classes( $this->render() ) );
+		$this->assertNotContains( 'wp-swiper--hover-zoom', $this->root_classes( $this->render( array( 'effect' => 'cube' ) + $on ) ) );
+		$this->assertStringContainsString( 'wp-swiper--hover-zoom', $this->render( array( 'effect' => 'collage' ) + $on ) );
+		$this->assertSame( 1, preg_match( '/<div class="wp-swiper-art [^"]*wp-swiper-art--hover-zoom[ "]/', $this->render( array( 'effect' => 'art' ) + $on ) ) );
+		$this->assertStringNotContainsString( 'wp-swiper-art--hover-zoom', $this->render( array( 'effect' => 'art' ) ) );
+		// Only where there is a pointer.
+		$this->assertStringContainsString( "@media (hover: hover) {\n\t.wp-swiper--hover-zoom .wp-swiper__media:hover img.wp-swiper__image", file_get_contents( WP_SWIPER_DIR . 'assets/css/frontend.css' ) );
+		$this->assertStringContainsString( "@media (hover: hover) {\n\t.wp-swiper-art--hover-zoom .wp-swiper-art__piece:hover", file_get_contents( WP_SWIPER_DIR . 'assets/css/art.css' ) );
+	}
 }

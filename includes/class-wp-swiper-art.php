@@ -776,6 +776,8 @@ class WP_Swiper_Art {
 				array( $one ? 'wp-swiper-art--one' : '' ),
 				// Image shadow (art.css): along each shape, room kept around the stage for it.
 				array( $shadow ? 'wp-swiper-art--shadow' : '' ),
+				// "Zoom on hover" (art.css): the photo under the pointer.
+				array( WP_Swiper_Settings::hover_zoom( $settings ) ? 'wp-swiper-art--hover-zoom' : '' ),
 				// The block's background (art.js, art.css), with a color over it.
 				array( $background ? 'wp-swiper-art--background' : '' ),
 				array( $background && '' !== WP_Swiper_Settings::background_overlay( $settings ) ? 'wp-swiper-art--bg-overlay' : '' ),

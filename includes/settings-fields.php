@@ -757,6 +757,17 @@ return array(
 	// Image shadow: one for every screen, where the photos stand apart
 	// (see shadow() for when it applies). Its offsets, blur and spread
 	// in one row, its color (with opacity) under them.
+	// The photo under the pointer zooms a little in its box (its frame and
+	// corners stay). Off by default; on for Art, which always had it
+	// (merge_hover_zoom(), layouts()).
+	'image_hover_zoom'      => array(
+		'section' => 'layout',
+		'effects' => self::HOVER_ZOOM_EFFECTS,
+		'label'   => __( 'Zoom on hover', 'wp-swiper' ),
+		'type'    => 'checkbox',
+		'default' => false,
+		'help'    => __( 'The photo under the pointer zooms in a little. Not on touch screens, not for a background, nor with Zoom the main image.', 'wp-swiper' ),
+	),
 	'image_shadow'          => array(
 		'section' => 'layout',
 		'effects' => self::SHADOW_EFFECTS,

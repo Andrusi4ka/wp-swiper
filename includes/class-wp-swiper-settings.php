@@ -70,6 +70,12 @@ class WP_Swiper_Settings {
 	const SHADOW_EFFECTS = array( 'slide', 'fade', 'coverflow', 'cards', 'creative', 'collage', 'art' );
 
 	/**
+	 * Effects whose photos can zoom under the pointer (Zoom on hover): not
+	 * those that turn in 3D (Cube, Flip, Coverflow, Cards).
+	 */
+	const HOVER_ZOOM_EFFECTS = array( 'slide', 'fade', 'creative', 'thumbs', 'collage', 'art' );
+
+	/**
 	 * The column widths a saved grid's square photos are measured for
 	 * (merge_art_height()): a typical desktop, tablet and phone.
 	 */
@@ -224,6 +230,22 @@ class WP_Swiper_Settings {
 				'left'   => max( 0, $reach - $x ),
 			),
 		);
+	}
+
+	/**
+	 * "Zoom on hover": on, with an effect whose photos can (not those turning
+	 * in 3D), where the pointer reaches them (not a background) and the main
+	 * image does not zoom already.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function hover_zoom( $settings ) {
+		return ! empty( $settings['image_hover_zoom'] )
+			&& in_array( $settings['effect'], self::HOVER_ZOOM_EFFECTS, true )
+			// No pointer reaches a background; the main image already zooms.
+			&& ! self::is_background( $settings )
+			&& ! self::is_zoom( $settings );
 	}
 
 	/**
@@ -678,7 +700,7 @@ class WP_Swiper_Settings {
 				// where a slider's are): the shadow under them on both.
 				'look'        => array(
 					'title'  => __( 'Look', 'wp-swiper' ),
-					'fields' => array( 'border_rounded', 'border_radius', 'art_rounded', 'art_radius', 'image_border', 'image_border_width', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
+					'fields' => array( 'border_rounded', 'border_radius', 'art_rounded', 'art_radius', 'image_border', 'image_border_width', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_hover_zoom', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
 				),
 				'zoom'        => array(
 					'title'  => __( 'Zoom', 'wp-swiper' ),
@@ -877,6 +899,8 @@ class WP_Swiper_Settings {
 		$saved = self::merge_opening_content( $saved );
 		// Art: one Height for every Style (the rings' Size, the grids' Height until 3.1).
 		$saved = self::merge_art_height( $saved );
+		// Art's photos always zoomed under the pointer: Zoom on hover on there.
+		$saved = self::merge_hover_zoom( $saved );
 		if ( ! empty( $saved['layouts'] ) && is_array( $saved['layouts'] ) ) {
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_ratio_fields' ), array_filter( $saved['layouts'], 'is_array' ) );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_overlay_opacity' ), $saved['layouts'] );
@@ -1092,6 +1116,10 @@ class WP_Swiper_Settings {
 				$layouts[ $effect ] = array_intersect_key( $saved[ $effect ], $keys ) + $defaults;
 			} else {
 				$layouts[ $effect ] = $defaults;
+				// Art: Zoom on hover on by default (its photos always had it).
+				if ( 'art' === $effect && isset( $defaults['image_hover_zoom'] ) ) {
+					$layouts[ $effect ]['image_hover_zoom'] = true;
+				}
 			}
 		}
 		return $layouts;
