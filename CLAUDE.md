@@ -205,12 +205,16 @@
   (`hover_zoom()`), лише `@media (hover: hover)`. Art мав збільшення завжди:
   старі слайдери Art — увімкнено (`merge_hover_zoom()`), для Art за
   замовчуванням увімкнено (`layouts()`), для решти — вимкнено.
-- **Art як фон** (Use as background): лише стилі, що розтягуються — сітки
-  (`is_wide()`: Grid + circle/square і Grid shapes); кільця й SVG shape — ні
-  (свої пропорції). `is_background()` це перевіряє; поля фону мають
-  `styles`. У фоні: без підписів, описів, посилань і лайтбокса, висота
-  блоку; переносить у блок `art.js background()` (на сторінці з Art може не
-  бути `frontend.js`), правила хоста продубльовано в `art.css`.
+- **Art як фон** (Use as background): будь-який стиль. Сітки (`is_wide()`)
+  розтягуються на блок; кільця й SVG shape (свої пропорції) — Background
+  size (Contain / Cover) і Background position (9 положень, без «None»,
+  за замовч. Center center), обидва для кожного пристрою (рішення
+  користувача), `art_bg_size` / `art_bg_position` у блоці Background.
+  `background_fit()` дає змінні, `art.css` ставить сцену через `cqw/cqh`
+  блоку (`container-type: size`). У фоні: без підписів, описів, посилань і
+  лайтбокса, висота блоку; переносить у блок `art.js background()` (на
+  сторінці з Art може не бути `frontend.js`), правила хоста продубльовано в
+  `art.css`.
 - **Collage Freeform:** фото не накладаються; Shuffle — нова випадкова
   розкладка, Reset — перша; Gap — «магніт».
 - Кнопка × «прибрати місце» — лише Scattered і Freeform; для інших стилів —
@@ -374,7 +378,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 349 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 351 тест, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` і `art-effect` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.
@@ -404,7 +408,7 @@ WP-CLI для тестів не потрібен: досить `WP_CORE_DIR` і 
 котра медіатека правильна. Видаляючи рядки за номерами (sed), звіряй
 `git diff` — так одного разу пропав селектор `.wp-swiper.wp-swiper--background`.
 `fixture.php` показує слайдер з налаштувань `cases.php` на фото з медіатеки,
-нічого не зберігає, відкривається лише з 127.x. Перевіряє 37 випадків
+нічого не зберігає, відкривається лише з 127.x. Перевіряє 38 випадків
 (усі ефекти, стилі колажу й Art) на desktop і mobile: без помилок у консолі,
 які файли підключено, де стоять фото (знімки в `snapshots/`), стрілки,
 лайтбокс. Запуск: `cd tests/browser && npm install && npx playwright test`;

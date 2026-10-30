@@ -1796,7 +1796,7 @@
 			}
 
 			// Background: its settings once it is on (data-effects above: the effects that can be one).
-			[ 'background_class', 'background_overlay_color' ].forEach( function ( name ) {
+			[ 'background_class', 'art_bg_size', 'art_bg_position', 'background_overlay_color' ].forEach( function ( name ) {
 				field( name ).toggle( background );
 			} );
 
@@ -3036,7 +3036,7 @@
 				} );
 			};
 			// The preview takes the device's values at once; else Update says it is out of date.
-			var restorePreview = function ( device ) {
+			var restorePreview = function ( device, cellsChanged ) {
 				var win = previewFrame.contentWindow;
 				var center = parseFloat( resolved( 'art_ring_center', device ) );
 				var done = false;
@@ -3055,8 +3055,9 @@
 							device: device,
 							order: idsOf( resolved( 'art_order', device ) ),
 							center: isFinite( center ) ? center : null,
-							// Grid shapes: its layout (one for every device).
-							cells: String( $( '#wp-swiper-art_cells' ).val() || '' )
+							// Grid shapes: its layout (one for every device), only where
+							// it changed (none kept, the default one: the preview cannot).
+							cells: cellsChanged ? String( $( '#wp-swiper-art_cells' ).val() || '' ) : undefined
 						} ) || done;
 					}
 				} catch ( e ) {}
@@ -3105,7 +3106,7 @@
 
 				markChanged( before, baseline );
 				if ( previewOnly( before, baseline ) ) {
-					restorePreview( step.at.device || currentDevice );
+					restorePreview( step.at.device || currentDevice, before.values[ 'wp_swiper_settings[art_cells]#1' ] !== baseline.values[ 'wp_swiper_settings[art_cells]#1' ] );
 				} else {
 					$update.addClass( 'is-stale' );
 				}

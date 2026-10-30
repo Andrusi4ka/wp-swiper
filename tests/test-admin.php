@@ -459,13 +459,13 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( 1, preg_match( '#^\s*<legend>[^<]*</legend>\s*<div class="wp-swiper-block" data-block="video_posters"><h4 class="wp-swiper-subheading">Posters</h4><div class="wp-swiper-field wp-swiper-posters" data-field="video_posters">#', $match[1] ) );
 		$this->assertLessThan( strpos( $match[1], 'data-block="video_playback"' ), strpos( $match[1], 'data-block="video_posters"' ) );
 		// The effects a field belongs to, for admin.js.
-		$this->assertStringContainsString( 'data-field="background" data-effects="slide fade collage art" data-styles="grid-circle grid-circle-text grid-square grid-square-text grid-shapes"', $html );
+		$this->assertStringContainsString( 'data-field="background" data-effects="slide fade collage art"', $html );
 		// Use as background: no page of its own, the last block of Layout.
 		$this->assertStringNotContainsString( 'id="wp-swiper-page-background"', $html );
 		$this->assertStringNotContainsString( 'data-page="background"', $html );
 		$layout = WP_Swiper_Settings::blocks()['layout'];
 		$this->assertSame( 'background', array_key_last( $layout ) );
-		$this->assertSame( array( 'background', 'background_class', 'background_overlay_color' ), $layout['background']['fields'] );
+		$this->assertSame( array( 'background', 'background_class', 'art_bg_size', 'art_bg_position', 'background_overlay_color' ), $layout['background']['fields'] );
 		preg_match( '#<fieldset[^>]*id="wp-swiper-page-layout"[^>]*>(.*?)</fieldset>#s', $html, $match );
 		$this->assertStringContainsString( 'data-block="background"', $match[1] );
 		// Description: its two notes (no description yet, or none shown).

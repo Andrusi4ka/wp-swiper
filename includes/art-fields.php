@@ -436,6 +436,48 @@ return array(
 		'max'        => 200,
 		'step'       => 1,
 	),
+	// As a background, the Styles of their own proportions (a ring, an SVG
+	// shape; a grid stretches to the block): the whole shape in the block
+	// (Contain) or the block filled, the rest cut off (Cover), and where it
+	// sits, per device (the block's proportions differ). Shown while Use as
+	// background is on (admin.js).
+	'art_bg_size'        => array(
+		'section'    => 'advanced',
+		'panel'      => 'layout',
+		'effects'    => $art,
+		'styles'     => array( 'ring', 'ring-text', 'shape' ),
+		'label'      => __( 'Background size', 'wp-swiper' ),
+		'type'       => 'select',
+		'responsive' => true,
+		'default'    => 'contain',
+		'choices'    => array(
+			'contain' => __( 'Contain', 'wp-swiper' ),
+			'cover'   => __( 'Cover', 'wp-swiper' ),
+		),
+		'help'       => __( 'Contain: the whole shape, as large as fits in the block. Cover: it fills the block, what does not fit cut off at its edges.', 'wp-swiper' ),
+	),
+	'art_bg_position'    => array(
+		'section'    => 'advanced',
+		'panel'      => 'layout',
+		'effects'    => $art,
+		'styles'     => array( 'ring', 'ring-text', 'shape' ),
+		'label'      => __( 'Background position', 'wp-swiper' ),
+		'type'       => 'select',
+		'responsive' => true,
+		'default'    => 'center center',
+		'choices'    => array(
+			'left top'      => __( 'Left top', 'wp-swiper' ),
+			'left center'   => __( 'Left center', 'wp-swiper' ),
+			'left bottom'   => __( 'Left bottom', 'wp-swiper' ),
+			'right top'     => __( 'Right top', 'wp-swiper' ),
+			'right center'  => __( 'Right center', 'wp-swiper' ),
+			'right bottom'  => __( 'Right bottom', 'wp-swiper' ),
+			'center top'    => __( 'Center top', 'wp-swiper' ),
+			'center center' => __( 'Center center', 'wp-swiper' ),
+			'center bottom' => __( 'Center bottom', 'wp-swiper' ),
+		),
+		'help'       => __( 'Contain: where the shape sits in the block. Cover: which part of it stays in view.', 'wp-swiper' ),
+	),
 	// Captions on the middle photo only (the Caption page): the ring's
 	// photos without, the middle one's showing as it changes.
 	'art_caption_middle' => array(

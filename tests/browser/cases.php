@@ -106,6 +106,13 @@ return array(
 		'photos'   => 10,
 		'block'    => true,
 	),
+	// A ring as its block's background, its proportions kept: filling the
+	// block (Cover) at the right on desktop, all of it (Contain) at the top on mobile.
+	'art-ring-background' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'art_rounded' => '1', 'background' => '1', 'background_class' => 'fixture-bg', 'art_bg_size' => 'cover', 'art_bg_position' => 'right center', 'art_bg_size_mobile' => 'contain', 'art_bg_position_mobile' => 'center top' ),
+		'photos'   => 8,
+		'block'    => true,
+	),
 	// Shapes that turn in (L shapes) and one round a hole (with a shape in
 	// it), one photo through all of them, stretched to a wide stage.
 	'art-grid-shapes-one' => array(

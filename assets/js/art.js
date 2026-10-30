@@ -1233,7 +1233,9 @@
 						// place on along the diagonal), a Gap away.
 						var reach = gap + half / 2;
 						var across = shapeAtPoint( p.x + dx * reach, p.y + dy * reach );
-						r = ( across >= 0 ? cornerRadius( across, p.ux + dx, p.uy + dy ) : own ) + gap;
+						var facing = across >= 0 ? cornerRadius( across, p.ux + dx, p.uy + dy ) : own;
+						// No radius there (Rounded corners off): a sharp corner too.
+						r = facing > 0 ? facing + gap : 0;
 					}
 					r = Math.max( 0, Math.min( r, lenIn / 2, lenOut / 2 ) );
 					if ( outward ) {

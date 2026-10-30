@@ -1743,8 +1743,6 @@ return array(
 		'section' => 'advanced',
 		'panel'   => 'layout',
 		'effects' => self::BACKGROUND_EFFECTS,
-		// Art: the Styles that stretch to any block only (WP_Swiper_Art::is_wide()).
-		'styles'  => array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
 		'label'   => __( 'Use as background', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => false,
@@ -1754,8 +1752,6 @@ return array(
 		'section'     => 'advanced',
 		'panel'       => 'layout',
 		'effects'     => self::BACKGROUND_EFFECTS,
-		// Art: the Styles that stretch to any block only (WP_Swiper_Art::is_wide()).
-		'styles'      => array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
 		'label'       => __( 'Parent block class', 'wp-swiper' ),
 		'type'        => 'text',
 		'default'     => '',
@@ -1768,8 +1764,6 @@ return array(
 		'section' => 'advanced',
 		'panel'   => 'layout',
 		'effects' => self::BACKGROUND_EFFECTS,
-		// Art: the Styles that stretch to any block only (WP_Swiper_Art::is_wide()).
-		'styles'  => array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
 		'label'   => __( 'Overlay color', 'wp-swiper' ),
 		'type'    => 'alpha_color',
 		'default' => 'rgba(0,0,0,0)',

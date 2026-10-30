@@ -573,3 +573,46 @@
 	background: var(--wp-swiper-bg-overlay, transparent);
 	pointer-events: none;
 }
+
+/* A ring or SVG shape as a background (class-wp-swiper-art.php
+   background_fit()): its proportions kept, the largest that fits in the
+   block (Contain) or the smallest that fills it (Cover), placed by its
+   Background position: a share of the room left (or of what is cut off)
+   each way. Sizes in the block's container units, per device. */
+.wp-swiper-art.wp-swiper-art--background.wp-swiper-art--bg-fit {
+	--wp-swiper-art-bg-w-now: var(--wp-swiper-art-bg-w, min(100cqw, 100cqh));
+	--wp-swiper-art-bg-ratio-now: var(--wp-swiper-art-bg-ratio, 1);
+	--wp-swiper-art-bg-x-now: var(--wp-swiper-art-bg-x, 0.5);
+	--wp-swiper-art-bg-y-now: var(--wp-swiper-art-bg-y, 0.5);
+
+	container-type: size;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper-art.wp-swiper-art--background.wp-swiper-art--bg-fit {
+		--wp-swiper-art-bg-w-now: var(--wp-swiper-art-bg-w-tablet, var(--wp-swiper-art-bg-w, min(100cqw, 100cqh)));
+		--wp-swiper-art-bg-ratio-now: var(--wp-swiper-art-bg-ratio-tablet, var(--wp-swiper-art-bg-ratio, 1));
+		--wp-swiper-art-bg-x-now: var(--wp-swiper-art-bg-x-tablet, var(--wp-swiper-art-bg-x, 0.5));
+		--wp-swiper-art-bg-y-now: var(--wp-swiper-art-bg-y-tablet, var(--wp-swiper-art-bg-y, 0.5));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-art.wp-swiper-art--background.wp-swiper-art--bg-fit {
+		--wp-swiper-art-bg-w-now: var(--wp-swiper-art-bg-w-mobile, var(--wp-swiper-art-bg-w-tablet, var(--wp-swiper-art-bg-w, min(100cqw, 100cqh))));
+		--wp-swiper-art-bg-ratio-now: var(--wp-swiper-art-bg-ratio-mobile, var(--wp-swiper-art-bg-ratio-tablet, var(--wp-swiper-art-bg-ratio, 1)));
+		--wp-swiper-art-bg-x-now: var(--wp-swiper-art-bg-x-mobile, var(--wp-swiper-art-bg-x-tablet, var(--wp-swiper-art-bg-x, 0.5)));
+		--wp-swiper-art-bg-y-now: var(--wp-swiper-art-bg-y-mobile, var(--wp-swiper-art-bg-y-tablet, var(--wp-swiper-art-bg-y, 0.5)));
+	}
+}
+
+.wp-swiper-art.wp-swiper-art--background.wp-swiper-art--bg-fit .wp-swiper-art__stage {
+	position: absolute;
+	top: calc((100cqh - var(--wp-swiper-art-bg-w-now) / var(--wp-swiper-art-bg-ratio-now)) * var(--wp-swiper-art-bg-y-now));
+	left: calc((100cqw - var(--wp-swiper-art-bg-w-now)) * var(--wp-swiper-art-bg-x-now));
+	width: var(--wp-swiper-art-bg-w-now);
+	height: auto;
+	max-width: none;
+	margin: 0;
+	aspect-ratio: var(--wp-swiper-art-bg-ratio-now);
+}

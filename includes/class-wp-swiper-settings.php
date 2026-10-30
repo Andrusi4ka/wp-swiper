@@ -31,7 +31,8 @@ class WP_Swiper_Settings {
 
 	/**
 	 * Effects that can be the background of their parent block ("Use as
-	 * background"); Art with a Style that stretches only (is_background()).
+	 * background"); Art: a grid stretches to the block, a ring or SVG shape is
+	 * placed in it (Background size and position, WP_Swiper_Art::render()).
 	 */
 	const BACKGROUND_EFFECTS = array( 'slide', 'fade', 'collage', 'art' );
 
@@ -119,9 +120,7 @@ class WP_Swiper_Settings {
 	 * @return bool
 	 */
 	public static function is_background( $settings ) {
-		return ! empty( $settings['background'] ) && in_array( $settings['effect'], self::BACKGROUND_EFFECTS, true )
-			// Art: a Style that stretches to any block (the grids), not a ring or SVG shape.
-			&& ( WP_Swiper_Art::EFFECT !== $settings['effect'] || WP_Swiper_Art::is_wide( $settings ) );
+		return ! empty( $settings['background'] ) && in_array( $settings['effect'], self::BACKGROUND_EFFECTS, true );
 	}
 
 	/**
@@ -711,7 +710,7 @@ class WP_Swiper_Settings {
 				// the checkbox while it is on (admin.js).
 				'background'  => array(
 					'title'  => __( 'Background', 'wp-swiper' ),
-					'fields' => array( 'background', 'background_class', 'background_overlay_color' ),
+					'fields' => array( 'background', 'background_class', 'art_bg_size', 'art_bg_position', 'background_overlay_color' ),
 				),
 			),
 			'thumbs'   => array(

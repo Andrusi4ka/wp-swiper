@@ -27,6 +27,9 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 				$this->assertSame( array( 'advanced', 'controls' ), array( $field['section'], $field['panel'] ), $key );
 			} elseif ( 'art_caption_middle' === $key ) {
 				$this->assertSame( 'caption', $field['section'], $key );
+			} elseif ( 0 === strpos( $key, 'art_bg_' ) ) {
+				// A ring's or SVG shape's size and place as a background: with the Background's fields.
+				$this->assertSame( array( 'advanced', 'layout' ), array( $field['section'], $field['panel'] ), $key );
 			} else {
 				$this->assertSame( 'layout', $field['section'], $key );
 			}
@@ -1224,21 +1227,62 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertSame( 'Split into cells', WP_Swiper_Preview::preview_words()['split'] );
 	}
 
-	public function test_art_as_a_background_with_a_style_that_stretches() {
+	public function test_art_as_a_background_with_any_style() {
 		$on = array( 'effect' => 'art', 'background' => true, 'background_class' => 'hero' );
-		// The grids, which stretch to any block; not a ring or an SVG shape (their own proportions).
-		foreach ( array( 'grid-shapes', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ) as $style ) {
+		foreach ( array_keys( WP_Swiper_Art::styles() ) as $style ) {
 			$this->assertTrue( WP_Swiper_Settings::is_background( $this->settings( array( 'art_style' => $style ) + $on ) ), $style );
-		}
-		foreach ( array( 'ring', 'ring-text', 'shape' ) as $style ) {
-			$this->assertFalse( WP_Swiper_Settings::is_background( $this->settings( array( 'art_style' => $style ) + $on ) ), $style );
 		}
 		$fields = WP_Swiper_Settings::fields();
 		foreach ( array( 'background', 'background_class', 'background_overlay_color' ) as $key ) {
 			$this->assertContains( 'art', $fields[ $key ]['effects'], $key );
-			$this->assertContains( 'grid-shapes', $fields[ $key ]['styles'], $key );
-			$this->assertNotContains( 'ring', $fields[ $key ]['styles'], $key );
+			$this->assertArrayNotHasKey( 'styles', $fields[ $key ], $key );
 		}
+		// A ring's or SVG shape's size and place (a grid stretches): per device, in the Background block.
+		foreach ( array( 'art_bg_size' => 'contain', 'art_bg_position' => 'center center' ) as $key => $default ) {
+			$this->assertSame( array( 'ring', 'ring-text', 'shape' ), $fields[ $key ]['styles'], $key );
+			$this->assertTrue( $fields[ $key ]['responsive'], $key );
+			$this->assertSame( $default, $fields[ $key ]['default'], $key );
+		}
+		$this->assertSame( array( 'contain', 'cover' ), array_keys( $fields['art_bg_size']['choices'] ) );
+		$this->assertCount( 9, $fields['art_bg_position']['choices'] );
+		$this->assertSame( array( 'background', 'background_class', 'art_bg_size', 'art_bg_position', 'background_overlay_color' ), WP_Swiper_Settings::blocks()['layout']['background']['fields'] );
+	}
+
+	public function test_ring_or_shape_as_a_background_is_placed_in_the_block() {
+		$values = array(
+			'effect'                 => 'art',
+			'art_style'              => 'ring',
+			'background'             => true,
+			'background_class'       => 'hero',
+			'art_bg_size'            => 'cover',
+			'art_bg_position'        => 'right bottom',
+			'art_bg_size_mobile'     => 'contain',
+			'art_bg_position_mobile' => 'left top',
+		);
+		$html = $this->render( $values, $this->slides( 4 ) );
+		$this->assertSame( 1, preg_match( '/<div class="wp-swiper-art [^"]*wp-swiper-art--background wp-swiper-art--bg-fit[ "]/', $html ) );
+		// Cover: the smallest that fills the block; Contain: the largest that fits; a ring square.
+		$this->assertStringContainsString( '--wp-swiper-art-bg-w:max(100cqw, 100cqh * 1)', $html );
+		$this->assertStringContainsString( '--wp-swiper-art-bg-w-tablet:max(100cqw, 100cqh * 1)', $html );
+		$this->assertStringContainsString( '--wp-swiper-art-bg-w-mobile:min(100cqw, 100cqh * 1)', $html );
+		$this->assertStringContainsString( '--wp-swiper-art-bg-x:1;--wp-swiper-art-bg-y:1', html_entity_decode( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-art-bg-x-mobile:0;--wp-swiper-art-bg-y-mobile:0', html_entity_decode( $html ) );
+		// An SVG shape: its drawing's proportions.
+		$this->assertContains( '--wp-swiper-art-bg-ratio:2.5', WP_Swiper_Art::background_fit( $this->settings( $values ), array( 'desktop' => 2.5, 'tablet' => 2.5, 'mobile' => 0.8 ) ) );
+		$this->assertContains( '--wp-swiper-art-bg-w-mobile:min(100cqw, 100cqh * 0.8)', WP_Swiper_Art::background_fit( $this->settings( $values ), array( 'desktop' => 2.5, 'tablet' => 2.5, 'mobile' => 0.8 ) ) );
+		// A grid stretches to the block: none of it.
+		$grid = $this->render( array( 'art_style' => 'grid-shapes' ) + $values, $this->slides( 4 ) );
+		$this->assertStringContainsString( 'wp-swiper-art--background', $grid );
+		$this->assertStringNotContainsString( 'wp-swiper-art--bg-fit', $grid );
+		$this->assertStringNotContainsString( 'art-bg-w', $grid );
+	}
+
+	public function test_style_without_one_saved_is_ring() {
+		// Settings without a Style (or an unknown one): Ring, no notice.
+		$this->assertSame( 'ring', WP_Swiper_Art::style_of( array( 'effect' => 'art' ) ) );
+		$this->assertSame( 'ring', WP_Swiper_Art::style_of( array( 'art_style' => 'nope' ) ) );
+		// So it can be a background too (as a ring, placed in the block).
+		$this->assertTrue( WP_Swiper_Settings::is_background( array( 'effect' => 'art', 'background' => true ) ) );
 	}
 
 	public function test_art_background_markup() {
@@ -1266,11 +1310,13 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		// Its notice, shown by art.js where no block has the class.
 		$this->assertStringContainsString( 'data-wp-swiper-bg-missing hidden', $html );
 
-		// A ring: as usual, captions and all.
+		// A ring too: placed in the block, no captions either.
 		$ring = $this->render( array( 'art_style' => 'ring' ) + $values, $slides );
-		$this->assertStringNotContainsString( 'wp-swiper-art--background', $ring );
-		$this->assertStringNotContainsString( 'data-wp-swiper-bg', $ring );
-		$this->assertStringContainsString( 'wp-swiper-art__caption', $ring );
+		$this->assertStringContainsString( 'wp-swiper-art--bg-fit', $ring );
+		$this->assertStringContainsString( 'data-wp-swiper-bg="hero"', $ring );
+		$this->assertStringNotContainsString( 'wp-swiper-art__caption', $ring );
+		// Not a background: captions and all.
+		$this->assertStringContainsString( 'wp-swiper-art__caption', $this->render( array( 'art_style' => 'ring', 'background' => false ) + $values, $slides ) );
 		// Without the overlay color: no overlay.
 		$this->assertStringNotContainsString( 'wp-swiper-art--bg-overlay', $this->render( array( 'background_overlay_color' => 'rgba(0,0,0,0)' ) + $values, $slides ) );
 	}

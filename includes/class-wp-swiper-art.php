@@ -367,7 +367,8 @@ class WP_Swiper_Art {
 	 * @return string
 	 */
 	public static function style_of( $settings ) {
-		return array_key_exists( $settings['art_style'], self::styles() ) ? $settings['art_style'] : 'ring';
+		$style = isset( $settings['art_style'] ) ? (string) $settings['art_style'] : '';
+		return array_key_exists( $style, self::styles() ) ? $style : 'ring';
 	}
 
 	/**
@@ -778,8 +779,10 @@ class WP_Swiper_Art {
 				array( $shadow ? 'wp-swiper-art--shadow' : '' ),
 				// "Zoom on hover" (art.css): the photo under the pointer.
 				array( WP_Swiper_Settings::hover_zoom( $settings ) ? 'wp-swiper-art--hover-zoom' : '' ),
-				// The block's background (art.js, art.css), with a color over it.
+				// The block's background (art.js, art.css), with a color over it; a
+				// ring or SVG shape placed in the block (its size and position).
 				array( $background ? 'wp-swiper-art--background' : '' ),
+				array( $background && ! $wide ? 'wp-swiper-art--bg-fit' : '' ),
 				array( $background && '' !== WP_Swiper_Settings::background_overlay( $settings ) ? 'wp-swiper-art--bg-overlay' : '' ),
 				array( WP_Swiper_Settings::sanitize_classes( $settings['css_class'] . ' ' . $extra_class ) )
 			)
@@ -816,7 +819,9 @@ class WP_Swiper_Art {
 				'--wp-swiper-art-shadow:drop-shadow(' . $shadow['x'] . 'px ' . $shadow['y'] . 'px ' . $shadow['blur'] . 'px ' . $shadow['color'] . ')',
 			) : array(),
 			// The background's Overlay color (art.css).
-			$background && '' !== WP_Swiper_Settings::background_overlay( $settings ) ? array( '--wp-swiper-bg-overlay:' . WP_Swiper_Settings::background_overlay( $settings ) ) : array()
+			$background && '' !== WP_Swiper_Settings::background_overlay( $settings ) ? array( '--wp-swiper-bg-overlay:' . WP_Swiper_Settings::background_overlay( $settings ) ) : array(),
+			// A ring or SVG shape as a background: its size and place in the block.
+			$background && ! $wide ? self::background_fit( $settings, $ratios ) : array()
 		);
 
 		// The slides' descriptions under it, as under a slider (the same block,
@@ -882,6 +887,42 @@ class WP_Swiper_Art {
 			) . '</p>';
 		}
 		return ob_get_clean();
+	}
+
+	/**
+	 * A ring or SVG shape as a background (art.css): per device its width in
+	 * the block (container units of the block: the largest that fits, or the
+	 * smallest that fills it, its proportions kept), its proportions, and
+	 * where it sits (a share of the room left, or cut off, each way).
+	 *
+	 * @param array $settings Slider settings.
+	 * @param array $ratios   device => width / height (none: 1, a ring).
+	 * @return string[] CSS variables.
+	 */
+	public static function background_fit( $settings, $ratios ) {
+		$sizes     = WP_Swiper_Settings::responsive( $settings, 'art_bg_size' );
+		$positions = WP_Swiper_Settings::responsive( $settings, 'art_bg_position' );
+		$share     = array(
+			'left'   => 0,
+			'top'    => 0,
+			'center' => 0.5,
+			'right'  => 1,
+			'bottom' => 1,
+		);
+		$style     = array();
+		foreach ( array( 'desktop', 'tablet', 'mobile' ) as $device ) {
+			$ratio    = isset( $ratios[ $device ] ) && (float) $ratios[ $device ] > 0 ? round( (float) $ratios[ $device ], 4 ) : 1;
+			$fit      = 'cover' === $sizes[ $device ] ? 'max' : 'min';
+			$place    = explode( ' ', (string) $positions[ $device ] ) + array( 'center', 'center' );
+			$x        = isset( $share[ $place[0] ] ) ? $share[ $place[0] ] : 0.5;
+			$y        = isset( $share[ $place[1] ] ) ? $share[ $place[1] ] : 0.5;
+			$suffix   = WP_Swiper_Render::SUFFIX[ $device ];
+			$style[]  = '--wp-swiper-art-bg-w' . $suffix . ':' . $fit . '(100cqw, 100cqh * ' . $ratio . ')';
+			$style[]  = '--wp-swiper-art-bg-ratio' . $suffix . ':' . $ratio;
+			$style[]  = '--wp-swiper-art-bg-x' . $suffix . ':' . $x;
+			$style[]  = '--wp-swiper-art-bg-y' . $suffix . ':' . $y;
+		}
+		return $style;
 	}
 
 	/**
