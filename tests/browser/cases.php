@@ -95,4 +95,21 @@ return array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-square-text', 'art_center' => '1', 'art_center_text' => '<h3>Hello</h3><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', 'lightbox' => '1' ),
 		'photos'   => 10,
 	),
+	// Grid shapes, the default layout (4 x 4, two of its shapes circles).
+	'art-grid-shapes' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_rounded' => '1', 'lightbox' => '1' ),
+		'photos'   => 10,
+	),
+	// Grid shapes as its block's background: it fills the block behind its content.
+	'art-grid-shapes-background' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_rounded' => '1', 'background' => '1', 'background_class' => 'fixture-bg', 'background_overlay_color' => 'rgba(0,0,0,0.3)' ),
+		'photos'   => 10,
+		'block'    => true,
+	),
+	// Shapes that turn in (L shapes) and one round a hole (with a shape in
+	// it), one photo through all of them, stretched to a wide stage.
+	'art-grid-shapes-one' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_cells_columns' => '5', 'art_cells_rows' => '4', 'art_cells' => '5x4:0,0,0,0,1,0,2,2,0,1,0,2,2,0,3,0,0,0,0,3;2=40', 'art_height' => '420', 'art_gap' => '10', 'art_rounded' => '1', 'art_radius' => '30', 'art_shape_target' => 'one', 'lightbox' => '1' ),
+		'photos'   => 4,
+	),
 );

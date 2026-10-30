@@ -126,3 +126,149 @@
 	max-width: none;
 	object-fit: cover;
 }
+
+/* Grid shapes (preview-art.js): the Shapes / Photos buttons over the stage,
+   the selected shape's panel under them; in Shapes the grid over the photos
+   (empty cells hatched), the rectangle being drawn and the selected shape's
+   outline, a crosshair instead of the photos' move cursor. */
+.wp-swiper-art-tools {
+	position: absolute;
+	z-index: 10;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 4px;
+	max-width: 320px;
+	font: 12px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.wp-swiper-art-tools button {
+	margin: 0;
+	padding: 5px 10px;
+	border: 0;
+	border-radius: 4px;
+	background: rgba(255, 255, 255, 0.92);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+	color: #1d2327;
+	font: inherit;
+	line-height: 1.3;
+	text-transform: none;
+	letter-spacing: 0;
+	cursor: pointer;
+}
+
+.wp-swiper-art-tools button.is-active {
+	background: #2271b1;
+	color: #fff;
+}
+
+.wp-swiper-art-tools button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.wp-swiper-art-tools__panel {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	flex-basis: 100%;
+	padding: 8px;
+	border-radius: 6px;
+	background: rgba(255, 255, 255, 0.95);
+	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+	color: #1d2327;
+}
+
+.wp-swiper-art-tools__panel[hidden] {
+	display: none;
+}
+
+.wp-swiper-art-tools__panel button {
+	box-shadow: inset 0 0 0 1px #c3c4c7;
+}
+
+.wp-swiper-art-tools__corners {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-basis: 100%;
+	margin: 0;
+	color: inherit;
+	font: inherit;
+}
+
+.wp-swiper-art-tools__corners input {
+	flex: 1 1 auto;
+	min-width: 80px;
+	margin: 0;
+}
+
+.wp-swiper-art-tools__value {
+	min-width: 44px;
+	text-align: right;
+}
+
+.wp-swiper-art-cells {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 6;
+	overflow: visible;
+	pointer-events: none;
+}
+
+.wp-swiper-art-cells .is-cell {
+	fill: none;
+	stroke: rgba(255, 255, 255, 0.85);
+	stroke-width: 1;
+	stroke-dasharray: 4 3;
+}
+
+.wp-swiper-art-cells .is-empty {
+	fill: rgba(34, 113, 177, 0.08);
+	stroke: rgba(34, 113, 177, 0.6);
+	stroke-width: 1;
+	stroke-dasharray: 4 3;
+}
+
+.wp-swiper-art-cells .is-paint {
+	fill: rgba(34, 113, 177, 0.3);
+	stroke: #2271b1;
+	stroke-width: 2;
+}
+
+.wp-swiper-art-cells .is-selected {
+	fill: none;
+	stroke: #fff;
+	stroke-width: 3;
+	filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.6));
+}
+
+.wp-swiper-art-cells-mode .wp-swiper-art--grid-shapes .wp-swiper-art__stage,
+.wp-swiper-art-cells-mode .wp-swiper-art--grid-shapes .wp-swiper-art__stage * {
+	cursor: crosshair !important;
+}
+
+.wp-swiper-art-cells-mode .wp-swiper-art--grid-shapes .wp-swiper-art__piece:hover .wp-swiper-art__image {
+	transform: none;
+}
+
+/* The selected shape's outward corners (preview-art.js): a dot on each, a
+   click selects it for a radius of its own (its own: filled; selected: larger). */
+.wp-swiper-art-cells .is-corner {
+	fill: #fff;
+	stroke: #2271b1;
+	stroke-width: 2;
+	filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+}
+
+.wp-swiper-art-cells .is-corner.is-own {
+	fill: #2271b1;
+	stroke: #fff;
+}
+
+.wp-swiper-art-cells .is-corner.is-active {
+	stroke: #d63638;
+	stroke-width: 3;
+}

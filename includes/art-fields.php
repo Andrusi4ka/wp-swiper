@@ -63,6 +63,46 @@ return array(
 		'default' => false,
 		'help'    => __( 'Off: the slider is as large as its shapes. On: the whole drawing, with the space around them.', 'wp-swiper' ),
 	),
+	// Grid shapes: which cell is in which shape, and the shapes' own corners
+	// (WP_Swiper_Art::parse_cells()), one layout for every device. Drawn in
+	// the preview (preview-art.js); no field to show.
+	'art_cells'          => array(
+		'section'       => 'layout',
+		'effects'       => $art,
+		'styles'        => array( 'grid-shapes' ),
+		'label'         => __( 'Shapes', 'wp-swiper' ),
+		'type'          => 'cells',
+		'inline_in'     => 'art_style',
+		'inline_hidden' => true,
+		'default'       => '',
+	),
+	// Grid shapes: its columns and rows, one for every device (it stretches
+	// to the column and the Height).
+	'art_cells_columns'  => array(
+		'section' => 'layout',
+		'effects' => $art,
+		'styles'  => array( 'grid-shapes' ),
+		'group'   => 'art_cells',
+		'label'   => __( 'Columns', 'wp-swiper' ),
+		'type'    => 'number',
+		'default' => 4,
+		'min'     => 2,
+		'max'     => 12,
+		'step'    => 1,
+	),
+	'art_cells_rows'     => array(
+		'section' => 'layout',
+		'effects' => $art,
+		'styles'  => array( 'grid-shapes' ),
+		'group'   => 'art_cells',
+		'label'   => __( 'Rows', 'wp-swiper' ),
+		'type'    => 'number',
+		'default' => 4,
+		'min'     => 2,
+		'max'     => 12,
+		'step'    => 1,
+		'help'    => __( 'The grid the shapes are drawn on. In the preview: drag across cells to join them into one shape, click a shape for its corners. It stretches to the column and the Height.', 'wp-swiper' ),
+	),
 	// Height for every Style, as a slider's: its number and unit per device
 	// (tablet and mobile empty: the larger screen's). A ring is as wide as
 	// it is tall, an SVG shape as its drawing; a grid as wide as the column.
@@ -201,7 +241,7 @@ return array(
 	'art_gap'            => array(
 		'section'    => 'layout',
 		'effects'    => $art,
-		'styles'     => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
+		'styles'     => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
 		'label'      => __( 'Gap (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -216,7 +256,7 @@ return array(
 	'art_rounded'        => array(
 		'section' => 'layout',
 		'effects' => $art,
-		'styles'  => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
+		'styles'  => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
 		'label'   => __( 'Rounded corners', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => true,
@@ -224,7 +264,7 @@ return array(
 	'art_radius'         => array(
 		'section'    => 'layout',
 		'effects'    => $art,
-		'styles'     => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
+		'styles'     => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
 		'label'      => __( 'Radius (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -401,7 +441,7 @@ return array(
 	'art_caption_middle' => array(
 		'section' => 'caption',
 		'effects' => $art,
-		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'   => __( 'Only on the middle photo', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => false,
@@ -443,7 +483,7 @@ return array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
 		'effects' => $art,
-		'styles'  => array( 'shape' ),
+		'styles'  => array( 'grid-shapes', 'shape' ),
 		'label'   => __( 'What changes', 'wp-swiper' ),
 		'type'    => 'select',
 		'default' => 'any',
@@ -463,7 +503,7 @@ return array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
 		'effects' => $art,
-		'styles'  => array( 'shape' ),
+		'styles'  => array( 'grid-shapes', 'shape' ),
 		'label'   => __( 'Appearance', 'wp-swiper' ),
 		'type'    => 'select',
 		'default' => 'all',

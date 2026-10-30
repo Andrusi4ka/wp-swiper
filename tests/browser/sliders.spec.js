@@ -14,6 +14,7 @@ const CASES = [
 	'collage-scatter', 'collage-freeform', 'collage-grid', 'collage-masonry',
 	'collage-justified', 'collage-random', 'collage-feature',
 	'art-ring', 'art-ring-text', 'art-grid-circle', 'art-grid-circle-text', 'art-grid-square', 'art-grid-square-text',
+	'art-grid-shapes', 'art-grid-shapes-one', 'art-grid-shapes-background',
 ];
 
 // Ones with arrows that move the slides (a marquee runs on its own).
@@ -24,7 +25,8 @@ const NAVIGATES = [
 
 // Ones whose photo opens the lightbox on a click.
 const LIGHTBOX = NAVIGATES.filter( ( name ) => 'video' !== name ).concat(
-	CASES.filter( ( name ) => /^(collage|art)-/.test( name ) )
+	// A background takes no clicks: no lightbox.
+	CASES.filter( ( name ) => /^(collage|art)-/.test( name ) && ! /background/.test( name ) )
 );
 
 /**
@@ -155,11 +157,18 @@ for ( const name of CASES ) {
 			test( 'a photo opens the lightbox', async ( { page } ) => {
 				const errors = await open( page, name );
 				const photo = /^art-/.test( name )
-					? page.locator( '.wp-swiper-art__piece:visible img' ).first()
+					? page.locator( '.wp-swiper-art__piece:visible' ).first()
 					: /^collage-/.test( name )
 						? page.locator( '.wp-swiper-collage__grid img:visible' ).first()
 						: page.locator( '.swiper-slide-active img' ).first();
-				await photo.click();
+				if ( /^art-/.test( name ) ) {
+					// Art: the first piece near its left edge, its own there (its
+					// middle may be another piece's: a shape round a hole).
+					const box = await photo.boundingBox();
+					await photo.click( { position: { x: 12, y: box.height / 2 } } );
+				} else {
+					await photo.click();
+				}
 				const lightbox = page.locator( '.wp-swiper-lightbox' );
 				await expect( lightbox ).toBeVisible();
 				await page.keyboard.press( 'Escape' );

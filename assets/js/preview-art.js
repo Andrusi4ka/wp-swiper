@@ -341,6 +341,7 @@
 	 */
 	window.wpSwiperRestoreArt = function ( state ) {
 		var done = false;
+		var missed = false;
 		[].forEach.call( document.querySelectorAll( '.wp-swiper-art' ), function ( block ) {
 			var api = block.wpSwiperArt;
 			if ( ! api || ! api.setOrder || api.device() !== state.device ) {
@@ -360,11 +361,496 @@
 			if ( api.setCenter && typeof state.center === 'number' && isFinite( state.center ) ) {
 				api.setCenter( state.center );
 			}
+			// Grid shapes: its layout (none kept, the default one: the editor updates the preview).
+			if ( api.setGrid && api.grid() && typeof state.cells === 'string' && window.wpSwiperArtCells ) {
+				var grid = window.wpSwiperArtCells.parse( state.cells );
+				var now = api.grid();
+				if ( ! grid || grid.columns !== now.columns || grid.rows !== now.rows ) {
+					missed = true;
+					return;
+				}
+				api.setGrid( window.wpSwiperArtCells.number( grid ) );
+				if ( block.wpSwiperArtEditor ) {
+					block.wpSwiperArtEditor.selected = -1;
+					block.wpSwiperArtEditor.corner = null;
+					refresh( block.wpSwiperArtEditor );
+				}
+			}
 			api.setOrder( order );
 			done = true;
 		} );
-		return done;
+		return done && ! missed;
 	};
+
+	/*
+	 * Grid shapes (art.js gridShapes()): the Shapes / Photos buttons over the
+	 * stage. Shapes (the first time): the grid shows; a drag from one cell to
+	 * another joins the cells of that rectangle to the first cell's shape (a
+	 * new shape from an empty cell); a click selects the cell's shape (an
+	 * empty cell becomes a shape of its own), its panel sets its corners (a
+	 * share of half a cell, or Radius), splits it into its cells or empties
+	 * them. Each change is drawn at once and kept by the editor (admin.js: an
+	 * "art-cells" message with the layout). Photos: they swap by dragging, as
+	 * in the other Styles. Caught before a photo's drag (capture).
+	 */
+	var I18N = window.wpSwiperPreviewI18n || {};
+	var MODE_KEY = 'wpSwiperArtCellsMode';
+	var SVG_NS = 'http://www.w3.org/2000/svg';
+	var cellsMode = 'shapes';
+	try {
+		cellsMode = window.sessionStorage.getItem( MODE_KEY ) === 'photos' ? 'photos' : 'shapes';
+	} catch ( e ) {}
+	var editors = [];
+	var paint = null;
+
+	function word( key, fallback ) {
+		return I18N[ key ] || fallback;
+	}
+
+	function cellsTools() {
+		return window.wpSwiperArtCells;
+	}
+
+	function button( label, className ) {
+		var b = document.createElement( 'button' );
+		b.type = 'button';
+		b.className = className;
+		b.textContent = label;
+		return b;
+	}
+
+	function makeEditor( block ) {
+		var api = block.wpSwiperArt;
+		var stage = block.querySelector( '.wp-swiper-art__stage' );
+		var ed = { block: block, api: api, stage: stage, selected: -1 };
+
+		ed.tools = document.createElement( 'div' );
+		ed.tools.className = 'wp-swiper-art-tools';
+		ed.shapesButton = button( word( 'shapes', 'Shapes' ), 'wp-swiper-art-tools__mode' );
+		ed.photosButton = button( word( 'photos', 'Photos' ), 'wp-swiper-art-tools__mode' );
+		ed.tools.appendChild( ed.shapesButton );
+		ed.tools.appendChild( ed.photosButton );
+
+		// The selected shape's panel.
+		ed.panel = document.createElement( 'div' );
+		ed.panel.className = 'wp-swiper-art-tools__panel';
+		ed.panel.hidden = true;
+		var corners = document.createElement( 'label' );
+		corners.className = 'wp-swiper-art-tools__corners';
+		// "Corners" (the shape's), or "Corner" (the one selected).
+		ed.rangeLabel = document.createTextNode( word( 'corners', 'Corners' ) + ' ' );
+		corners.appendChild( ed.rangeLabel );
+		ed.range = document.createElement( 'input' );
+		ed.range.type = 'range';
+		ed.range.min = 0;
+		ed.range.max = 100;
+		ed.range.step = 5;
+		corners.appendChild( ed.range );
+		ed.rangeValue = document.createElement( 'span' );
+		ed.rangeValue.className = 'wp-swiper-art-tools__value';
+		corners.appendChild( ed.rangeValue );
+		ed.panel.appendChild( corners );
+		ed.radiusButton = button( word( 'asRadius', 'As Radius' ), 'wp-swiper-art-tools__action' );
+		ed.splitButton = button( word( 'split', 'Split into cells' ), 'wp-swiper-art-tools__action' );
+		ed.emptyButton = button( word( 'empty', 'Empty' ), 'wp-swiper-art-tools__action' );
+		ed.panel.appendChild( ed.radiusButton );
+		ed.panel.appendChild( ed.splitButton );
+		ed.panel.appendChild( ed.emptyButton );
+		ed.tools.appendChild( ed.panel );
+		block.appendChild( ed.tools );
+
+		ed.overlay = document.createElementNS( SVG_NS, 'svg' );
+		ed.overlay.setAttribute( 'class', 'wp-swiper-art-cells' );
+		ed.overlay.setAttribute( 'aria-hidden', 'true' );
+		stage.appendChild( ed.overlay );
+
+		ed.shapesButton.addEventListener( 'click', function () {
+			setMode( 'shapes' );
+		} );
+		ed.photosButton.addEventListener( 'click', function () {
+			setMode( 'photos' );
+		} );
+		ed.range.addEventListener( 'input', function () {
+			setRadius( ed, Number( ed.range.value ), false );
+		} );
+		ed.range.addEventListener( 'change', function () {
+			setRadius( ed, Number( ed.range.value ), true );
+		} );
+		ed.radiusButton.addEventListener( 'click', function () {
+			setRadius( ed, null, true );
+		} );
+		ed.splitButton.addEventListener( 'click', function () {
+			change( ed, function ( grid, shape ) {
+				var next = grid.count;
+				grid.cells = grid.cells.map( function ( cell ) {
+					return cell === shape ? next++ : cell;
+				} );
+				delete grid.radii[ shape ];
+			} );
+		} );
+		ed.emptyButton.addEventListener( 'click', function () {
+			change( ed, function ( grid, shape ) {
+				grid.cells = grid.cells.map( function ( cell ) {
+					return cell === shape ? -1 : cell;
+				} );
+				delete grid.radii[ shape ];
+			} );
+			ed.selected = -1;
+			ed.corner = null;
+			refresh( ed );
+		} );
+
+		if ( 'ResizeObserver' in window ) {
+			new ResizeObserver( function () {
+				refresh( ed );
+			} ).observe( stage );
+		}
+		window.addEventListener( 'resize', function () {
+			refresh( ed );
+		} );
+		editors.push( ed );
+		refresh( ed );
+		return ed;
+	}
+
+	// A copy of the layout as drawn, to change.
+	function layoutOf( ed ) {
+		var grid = ed.api.grid();
+		var radii = {};
+		Object.keys( grid.radii || {} ).forEach( function ( shape ) {
+			radii[ shape ] = grid.radii[ shape ];
+		} );
+		var corners = {};
+		Object.keys( grid.corners || {} ).forEach( function ( at ) {
+			corners[ at ] = grid.corners[ at ];
+		} );
+		var count = 0;
+		grid.cells.forEach( function ( cell ) {
+			count = Math.max( count, cell + 1 );
+		} );
+		return { columns: grid.columns, rows: grid.rows, cells: grid.cells.slice(), radii: radii, corners: corners, count: count };
+	}
+
+	// The outward corners of the shapes as drawn ("x.y" => true): a corner's
+	// own radius kept only while it is one (a shape changed: those gone, forgotten).
+	function cornersDrawn( ed ) {
+		var drawn = {};
+		( ed.block.wpSwiperArtOutlines || [] ).forEach( function ( outline ) {
+			( outline && outline.corners || [] ).forEach( function ( corner ) {
+				drawn[ corner.key ] = true;
+			} );
+		} );
+		return drawn;
+	}
+
+	// A new layout: its shapes split where they no longer touch, drawn, kept by the editor.
+	function apply( ed, grid, keep ) {
+		grid = cellsTools().split( grid );
+		ed.api.setGrid( grid );
+		if ( keep !== false ) {
+			send( ed );
+		}
+		refresh( ed );
+	}
+
+	function send( ed ) {
+		var grid = ed.api.grid();
+		var drawn = cornersDrawn( ed );
+		Object.keys( grid.corners || {} ).forEach( function ( at ) {
+			if ( ! drawn[ at ] ) {
+				delete grid.corners[ at ];
+			}
+		} );
+		if ( ed.corner && ! drawn[ ed.corner ] ) {
+			ed.corner = null;
+		}
+		if ( window.parent && window.parent !== window ) {
+			window.parent.postMessage( { wpSwiper: 'art-cells', device: ed.api.device(), cells: cellsTools().text( ed.api.grid() ) }, window.location.origin );
+		}
+	}
+
+	// The selected shape changed by `fn( grid, shape )`.
+	function change( ed, fn ) {
+		var grid = layoutOf( ed );
+		var shape = ed.selected >= 0 ? grid.cells[ ed.selected ] : -1;
+		if ( shape < 0 ) {
+			return;
+		}
+		fn( grid, shape );
+		apply( ed, grid );
+	}
+
+	// The selected shape's corners: a share of half a cell (null: Radius). Kept on release.
+	// Or the selected corner's (null: its shape's).
+	function setRadius( ed, value, keep ) {
+		var grid = layoutOf( ed );
+		var shape = ed.selected >= 0 ? grid.cells[ ed.selected ] : -1;
+		if ( shape < 0 ) {
+			return;
+		}
+		var own = ed.corner ? grid.corners : grid.radii;
+		var key = ed.corner ? ed.corner : shape;
+		if ( null === value ) {
+			delete own[ key ];
+		} else {
+			own[ key ] = value;
+		}
+		ed.api.setGrid( cellsTools().number( grid ) );
+		if ( keep ) {
+			send( ed );
+		}
+		refresh( ed );
+	}
+
+	function setMode( mode ) {
+		cellsMode = mode;
+		try {
+			window.sessionStorage.setItem( MODE_KEY, mode );
+		} catch ( e ) {}
+		editors.forEach( function ( ed ) {
+			if ( mode !== 'shapes' ) {
+				ed.selected = -1;
+				ed.corner = null;
+			}
+			refresh( ed );
+		} );
+	}
+
+	// The cell under a point (the gap after a cell counts as the cell's).
+	function cellAt( ed, x, y ) {
+		var g = ed.block.wpSwiperArtGrid;
+		if ( ! g ) {
+			return -1;
+		}
+		var rect = ed.stage.getBoundingClientRect();
+		var cx = Math.max( 0, Math.min( g.columns - 1, Math.floor( ( x - rect.left ) / ( g.cellW + g.gap ) ) ) );
+		var cy = Math.max( 0, Math.min( g.rows - 1, Math.floor( ( y - rect.top ) / ( g.cellH + g.gap ) ) ) );
+		return cy * g.columns + cx;
+	}
+
+	function svgNode( name, attrs, parent ) {
+		var node = document.createElementNS( SVG_NS, name );
+		Object.keys( attrs ).forEach( function ( key ) {
+			node.setAttribute( key, attrs[ key ] );
+		} );
+		parent.appendChild( node );
+		return node;
+	}
+
+	// The grid over the stage, the rectangle being drawn, the selected shape; the buttons and panel.
+	function refresh( ed ) {
+		var g = ed.block.wpSwiperArtGrid;
+		var grid = ed.api.grid();
+		var on = cellsMode === 'shapes';
+		document.documentElement.classList.toggle( 'wp-swiper-art-cells-mode', on );
+		ed.shapesButton.classList.toggle( 'is-active', on );
+		ed.photosButton.classList.toggle( 'is-active', ! on );
+		ed.tools.style.left = ( ed.stage.offsetLeft + 8 ) + 'px';
+		ed.tools.style.top = ( ed.stage.offsetTop + 8 ) + 'px';
+		while ( ed.overlay.firstChild ) {
+			ed.overlay.removeChild( ed.overlay.firstChild );
+		}
+		ed.overlay.style.display = on && g ? '' : 'none';
+		if ( ! g || ! grid ) {
+			ed.panel.hidden = true;
+			return;
+		}
+		ed.overlay.setAttribute( 'width', g.width );
+		ed.overlay.setAttribute( 'height', g.height );
+		ed.overlay.setAttribute( 'viewBox', '0 0 ' + g.width + ' ' + g.height );
+		var box = function ( x0, y0, x1, y1 ) {
+			return {
+				x: x0 * ( g.cellW + g.gap ),
+				y: y0 * ( g.cellH + g.gap ),
+				width: ( x1 - x0 + 1 ) * ( g.cellW + g.gap ) - g.gap,
+				height: ( y1 - y0 + 1 ) * ( g.cellH + g.gap ) - g.gap
+			};
+		};
+		grid.cells.forEach( function ( cell, k ) {
+			var b = box( k % g.columns, Math.floor( k / g.columns ), k % g.columns, Math.floor( k / g.columns ) );
+			b[ 'class' ] = cell < 0 ? 'is-empty' : 'is-cell';
+			svgNode( 'rect', b, ed.overlay );
+		} );
+		if ( paint && paint.ed === ed ) {
+			var a = paint.from;
+			var z = paint.to;
+			var p = box( Math.min( a % g.columns, z % g.columns ), Math.min( Math.floor( a / g.columns ), Math.floor( z / g.columns ) ), Math.max( a % g.columns, z % g.columns ), Math.max( Math.floor( a / g.columns ), Math.floor( z / g.columns ) ) );
+			p[ 'class' ] = 'is-paint';
+			svgNode( 'rect', p, ed.overlay );
+		}
+		var shape = ed.selected >= 0 ? grid.cells[ ed.selected ] : -1;
+		var outline = shape >= 0 && ed.block.wpSwiperArtOutlines ? ed.block.wpSwiperArtOutlines[ shape ] : null;
+		if ( on && outline ) {
+			svgNode( 'path', { d: outline.d, transform: 'translate(' + outline.box.left + ' ' + outline.box.top + ')', 'class': 'is-selected' }, ed.overlay );
+		}
+		// Its outward corners: a dot on each (its own radius: filled; the one selected: larger).
+		if ( on && outline ) {
+			( outline.corners || [] ).forEach( function ( corner ) {
+				var mine = grid.corners && typeof grid.corners[ corner.key ] === 'number';
+				svgNode( 'circle', {
+					cx: corner.x,
+					cy: corner.y,
+					r: corner.key === ed.corner ? 7 : 5,
+					'class': 'is-corner' + ( mine ? ' is-own' : '' ) + ( corner.key === ed.corner ? ' is-active' : '' )
+				}, ed.overlay );
+			} );
+		}
+		ed.panel.hidden = ! ( on && shape >= 0 );
+		if ( shape >= 0 ) {
+			var shapeOwn = grid.radii && typeof grid.radii[ shape ] === 'number';
+			var cornerOwn = !! ed.corner && grid.corners && typeof grid.corners[ ed.corner ] === 'number';
+			var value = cornerOwn ? grid.corners[ ed.corner ] : ( shapeOwn ? grid.radii[ shape ] : null );
+			ed.rangeLabel.nodeValue = ( ed.corner ? word( 'corner', 'Corner' ) : word( 'corners', 'Corners' ) ) + ' ';
+			ed.range.value = null === value ? 0 : value;
+			ed.rangeValue.textContent = null === value ? word( 'radius', 'Radius' ) : value + '%';
+			ed.radiusButton.textContent = ed.corner ? word( 'asShape', 'As the shape' ) : word( 'asRadius', 'As Radius' );
+			ed.radiusButton.disabled = ed.corner ? ! cornerOwn : ! shapeOwn;
+		}
+	}
+
+	// The selected shape's corner dot under a point ("x.y"), if any.
+	function cornerAt( ed, x, y ) {
+		var grid = ed.api.grid();
+		var shape = ed.selected >= 0 && grid ? grid.cells[ ed.selected ] : -1;
+		var outline = shape >= 0 && ed.block.wpSwiperArtOutlines ? ed.block.wpSwiperArtOutlines[ shape ] : null;
+		if ( ! outline ) {
+			return null;
+		}
+		var rect = ed.stage.getBoundingClientRect();
+		var found = null;
+		var best = 12;
+		( outline.corners || [] ).forEach( function ( corner ) {
+			var distance = Math.hypot( x - rect.left - corner.x, y - rect.top - corner.y );
+			if ( distance < best ) {
+				best = distance;
+				found = corner.key;
+			}
+		} );
+		return found;
+	}
+
+	function editorOf( target ) {
+		for ( var i = 0; i < editors.length; i++ ) {
+			if ( editors[ i ].stage.contains( target ) ) {
+				return editors[ i ];
+			}
+		}
+		return null;
+	}
+
+	document.addEventListener( 'pointerdown', function ( e ) {
+		if ( e.button !== 0 || cellsMode !== 'shapes' ) {
+			return;
+		}
+		var ed = editorOf( e.target );
+		if ( ! ed ) {
+			return;
+		}
+		e.stopImmediatePropagation();
+		e.preventDefault();
+		// A dot on the selected shape's corner: that corner selected (again: none).
+		var corner = cornerAt( ed, e.clientX, e.clientY );
+		if ( corner ) {
+			ed.corner = ed.corner === corner ? null : corner;
+			stopNextClick();
+			refresh( ed );
+			return;
+		}
+		var cell = cellAt( ed, e.clientX, e.clientY );
+		paint = { ed: ed, from: cell, to: cell, moved: false };
+		refresh( ed );
+	}, true );
+
+	document.addEventListener( 'pointermove', function ( e ) {
+		if ( ! paint ) {
+			return;
+		}
+		var cell = cellAt( paint.ed, e.clientX, e.clientY );
+		if ( cell !== paint.to ) {
+			paint.to = cell;
+			paint.moved = true;
+			refresh( paint.ed );
+		}
+	} );
+
+	document.addEventListener( 'pointerup', function () {
+		if ( ! paint ) {
+			return;
+		}
+		var done = paint;
+		paint = null;
+		stopNextClick();
+		var ed = done.ed;
+		var grid = layoutOf( ed );
+		var columns = grid.columns;
+		var first = grid.cells[ done.from ];
+		if ( done.from === done.to ) {
+			// A click: its shape selected (again: none); an empty cell a shape of its own.
+			if ( first < 0 ) {
+				grid.cells[ done.from ] = grid.count;
+				ed.selected = done.from;
+				ed.corner = null;
+				apply( ed, grid );
+				return;
+			}
+			// On the selected shape with a corner selected: back to the whole shape.
+			var same = ed.selected >= 0 && grid.cells[ ed.selected ] === first;
+			if ( same && ed.corner ) {
+				ed.corner = null;
+			} else {
+				ed.selected = same ? -1 : done.from;
+				ed.corner = null;
+			}
+			refresh( ed );
+			return;
+		}
+		ed.corner = null;
+		// A drag: the rectangle joins the first cell's shape (a new one from an empty cell).
+		var shape = first >= 0 ? first : grid.count;
+		var x0 = Math.min( done.from % columns, done.to % columns );
+		var x1 = Math.max( done.from % columns, done.to % columns );
+		var y0 = Math.min( Math.floor( done.from / columns ), Math.floor( done.to / columns ) );
+		var y1 = Math.max( Math.floor( done.from / columns ), Math.floor( done.to / columns ) );
+		for ( var y = y0; y <= y1; y++ ) {
+			for ( var x = x0; x <= x1; x++ ) {
+				grid.cells[ y * columns + x ] = shape;
+			}
+		}
+		ed.selected = done.from;
+		apply( ed, grid );
+	} );
+
+	document.addEventListener( 'keydown', function ( e ) {
+		if ( e.key !== 'Escape' ) {
+			return;
+		}
+		if ( paint ) {
+			var ed = paint.ed;
+			paint = null;
+			refresh( ed );
+			return;
+		}
+		editors.forEach( function ( one ) {
+			one.selected = -1;
+			one.corner = null;
+			refresh( one );
+		} );
+	} );
+
+	// The Grid shapes blocks, once art.js has set them up.
+	function setupEditors() {
+		[].forEach.call( document.querySelectorAll( '.wp-swiper-art--grid-shapes' ), function ( block ) {
+			if ( block.wpSwiperArt && block.wpSwiperArt.setGrid && ! block.wpSwiperArtEditor && cellsTools() ) {
+				block.wpSwiperArtEditor = makeEditor( block );
+			}
+		} );
+	}
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', setupEditors );
+	} else {
+		setupEditors();
+	}
+	window.addEventListener( 'load', setupEditors );
 
 	document.addEventListener( 'pointercancel', end );
 	document.addEventListener( 'keydown', function ( e ) {

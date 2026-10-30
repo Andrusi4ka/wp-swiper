@@ -30,9 +30,10 @@ class WP_Swiper_Settings {
 	const SINGLE_SLIDE_EFFECTS = array( 'fade', 'cube', 'flip', 'cards', 'creative', 'thumbs', 'collage' );
 
 	/**
-	 * Effects that can be the background of their parent block ("Use as background").
+	 * Effects that can be the background of their parent block ("Use as
+	 * background"); Art with a Style that stretches only (is_background()).
 	 */
-	const BACKGROUND_EFFECTS = array( 'slide', 'fade', 'collage' );
+	const BACKGROUND_EFFECTS = array( 'slide', 'fade', 'collage', 'art' );
 
 	/**
 	 * Effects with a main image that can zoom ("Zoom the main image"); Slide
@@ -112,7 +113,9 @@ class WP_Swiper_Settings {
 	 * @return bool
 	 */
 	public static function is_background( $settings ) {
-		return ! empty( $settings['background'] ) && in_array( $settings['effect'], self::BACKGROUND_EFFECTS, true );
+		return ! empty( $settings['background'] ) && in_array( $settings['effect'], self::BACKGROUND_EFFECTS, true )
+			// Art: a Style that stretches to any block (the grids), not a ring or SVG shape.
+			&& ( WP_Swiper_Art::EFFECT !== $settings['effect'] || WP_Swiper_Art::is_wide( $settings ) );
 	}
 
 	/**

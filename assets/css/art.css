@@ -524,3 +524,42 @@
 .wp-swiper-art .wp-swiper-art__center-text > :last-child {
 	margin-bottom: 0;
 }
+
+/* "Use as background" (the grids, class-wp-swiper-art.php; art.js puts it
+   first in the block with the class given): it fills the block behind its
+   content, as a slider does (frontend.css, which a page with Art alone may
+   not load: the block's rules again here). Nothing of it takes clicks. */
+.wp-swiper-bg-host {
+	isolation: isolate;
+}
+
+.wp-swiper-bg-host--static {
+	position: relative;
+}
+
+.wp-swiper-art.wp-swiper-art--background {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	width: auto;
+	height: auto;
+	margin: 0;
+	overflow: hidden;
+	border-radius: inherit;
+	pointer-events: none;
+}
+
+/* The block's height, not the Height. */
+.wp-swiper-art.wp-swiper-art--wide.wp-swiper-art--background .wp-swiper-art__stage {
+	height: 100%;
+}
+
+/* "Overlay": a color over the photos, under the content. */
+.wp-swiper-art.wp-swiper-art--background.wp-swiper-art--bg-overlay::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 4;
+	background: var(--wp-swiper-bg-overlay, transparent);
+	pointer-events: none;
+}

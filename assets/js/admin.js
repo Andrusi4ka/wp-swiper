@@ -2040,6 +2040,8 @@
 
 			// Art: the preview says its photos swap by dragging.
 			$( '.wp-swiper-preview__hint[data-effect="art"]' ).prop( 'hidden', effect !== 'art' );
+			// Grid shapes: its shapes are drawn there (preview-art.js).
+			$( '.wp-swiper-preview__hint[data-effect="art-cells"]' ).prop( 'hidden', effect !== 'art' || $( '#wp-swiper-art_style' ).val() !== 'grid-shapes' );
 			// Art (class-wp-swiper-art.php): its own fields only, those of its Style
 			// (data-styles); of the rest the Effect, the slider's class and id, the
 			// lightbox's (images only, no strip), and the Caption and Description
@@ -2761,7 +2763,7 @@
 			 */
 			var HISTORY_MAX = 50;
 			// Taken by the preview without drawing it again (wpSwiperRestoreCollage / -Art).
-			var PREVIEW_FIELDS = [ 'collage_order', 'collage_mosaic', 'collage_cuts', 'collage_manual', 'collage_count', 'art_order', 'art_ring_center' ];
+			var PREVIEW_FIELDS = [ 'collage_order', 'collage_mosaic', 'collage_cuts', 'collage_manual', 'collage_count', 'art_order', 'art_ring_center', 'art_cells' ];
 			var $history = $preview.find( '.wp-swiper-preview__history' );
 			var $undo = $history.find( '.wp-swiper-preview__undo' );
 			var $redo = $history.find( '.wp-swiper-preview__redo' );
@@ -3052,7 +3054,9 @@
 						done = win.wpSwiperRestoreArt( {
 							device: device,
 							order: idsOf( resolved( 'art_order', device ) ),
-							center: isFinite( center ) ? center : null
+							center: isFinite( center ) ? center : null,
+							// Grid shapes: its layout (one for every device).
+							cells: String( $( '#wp-swiper-art_cells' ).val() || '' )
 						} ) || done;
 					}
 				} catch ( e ) {}
@@ -3232,8 +3236,13 @@
 					return;
 				}
 				var suffix = data.device === 'desktop' ? '' : '_' + data.device;
-				if ( data.wpSwiper === 'art-order' || data.wpSwiper === 'art-center' ) {
+				if ( data.wpSwiper === 'art-order' || data.wpSwiper === 'art-center' || data.wpSwiper === 'art-cells' ) {
 					record( data.device );
+				}
+				// Grid shapes: the layout drawn there (one for every device; checked again when saved).
+				if ( data.wpSwiper === 'art-cells' && typeof data.cells === 'string' && data.cells.length <= 2000 ) {
+					$( '#wp-swiper-art_cells' ).val( data.cells );
+					return;
 				}
 				if ( data.wpSwiper === 'art-order' && Array.isArray( data.ids ) ) {
 					$( '#wp-swiper-art_order' + suffix ).val( data.ids.map( Number ).filter( function ( id ) {

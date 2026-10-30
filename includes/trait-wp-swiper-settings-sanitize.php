@@ -152,6 +152,10 @@ trait WP_Swiper_Settings_Sanitize {
 				case 'svg_shape': // Art's SVG shape: its shapes' geometry only, as JSON; '' = none.
 					$clean[ $key ] = WP_Swiper_Svg_Shape::sanitize( null === $value ? '' : (string) $value );
 					break;
+
+				case 'cells': // Art's Grid shapes layout, "4x4:0,0,1,…;1=100"; '' = the default one.
+					$clean[ $key ] = WP_Swiper_Art::sanitize_cells( null === $value ? '' : (string) $value );
+					break;
 			}
 		}
 

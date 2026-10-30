@@ -32,9 +32,10 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 			}
 			$this->assertSame( $field, $fields[ $key ], $key );
 		}
-		// No other field is Art's, but the Image shadow, shared with the effects whose photos stand apart.
+		// No other field is Art's, but the Image shadow, shared with the effects whose photos stand apart,
+		// and the Background, shared with the effects that can be one.
 		foreach ( $fields as $key => $field ) {
-			if ( 0 !== strpos( $key, 'art_' ) && 0 !== strpos( $key, 'image_shadow' ) && ! empty( $field['effects'] ) ) {
+			if ( 0 !== strpos( $key, 'art_' ) && 0 !== strpos( $key, 'image_shadow' ) && 0 !== strpos( $key, 'background' ) && ! empty( $field['effects'] ) ) {
 				$this->assertNotContains( 'art', $field['effects'], $key );
 			}
 		}
@@ -605,7 +606,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 			$this->assertSame( array( 'ring' ), $fields[ $key ]['styles'], $key );
 		}
 		// SVG shape: captions on its main window only too; its photos move on window by window.
-		$this->assertSame( array( 'ring', 'grid-circle', 'grid-square', 'shape' ), $fields['art_caption_middle']['styles'] );
+		$this->assertSame( array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ), $fields['art_caption_middle']['styles'] );
 		$this->assertSame( array( 'ring', 'grid-circle', 'grid-square' ), $fields['art_swap_target']['styles'] );
 		$this->assertSame( 'editor', $fields['art_center_text']['type'] );
 		// Content in the middle: a checkbox, on by default, before the middle's own settings.
@@ -953,7 +954,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 	public function test_grid_circle_with_text_in_the_circle() {
 		// After Grid + circle, SVG shape last; its icon there.
 		$styles = array_keys( WP_Swiper_Art::styles() );
-		$this->assertSame( array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'shape' ), $styles );
+		$this->assertSame( array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes', 'shape' ), $styles );
 		$this->assertSame( 'Grid + circle + text', WP_Swiper_Art::styles()['grid-circle-text'] );
 		$svg = file_get_contents( WP_SWIPER_DIR . 'assets/images/art/grid-circle-text.svg' );
 		$this->assertStringContainsString( 'fill="currentColor"', $svg );
@@ -1057,5 +1058,220 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertSame( array( 'desktop' => 9, 'tablet' => 9, 'mobile' => 9 ), WP_Swiper_Art::counts( $this->settings( $values ) ) );
 		// The preview's hint says a square's edge drags too.
 		$this->assertStringContainsString( "Drag the edge of the middle circle or square to resize it.", file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' ) );
+	}
+
+	/* Grid shapes ------------------------------------------------------ */
+
+	public function test_grid_shapes_is_a_style_of_windows_with_its_icon() {
+		$this->assertSame( 'Grid shapes', WP_Swiper_Art::styles()['grid-shapes'] );
+		$svg = file_get_contents( WP_SWIPER_DIR . 'assets/images/art/grid-shapes.svg' );
+		$this->assertStringContainsString( 'fill="currentColor"', $svg );
+		$this->assertDoesNotMatchRegularExpression( '~<script|<foreignObject|<style|\son\w+=|href=~i', $svg );
+		// As wide as the column (it stretches), its first shape the main one, windows as SVG shape's.
+		$this->assertTrue( WP_Swiper_Art::is_wide( $this->settings( array( 'art_style' => 'grid-shapes' ) ) ) );
+		$this->assertTrue( WP_Swiper_Art::has_middle_photo( 'grid-shapes' ) );
+		$this->assertTrue( WP_Swiper_Art::has_windows( 'grid-shapes' ) );
+		$this->assertTrue( WP_Swiper_Art::has_windows( 'shape' ) );
+		$this->assertFalse( WP_Swiper_Art::has_windows( 'grid-square' ) );
+	}
+
+	public function test_grid_shapes_layout_is_read_and_numbered() {
+		$this->assertSame(
+			array(
+				'columns' => 2,
+				'rows'    => 2,
+				'cells'   => array( 5, 5, -1, 9 ),
+				'radii'   => array( 9 => 50, 3 => 20 ),
+				'corners' => array(),
+			),
+			WP_Swiper_Art::parse_cells( ' 2x2:5,5,-1,9;9=50,3=20 ' )
+		);
+		// Without radii; a radius over 100 is 100.
+		$this->assertSame( array(), WP_Swiper_Art::parse_cells( '2x1:0,1' )['radii'] );
+		$this->assertSame( array( 0 => 100 ), WP_Swiper_Art::parse_cells( '2x1:0,1;0=250' )['radii'] );
+		foreach ( array( '', 'nonsense', '2x2:0,1,2', '13x1:' . implode( ',', range( 0, 12 ) ), '0x2:', '2x1:0,-2', '2x1:0,144', '2x1:0,1;a=5', '2x1:0,1;<b>' ) as $bad ) {
+			$this->assertNull( WP_Swiper_Art::parse_cells( $bad ), $bad );
+		}
+		// Kept numbered from 0 in the order the shapes first come; the radii of shapes left out dropped.
+		$this->assertSame( '2x2:0,0,-1,1;1=50', WP_Swiper_Art::sanitize_cells( '2x2:5,5,-1,9;9=50,3=20' ) );
+		$this->assertSame( '', WP_Swiper_Art::sanitize_cells( '2x2:0,1' ) );
+		$this->assertSame( '', WP_Swiper_Art::sanitize_cells( '' ) );
+		// So when the slider is saved.
+		$saved = WP_Swiper_Settings::sanitize( array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_cells' => '2x2:7,7,3,3' ) );
+		$this->assertSame( '2x2:0,0,1,1', $saved['art_cells'] );
+		$this->assertSame( '', WP_Swiper_Settings::sanitize( array( 'effect' => 'art', 'art_cells' => '"><script>' ) )['art_cells'] );
+	}
+
+	public function test_grid_shapes_layout_fits_its_columns_and_rows() {
+		// None drawn: the default one, on 4 x 4 a few shapes (two of them round)...
+		$grid = WP_Swiper_Art::cells( $this->settings( array( 'art_style' => 'grid-shapes' ) ) );
+		$this->assertSame( array( 4, 4, 8 ), array( $grid['columns'], $grid['rows'], $grid['count'] ) );
+		$this->assertSame( array( 1 => 100, 7 => 100 ), $grid['radii'] );
+		// ...else each cell a shape of its own.
+		$grid = WP_Swiper_Art::cells( $this->settings( array( 'art_style' => 'grid-shapes', 'art_cells_columns' => 3, 'art_cells_rows' => 2 ) ) );
+		$this->assertSame( range( 0, 5 ), $grid['cells'] );
+		// A drawn one at other Columns and Rows: kept where it reaches, each new cell its own shape.
+		$grid = WP_Swiper_Art::cells( $this->settings( array( 'art_cells' => '2x2:0,0,1,-1;1=40', 'art_cells_columns' => 3, 'art_cells_rows' => 3 ) ) );
+		$this->assertSame( array( 0, 0, 1, 2, -1, 3, 4, 5, 6 ), $grid['cells'] );
+		$this->assertSame( array( 2 => 40 ), $grid['radii'] );
+		$this->assertSame( 7, $grid['count'] );
+		// Fewer: cut off.
+		$grid = WP_Swiper_Art::cells( $this->settings( array( 'art_cells' => '3x2:0,1,2,3,3,3', 'art_cells_columns' => 2, 'art_cells_rows' => 2 ) ) );
+		$this->assertSame( array( 0, 1, 2, 2 ), $grid['cells'] );
+		// Columns and Rows within 2–12.
+		$grid = WP_Swiper_Art::cells( $this->settings( array( 'art_cells_columns' => 40, 'art_cells_rows' => 1 ) ) );
+		$this->assertSame( array( 12, 2 ), array( $grid['columns'], $grid['rows'] ) );
+	}
+
+	public function test_grid_shapes_single_corners_have_their_own_radius() {
+		// After the shapes' radii (none: an empty part), by their place on the grid of cells and gaps.
+		$grid = WP_Swiper_Art::parse_cells( '3x3:0,0,0,0,1,2,0,2,2;;2.2=100,5.0=0' );
+		$this->assertSame( array( '2.2' => 100, '5.0' => 0 ), $grid['corners'] );
+		$this->assertSame( array(), $grid['radii'] );
+		$this->assertSame( array( '3.3' => 100 ), WP_Swiper_Art::parse_cells( '2x2:0,1,2,3;0=40;3.3=250' )['corners'] );
+		// A place past the grid (2 x columns - 1) left out.
+		$this->assertSame( array( '3.3' => 5 ), WP_Swiper_Art::parse_cells( '2x2:0,1,2,3;;3.3=5,4.0=5' )['corners'] );
+		foreach ( array( '2x2:0,1,2,3;;3=5', '2x2:0,1,2,3;;3.3', '2x2:0,1,2,3;;a.b=5', '2x2:0,1,2,3;;3.3=5;1' ) as $bad ) {
+			$this->assertNull( WP_Swiper_Art::parse_cells( $bad ), $bad );
+		}
+		// Kept in order, the shapes' radii between (empty: none).
+		$this->assertSame( '3x3:0,0,0,0,1,2,0,2,2;;2.2=100,5.0=0', WP_Swiper_Art::sanitize_cells( '3x3:9,9,9,9,4,7,9,7,7;;5.0=0,2.2=100' ) );
+		$this->assertSame( '2x2:0,1,2,3;1=40;3.3=0', WP_Swiper_Art::sanitize_cells( '2x2:0,5,2,3;5=40;3.3=0' ) );
+		// With fewer columns: the corners the grid still reaches.
+		$grid = WP_Swiper_Art::cells( $this->settings( array( 'art_cells' => '3x3:0,0,0,0,1,2,0,2,2;;2.2=100,5.0=0', 'art_cells_columns' => 2, 'art_cells_rows' => 3 ) ) );
+		$this->assertSame( array( '2.2' => 100 ), $grid['corners'] );
+		// In the config, an object (art.js reads it by place).
+		$config = $this->config( $this->render( array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_cells' => '3x3:0,0,0,0,1,2,0,2,2;;2.2=100', 'art_cells_columns' => 3, 'art_cells_rows' => 3 ) ), 'data-wp-swiper-art' );
+		$this->assertSame( array( '2.2' => 100 ), $config['grid']['corners'] );
+		$this->assertStringContainsString( '&quot;corners&quot;:{}', $this->render( array( 'effect' => 'art', 'art_style' => 'grid-shapes' ) ) );
+		// The preview's words for it.
+		$this->assertSame( 'As the shape', WP_Swiper_Preview::preview_words()['asShape'] );
+	}
+
+	public function test_grid_shapes_markup_and_config() {
+		$values = array(
+			'effect'            => 'art',
+			'art_style'         => 'grid-shapes',
+			'art_cells'         => '3x2:0,0,1,2,-1,1;0=100',
+			'art_cells_columns' => 3,
+			'art_cells_rows'    => 2,
+		);
+		$html   = $this->render( $values, $this->slides( 5 ) );
+		$config = $this->config( $html, 'data-wp-swiper-art' );
+		$this->assertSame(
+			array(
+				'columns' => 3,
+				'rows'    => 2,
+				'cells'   => array( 0, 0, 1, 2, -1, 1 ),
+				'radii'   => array( 0 => 100 ),
+				'corners' => array(),
+			),
+			$config['grid']
+		);
+		$this->assertSame( 'grid-shapes', $config['style'] );
+		$this->assertTrue( $config['wide'] );
+		// Not the Grid + circle's photos and columns.
+		$this->assertArrayNotHasKey( 'columns', $config );
+		$this->assertArrayNotHasKey( 'cells', $config );
+		// A piece per shape; as wide as the column, its Height.
+		$this->assertSame( 3, substr_count( $html, 'class="wp-swiper-art__piece"' ) );
+		$this->assertSame( 1, preg_match( '/<div class="wp-swiper-art wp-swiper-art--grid-shapes[ "][^"]* wp-swiper-art--wide[ "]/', $html ) );
+		$this->assertSame( array( 'desktop' => 3, 'tablet' => 3, 'mobile' => 3 ), WP_Swiper_Art::counts( $this->settings( $values ) ) );
+		// No radii: an object all the same (art.js reads it by shape).
+		$this->assertStringContainsString( '&quot;radii&quot;:{}', $this->render( array( 'art_cells' => '3x2:0,0,1,1,2,2' ) + $values ) );
+
+		// What changes as SVG shape's: one photo through all windows, in a wave.
+		$one    = $this->render( $values + array( 'art_shape_target' => 'one', 'art_shape_appear' => 'ltr' ), $this->slides( 5 ) );
+		$config = $this->config( $one, 'data-wp-swiper-art' );
+		$this->assertTrue( $config['one'] );
+		$this->assertSame( 'one', $config['swap']['target'] );
+		$this->assertSame( 'ltr', $config['appear'] );
+		$this->assertSame( 1, preg_match( '/<div class="wp-swiper-art [^"]*wp-swiper-art--one[ "]/', $one ) );
+		// Not for the other Styles.
+		$ring = $this->config( $this->render( array( 'effect' => 'art', 'art_shape_target' => 'one' ) ), 'data-wp-swiper-art' );
+		$this->assertArrayNotHasKey( 'one', $ring );
+		$this->assertArrayNotHasKey( 'grid', $ring );
+	}
+
+	public function test_grid_shapes_fields() {
+		$fields = WP_Swiper_Settings::fields();
+		// The layout: kept with the Style, set by the preview only.
+		$this->assertSame( 'cells', $fields['art_cells']['type'] );
+		$this->assertSame( 'art_style', $fields['art_cells']['inline_in'] );
+		$this->assertTrue( $fields['art_cells']['inline_hidden'] );
+		// Columns and Rows side by side, one for every device.
+		foreach ( array( 'art_cells_columns', 'art_cells_rows' ) as $key ) {
+			$this->assertSame( array( 'grid-shapes' ), $fields[ $key ]['styles'], $key );
+			$this->assertSame( 'art_cells', $fields[ $key ]['group'], $key );
+			$this->assertArrayNotHasKey( 'responsive', $fields[ $key ], $key );
+		}
+		// Gap and corners as the grids'; captions, What changes and Appearance as SVG shape's.
+		foreach ( array( 'art_gap', 'art_rounded', 'art_radius', 'art_caption_middle', 'art_shape_target', 'art_shape_appear' ) as $key ) {
+			$this->assertContains( 'grid-shapes', $fields[ $key ]['styles'], $key );
+		}
+		foreach ( array( 'art_grid_count', 'art_grid_columns', 'art_ring_center', 'art_swap_target', 'art_center', 'art_shape', 'art_align' ) as $key ) {
+			$this->assertNotContains( 'grid-shapes', $fields[ $key ]['styles'], $key );
+		}
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_cells' => '2x2:0,0,1,1' ) ) ) );
+		$html = ob_get_clean();
+		$this->assertStringContainsString( '<input type="hidden" id="wp-swiper-art_cells" name="wp_swiper_settings[art_cells]" value="2x2:0,0,1,1">', $html );
+		$this->assertStringContainsString( 'data-field="art_cells_columns" data-effects="art" data-styles="grid-shapes"', $html );
+		// The preview's hint and its words.
+		$this->assertStringContainsString( 'data-effect="art-cells"', file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' ) );
+		$this->assertSame( 'Split into cells', WP_Swiper_Preview::preview_words()['split'] );
+	}
+
+	public function test_art_as_a_background_with_a_style_that_stretches() {
+		$on = array( 'effect' => 'art', 'background' => true, 'background_class' => 'hero' );
+		// The grids, which stretch to any block; not a ring or an SVG shape (their own proportions).
+		foreach ( array( 'grid-shapes', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ) as $style ) {
+			$this->assertTrue( WP_Swiper_Settings::is_background( $this->settings( array( 'art_style' => $style ) + $on ) ), $style );
+		}
+		foreach ( array( 'ring', 'ring-text', 'shape' ) as $style ) {
+			$this->assertFalse( WP_Swiper_Settings::is_background( $this->settings( array( 'art_style' => $style ) + $on ) ), $style );
+		}
+		$fields = WP_Swiper_Settings::fields();
+		foreach ( array( 'background', 'background_class', 'background_overlay_color' ) as $key ) {
+			$this->assertContains( 'art', $fields[ $key ]['effects'], $key );
+			$this->assertContains( 'grid-shapes', $fields[ $key ]['styles'], $key );
+			$this->assertNotContains( 'ring', $fields[ $key ]['styles'], $key );
+		}
+	}
+
+	public function test_art_background_markup() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		$slides = $this->slides( 4, array( 'caption' => '<p>Over the photo</p>', 'description' => '<p>Under it</p>' ) );
+		$values = array(
+			'effect'                   => 'art',
+			'art_style'                => 'grid-shapes',
+			'background'               => true,
+			'background_class'         => 'hero',
+			'background_overlay_color' => 'rgba(0,0,0,0.4)',
+			'lightbox'                 => true,
+			'art_height_unit'          => '%',
+		);
+		$html   = $this->render( $values, $slides );
+		$config = $this->config( $html, 'data-wp-swiper-art' );
+		$this->assertSame( 1, preg_match( '/<div class="wp-swiper-art [^"]*wp-swiper-art--background wp-swiper-art--bg-overlay[ "]/', $html ) );
+		$this->assertStringContainsString( 'data-wp-swiper-bg="hero"', $html );
+		$this->assertStringContainsString( '--wp-swiper-bg-overlay:rgba(0,0,0,0.4)', $html );
+		// Behind the block's content: no captions, descriptions or lightbox; the block's height.
+		$this->assertStringNotContainsString( 'wp-swiper-art__caption', $html );
+		$this->assertStringNotContainsString( 'wp-swiper-descriptions', $html );
+		$this->assertFalse( $config['lightbox'] );
+		$this->assertSame( array( 'desktop' => 'px', 'tablet' => 'px', 'mobile' => 'px' ), $config['height'] );
+		// Its notice, shown by art.js where no block has the class.
+		$this->assertStringContainsString( 'data-wp-swiper-bg-missing hidden', $html );
+
+		// A ring: as usual, captions and all.
+		$ring = $this->render( array( 'art_style' => 'ring' ) + $values, $slides );
+		$this->assertStringNotContainsString( 'wp-swiper-art--background', $ring );
+		$this->assertStringNotContainsString( 'data-wp-swiper-bg', $ring );
+		$this->assertStringContainsString( 'wp-swiper-art__caption', $ring );
+		// Without the overlay color: no overlay.
+		$this->assertStringNotContainsString( 'wp-swiper-art--bg-overlay', $this->render( array( 'background_overlay_color' => 'rgba(0,0,0,0)' ) + $values, $slides ) );
 	}
 }

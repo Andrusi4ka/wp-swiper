@@ -240,7 +240,7 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 		// What changes: a window at random by default; in turn; or all at once (as a slider).
 		$this->assertSame( 'any', $config['swap']['target'] );
 		$field = WP_Swiper_Settings::fields()['art_shape_target'];
-		$this->assertSame( array( 'shape' ), $field['styles'] );
+		$this->assertSame( array( 'grid-shapes', 'shape' ), $field['styles'] );
 		$this->assertSame( array( 'advanced', 'controls' ), array( $field['section'], $field['panel'] ) );
 		$this->assertSame( array( 'any', 'turn', 'advance', 'one' ), array_keys( $field['choices'] ) );
 		$this->assertArrayNotHasKey( 'one', $config );
@@ -263,7 +263,7 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 
 		// Appearance: the order the windows change in, only where they all change at once.
 		$field = WP_Swiper_Settings::fields()['art_shape_appear'];
-		$this->assertSame( array( 'shape' ), $field['styles'] );
+		$this->assertSame( array( 'grid-shapes', 'shape' ), $field['styles'] );
 		$this->assertSame( array( 'advanced', 'controls' ), array( $field['section'], $field['panel'] ) );
 		$this->assertSame( array( 'all', 'random', 'ltr', 'ttb', 'diagonal', 'center' ), array_keys( $field['choices'] ) );
 		$this->assertSame( 'all', WP_Swiper_Settings::sanitize( array( 'art_shape_appear' => 'sideways' ) )['art_shape_appear'] );
@@ -332,7 +332,7 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 		$this->assertSame( 2, substr_count( $html, 'class="wp-swiper-shape__window"' ) );
 		$this->assertStringContainsString( 'accept=".svg,image/svg+xml"', $html );
 		// Gap and Rounded corners are not for it; Height is (every Style's).
-		$this->assertSame( 1, preg_match( '/data-field="art_gap"[^>]*data-styles="ring ring-text grid-circle grid-circle-text grid-square grid-square-text"/', $html ) );
+		$this->assertSame( 1, preg_match( '/data-field="art_gap"[^>]*data-styles="ring ring-text grid-circle grid-circle-text grid-square grid-square-text grid-shapes"/', $html ) );
 		$this->assertSame( 1, preg_match( '/data-field="art_height" data-effects="art">/', $html ) );
 	}
 

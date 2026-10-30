@@ -75,6 +75,28 @@ class WP_Swiper_Preview {
 	}
 
 	/**
+	 * The words the frame's own scripts show (window.wpSwiperPreviewI18n): the
+	 * Collage's × (preview-collage.js), the Grid shapes buttons and panel
+	 * (preview-art.js).
+	 *
+	 * @return array key => text
+	 */
+	public static function preview_words() {
+		return array(
+			'removePlace' => __( 'Remove this place from the collage (the slide stays)', 'wp-swiper' ),
+			'shapes'      => __( 'Shapes', 'wp-swiper' ),
+			'photos'      => __( 'Photos', 'wp-swiper' ),
+			'corners'     => __( 'Corners', 'wp-swiper' ),
+			'corner'      => __( 'Corner', 'wp-swiper' ),
+			'asShape'     => __( 'As the shape', 'wp-swiper' ),
+			'radius'      => __( 'Radius', 'wp-swiper' ),
+			'asRadius'    => __( 'As Radius', 'wp-swiper' ),
+			'split'       => __( 'Split into cells', 'wp-swiper' ),
+			'empty'       => __( 'Empty', 'wp-swiper' ),
+		);
+	}
+
+	/**
 	 * Tablet and Mobile turned sideways (the preview's turn button): what the
 	 * note under the bar says, where the screen then takes another device's
 	 * settings (its width the portrait height: a phone 844px wide is a tablet).
@@ -180,6 +202,11 @@ class WP_Swiper_Preview {
 				<p class="description wp-swiper-preview__hint" data-effect="art" hidden>
 					<span class="dashicons dashicons-image-filter" aria-hidden="true"></span>
 					<?php esc_html_e( 'Drag the edge of the middle circle or square to resize it.', 'wp-swiper' ); ?>
+				</p>
+				<?php // Art's Grid shapes only (admin.js): its shapes are drawn here (preview-art.js). ?>
+				<p class="description wp-swiper-preview__hint" data-effect="art-cells" hidden>
+					<span class="dashicons dashicons-screenoptions" aria-hidden="true"></span>
+					<?php esc_html_e( 'Shapes: drag across cells to join them, click a shape for its corners (a dot on a corner: that corner alone). Photos: drag a photo onto another to swap them.', 'wp-swiper' ); ?>
 				</p>
 				<?php // Random mosaic only (admin.js): the lines between its photos resize them. ?>
 				<p class="description wp-swiper-preview__hint" data-effect="mosaic" hidden>
@@ -326,8 +353,8 @@ class WP_Swiper_Preview {
 		.wp-swiper-preview-page { box-sizing: border-box; min-height: 100vh; padding: 24px; }
 		@media (max-width: 767px) { .wp-swiper-preview-page { padding: 12px; } }
 		.wp-swiper-preview-block { position: relative; background: #f0f0f1; }
-		/* "Background mode": a small label in the block's corner, over the slider. */
-		.wp-swiper-preview-block__mode { position: absolute; top: 12px; left: 12px; z-index: 3; padding: 3px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 12px; line-height: 18px; font-weight: 600; pointer-events: none; }
+		/* "Background mode": a small label in the block's top right corner, over the slider (the left one has Art's Shapes / Photos buttons). */
+		.wp-swiper-preview-block__mode { position: absolute; top: 12px; right: 12px; z-index: 3; padding: 3px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 12px; line-height: 18px; font-weight: 600; pointer-events: none; }
 		/* Background: the block fills the device's screen, no gaps around it (the
 		   preview only; on the site the block's height is the page builder's). */
 		.wp-swiper-preview-page--background { padding: 0; }
@@ -335,7 +362,8 @@ class WP_Swiper_Preview {
 		/* Here only (on a page the content takes the clicks): the background slider
 		   takes the pointer, so its photos can be dragged (preview-collage.js,
 		   preview-art.js). */
-		.wp-swiper-preview-block .wp-swiper.wp-swiper--background { pointer-events: auto; }
+		.wp-swiper-preview-block .wp-swiper.wp-swiper--background,
+		.wp-swiper-preview-block .wp-swiper-art.wp-swiper-art--background { pointer-events: auto; }
 		/* No slides yet: the picture in the middle of the screen, not too big. */
 		.wp-swiper-preview-empty { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
 		.wp-swiper-preview-empty img { display: block; width: min(160px, 32vw); height: auto; }
@@ -348,7 +376,8 @@ class WP_Swiper_Preview {
 	<?php wp_print_scripts( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-collage', 'wp-swiper-art' ) ); ?>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-dev.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-dev.js' ) ); ?>"></script>
 	<?php // Collage: a photo dragged onto another place swaps with it (the editor stores the order); its words. ?>
-	<script>window.wpSwiperPreviewI18n = <?php echo wp_json_encode( array( 'removePlace' => __( 'Remove this place from the collage (the slide stays)', 'wp-swiper' ) ) ); ?>;</script>
+	<?php // And Art's Grid shapes: the buttons and the selected shape's panel (preview-art.js). ?>
+	<script>window.wpSwiperPreviewI18n = <?php echo wp_json_encode( self::preview_words() ); ?>;</script>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-collage.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-collage.js' ) ); ?>"></script>
 	<?php // Art: the same for its pieces, its own script (the editor stores its order apart). ?>
 	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-art.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-art.js' ) ); ?>"></script>

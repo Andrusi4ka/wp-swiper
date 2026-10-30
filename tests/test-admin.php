@@ -459,7 +459,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( 1, preg_match( '#^\s*<legend>[^<]*</legend>\s*<div class="wp-swiper-block" data-block="video_posters"><h4 class="wp-swiper-subheading">Posters</h4><div class="wp-swiper-field wp-swiper-posters" data-field="video_posters">#', $match[1] ) );
 		$this->assertLessThan( strpos( $match[1], 'data-block="video_playback"' ), strpos( $match[1], 'data-block="video_posters"' ) );
 		// The effects a field belongs to, for admin.js.
-		$this->assertStringContainsString( 'data-field="background" data-effects="slide fade collage"', $html );
+		$this->assertStringContainsString( 'data-field="background" data-effects="slide fade collage art" data-styles="grid-circle grid-circle-text grid-square grid-square-text grid-shapes"', $html );
 		// Use as background: no page of its own, the last block of Layout.
 		$this->assertStringNotContainsString( 'id="wp-swiper-page-background"', $html );
 		$this->assertStringNotContainsString( 'data-page="background"', $html );
@@ -615,6 +615,8 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		// On: the block with the label, then the slider; no example content.
 		$html = WP_Swiper_Preview::background_block( $slider, $this->settings( array( 'background' => true, 'background_class' => 'hero' ) ) );
 		$this->assertSame( '<div class="wp-swiper-preview-block hero"><span class="wp-swiper-preview-block__mode">Background mode</span>' . $slider . '</div>', $html );
+		// In the top right corner: the left one has Art's Shapes / Photos buttons.
+		$this->assertStringContainsString( '.wp-swiper-preview-block__mode { position: absolute; top: 12px; right: 12px;', file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' ) );
 		$this->assertStringNotContainsString( 'wp-swiper-preview-block__content', $html );
 
 		// Off, or an effect that cannot be one: the slider alone, no label.

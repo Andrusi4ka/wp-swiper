@@ -1,0 +1,10 @@
+{
+	"scripts": [
+		"wp-swiper-art",
+		"wp-swiper"
+	],
+	"styles": [
+		"wp-swiper-art",
+		"wp-swiper"
+	]
+}
