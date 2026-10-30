@@ -9,12 +9,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$art = array( self::EFFECT );
+$wp_swiper_art = array( self::EFFECT );
 
 return array(
 	'art_style'          => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'label'   => __( 'Style', 'wp-swiper' ),
 		'type'    => 'select',
 		// Shown as icons, assets/images/art/{style}.svg (as the Collage's Style).
@@ -31,7 +31,7 @@ return array(
 	// piece in the preview (preview-art.js); no field to show.
 	'art_order'          => array(
 		'section'       => 'layout',
-		'effects'       => $art,
+		'effects'       => $wp_swiper_art,
 		'label'         => __( 'Order', 'wp-swiper' ),
 		'type'          => 'order',
 		'responsive'    => true,
@@ -43,7 +43,7 @@ return array(
 	// only, read when the slider is saved or the preview updated).
 	'art_shape'          => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'shape' ),
 		'label'      => __( 'Shape (SVG file)', 'wp-swiper' ),
 		'type'       => 'svg_shape',
@@ -56,7 +56,7 @@ return array(
 	// left out (by default: the slider as large as the shapes).
 	'art_shape_margins'  => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'shape' ),
 		'label'   => __( 'Keep the file\'s empty margins', 'wp-swiper' ),
 		'type'    => 'checkbox',
@@ -68,7 +68,7 @@ return array(
 	// the preview (preview-art.js); no field to show.
 	'art_cells'          => array(
 		'section'       => 'layout',
-		'effects'       => $art,
+		'effects'       => $wp_swiper_art,
 		'styles'        => array( 'grid-shapes' ),
 		'label'         => __( 'Shapes', 'wp-swiper' ),
 		'type'          => 'cells',
@@ -80,7 +80,7 @@ return array(
 	// to the column and the Height).
 	'art_cells_columns'  => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'grid-shapes' ),
 		'group'   => 'art_cells',
 		'label'   => __( 'Columns', 'wp-swiper' ),
@@ -92,7 +92,7 @@ return array(
 	),
 	'art_cells_rows'     => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'grid-shapes' ),
 		'group'   => 'art_cells',
 		'label'   => __( 'Rows', 'wp-swiper' ),
@@ -110,7 +110,7 @@ return array(
 	// square photos), merge_art_height().
 	'art_height'         => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'label'      => __( 'Height', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -123,7 +123,7 @@ return array(
 	),
 	'art_height_unit'    => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'label'      => __( 'Height unit', 'wp-swiper' ),
 		'type'       => 'select',
 		'responsive' => true,
@@ -139,7 +139,7 @@ return array(
 	// Where the shape sits in its column, per device, when it is narrower.
 	'art_align'          => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring', 'ring-text', 'shape' ),
 		'label'      => __( 'Alignment', 'wp-swiper' ),
 		'type'       => 'select',
@@ -154,7 +154,7 @@ return array(
 	),
 	'art_ring_count'     => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring', 'ring-text' ),
 		'label'      => __( 'Photos around', 'wp-swiper' ),
 		'type'       => 'number',
@@ -170,7 +170,7 @@ return array(
 	// make (the last one's photos in the middle); as wide as the column.
 	'art_grid_count'     => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
 		'label'      => __( 'Photos in the grid', 'wp-swiper' ),
 		'type'       => 'number',
@@ -183,7 +183,7 @@ return array(
 	),
 	'art_grid_columns'   => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
 		'label'      => __( 'Columns', 'wp-swiper' ),
 		'type'       => 'number',
@@ -199,7 +199,7 @@ return array(
 	// edge in the preview (preview-art.js); no field to show.
 	'art_ring_center'    => array(
 		'section'       => 'layout',
-		'effects'       => $art,
+		'effects'       => $wp_swiper_art,
 		'styles'        => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
 		'label'         => __( 'Middle circle (%)', 'wp-swiper' ),
 		'type'          => 'float',
@@ -217,7 +217,7 @@ return array(
 	// switch: on where an Opening above 0 was (merge_art_opening(), get()).
 	'art_opening'        => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'ring' ),
 		'label'   => __( 'Opening', 'wp-swiper' ),
 		'type'    => 'checkbox',
@@ -226,7 +226,7 @@ return array(
 	),
 	'art_ring_opening'   => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring' ),
 		'label'      => __( 'Opening (degrees)', 'wp-swiper' ),
 		'type'       => 'number',
@@ -240,7 +240,7 @@ return array(
 	// Not for SVG shape: its windows are as drawn.
 	'art_gap'            => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
 		'label'      => __( 'Gap (px)', 'wp-swiper' ),
 		'type'       => 'number',
@@ -255,7 +255,7 @@ return array(
 	// where a radius above 0 was (merge_rounded(), get()).
 	'art_rounded'        => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
 		'label'   => __( 'Rounded corners', 'wp-swiper' ),
 		'type'    => 'checkbox',
@@ -263,7 +263,7 @@ return array(
 	),
 	'art_radius'         => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
 		'label'      => __( 'Radius (px)', 'wp-swiper' ),
 		'type'       => 'number',
@@ -277,14 +277,14 @@ return array(
 	// Image border: a width per device, one color.
 	'art_border'         => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'label'   => __( 'Image border', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => false,
 	),
 	'art_border_width'   => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'group'      => 'art_border',
 		'label'      => __( 'Width (px)', 'wp-swiper' ),
 		'type'       => 'number',
@@ -296,7 +296,7 @@ return array(
 	),
 	'art_border_color'   => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'group'   => 'art_border',
 		'label'   => __( 'Color', 'wp-swiper' ),
 		'type'    => 'color',
@@ -308,7 +308,7 @@ return array(
 	// middle is on (off: the circle stays empty).
 	'art_center'         => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 		'label'   => __( 'Content in the middle', 'wp-swiper' ),
 		'type'    => 'checkbox',
@@ -317,7 +317,7 @@ return array(
 	),
 	'art_center_image'   => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 		'label'   => __( 'Image in the middle', 'wp-swiper' ),
 		'type'    => 'image',
@@ -325,7 +325,7 @@ return array(
 	),
 	'art_center_image_size' => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 		'label'      => __( 'Image size (%)', 'wp-swiper' ),
 		'type'       => 'number',
@@ -338,7 +338,7 @@ return array(
 	),
 	'art_center_text'    => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 		'label'   => __( 'Text in the middle', 'wp-swiper' ),
 		'type'    => 'editor',
@@ -346,7 +346,7 @@ return array(
 	),
 	'art_center_font_size' => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 		'label'      => __( 'Font size (px)', 'wp-swiper' ),
 		'type'       => 'number',
@@ -359,7 +359,7 @@ return array(
 	),
 	'art_center_padding' => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 		'label'      => __( 'Padding (px)', 'wp-swiper' ),
 		'type'       => 'number',
@@ -372,7 +372,7 @@ return array(
 	),
 	'art_center_bg'      => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
 		'label'   => __( 'Middle background', 'wp-swiper' ),
 		'type'    => 'alpha_color',
@@ -385,7 +385,7 @@ return array(
 	// then one or the other (art_opening_content, merge_opening_content()).
 	'art_opening_image'  => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'ring' ),
 		'label'   => __( 'Image in the opening', 'wp-swiper' ),
 		'type'    => 'image',
@@ -393,7 +393,7 @@ return array(
 	),
 	'art_opening_image_size' => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring' ),
 		'label'      => __( 'Image size (%)', 'wp-swiper' ),
 		'type'       => 'number',
@@ -406,7 +406,7 @@ return array(
 	),
 	'art_opening_text'   => array(
 		'section' => 'layout',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'ring' ),
 		'label'   => __( 'Text in the opening', 'wp-swiper' ),
 		'type'    => 'editor',
@@ -414,7 +414,7 @@ return array(
 	),
 	'art_opening_font_size' => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring' ),
 		'label'      => __( 'Font size (px)', 'wp-swiper' ),
 		'type'       => 'number',
@@ -426,7 +426,7 @@ return array(
 	),
 	'art_opening_gap'    => array(
 		'section'    => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring' ),
 		'label'      => __( 'Gap from the photos (px)', 'wp-swiper' ),
 		'type'       => 'number',
@@ -444,7 +444,7 @@ return array(
 	'art_bg_size'        => array(
 		'section'    => 'advanced',
 		'panel'      => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring', 'ring-text', 'shape' ),
 		'label'      => __( 'Background size', 'wp-swiper' ),
 		'type'       => 'select',
@@ -459,7 +459,7 @@ return array(
 	'art_bg_position'    => array(
 		'section'    => 'advanced',
 		'panel'      => 'layout',
-		'effects'    => $art,
+		'effects'    => $wp_swiper_art,
 		'styles'     => array( 'ring', 'ring-text', 'shape' ),
 		'label'      => __( 'Background position', 'wp-swiper' ),
 		'type'       => 'select',
@@ -482,7 +482,7 @@ return array(
 	// photos without, the middle one's showing as it changes.
 	'art_caption_middle' => array(
 		'section' => 'caption',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'   => __( 'Only on the middle photo', 'wp-swiper' ),
 		'type'    => 'checkbox',
@@ -495,7 +495,7 @@ return array(
 	'art_swap'           => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'label'   => __( 'Swap in the other photos', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => true,
@@ -507,7 +507,7 @@ return array(
 	'art_swap_target'    => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'ring', 'grid-circle', 'grid-square' ),
 		'label'   => __( 'What changes', 'wp-swiper' ),
 		'type'    => 'select',
@@ -524,7 +524,7 @@ return array(
 	'art_shape_target'   => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'grid-shapes', 'shape' ),
 		'label'   => __( 'What changes', 'wp-swiper' ),
 		'type'    => 'select',
@@ -544,7 +544,7 @@ return array(
 	'art_shape_appear'   => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'styles'  => array( 'grid-shapes', 'shape' ),
 		'label'   => __( 'Appearance', 'wp-swiper' ),
 		'type'    => 'select',
@@ -562,7 +562,7 @@ return array(
 	'art_swap_delay'     => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'label'   => __( 'A new photo every (ms)', 'wp-swiper' ),
 		'type'    => 'number',
 		'default' => 3000,
@@ -574,7 +574,7 @@ return array(
 	'art_swap_speed'     => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'label'   => __( 'Fade (ms)', 'wp-swiper' ),
 		'type'    => 'number',
 		'default' => 800,
@@ -586,7 +586,7 @@ return array(
 	'art_pause'          => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $art,
+		'effects' => $wp_swiper_art,
 		'label'   => __( 'Pause on hover', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => true,

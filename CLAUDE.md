@@ -366,7 +366,9 @@
     Нова спільна функція = додати її туди. Обидва, якщо прийшли пізніше за
     `frontend.js`, самі ще раз викликають `wpSwiperInit()`.
 - Прев'ю — iframe (`class-wp-swiper-preview.php`, свій список скриптів у
-  `wp_print_scripts()`; новий скрипт сайту — додати й туди). Без слайдів —
+  `wp_print_scripts()`; новий скрипт сайту — додати й туди; власні файли прев'ю
+  (`preview-*.js/css`) — у `WP_Swiper_Preview::register_assets()`, не тегами
+  вручну). Без слайдів —
   `empty_screen()`: `assets/images/no-image.svg` (малюнок користувача) по
   центру екрана, 160px (на телефоні 32vw), замість напису «no slides yet».
   Поворот Tablet/Mobile (кнопка `rotate.svg` між «Preview» і Developer mode,

@@ -75,6 +75,23 @@ class WP_Swiper_Preview {
 	}
 
 	/**
+	 * The frame's own files, printed after the site's (render_frame()):
+	 * Developer mode (the button by "Preview"; admin.js turns it on in
+	 * there); the Collage's photos swapping and resizing; Art's (its photos
+	 * swapping, the middle's edge, Grid shapes drawn), after art.js. Their
+	 * words before the collage's script (window.wpSwiperPreviewI18n).
+	 */
+	public static function register_assets() {
+		foreach ( array( 'dev', 'art' ) as $name ) {
+			wp_register_style( 'wp-swiper-preview-' . $name, WP_SWIPER_URL . 'assets/css/preview-' . $name . '.css', array(), wp_swiper_asset_version( 'assets/css/preview-' . $name . '.css' ) );
+		}
+		wp_register_script( 'wp-swiper-preview-dev', WP_SWIPER_URL . 'assets/js/preview-dev.js', array(), wp_swiper_asset_version( 'assets/js/preview-dev.js' ), true );
+		wp_register_script( 'wp-swiper-preview-collage', WP_SWIPER_URL . 'assets/js/preview-collage.js', array(), wp_swiper_asset_version( 'assets/js/preview-collage.js' ), true );
+		wp_register_script( 'wp-swiper-preview-art', WP_SWIPER_URL . 'assets/js/preview-art.js', array( 'wp-swiper-art' ), wp_swiper_asset_version( 'assets/js/preview-art.js' ), true );
+		wp_add_inline_script( 'wp-swiper-preview-collage', 'window.wpSwiperPreviewI18n = ' . wp_json_encode( self::preview_words(), JSON_HEX_TAG | JSON_HEX_AMP ) . ';', 'before' );
+	}
+
+	/**
 	 * The words the frame's own scripts show (window.wpSwiperPreviewI18n): the
 	 * Collage's × (preview-collage.js), the Grid shapes buttons and panel
 	 * (preview-art.js).
@@ -315,6 +332,7 @@ class WP_Swiper_Preview {
 
 		WP_Swiper_Render::register_assets();
 		WP_Swiper_Art::register_assets();
+		self::register_assets();
 		$slides = WP_Swiper_Admin::posted_slides();
 		if ( $slides ) {
 			$slider = self::background_block( WP_Swiper_Render::render_slider( $post_id, $slides, $settings ), $settings );
@@ -333,10 +351,7 @@ class WP_Swiper_Preview {
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="noindex, nofollow">
 	<title><?php echo esc_html( $post->post_title ); ?></title>
-	<?php wp_print_styles( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-thumbs', 'wp-swiper-collage', 'wp-swiper-art' ) ); ?>
-	<?php // Developer mode (the button by "Preview"; admin.js turns it on in here). ?>
-	<link rel="stylesheet" href="<?php echo esc_url( WP_SWIPER_URL . 'assets/css/preview-dev.css?ver=' . wp_swiper_asset_version( 'assets/css/preview-dev.css' ) ); ?>">
-	<link rel="stylesheet" href="<?php echo esc_url( WP_SWIPER_URL . 'assets/css/preview-art.css?ver=' . wp_swiper_asset_version( 'assets/css/preview-art.css' ) ); ?>">
+	<?php wp_print_styles( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-thumbs', 'wp-swiper-collage', 'wp-swiper-art', 'wp-swiper-preview-dev', 'wp-swiper-preview-art' ) ); ?>
 	<style>
 		html, body { margin: 0; background: #fff; }
 		body { font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -373,14 +388,7 @@ class WP_Swiper_Preview {
 	<div class="wp-swiper-preview-page<?php echo WP_Swiper_Settings::is_background( $settings ) ? ' wp-swiper-preview-page--background' : ''; ?>">
 		<?php echo $slider; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the slider's markup, escaped where it is built. ?>
 	</div>
-	<?php wp_print_scripts( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-collage', 'wp-swiper-art' ) ); ?>
-	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-dev.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-dev.js' ) ); ?>"></script>
-	<?php // Collage: a photo dragged onto another place swaps with it (the editor stores the order); its words. ?>
-	<?php // And Art's Grid shapes: the buttons and the selected shape's panel (preview-art.js). ?>
-	<script>window.wpSwiperPreviewI18n = <?php echo wp_json_encode( self::preview_words(), JSON_HEX_TAG | JSON_HEX_AMP ); ?>;</script>
-	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-collage.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-collage.js' ) ); ?>"></script>
-	<?php // Art: the same for its pieces, its own script (the editor stores its order apart). ?>
-	<script src="<?php echo esc_url( WP_SWIPER_URL . 'assets/js/preview-art.js?ver=' . wp_swiper_asset_version( 'assets/js/preview-art.js' ) ); ?>"></script>
+	<?php wp_print_scripts( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-collage', 'wp-swiper-art', 'wp-swiper-preview-dev', 'wp-swiper-preview-collage', 'wp-swiper-preview-art' ) ); ?>
 </body>
 </html>
 		<?php

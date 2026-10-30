@@ -1098,4 +1098,44 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( 3, substr_count( $html, '<svg class="wp-swiper-slide__clone-icon" aria-hidden="true" focusable="false"' ) );
 		$this->assertStringNotContainsString( 'stroke="#000"', $html );
 	}
+
+	public function test_preview_files_are_registered() {
+		WP_Swiper_Render::register_assets();
+		WP_Swiper_Preview::register_assets();
+		foreach ( array( 'wp-swiper-preview-dev', 'wp-swiper-preview-art' ) as $handle ) {
+			$this->assertTrue( wp_style_is( $handle, 'registered' ), $handle );
+		}
+		foreach ( array( 'wp-swiper-preview-dev', 'wp-swiper-preview-collage', 'wp-swiper-preview-art' ) as $handle ) {
+			$this->assertTrue( wp_script_is( $handle, 'registered' ), $handle );
+		}
+		// Art's after art.js (its layouts: window.wpSwiperArtCells).
+		$this->assertSame( array( 'wp-swiper-art' ), wp_scripts()->query( 'wp-swiper-preview-art' )->deps );
+		// Their words before the collage's script, unable to close it.
+		$before = implode( '', (array) wp_scripts()->get_data( 'wp-swiper-preview-collage', 'before' ) );
+		$this->assertStringContainsString( 'window.wpSwiperPreviewI18n = {', $before );
+		$this->assertStringContainsString( '"split":"Split into cells"', $before );
+		// No file of the frame printed by hand.
+		$source = file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' );
+		$this->assertDoesNotMatchRegularExpression( '#<(?:script|link)[^>]*(?:src|href)=#', $source );
+	}
+
+	public function test_uninstall_removes_everything_and_leaves_nothing_global() {
+		$slider = $this->slider();
+		$draft  = $this->slider( null, array(), array( 'post_status' => 'draft' ) );
+		update_option( 'wp_swiper_version', '3.0.0' );
+		update_option( 'wp_swiper_late_styles', array( '*' => array( 'wp-swiper' ) ) );
+		update_user_meta( self::factory()->user->create(), 'wp_swiper_seen_version', '3.0.0' );
+		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+			define( 'WP_UNINSTALL_PLUGIN', 'wp-swiper/wp-swiper.php' );
+		}
+		include WP_SWIPER_DIR . 'uninstall.php';
+
+		$this->assertNull( get_post( $slider ) );
+		$this->assertNull( get_post( $draft ) );
+		$this->assertFalse( get_option( 'wp_swiper_version' ) );
+		$this->assertFalse( get_option( 'wp_swiper_late_styles' ) );
+		$this->assertSame( array(), get_users( array( 'meta_key' => 'wp_swiper_seen_version' ) ) );
+		// All inside its own function.
+		$this->assertFalse( function_exists( 'wp_swiper_uninstall_site' ) );
+	}
 }
