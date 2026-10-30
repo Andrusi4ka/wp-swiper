@@ -814,7 +814,7 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		// A description's span: no display.
 		$this->assertStringNotContainsString( 'display', WP_Swiper_Settings::sanitize_description( '<p><span style="display: none">x</span> y</p>' ) );
 		// Other plugins' styles are not touched by it (the filter is only on while sanitizing).
-		$this->assertSame( 'position: relative', safecss_filter_attr( 'position: relative' ) );
+		$this->assertSame( 'margin: 4px', safecss_filter_attr( 'margin: 4px' ) );
 	}
 
 	public function test_description_links_to_a_new_tab_get_noopener() {
