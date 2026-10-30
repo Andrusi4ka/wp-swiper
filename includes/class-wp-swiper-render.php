@@ -145,7 +145,7 @@ class WP_Swiper_Render {
 		if ( null !== $key && isset( $map[ $key ] ) ) {
 			$handles = array_merge( $handles, (array) $map[ $key ] );
 		}
-		return array_values( array_intersect( array_unique( $handles ), array( 'swiper', 'wp-swiper', 'wp-swiper-collage', 'wp-swiper-art' ) ) );
+		return array_values( array_intersect( array_unique( $handles ), array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-thumbs', 'wp-swiper-collage', 'wp-swiper-art' ) ) );
 	}
 
 	public static function register_assets() {
@@ -157,6 +157,10 @@ class WP_Swiper_Render {
 		// Art loads it for its lightbox, when that first opens (frontend.js).
 		wp_register_style( 'swiper', WP_SWIPER_URL . 'assets/vendor/swiper/swiper-bundle.min.css', array(), WP_SWIPER_SWIPER_VERSION );
 		wp_register_style( 'wp-swiper', WP_SWIPER_URL . 'assets/css/frontend.css', array(), wp_swiper_asset_version( 'assets/css/frontend.css' ) );
+		// The sliders' own rules (all but Collage and Art), after frontend's
+		// (enqueue()); the Thumbnails effect's strip after those.
+		wp_register_style( 'wp-swiper-slider', WP_SWIPER_URL . 'assets/css/slider.css', array( 'wp-swiper' ), wp_swiper_asset_version( 'assets/css/slider.css' ) );
+		wp_register_style( 'wp-swiper-thumbs', WP_SWIPER_URL . 'assets/css/thumbs.css', array( 'wp-swiper-slider' ), wp_swiper_asset_version( 'assets/css/thumbs.css' ) );
 		// The Collage effect's own files, after frontend's (enqueue_collage()).
 		wp_register_style( 'wp-swiper-collage', WP_SWIPER_URL . 'assets/css/collage.css', array( 'wp-swiper' ), wp_swiper_asset_version( 'assets/css/collage.css' ) );
 
@@ -190,10 +194,14 @@ class WP_Swiper_Render {
 			wp_enqueue_style( 'wp-swiper' );
 			if ( self::content_needs_swiper( $post->post_content ) ) {
 				wp_enqueue_style( 'swiper' );
+				wp_enqueue_style( 'wp-swiper-slider' );
 			}
-			// The Collage's and Art's own stylesheets too (Art's registered by
-			// WP_Swiper_Art, also on this hook).
+			// The Thumbnails effect's, the Collage's and Art's own stylesheets
+			// too (Art's registered by WP_Swiper_Art, also on this hook).
 			$effects = self::content_effects( $post->post_content );
+			if ( in_array( 'thumbs', $effects, true ) ) {
+				wp_enqueue_style( 'wp-swiper-thumbs' );
+			}
 			if ( in_array( 'collage', $effects, true ) ) {
 				wp_enqueue_style( 'wp-swiper-collage' );
 			}
@@ -256,12 +264,14 @@ class WP_Swiper_Render {
 
 	/**
 	 * The front end's files for a slider: frontend.js and .css, and where it
-	 * needs Swiper, Swiper's files and slider.js (after Swiper and
-	 * frontend.js; Swiper's stylesheet before frontend.css).
+	 * needs Swiper, Swiper's files and slider.js and .css (after Swiper and
+	 * frontend's; Swiper's stylesheet before frontend.css), with the
+	 * Thumbnails effect's thumbs.css after them.
 	 *
 	 * @param bool $swiper With Swiper.
+	 * @param bool $thumbs With the Thumbnails effect's strip.
 	 */
-	public static function enqueue( $swiper ) {
+	public static function enqueue( $swiper, $thumbs = false ) {
 		if ( $swiper ) {
 			$file = wp_styles()->query( 'wp-swiper', 'registered' );
 			if ( $file && ! in_array( 'swiper', $file->deps, true ) ) {
@@ -271,6 +281,12 @@ class WP_Swiper_Render {
 			wp_enqueue_script( 'wp-swiper-slider' );
 		}
 		self::style( 'wp-swiper' );
+		if ( $swiper ) {
+			self::style( 'wp-swiper-slider' );
+			if ( $thumbs ) {
+				self::style( 'wp-swiper-thumbs' );
+			}
+		}
 		wp_enqueue_script( 'wp-swiper' );
 	}
 
@@ -362,7 +378,7 @@ class WP_Swiper_Render {
 		if ( WP_Swiper_Settings::is_collage( $settings ) ) {
 			self::enqueue_collage();
 		} else {
-			self::enqueue( self::needs_swiper( $settings ) );
+			self::enqueue( self::needs_swiper( $settings ), WP_Swiper_Settings::is_thumbs( $settings ) );
 		}
 
 		// Fading slides (the Fade effect, Thumbnails with the Fade transition) have no

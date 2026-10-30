@@ -306,7 +306,7 @@ class WP_Swiper_Preview {
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="noindex, nofollow">
 	<title><?php echo esc_html( $post->post_title ); ?></title>
-	<?php wp_print_styles( array( 'swiper', 'wp-swiper', 'wp-swiper-collage', 'wp-swiper-art' ) ); ?>
+	<?php wp_print_styles( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-thumbs', 'wp-swiper-collage', 'wp-swiper-art' ) ); ?>
 	<?php // Developer mode (the button by "Preview"; admin.js turns it on in here). ?>
 	<link rel="stylesheet" href="<?php echo esc_url( WP_SWIPER_URL . 'assets/css/preview-dev.css?ver=' . wp_swiper_asset_version( 'assets/css/preview-dev.css' ) ); ?>">
 	<link rel="stylesheet" href="<?php echo esc_url( WP_SWIPER_URL . 'assets/css/preview-art.css?ver=' . wp_swiper_asset_version( 'assets/css/preview-art.css' ) ); ?>">

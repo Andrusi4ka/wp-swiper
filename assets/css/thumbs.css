@@ -1,0 +1,334 @@
+/* WP Swiper's Thumbnails effect (after slider.css): the strip of
+   thumbnails beside the slider. */
+
+/* Thumbnails effect: the slider and, under or above it, a strip of small
+   images (.wp-swiper__thumbs, a Swiper of its own: frontend.js thumbs()).
+   The strip follows the slider in the markup; "above" only reorders it.
+   The gap between the two: per device (the rules below). */
+.wp-swiper--effect-thumbs {
+	--wp-swiper-thumbs-space: var(--wp-swiper-thumbs-spacing, 10px);
+
+	display: flex;
+	flex-direction: column;
+}
+
+/* Flex items: without a width Swiper's auto margins would shrink them. */
+.wp-swiper--effect-thumbs > .swiper {
+	width: 100%;
+	min-width: 0;
+}
+
+/* Height "Auto": the slides take what the strip leaves of the block. */
+.wp-swiper.wp-swiper--fill.wp-swiper--effect-thumbs > [data-wp-swiper] {
+	flex: 1 1 auto;
+	height: auto;
+	min-height: 0;
+}
+
+/* Gap between the slider and the strip on this device. */
+@media (max-width: 1024px) {
+	.wp-swiper--effect-thumbs {
+		--wp-swiper-thumbs-space: var(--wp-swiper-thumbs-spacing-tablet, var(--wp-swiper-thumbs-spacing, 10px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper--effect-thumbs {
+		--wp-swiper-thumbs-space: var(--wp-swiper-thumbs-spacing-mobile, var(--wp-swiper-thumbs-spacing-tablet, var(--wp-swiper-thumbs-spacing, 10px)));
+	}
+}
+
+/* The strip is as tall as its thumbnails, whatever Height the slider has. */
+.wp-swiper.wp-swiper--effect-thumbs .swiper.wp-swiper__thumbs {
+	flex: none;
+	height: auto;
+	margin: var(--wp-swiper-thumbs-space) 0 0;
+}
+
+/* Arrows on the strip ("Arrows" in Controls): smaller than the slider's, at
+   the strip's two ends; in a column (Swiper's own class: the strip turns per
+   device) at its top and bottom, turned. Set in full, over what a vertical
+   slider gives its own arrows. */
+.wp-swiper .wp-swiper__thumbs .swiper-button-prev,
+.wp-swiper .wp-swiper__thumbs .swiper-button-next {
+	/* "Arrow height", or 20px (the rules below: tablet and mobile). */
+	--swiper-navigation-size: var(--wp-swiper-arrow-size, 20px);
+
+	top: 50%;
+	bottom: auto;
+	margin-top: -10px;
+	transform: none;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper .wp-swiper__thumbs .swiper-button-prev,
+	.wp-swiper .wp-swiper__thumbs .swiper-button-next {
+		--swiper-navigation-size: var(--wp-swiper-arrow-size-tablet, 20px);
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper .wp-swiper__thumbs .swiper-button-prev,
+	.wp-swiper .wp-swiper__thumbs .swiper-button-next {
+		--swiper-navigation-size: var(--wp-swiper-arrow-size-mobile, 20px);
+	}
+}
+
+.wp-swiper .wp-swiper__thumbs .swiper-button-prev {
+	right: auto;
+	left: 6px;
+}
+
+.wp-swiper .wp-swiper__thumbs .swiper-button-next {
+	right: 6px;
+	left: auto;
+}
+
+.wp-swiper .wp-swiper__thumbs.swiper-vertical .swiper-button-prev,
+.wp-swiper .wp-swiper__thumbs.swiper-vertical .swiper-button-next {
+	right: auto;
+	left: 50%;
+	margin-top: 0;
+	transform: translateX(-50%) rotate(90deg);
+}
+
+.wp-swiper .wp-swiper__thumbs.swiper-vertical .swiper-button-prev {
+	top: 6px;
+}
+
+.wp-swiper .wp-swiper__thumbs.swiper-vertical .swiper-button-next {
+	top: auto;
+	bottom: 6px;
+}
+
+.wp-swiper .wp-swiper__thumbs .swiper-button-disabled {
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+/* A thumbnail: a frame (its width inside the size Swiper gives it) around the
+   image, which sets the height. Undoes what the slider's own slides get (the
+   first image's proportions, the slide radius, the "Contain" box). */
+.wp-swiper .wp-swiper__thumbs .swiper-slide {
+	box-sizing: border-box;
+	display: block;
+	height: auto;
+	aspect-ratio: auto;
+	container-type: normal;
+	padding: 0;
+	border: var(--wp-swiper-thumb-border-width, 1px) solid var(--wp-swiper-thumb-border-color, #ddd);
+	border-radius: var(--wp-swiper-thumb-radius, 0px);
+	opacity: var(--wp-swiper-thumb-opacity, 0.6);
+	cursor: pointer;
+	transition: opacity 0.2s, border-color 0.2s;
+}
+
+.wp-swiper .wp-swiper__thumbs .swiper-slide:hover,
+.wp-swiper .wp-swiper__thumbs .swiper-slide:focus-visible,
+.wp-swiper .wp-swiper__thumbs .swiper-slide.wp-swiper-thumb-active {
+	opacity: 1;
+}
+
+.wp-swiper .wp-swiper__thumbs .swiper-slide.wp-swiper-thumb-active {
+	border-color: var(--wp-swiper-thumb-active-color, #333);
+}
+
+/* "Thumbnail height" on this device (frontend.js thumbs()): the size of each
+   thumbnail, as many as fit. Below or above the slider: its width (the image
+   gives the height); beside it: its height (the image fills it). */
+.wp-swiper .wp-swiper__thumbs.wp-swiper__thumbs--sized .swiper-slide {
+	width: var(--wp-swiper-thumb-w, 100%);
+	height: var(--wp-swiper-thumb-h, auto);
+}
+
+/* Inside the frame: the strip clips anything drawn outside a thumbnail. */
+.wp-swiper .wp-swiper__thumbs .swiper-slide:focus-visible {
+	outline: 2px solid var(--wp-swiper-thumb-active-color, #333);
+	outline-offset: -2px;
+}
+
+.wp-swiper .wp-swiper__thumb-image {
+	display: block;
+	width: 100%;
+	height: auto;
+	max-width: none;
+	aspect-ratio: var(--wp-swiper-thumb-ratio, 4 / 3);
+	object-fit: var(--wp-swiper-fit);
+}
+
+/* A video slide's thumbnail: its poster, or a dark box without one, with a
+   play mark over it. */
+.wp-swiper .wp-swiper__thumb-blank {
+	background: #1d2327;
+}
+
+.wp-swiper .wp-swiper__thumbs .wp-swiper__thumb--video::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	border-style: solid;
+	border-width: 7px 0 7px 12px;
+	border-color: transparent transparent transparent #fff;
+	filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
+	transform: translate(-40%, -50%);
+	pointer-events: none;
+}
+
+/* Thumbnail proportions and border radius on this device. */
+@media (max-width: 1024px) {
+	.wp-swiper .wp-swiper__thumbs .swiper-slide {
+		border-radius: var(--wp-swiper-thumb-radius-tablet, var(--wp-swiper-thumb-radius, 0px));
+	}
+
+	.wp-swiper .wp-swiper__thumb-image {
+		aspect-ratio: var(--wp-swiper-thumb-ratio-tablet, var(--wp-swiper-thumb-ratio, 4 / 3));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper .wp-swiper__thumbs .swiper-slide {
+		border-radius: var(--wp-swiper-thumb-radius-mobile, var(--wp-swiper-thumb-radius-tablet, var(--wp-swiper-thumb-radius, 0px)));
+	}
+
+	.wp-swiper .wp-swiper__thumb-image {
+		aspect-ratio: var(--wp-swiper-thumb-ratio-mobile, var(--wp-swiper-thumb-ratio-tablet, var(--wp-swiper-thumb-ratio, 4 / 3)));
+	}
+}
+
+/* Where the strip sits, per device: .wp-swiper--thumbs-{position} on desktop,
+   --thumbs-tablet-{position} and --thumbs-mobile-{position} (render.php works
+   out what a device inherits), so the same rules three times. Under the
+   slider needs none. Above: only reordered. Left or right: a row, the slider
+   taking what the column leaves; the column stretches to the slider's height
+   (its thumbnails are taken out of the flow, so they never make the row
+   taller) and frontend.js thumbsBeside() gives it its width, none until
+   then; Swiper sets each thumbnail's height there and the image fills it. */
+@media (min-width: 1025px) {
+	.wp-swiper.wp-swiper--thumbs-top .swiper.wp-swiper__thumbs {
+		order: -1;
+		margin: 0 0 var(--wp-swiper-thumbs-space);
+	}
+
+	.wp-swiper--thumbs-left,
+	.wp-swiper--thumbs-right {
+		flex-direction: row;
+	}
+
+	.wp-swiper.wp-swiper--effect-thumbs.wp-swiper--thumbs-left > [data-wp-swiper],
+	.wp-swiper.wp-swiper--effect-thumbs.wp-swiper--thumbs-right > [data-wp-swiper] {
+		flex: 1 1 0%;
+		width: auto;
+		min-width: 0;
+	}
+
+	.wp-swiper.wp-swiper--thumbs-right .swiper.wp-swiper__thumbs {
+		width: 0;
+		margin: 0 0 0 var(--wp-swiper-thumbs-space);
+	}
+
+	.wp-swiper.wp-swiper--thumbs-left .swiper.wp-swiper__thumbs {
+		width: 0;
+		order: -1;
+		margin: 0 var(--wp-swiper-thumbs-space) 0 0;
+	}
+
+	.wp-swiper--thumbs-left .wp-swiper__thumbs .swiper-wrapper,
+	.wp-swiper--thumbs-right .wp-swiper__thumbs .swiper-wrapper {
+		position: absolute;
+		top: 0;
+		left: 0;
+	}
+
+	.wp-swiper--thumbs-left .wp-swiper__thumb-image,
+	.wp-swiper--thumbs-right .wp-swiper__thumb-image {
+		height: 100%;
+		aspect-ratio: auto;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+	.wp-swiper.wp-swiper--thumbs-tablet-top .swiper.wp-swiper__thumbs {
+		order: -1;
+		margin: 0 0 var(--wp-swiper-thumbs-space);
+	}
+
+	.wp-swiper--thumbs-tablet-left,
+	.wp-swiper--thumbs-tablet-right {
+		flex-direction: row;
+	}
+
+	.wp-swiper.wp-swiper--effect-thumbs.wp-swiper--thumbs-tablet-left > [data-wp-swiper],
+	.wp-swiper.wp-swiper--effect-thumbs.wp-swiper--thumbs-tablet-right > [data-wp-swiper] {
+		flex: 1 1 0%;
+		width: auto;
+		min-width: 0;
+	}
+
+	.wp-swiper.wp-swiper--thumbs-tablet-right .swiper.wp-swiper__thumbs {
+		width: 0;
+		margin: 0 0 0 var(--wp-swiper-thumbs-space);
+	}
+
+	.wp-swiper.wp-swiper--thumbs-tablet-left .swiper.wp-swiper__thumbs {
+		width: 0;
+		order: -1;
+		margin: 0 var(--wp-swiper-thumbs-space) 0 0;
+	}
+
+	.wp-swiper--thumbs-tablet-left .wp-swiper__thumbs .swiper-wrapper,
+	.wp-swiper--thumbs-tablet-right .wp-swiper__thumbs .swiper-wrapper {
+		position: absolute;
+		top: 0;
+		left: 0;
+	}
+
+	.wp-swiper--thumbs-tablet-left .wp-swiper__thumb-image,
+	.wp-swiper--thumbs-tablet-right .wp-swiper__thumb-image {
+		height: 100%;
+		aspect-ratio: auto;
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper.wp-swiper--thumbs-mobile-top .swiper.wp-swiper__thumbs {
+		order: -1;
+		margin: 0 0 var(--wp-swiper-thumbs-space);
+	}
+
+	.wp-swiper--thumbs-mobile-left,
+	.wp-swiper--thumbs-mobile-right {
+		flex-direction: row;
+	}
+
+	.wp-swiper.wp-swiper--effect-thumbs.wp-swiper--thumbs-mobile-left > [data-wp-swiper],
+	.wp-swiper.wp-swiper--effect-thumbs.wp-swiper--thumbs-mobile-right > [data-wp-swiper] {
+		flex: 1 1 0%;
+		width: auto;
+		min-width: 0;
+	}
+
+	.wp-swiper.wp-swiper--thumbs-mobile-right .swiper.wp-swiper__thumbs {
+		width: 0;
+		margin: 0 0 0 var(--wp-swiper-thumbs-space);
+	}
+
+	.wp-swiper.wp-swiper--thumbs-mobile-left .swiper.wp-swiper__thumbs {
+		width: 0;
+		order: -1;
+		margin: 0 var(--wp-swiper-thumbs-space) 0 0;
+	}
+
+	.wp-swiper--thumbs-mobile-left .wp-swiper__thumbs .swiper-wrapper,
+	.wp-swiper--thumbs-mobile-right .wp-swiper__thumbs .swiper-wrapper {
+		position: absolute;
+		top: 0;
+		left: 0;
+	}
+
+	.wp-swiper--thumbs-mobile-left .wp-swiper__thumb-image,
+	.wp-swiper--thumbs-mobile-right .wp-swiper__thumb-image {
+		height: 100%;
+		aspect-ratio: auto;
+	}
+}

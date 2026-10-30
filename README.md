@@ -43,13 +43,15 @@ PHPUnit tests with the WordPress test suite, run by GitHub Actions on every push
 | Path | What it holds |
 |---|---|
 | `wp-swiper.php` | Plugin header, post type, update checker |
-| `includes/class-wp-swiper-settings.php` | Settings schema (single source for the form, saving and the front end), migrations |
+| `includes/class-wp-swiper-settings.php` | Settings (single source for the form, saving and the front end); its traits `includes/trait-wp-swiper-settings-*.php`: migrations, sanitizing, text, media |
+| `includes/settings-fields.php`, `includes/art-fields.php` | The settings schema: every field, Art's own |
 | `includes/class-wp-swiper-admin.php` | Slider edit screen |
 | `includes/class-wp-swiper-render.php` | Shortcode and markup |
 | `includes/class-wp-swiper-wpbakery.php` | WPBakery element |
 | `includes/class-wp-swiper-preview.php` | Preview beside the settings (the frame it draws in) |
 | `assets/js/admin.js`, `assets/css/admin.css` | Edit screen behaviour and styles |
-| `assets/js/frontend.js`, `assets/css/frontend.css` | Slider behaviour and styles |
+| `assets/js/frontend.js`, `assets/css/frontend.css` | What every slider, collage and Art shares: lightbox, videos, captions, descriptions, background |
+| `assets/js/slider.js`, `assets/css/slider.css`, `assets/css/thumbs.css` | The sliders (not Collage or Art); the Thumbnails effect's strip |
 | `assets/vendor/swiper` | Swiper 11 (MIT) |
 | `vendor/plugin-update-checker` | Plugin Update Checker 5 (MIT) |
 | `tests/`, `composer.json`, `phpunit.xml.dist` | Tests (not in `wp-swiper.zip`) |

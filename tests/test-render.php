@@ -109,6 +109,45 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 			$this->fresh_assets();
 			do_shortcode( '[wp_swiper id="' . $this->slider( null, array( 'effect' => $effect ) ) . '"]' );
 			$this->assertFalse( wp_script_is( 'wp-swiper-slider', 'enqueued' ), $effect );
+			$this->assertFalse( wp_style_is( 'wp-swiper-slider', 'enqueued' ), $effect );
+			$this->assertFalse( wp_style_is( 'wp-swiper-thumbs', 'enqueued' ), $effect );
+		}
+	}
+
+	public function test_slider_styles_only_for_sliders_thumbs_for_its_effect() {
+		// A slider: slider.css after frontend.css, no thumbs.css.
+		$this->fresh_assets();
+		do_shortcode( '[wp_swiper id="' . $this->slider() . '"]' );
+		$this->assertTrue( wp_style_is( 'wp-swiper-slider', 'enqueued' ) );
+		$this->assertFalse( wp_style_is( 'wp-swiper-thumbs', 'enqueued' ) );
+		$this->assertSame( array( 'wp-swiper' ), wp_styles()->query( 'wp-swiper-slider' )->deps );
+
+		// The Thumbnails effect: thumbs.css too, after slider.css.
+		$this->fresh_assets();
+		do_shortcode( '[wp_swiper id="' . $this->slider( null, array( 'effect' => 'thumbs' ) ) . '"]' );
+		$this->assertTrue( wp_style_is( 'wp-swiper-thumbs', 'enqueued' ) );
+		$this->assertSame( array( 'wp-swiper-slider' ), wp_styles()->query( 'wp-swiper-thumbs' )->deps );
+		wp_styles()->all_deps( wp_styles()->queue );
+		$this->assertSame( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-thumbs' ), array_values( array_intersect( wp_styles()->to_do, array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-thumbs' ) ) ) );
+
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/css/slider.css' );
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/css/thumbs.css' );
+	}
+
+	public function test_frontend_css_keeps_only_what_everything_shares() {
+		$frontend = file_get_contents( WP_SWIPER_DIR . 'assets/css/frontend.css' );
+		$slider   = file_get_contents( WP_SWIPER_DIR . 'assets/css/slider.css' );
+		$thumbs   = file_get_contents( WP_SWIPER_DIR . 'assets/css/thumbs.css' );
+		// The sliders' own rules: not in frontend.css (Collage and Art do without them).
+		foreach ( array( '.swiper-pagination', '.swiper-button-prev', '.wp-swiper--effect-', '.wp-swiper--carousel', '.wp-swiper--zoom', '.wp-swiper--expand', '.wp-swiper__separator', '.wp-swiper__thumbs' ) as $selector ) {
+			$this->assertStringNotContainsString( $selector, $frontend, $selector );
+		}
+		$this->assertStringContainsString( '.wp-swiper--pag-outside', $slider );
+		$this->assertStringContainsString( '.wp-swiper--effect-thumbs', $thumbs );
+		$this->assertStringNotContainsString( '.wp-swiper__thumbs', $slider );
+		// What Collage and Art use too: still there.
+		foreach ( array( '.wp-swiper-lightbox', '.wp-swiper-descriptions', '.wp-swiper__caption', '.wp-swiper--background', '.wp-swiper__embed', '.wp-swiper--shadow' ) as $selector ) {
+			$this->assertStringContainsString( $selector, $frontend, $selector );
 		}
 	}
 
@@ -136,13 +175,14 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$GLOBALS['wp_actions']['wp_head'] = 1;
 		do_shortcode( '[wp_swiper id="' . $this->slider() . '"]' );
 		WP_Swiper_Render::remember_late_styles();
-		$this->assertSame( array( 'p' . $page => array( 'swiper', 'wp-swiper' ) ), get_option( WP_Swiper_Render::LATE_OPTION ) );
+		$this->assertSame( array( 'p' . $page => array( 'swiper', 'wp-swiper', 'wp-swiper-slider' ) ), get_option( WP_Swiper_Render::LATE_OPTION ) );
 
 		// The next visit: in <head> (enqueued as the page starts).
 		unset( $GLOBALS['wp_actions']['wp_head'] );
 		$this->fresh_assets();
 		$this->assertTrue( wp_style_is( 'wp-swiper', 'enqueued' ) );
 		$this->assertTrue( wp_style_is( 'swiper', 'enqueued' ) );
+		$this->assertTrue( wp_style_is( 'wp-swiper-slider', 'enqueued' ) );
 
 		// Another page: not there.
 		$this->go_to( get_permalink( self::factory()->post->create( array( 'post_type' => 'page' ) ) ) );
@@ -155,7 +195,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->go_to( get_permalink( self::factory()->post->create( array( 'post_type' => 'page' ) ) ) );
 		$this->fresh_assets();
 		// <head> printed them (the content has the slider), then the content shows it.
-		wp_styles()->done = array( 'swiper', 'wp-swiper' );
+		wp_styles()->done = array( 'swiper', 'wp-swiper', 'wp-swiper-slider' );
 		$GLOBALS['wp_actions']['wp_head'] = 1;
 		do_shortcode( '[wp_swiper id="' . $this->slider() . '"]' );
 		WP_Swiper_Render::remember_late_styles();
@@ -189,9 +229,29 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$page = self::factory()->post->create( array( 'post_type' => 'page', 'post_content' => '[wp_swiper id="' . $art . '"]' ) );
 		$this->go_to( get_permalink( $page ) );
 		$this->fresh_assets();
-		// Art: its own stylesheet, no Swiper.
+		// Art: its own stylesheet, no Swiper, nor the sliders' own.
 		$this->assertTrue( wp_style_is( 'wp-swiper-art', 'enqueued' ) );
 		$this->assertFalse( wp_style_is( 'swiper', 'enqueued' ) );
+		$this->assertFalse( wp_style_is( 'wp-swiper-slider', 'enqueued' ) );
+
+		// Thumbnails: Swiper's, the sliders' and the strip's.
+		$thumbs = $this->slider( null, array( 'effect' => 'thumbs' ) );
+		$this->go_to( get_permalink( self::factory()->post->create( array( 'post_type' => 'page', 'post_content' => '[wp_swiper id="' . $thumbs . '"]' ) ) ) );
+		$this->fresh_assets();
+		foreach ( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-thumbs' ) as $handle ) {
+			$this->assertTrue( wp_style_is( $handle, 'enqueued' ), $handle );
+		}
+
+		// Another effect: no strip.
+		$this->go_to( get_permalink( self::factory()->post->create( array( 'post_type' => 'page', 'post_content' => '[wp_swiper id="' . $this->slider() . '"]' ) ) ) );
+		$this->fresh_assets();
+		$this->assertTrue( wp_style_is( 'wp-swiper-slider', 'enqueued' ) );
+		$this->assertFalse( wp_style_is( 'wp-swiper-thumbs', 'enqueued' ) );
+	}
+
+	public function test_late_slider_styles_are_remembered() {
+		update_option( WP_Swiper_Render::LATE_OPTION, array( '*' => array( 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-thumbs', 'unknown' ) ) );
+		$this->assertSame( array( 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-thumbs' ), WP_Swiper_Render::late_styles() );
 	}
 
 	public function test_content_needs_swiper() {
@@ -976,7 +1036,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		// Off: none.
 		$this->assertStringNotContainsString( 'cube-shadow-color', $this->root_style( $this->render( array( 'effect' => 'cube' ) ) ) );
 		// The CSS paints Swiper's shadow with it (no opacity of its own left).
-		$css = file_get_contents( WP_SWIPER_DIR . 'assets/css/frontend.css' );
+		$css = file_get_contents( WP_SWIPER_DIR . 'assets/css/slider.css' );
 		$this->assertStringContainsString( "background: var(--wp-swiper-cube-shadow-color, rgba(0, 0, 0, 0.6));", $css );
 		$this->assertStringNotContainsString( '--wp-swiper-cube-shadow-opacity', $css );
 	}

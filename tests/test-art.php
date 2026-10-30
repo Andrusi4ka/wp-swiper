@@ -387,7 +387,11 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		wp_dequeue_script( 'wp-swiper' );
 		// slider.js (left by other tests) needs frontend.js: out of the queue too.
 		wp_dequeue_script( 'wp-swiper-slider' );
+		// So does slider.css (and thumbs.css, after it) frontend.css.
+		wp_dequeue_style( 'wp-swiper-slider' );
+		wp_dequeue_style( 'wp-swiper-thumbs' );
 		$this->render( array( 'effect' => 'art' ) );
+		$this->assertFalse( wp_style_is( 'wp-swiper-slider', 'enqueued' ) );
 		$this->assertTrue( wp_style_is( 'wp-swiper-art', 'enqueued' ) );
 		$this->assertTrue( wp_script_is( 'wp-swiper-art', 'enqueued' ) );
 		$this->assertFalse( wp_script_is( 'wp-swiper', 'enqueued' ) );

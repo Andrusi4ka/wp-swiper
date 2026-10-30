@@ -6,6 +6,8 @@
 	],
 	"styles": [
 		"swiper",
-		"wp-swiper"
+		"wp-swiper",
+		"wp-swiper-slider",
+		"wp-swiper-thumbs"
 	]
 }

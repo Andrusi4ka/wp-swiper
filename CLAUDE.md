@@ -236,9 +236,20 @@
 - `includes/settings-fields.php` — схема всіх налаштувань (section, type,
   responsive, effects, `inline_in`, `tiles`, `styles`, `soon`…). Його
   повертає `WP_Swiper_Settings::fields()` (`require` всередині методу, тож
-  `self::` там — цей клас), Art додає свої з `WP_Swiper_Art::fields()`.
-- `includes/class-wp-swiper-settings.php`:
-  - `pages()` / `blocks()` — меню й блоки адмінки;
+  `self::` там — цей клас), Art додає свої з `WP_Swiper_Art::fields()`
+  (так само `require` файлу `includes/art-fields.php`).
+- `includes/class-wp-swiper-settings.php` — `get()`, `defaults()`,
+  `pages()` / `blocks()` (меню й блоки адмінки), перевірки ефектів
+  (`is_*`), висоти, `layouts`, усі константи. Решта методів класу — у
+  трейтах (`use` у класі; виклики як і раніше `WP_Swiper_Settings::…`,
+  `self::` у трейті — цей клас; констант у трейтах немає, PHP 7.4):
+  - `trait-wp-swiper-settings-migrations.php` — `merge_*()` і `legacy_*()`
+    (перенесення старих збережень), `inherit_old_mobile_defaults()`;
+  - `trait-wp-swiper-settings-sanitize.php` — `sanitize()`,
+    `sanitize_fields()` і всі `sanitize_*()`;
+  - `trait-wp-swiper-settings-text.php` — підписи, описи, шрифти, кольори
+    фону підпису й Overlay (CSS-змінні, теги, розмітка, перехід описів);
+  - `trait-wp-swiper-settings-media.php` — слайди, відео, embed, постери;
   - `sanitize()` відкидає невідомі ключі. Тому для прибраних полів є
     `legacy_*()`, а `admin.js` при завантаженні переносить старі значення в
     нові місця;
@@ -258,9 +269,20 @@
   іконки стилів — `assets/images/{collage,art}/{style}.svg` (`currentColor`).
 - `includes/class-wp-swiper-render.php`: розмітка й `data-*` конфіг, які файли
   підключити:
-  - `enqueue( $swiper )`: `frontend.js`/`.css` завжди; для слайдерів
-    (`needs_swiper()`, не Collage/Art) ще Swiper і `slider.js`
-    (deps `swiper`, `wp-swiper`). `enqueue_collage()` — `collage.js`/`.css`;
+  - `enqueue( $swiper, $thumbs )`: `frontend.js`/`.css` завжди; для
+    слайдерів (`needs_swiper()`, не Collage/Art) ще Swiper, `slider.js`
+    (deps `swiper`, `wp-swiper`) і `slider.css` (dep `wp-swiper`), для
+    ефекту Thumbnails ще `thumbs.css` (dep `wp-swiper-slider`).
+    `enqueue_collage()` — `collage.js`/`.css`;
+  - CSS сайту, як і JS: `frontend.css` — спільне для слайдерів, колажу й Art
+    (база, відео, підписи, описи — їх показує й Art, лайтбокс, фон, рамка й
+    тінь фото); `slider.css` — лише слайдери (marquee, Expand, ефекти,
+    пагінація, стрілки, zoom); `thumbs.css` — смуга Thumbnails. Нове правило
+    лише для слайдерів — у `slider.css`. Колаж отримує класи кореня з тієї
+    самої `markup()`, але `render_slider()` знімає йому пагінацію, стрілки,
+    Direction, тож правила `slider.css` йому не потрібні. Поділ перевірено
+    (2026-10-30): `getComputedStyle` усіх елементів 34 випадків до і після —
+    без змін, крім невживаних у колажі `--swiper-pagination-bullet-*`;
   - стилі в `<head>` — з вмісту сторінки (`content_effects()`); показані
     після `<head>` запам'ятовуються (`remember_late_styles()`, опція
     `wp_swiper_late_styles`, понад `LATE_PAGES` сторінок → `'*'`);
@@ -307,7 +329,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 302 тести, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 339 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` і `art-effect` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.
@@ -321,13 +343,20 @@
 - WP-CLI не встановлено: користувач дозволив завантажувати офіційний
   `wp-cli.phar` (GitHub releases) у тимчасову теку й запускати через цей PHP.
 
+На роботі (OSPanel, є `_backups` поруч із сайтом): PHP —
+`C:/OSPanel/modules/PHP-8.3/php.exe` (і `PHP-7.4/php.exe`, без теки `PHP`),
+`WP_TESTS_DB_HOST=127.0.1.13` (`mysql-8.0`), Python немає (скрипти — на PHP).
+WP-CLI для тестів не потрібен: досить `WP_CORE_DIR` і `tests/vendor`.
+
 **У браузері** — `tests/browser/` (Playwright 1.48.2, встановлений Chrome),
 див. `tests/browser/README.md`. Лише локально, у CI не ходять (потрібен сайт).
 Знімки записані на роботі, з її медіатекою. Вдома (2026-10-29) у медіатеці
 немає відео, тож `video` не збігається зі знімком (156 інших проходять);
-знімки вдома не оновлювати. Виняток: усі `art-grid-*` (circle, circle-text, square,
-square-text) записано вдома (2026-10-29, після нової висоти Art) — на роботі
-перезаписати лише їх (`npx playwright test -g art-grid- --update-snapshots`). Видаляючи рядки за номерами (sed), звіряй
+знімки вдома не оновлювати. Усі `art-grid-*` записано вдома (2026-10-29),
+на роботі вони теж проходять (2026-10-30). На роботі (2026-10-30)
+`video-layout` теж не збігається: у знімку 4 відео, в медіатеці 3 — так і
+до поділу CSS; `video-layout.txt` не перезаписувати, доки не з'ясується,
+котра медіатека правильна. Видаляючи рядки за номерами (sed), звіряй
 `git diff` — так одного разу пропав селектор `.wp-swiper.wp-swiper--background`.
 `fixture.php` показує слайдер з налаштувань `cases.php` на фото з медіатеки,
 нічого не зберігає, відкривається лише з 127.x. Перевіряє 29 випадків
