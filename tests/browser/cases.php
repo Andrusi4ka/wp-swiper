@@ -109,31 +109,41 @@ return array(
 	// Text mask (drawn by Art): one photo through the letters, a strip under each.
 	// Plain fonts (Georgia, Arial Black): the same on any theme.
 	'art-text-mask'      => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ) + $shadow,
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ) + $shadow,
 		'photos'   => 3,
 	),
 	'art-text-mask-sans' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'WP SWIPER', 'text_mask_font' => 'sans', 'text_mask_strip_width' => 'letter', 'text_mask_strips' => 'middle', 'text_mask_gap' => '6', 'text_mask_size' => '45', 'art_height' => '360', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'WP SWIPER', 'text_mask_font' => 'sans', 'text_mask_strip_width' => 'letter', 'text_mask_strips' => 'middle', 'text_mask_gap' => '6', 'text_mask_size' => '45', 'art_height' => '360', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// A photo in each letter (as many photos as letters).
 	'art-text-mask-each' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_photos' => 'each', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_photos' => 'each', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ),
 		'photos'   => 6,
 	),
 	// The letters one under another, the strips going out to the right (all as
 	// wide), or to the left (each as its letter).
 	'art-text-mask-right' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_direction' => 'right', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '640', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_direction' => 'right', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '640', 'lightbox' => '1' ),
 		'photos'   => 3,
 	),
 	'art-text-mask-left' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'WP SWIPER', 'text_mask_direction' => 'left', 'text_mask_font' => 'sans', 'text_mask_strip_width' => 'letter', 'text_mask_strips' => 'sides', 'art_height' => '640', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'WP SWIPER', 'text_mask_direction' => 'left', 'text_mask_font' => 'sans', 'text_mask_strip_width' => 'letter', 'text_mask_strips' => 'sides', 'art_height' => '640', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// A font by name (Impact: on every Windows computer).
 	'art-text-mask-name' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'name', 'text_mask_font_name' => 'Impact', 'text_mask_weight' => '400', 'art_height' => '520', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'name', 'text_mask_font_name' => 'Impact', 'text_mask_weight' => '400', 'art_height' => '520', 'lightbox' => '1' ),
+		'photos'   => 1,
+	),
+	// Letter size Auto (the default): the word as wide as the stage.
+	'art-text-mask-auto' => array(
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ),
+		'photos'   => 1,
+	),
+	// Stretch letters: held low by Letter size, widened to fill their columns.
+	'art-text-mask-stretch' => array(
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_size' => '25', 'text_mask_stretch' => '1', 'text_mask_title' => 'WIDE', 'text_mask_font' => 'sans', 'art_height' => '420', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// A ring as its block's background, its proportions kept: filling the

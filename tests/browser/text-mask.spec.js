@@ -14,6 +14,8 @@ const CASES = [
 	[ 'art-text-mask-right', 'LAHORE', 1, 12, 'y' ],
 	[ 'art-text-mask-left', 'WPSWIPER', 1, null, 'y' ],
 	[ 'art-text-mask-name', 'LAHORE', 1, 12, 'x' ],
+	[ 'art-text-mask-auto', 'LAHORE', 1, 12, 'x' ],
+	[ 'art-text-mask-stretch', 'WIDE', 1, 12, 'x' ],
 ];
 
 for ( const [ name, word, photos, gap, axis ] of CASES ) {
@@ -51,6 +53,7 @@ for ( const [ name, word, photos, gap, axis ] of CASES ) {
 						box: [ box.left - stage.left, box.top - stage.top, box.width, box.height ].map( Math.round ),
 						letter: clip ? clip.querySelector( 'text' ).textContent : '',
 						family: clip ? clip.querySelector( 'text' ).style.fontFamily : '',
+						transform: clip ? clip.querySelector( 'text' ).getAttribute( 'transform' ) || '' : '',
 						photo: ( piece.querySelector( 'img' ) || {} ).currentSrc || '',
 						hit: !! ( inside && inside.closest( '.wp-swiper-art__piece' ) === piece ),
 						missed: ! ( before && before.closest( '.wp-swiper-art__piece' ) === piece ),
@@ -65,6 +68,25 @@ for ( const [ name, word, photos, gap, axis ] of CASES ) {
 		// Font by name: that font first (quoted), a plain one after it.
 		if ( 'art-text-mask-name' === name ) {
 			expect( found.pieces[ 0 ].family ).toMatch( /^"?Impact"?, Georgia/ );
+		}
+		// Letter size Auto: the strips from the stage's left edge to its right.
+		if ( 'art-text-mask-auto' === name ) {
+			const last = found.pieces[ found.pieces.length - 1 ].strip;
+			expect( found.pieces[ 0 ].strip[ 0 ] ).toBeLessThanOrEqual( 1 );
+			expect( last[ 0 ] + last[ 2 ] ).toBeGreaterThanOrEqual( found.stage[ 0 ] - 1 );
+		}
+		// Stretch letters: wider only (their height as it is), at most twice; the narrow "I" for one.
+		if ( 'art-text-mask-stretch' === name ) {
+			const scales = found.pieces.map( ( piece ) => {
+				const match = / scale\(([\d.]+) ([\d.]+)\)$/.exec( piece.transform );
+				return match ? [ Number( match[ 1 ] ), Number( match[ 2 ] ) ] : [ 1, 1 ];
+			} );
+			for ( const [ sx, sy ] of scales ) {
+				expect( sx ).toBeGreaterThanOrEqual( 1 );
+				expect( sx ).toBeLessThanOrEqual( 2 );
+				expect( sy ).toBe( 1 );
+			}
+			expect( scales[ 1 ][ 0 ] ).toBeGreaterThan( 1 );
 		}
 		// One photo through all the letters, or one in each (Photos).
 		expect( new Set( found.pieces.map( ( piece ) => piece.photo ) ).size ).toBe( photos );

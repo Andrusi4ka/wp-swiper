@@ -154,6 +154,25 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		$this->assertSame( 'same', WP_Swiper_Settings::sanitize( array( 'effect' => 'text-mask', 'text_mask_strip_width' => 'wide' ) )['text_mask_strip_width'] );
 	}
 
+	public function test_letter_size_auto_and_stretch() {
+		// Letter size Auto by default (the word as wide as it can be), per device.
+		$this->assertSame( 'auto', WP_Swiper_Settings::defaults()['text_mask_size_unit'] );
+		$this->assertSame( 'text_mask_size', WP_Swiper_Settings::fields()['text_mask_size_unit']['inline_in'] );
+		$text = WP_Swiper_Art::text_config( $this->text() );
+		$this->assertSame( array( 'desktop' => true, 'tablet' => true, 'mobile' => true ), $text['auto'] );
+		// % on desktop; the tablet its own Auto, the phone the tablet's.
+		$text = WP_Swiper_Art::text_config( $this->text( array( 'text_mask_size_unit' => '%', 'text_mask_size_unit_tablet' => 'auto', 'text_mask_size_unit_mobile' => '' ) ) );
+		$this->assertSame( array( 'desktop' => false, 'tablet' => true, 'mobile' => true ), $text['auto'] );
+		$text = WP_Swiper_Art::text_config( $this->text( array( 'text_mask_size_unit' => '%' ) ) );
+		$this->assertSame( array( 'desktop' => false, 'tablet' => false, 'mobile' => false ), $text['auto'] );
+		$this->assertSame( 'auto', WP_Swiper_Settings::sanitize( array( 'effect' => 'text-mask', 'text_mask_size_unit' => 'px' ) )['text_mask_size_unit'] );
+
+		// Stretch letters: off by default.
+		$this->assertFalse( WP_Swiper_Settings::defaults()['text_mask_stretch'] );
+		$this->assertFalse( WP_Swiper_Art::text_config( $this->text() )['stretch'] );
+		$this->assertTrue( WP_Swiper_Art::text_config( $this->text( array( 'text_mask_stretch' => true ) ) )['stretch'] );
+	}
+
 	public function test_strips_go_down_or_sideways() {
 		// Down by default (the word across); right or left: the letters one under another.
 		$this->assertSame( 'down', WP_Swiper_Settings::defaults()['text_mask_direction'] );

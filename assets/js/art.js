@@ -1395,6 +1395,9 @@
 	// letter still whole), and how wide it is (of the letter's).
 	var STRIP_JOIN = 2;
 	var STRIP_WIDTH = 0.8;
+	// Letter size Auto: at most this share of the stage away from the word; Stretch letters: at most this much.
+	var TEXT_AUTO = 0.7;
+	var TEXT_STRETCH = 2;
 	var textBlocks = 0;
 	var measurer = null;
 
@@ -1521,21 +1524,33 @@
 			deepest = up + down;
 		}
 		var gaps = gap * ( count - 1 + spaces.length );
-		var bySize = away * ( Number( forDevice( text.size ) ) || 30 ) / 100 / ( deepest || 1 );
+		// Letter size: its % of the stage (away from the word), or Auto: as
+		// large as the word can be, at most TEXT_AUTO of it (room left for the strips).
+		var share = forDevice( text.auto ) ? TEXT_AUTO : ( Number( forDevice( text.size ) ) || 30 ) / 100;
+		var bySize = away * share / ( deepest || 1 );
 		// A space: half a column, or (as the letter) a space's width (down) or half the tallest letter.
 		var space = across ? widest / 2 : sizes.space;
 		var scale;
 		var column = 0;
 		var used;
+		// Stretch letters: along the word, at most TEXT_STRETCH times (as the letter: all alike).
+		var stretch = 1;
 		if ( text.width !== 'letter' ) {
 			var units = count + spaces.length / 2;
 			var full = ( along - gaps ) / units;
 			scale = Math.min( ( full + gap / 2 ) / ( widest || 1 ), bySize );
 			column = Math.max( 1, Math.min( full, scale * widest - gap / 2 ) );
+			// Stretched, they fill their columns: the columns as wide as there is room.
+			if ( text.stretch ) {
+				column = Math.max( column, Math.min( full, scale * widest * TEXT_STRETCH ) );
+			}
 			used = column * units + gaps;
 		} else {
 			scale = Math.min( ( along - gaps ) / ( total + spaces.length * space ), bySize );
-			used = scale * ( total + spaces.length * space ) + gaps;
+			if ( text.stretch ) {
+				stretch = Math.max( 1, Math.min( TEXT_STRETCH, ( along - gaps ) / ( scale * ( total + spaces.length * space ) ) ) );
+			}
+			used = scale * stretch * ( total + spaces.length * space ) + gaps;
 		}
 		if ( ! ( scale > 0 ) || ! ( along - gaps > 0 ) ) {
 			return null;
@@ -1550,9 +1565,11 @@
 		for ( var i = 0; i < count; i++ ) {
 			var size = sizes[ i ];
 			if ( spaces.indexOf( i ) !== -1 ) {
-				at += ( column ? column / 2 : scale * space ) + gap;
+				at += ( column ? column / 2 : scale * stretch * space ) + gap;
 			}
-			var span = scale * spans[ i ];
+			// Stretched: as the letter, all alike; in columns, each to fill its own.
+			var widen = column ? ( text.stretch ? Math.max( 1, Math.min( TEXT_STRETCH, column / ( scale * spans[ i ] || 1 ) ) ) : 1 ) : stretch;
+			var span = scale * spans[ i ] * widen;
 			var depth = scale * depths[ i ];
 			// Along the word: in the middle of its column, or where it is.
 			var start = column ? at + ( column - span ) / 2 : at;
@@ -1577,6 +1594,8 @@
 					item = { left: width - depth, top: start, width: depth, height: span, strip: reach > 1 ? { x: width - end, y: stripStart, w: reach, h: stripSpan } : null };
 				}
 			}
+			// How much wider (down) or taller (right, left) its letter is drawn.
+			item.stretch = widen;
 			items.push( item );
 			at += ( column || span ) + gap;
 		}
@@ -1656,8 +1675,20 @@
 			clip.setAttribute( 'clipPathUnits', 'userSpaceOnUse' );
 			var glyph = document.createElementNS( SVG, 'text' );
 			// At its origin: the ink starts `left` before it.
-			glyph.setAttribute( 'x', Math.round( ( item.left - box.left + scale * size.left ) * 100 ) / 100 );
-			glyph.setAttribute( 'y', Math.round( ( item.top + scale * size.ascent - box.top ) * 100 ) / 100 );
+			// Stretched along the word (down: wider; right or left: taller), from its origin.
+			var sideways = text.direction === 'right' || text.direction === 'left';
+			var sx = sideways ? 1 : item.stretch || 1;
+			var sy = sideways ? item.stretch || 1 : 1;
+			var ox = Math.round( ( item.left - box.left + scale * size.left * sx ) * 100 ) / 100;
+			var oy = Math.round( ( item.top + scale * size.ascent * sy - box.top ) * 100 ) / 100;
+			if ( sx !== 1 || sy !== 1 ) {
+				glyph.setAttribute( 'x', 0 );
+				glyph.setAttribute( 'y', 0 );
+				glyph.setAttribute( 'transform', 'translate(' + ox + ' ' + oy + ') scale(' + ( Math.round( sx * 1000 ) / 1000 ) + ' ' + ( Math.round( sy * 1000 ) / 1000 ) + ')' );
+			} else {
+				glyph.setAttribute( 'x', ox );
+				glyph.setAttribute( 'y', oy );
+			}
 			// As measured, whatever the page's CSS says of text (inline: over its rules).
 			glyph.style.cssText = 'font-family:' + family + ';font-weight:' + weight + ';font-size:' + ( Math.round( scale * 10000 ) / 100 ) + 'px;font-style:normal;font-variant:normal;letter-spacing:0;text-transform:none;text-anchor:start;dominant-baseline:alphabetic';
 			glyph.textContent = letters[ i ];

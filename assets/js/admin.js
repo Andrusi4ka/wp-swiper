@@ -2131,6 +2131,13 @@
 					heightUnit = $( '#wp-swiper-art_height_unit' + suffix ).val() || heightUnit;
 					$( '#wp-swiper-art_height' + suffix ).prop( 'readOnly', heightUnit === 'auto' ).toggleClass( 'is-unused', heightUnit === 'auto' );
 				} );
+				// Text mask, Letter size Auto on a device: its % does not apply there (greyed, kept).
+				var sizeUnit = 'auto';
+				[ 'desktop', 'tablet', 'mobile' ].forEach( function ( device ) {
+					var suffix = device === 'desktop' ? '' : '_' + device;
+					sizeUnit = $( '#wp-swiper-text_mask_size_unit' + suffix ).val() || sizeUnit;
+					$( '#wp-swiper-text_mask_size' + suffix ).prop( 'readOnly', sizeUnit === 'auto' ).toggleClass( 'is-unused', sizeUnit === 'auto' );
+				} );
 			}
 
 			// A block titled otherwise for some effects (render_blocks(): Art's for Text mask).

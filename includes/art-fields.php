@@ -684,14 +684,39 @@ return array(
 	'text_mask_size'     => array(
 		'section'    => 'layout',
 		'effects'    => array( self::TEXT_EFFECT ),
-		'label'      => __( 'Letter size (%)', 'wp-swiper' ),
+		'label'      => __( 'Letter size', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
+		'unit'       => 'text_mask_size_unit',
 		'default'    => 30,
 		'min'        => 10,
 		'max'        => 70,
 		'step'       => 1,
-		'help'       => __( 'Strips down: of the Height, the letters no taller than this (the word fills the width). Strips right or left: of the width, the letters no wider than this (the word fills the Height).', 'wp-swiper' ),
+		'help'       => __( 'Auto: the word as wide as it can be (the letters at most 70% of the Height, or of the width with strips right or left). %: strips down, of the Height, the letters no taller than this; strips right or left, of the width, no wider than this.', 'wp-swiper' ),
+	),
+	// Auto: no Letter size of its own, the letters as large as fill the width.
+	'text_mask_size_unit' => array(
+		'section'    => 'layout',
+		'effects'    => array( self::TEXT_EFFECT ),
+		'label'      => __( 'Letter size unit', 'wp-swiper' ),
+		'type'       => 'select',
+		'responsive' => true,
+		'inline_in'  => 'text_mask_size',
+		'default'    => 'auto',
+		'choices'    => array(
+			'auto' => __( 'Auto', 'wp-swiper' ),
+			'%'    => '%',
+		),
+	),
+	// Each letter stretched along the word (up to twice its width), to fill its
+	// strip (or the word the width): its height as Letter size has it.
+	'text_mask_stretch'  => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Stretch letters', 'wp-swiper' ),
+		'type'    => 'checkbox',
+		'default' => false,
+		'help'    => __( 'Each letter wider (up to twice), to fill its strip, or with strips as the letter the word the width; their height stays. Good with narrow fonts; it changes the font\'s look.', 'wp-swiper' ),
 	),
 	'text_mask_gap'      => array(
 		'section'    => 'layout',

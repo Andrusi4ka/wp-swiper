@@ -15,7 +15,7 @@ const CASES = [
 	'collage-justified', 'collage-random', 'collage-feature',
 	'art-ring', 'art-ring-text', 'art-grid-circle', 'art-grid-circle-text', 'art-grid-square', 'art-grid-square-text',
 	'art-grid-shapes', 'art-grid-shapes-one', 'art-grid-shapes-background', 'art-ring-background',
-	'art-text-mask', 'art-text-mask-sans', 'art-text-mask-each', 'art-text-mask-right', 'art-text-mask-left', 'art-text-mask-name',
+	'art-text-mask', 'art-text-mask-sans', 'art-text-mask-each', 'art-text-mask-right', 'art-text-mask-left', 'art-text-mask-name', 'art-text-mask-auto', 'art-text-mask-stretch',
 ];
 
 // Ones with arrows that move the slides (a marquee runs on its own).
