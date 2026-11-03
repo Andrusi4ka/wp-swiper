@@ -1772,7 +1772,7 @@
 
 			// Before reading Direction: locked, it shows the fixed value.
 			// Fading slides: the Fade effect, or Thumbnails with the Fade transition.
-			var fixedDirection = effect === 'fade' || collage || effect === 'art' || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' );
+			var fixedDirection = effect === 'fade' || collage || effect === 'art' || effect === 'text-mask' || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' );
 			lockDirection( fixedDirection );
 			var vertical = $( '#wp-swiper-direction' ).val() === 'vertical';
 			var cover = $( '#wp-swiper-image_fit' ).val() === 'cover';
@@ -1893,7 +1893,7 @@
 			[ 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_color' ].forEach( function ( name ) {
 				field( name ).toggle( shadowOn );
 			} );
-			field( 'image_shadow_spread' ).toggle( shadowOn && effect !== 'art' );
+			field( 'image_shadow_spread' ).toggle( shadowOn && effect !== 'art' && effect !== 'text-mask' );
 			// Continuous scroll: the delay shown greyed (locked above), the pause
 			// applies (frontend.js stops the strip where it is).
 			field( 'autoplay_delay' ).toggle( autoplay || marquee );
@@ -1950,7 +1950,7 @@
 			// background (WP_Swiper_Settings::can_describe()); the page is greyed
 			// otherwise, and while no slide has one.
 			// Art: always under it (Direction does not apply).
-			var describable = effect === 'art' || ( ! vertical && ! background && ! marquee && ! collage );
+			var describable = effect === 'art' || effect === 'text-mask' || ( ! vertical && ! background && ! marquee && ! collage );
 			// Captions: none as a background either (WP_Swiper_Settings::can_caption());
 			// the Caption page is greyed then, as while no slide has one.
 			captionsShown = ! background;
@@ -2048,13 +2048,18 @@
 			// pages (all as the toggles above left them; vertical captions
 			// excepted). Last, over the toggles above: none of the others applies to it.
 			var ART_SHARED = [ 'effect', 'css_class', 'css_id', 'lightbox', 'lightbox_border_rounded', 'lightbox_radius', 'description_lightbox', 'description_lightbox_place', 'description_lightbox_width', 'description_lightbox_max' ];
-			if ( effect === 'art' ) {
-				var artStyle = $( '#wp-swiper-art_style' ).val();
+			// Text mask is drawn by Art too, as its Style "text" (WP_Swiper_Art::style_of()):
+			// the same here, its own fields (data-effects) and no captions (its
+			// letters would cut them up), the descriptions kept.
+			var textMask = effect === 'text-mask';
+			if ( effect === 'art' || textMask ) {
+				var artStyle = textMask ? 'text' : $( '#wp-swiper-art_style' ).val();
+				var textSections = textMask ? 'fieldset[data-section="description"]' : 'fieldset[data-section="caption"], fieldset[data-section="description"]';
 				$( '.wp-swiper-field' ).each( function () {
 					var $field = $( this );
-					if ( String( $field.data( 'effects' ) || '' ).split( ' ' ).indexOf( 'art' ) === -1 ) {
+					if ( String( $field.data( 'effects' ) || '' ).split( ' ' ).indexOf( effect ) === -1 ) {
 						var name = $field.data( 'field' );
-						var text = $field.closest( 'fieldset[data-section="caption"], fieldset[data-section="description"]' ).length > 0;
+						var text = $field.closest( textSections ).length > 0;
 						if ( ( ! text || name === 'caption_orientation' ) && ART_SHARED.indexOf( name ) === -1 ) {
 							$field.addClass( 'is-art-hidden' ).hide();
 						}
@@ -2089,8 +2094,9 @@
 						field( name ).hide();
 					} );
 				}
-				// SVG shape: the order windows show a new photo in, only where they all change at once.
-				if ( [ 'one', 'advance' ].indexOf( $( '#wp-swiper-art_shape_target' ).val() ) === -1 ) {
+				// SVG shape: the order windows show a new photo in, only where they all
+				// change at once (Text mask: always, one photo through all its letters).
+				if ( ! textMask && [ 'one', 'advance' ].indexOf( $( '#wp-swiper-art_shape_target' ).val() ) === -1 ) {
 					field( 'art_shape_appear' ).hide();
 				}
 				// Opening: its size and content (image and text, either or both) only
@@ -2109,6 +2115,12 @@
 					$( '#wp-swiper-art_height' + suffix ).prop( 'readOnly', heightUnit === 'auto' ).toggleClass( 'is-unused', heightUnit === 'auto' );
 				} );
 			}
+
+			// A block titled otherwise for some effects (render_blocks(): Art's for Text mask).
+			$( '.wp-swiper-subheading[data-titles]' ).each( function () {
+				var titles = $( this ).data( 'titles' ) || {};
+				$( this ).text( titles[ effect ] || $( this ).attr( 'data-title' ) );
+			} );
 
 			// Shown: not hidden by a toggle, nor as not applicable (above).
 			var shown = function () {

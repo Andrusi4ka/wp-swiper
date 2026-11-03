@@ -16,6 +16,47 @@ class WP_Swiper_Art {
 
 	const EFFECT = 'art';
 
+	// Text mask: an effect of its own in the list, drawn here as a Style of
+	// Art would be ('text', style_of()): its letters are its windows.
+	const TEXT_EFFECT = 'text-mask';
+
+	// The effects this class draws.
+	const EFFECTS = array( self::EFFECT, self::TEXT_EFFECT );
+
+	// Text mask: the most characters of its word.
+	const TEXT_MAX = 24;
+
+	/**
+	 * Whether this class draws the slider (Art or Text mask).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return bool
+	 */
+	public static function is_art( $settings ) {
+		return isset( $settings['effect'] ) && in_array( $settings['effect'], self::EFFECTS, true );
+	}
+
+	/**
+	 * Text mask: the letters of its word (its windows, in order), spaces left
+	 * out; at least one.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string[]
+	 */
+	public static function letters( $settings ) {
+		$word    = isset( $settings['text_mask_title'] ) ? (string) $settings['text_mask_title'] : '';
+		$letters = preg_split( '//u', $word, -1, PREG_SPLIT_NO_EMPTY );
+		$letters = array_values(
+			array_filter(
+				is_array( $letters ) ? $letters : array(),
+				function ( $letter ) {
+					return '' !== trim( $letter );
+				}
+			)
+		);
+		return $letters ? $letters : array( 'T' );
+	}
+
 
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
@@ -129,19 +170,19 @@ class WP_Swiper_Art {
 	 * @return bool
 	 */
 	public static function is_wide( $settings ) {
-		return in_array( self::style_of( $settings ), array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ), true );
+		return in_array( self::style_of( $settings ), array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes', 'text' ), true );
 	}
 
 	/**
 	 * Whether a Style's pieces are windows that change as the SVG shape's do
 	 * (What changes, Appearance, One photo through all windows): SVG shape
-	 * and Grid shapes.
+	 * and Grid shapes; Text mask's letters too.
 	 *
 	 * @param string $style Style.
 	 * @return bool
 	 */
 	public static function has_windows( $style ) {
-		return in_array( $style, array( 'grid-shapes', 'shape' ), true );
+		return in_array( $style, array( 'grid-shapes', 'shape', 'text' ), true );
 	}
 
 	// Grid shapes: the most columns and rows.
@@ -367,6 +408,9 @@ class WP_Swiper_Art {
 	 * @return string
 	 */
 	public static function style_of( $settings ) {
+		if ( isset( $settings['effect'] ) && self::TEXT_EFFECT === $settings['effect'] ) {
+			return 'text';
+		}
 		$style = isset( $settings['art_style'] ) ? (string) $settings['art_style'] : '';
 		return array_key_exists( $style, self::styles() ) ? $style : 'ring';
 	}
@@ -395,9 +439,12 @@ class WP_Swiper_Art {
 	public static function blocks() {
 		return array(
 			'layout'   => array(
+				// Text mask's own fields here too (its Height is Art's): the
+				// block's title says which (admin.js, `titles`).
 				'art'        => array(
 					'title'  => __( 'Art', 'wp-swiper' ),
-					'fields' => array( 'art_style', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_height', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ),
+					'titles' => array( self::TEXT_EFFECT => __( 'Text mask', 'wp-swiper' ) ),
+					'fields' => array( 'art_style', 'text_mask_title', 'text_mask_font', 'text_mask_weight', 'text_mask_size', 'text_mask_gap', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_height', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ),
 				),
 				// Ring + text: what is in the middle, a block of its own (shown
 				// for that Style only, as its fields are).
@@ -451,6 +498,10 @@ class WP_Swiper_Art {
 	 */
 	public static function counts( $settings ) {
 		$style = self::style_of( $settings );
+		// Text mask: its letters, on every device.
+		if ( 'text' === $style ) {
+			return array_fill_keys( array( 'desktop', 'tablet', 'mobile' ), count( self::letters( $settings ) ) );
+		}
 		// SVG shape: its windows, on every device.
 		if ( 'shape' === $style ) {
 			return array_map(
@@ -630,6 +681,18 @@ class WP_Swiper_Art {
 		}
 
 		$style   = self::style_of( $settings );
+		// Text mask: one photo through all its letters (the word is the
+		// stencil), no captions on it (each letter would cut one up).
+		if ( 'text' === $style ) {
+			$settings['art_shape_target'] = 'one';
+			$slides                       = array_map(
+				function ( $slide ) {
+					$slide['caption'] = '';
+					return $slide;
+				},
+				$slides
+			);
+		}
 		// SVG shape: no file yet (or no shapes in it), nothing to show.
 		$shapes = 'shape' === $style ? self::shapes( $settings ) : null;
 		$shape  = $shapes ? $shapes['desktop'] : null;
@@ -697,6 +760,11 @@ class WP_Swiper_Art {
 		if ( $wide && 'grid-shapes' !== $style ) {
 			$config['columns'] = self::per_device( $settings, 'art_grid_columns', 2, 6 );
 			$config['cells']   = self::per_device( $settings, 'art_grid_count', 2, 36 );
+		}
+		// Text mask: its word and how it is drawn (art.js text()), its own Gap.
+		if ( 'text' === $style ) {
+			$config['gap']  = self::per_device( $settings, 'text_mask_gap', 0, 60 );
+			$config['text'] = self::text_config( $settings );
 		}
 		// Grid shapes: its layout (art.js draws each shape at the stage's size).
 		if ( 'grid-shapes' === $style ) {
@@ -865,6 +933,10 @@ class WP_Swiper_Art {
 				}
 				?>
 			</div>
+			<?php if ( 'text' === $style ) : ?>
+				<?php // Text mask: its word as text (the letters drawn are pictures of it), for screen readers and search. ?>
+				<span class="wp-swiper-art__word"><?php echo esc_html( trim( (string) $settings['text_mask_title'] ) ); ?></span>
+			<?php endif; ?>
 			<?php echo $opening . $center; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where they are built. ?>
 			<template class="wp-swiper-art__pool">
 				<?php
@@ -887,6 +959,45 @@ class WP_Swiper_Art {
 			) . '</p>';
 		}
 		return ob_get_clean();
+	}
+
+	/**
+	 * Text mask, for art.js text(): the letters (its windows, in order), where
+	 * the spaces were (a wider gap before that letter), the font, the
+	 * letters' height at most per device (% of the stage's), and the strips:
+	 * how their lengths go, the shortest and longest (% of the height under
+	 * the letters; Shortest at most Longest), and a number for "Different
+	 * lengths" that stays the same for the word (the same strips each time).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array
+	 */
+	public static function text_config( $settings ) {
+		$word   = isset( $settings['text_mask_title'] ) ? (string) $settings['text_mask_title'] : '';
+		$chars  = preg_split( '//u', $word, -1, PREG_SPLIT_NO_EMPTY );
+		$spaces = array();
+		$index  = 0;
+		foreach ( is_array( $chars ) ? $chars : array() as $char ) {
+			if ( '' === trim( $char ) ) {
+				// Before the next letter (one or more spaces: one wider gap).
+				$spaces[ $index ] = 1;
+			} else {
+				$index++;
+			}
+		}
+		$min = max( 0, min( 100, (int) $settings['text_mask_strip_min'] ) );
+		$max = max( 0, min( 100, (int) $settings['text_mask_strip_max'] ) );
+		return array(
+			'letters' => self::letters( $settings ),
+			'spaces'  => array_values( array_map( 'intval', array_keys( $spaces ) ) ),
+			'font'    => in_array( $settings['text_mask_font'], array( 'heading', 'serif', 'sans' ), true ) ? $settings['text_mask_font'] : 'heading',
+			'weight'  => in_array( (string) $settings['text_mask_weight'], array( '400', '700', '900' ), true ) ? (int) $settings['text_mask_weight'] : 700,
+			'size'    => self::per_device( $settings, 'text_mask_size', 10, 70 ),
+			'strips'  => in_array( $settings['text_mask_strips'], array( 'random', 'equal', 'middle', 'sides' ), true ) ? $settings['text_mask_strips'] : 'random',
+			'min'     => min( $min, $max ),
+			'max'     => max( $min, $max ),
+			'seed'    => (int) sprintf( '%u', crc32( $word ) ) % 100000,
+		);
 	}
 
 	/**

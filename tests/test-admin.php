@@ -446,7 +446,8 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 				$at = strpos( $match[1], 'data-block="' . $name . '"' );
 				$this->assertNotFalse( $at, "$page/$name" );
 				$this->assertGreaterThan( $last, $at, "$page/$name in order" );
-				$this->assertStringContainsString( '<h4 class="wp-swiper-subheading">' . esc_html( $block['title'] ) . '</h4>', $match[1] );
+				// Its title (another one for some effects: data-titles, admin.js).
+				$this->assertSame( 1, preg_match( '#<h4 class="wp-swiper-subheading"( data-title="[^"]*" data-titles="[^"]*")?>' . preg_quote( esc_html( $block['title'] ), '#' ) . '</h4>#', $match[1] ), "$page/$name title" );
 				$last = $at;
 			}
 		}

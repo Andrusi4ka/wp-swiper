@@ -128,6 +128,11 @@ trait WP_Swiper_Settings_Sanitize {
 					$clean[ $key ] = self::sanitize_classes( (string) $value );
 					break;
 
+				case 'line': // A line of plain text (Text mask's word), no longer than `maxlength`.
+					$value         = sanitize_text_field( null === $value ? $field['default'] : (string) $value );
+					$clean[ $key ] = isset( $field['maxlength'] ) ? mb_substr( $value, 0, (int) $field['maxlength'] ) : $value;
+					break;
+
 				case 'id': // An HTML id.
 					$clean[ $key ] = self::sanitize_id( (string) $value );
 					break;

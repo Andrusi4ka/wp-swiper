@@ -1010,7 +1010,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 
 		// The editor hides it where the slides only fade (Thumbnails with Fade) and unlocks it for the effect change.
 		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' );
-		$this->assertStringContainsString( "var fixedDirection = effect === 'fade' || collage || effect === 'art' || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' );", $js );
+		$this->assertStringContainsString( "var fixedDirection = effect === 'fade' || collage || effect === 'art' || effect === 'text-mask' || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' );", $js );
 		$this->assertStringContainsString( "field( 'direction' ).hide();", $js );
 		$this->assertMatchesRegularExpression( '#// The own values, not the fixed ones locked Layout fields show\.\s*lockDirection\( false \);#', $js );
 	}

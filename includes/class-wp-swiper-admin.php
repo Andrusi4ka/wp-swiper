@@ -808,7 +808,13 @@ class WP_Swiper_Admin {
 			if ( ! $in ) {
 				continue;
 			}
-			printf( '<div class="wp-swiper-block" data-block="%s"><h4 class="wp-swiper-subheading">%s</h4>', esc_attr( $name ), esc_html( $block['title'] ) );
+			// Another title for some effects (`titles`: effect => title, admin.js).
+			printf(
+				'<div class="wp-swiper-block" data-block="%s"><h4 class="wp-swiper-subheading"%s>%s</h4>',
+				esc_attr( $name ),
+				empty( $block['titles'] ) ? '' : ' data-title="' . esc_attr( $block['title'] ) . '" data-titles="' . esc_attr( wp_json_encode( $block['titles'] ) ) . '"',
+				esc_html( $block['title'] )
+			);
 			self::render_fields( $in, $fields, $values );
 			echo '</div>';
 			$keys = array_diff( $keys, $in );
@@ -1005,10 +1011,12 @@ class WP_Swiper_Admin {
 				</div>
 
 				<?php // Class names or an id: a plain text input. ?>
-				<?php if ( in_array( $field['type'], array( 'text', 'id' ), true ) ) : ?>
+				<?php // A line of text too (`line`: Text mask's word). ?>
+				<?php if ( in_array( $field['type'], array( 'text', 'id', 'line' ), true ) ) : ?>
 					<input type="text" class="regular-text" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
 						value="<?php echo esc_attr( $value ); ?>"
 						placeholder="<?php echo esc_attr( isset( $field['placeholder'] ) ? $field['placeholder'] : '' ); ?>"
+						<?php echo isset( $field['maxlength'] ) ? ' maxlength="' . (int) $field['maxlength'] . '"' : ''; ?>
 						spellcheck="false">
 				<?php elseif ( 'image' === $field['type'] ) : ?>
 					<?php

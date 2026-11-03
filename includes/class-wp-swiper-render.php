@@ -205,7 +205,7 @@ class WP_Swiper_Render {
 			if ( in_array( 'collage', $effects, true ) ) {
 				wp_enqueue_style( 'wp-swiper-collage' );
 			}
-			if ( in_array( WP_Swiper_Art::EFFECT, $effects, true ) ) {
+			if ( array_intersect( WP_Swiper_Art::EFFECTS, $effects ) ) {
 				wp_enqueue_style( 'wp-swiper-art' );
 			}
 		}
@@ -259,7 +259,7 @@ class WP_Swiper_Render {
 	 * @return bool
 	 */
 	public static function needs_swiper( $settings ) {
-		return ! in_array( $settings['effect'], array( 'collage', WP_Swiper_Art::EFFECT ), true );
+		return 'collage' !== $settings['effect'] && ! WP_Swiper_Art::is_art( $settings );
 	}
 
 	/**
@@ -371,7 +371,7 @@ class WP_Swiper_Render {
 		}
 
 		// Art: drawn by its own class, with its own settings and assets only.
-		if ( WP_Swiper_Art::EFFECT === $settings['effect'] ) {
+		if ( WP_Swiper_Art::is_art( $settings ) ) {
 			return WP_Swiper_Art::render( $post_id, $slides, $settings, $class );
 		}
 

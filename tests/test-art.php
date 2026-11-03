@@ -19,9 +19,18 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 
 	public function test_art_settings_are_its_own() {
 		$fields = WP_Swiper_Settings::fields();
+		// Text mask (drawn by Art) uses these of Art's too.
+		$shared = array( 'art_height', 'art_height_unit', 'art_swap', 'art_shape_appear', 'art_swap_delay', 'art_swap_speed', 'art_pause' );
 		foreach ( WP_Swiper_Art::fields() as $key => $field ) {
+			// Text mask's own: for it only, on the Layout page.
+			if ( 0 === strpos( $key, 'text_mask_' ) ) {
+				$this->assertSame( array( 'text-mask' ), $field['effects'], $key );
+				$this->assertSame( 'layout', $field['section'], $key );
+				$this->assertSame( $field, $fields[ $key ], $key );
+				continue;
+			}
 			$this->assertStringStartsWith( 'art_', $key );
-			$this->assertSame( array( 'art' ), $field['effects'], $key );
+			$this->assertSame( in_array( $key, $shared, true ) ? array( 'art', 'text-mask' ) : array( 'art' ), $field['effects'], $key );
 			// On the Layout page; Photo swapping on the Controls page; captions on the middle photo only on the Caption page.
 			if ( 0 === strpos( $key, 'art_swap' ) || 'art_pause' === $key || in_array( $key, array( 'art_shape_target', 'art_shape_appear' ), true ) ) {
 				$this->assertSame( array( 'advanced', 'controls' ), array( $field['section'], $field['panel'] ), $key );

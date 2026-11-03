@@ -68,13 +68,13 @@ class WP_Swiper_Settings {
 	 * stand apart, and Fade, one photo framed by it (see shadow() for the rest
 	 * of the conditions).
 	 */
-	const SHADOW_EFFECTS = array( 'slide', 'fade', 'coverflow', 'cards', 'creative', 'collage', 'art' );
+	const SHADOW_EFFECTS = array( 'slide', 'fade', 'coverflow', 'cards', 'creative', 'collage', 'art', 'text-mask' );
 
 	/**
 	 * Effects whose photos can zoom under the pointer (Zoom on hover): not
 	 * those that turn in 3D (Cube, Flip, Coverflow, Cards).
 	 */
-	const HOVER_ZOOM_EFFECTS = array( 'slide', 'fade', 'creative', 'thumbs', 'collage', 'art' );
+	const HOVER_ZOOM_EFFECTS = array( 'slide', 'fade', 'creative', 'thumbs', 'collage', 'art', 'text-mask' );
 
 	/**
 	 * The CSS a caption's or description's markup may keep (its editor's: a
@@ -216,7 +216,7 @@ class WP_Swiper_Settings {
 		$x      = (int) $settings['image_shadow_x'];
 		$y      = (int) $settings['image_shadow_y'];
 		$blur   = max( 0, (int) $settings['image_shadow_blur'] );
-		$spread = 'art' === $effect ? 0 : (int) $settings['image_shadow_spread'];
+		$spread = in_array( $effect, WP_Swiper_Art::EFFECTS, true ) ? 0 : (int) $settings['image_shadow_spread'];
 		$color  = self::sanitize_slide_color( $settings['image_shadow_color'] );
 		$color  = '' === $color ? 'rgba(0,0,0,0.3)' : $color;
 		$reach  = $blur + $spread;

@@ -10,6 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $wp_swiper_art = array( self::EFFECT );
+// Text mask (its own effect, drawn by Art: style_of() 'text'): Art's fields it
+// uses too (data-styles still says which Styles of Art).
+$wp_swiper_art_text = self::EFFECTS;
 
 return array(
 	'art_style'          => array(
@@ -110,7 +113,7 @@ return array(
 	// square photos), merge_art_height().
 	'art_height'         => array(
 		'section'    => 'layout',
-		'effects'    => $wp_swiper_art,
+		'effects'    => $wp_swiper_art_text,
 		'label'      => __( 'Height', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -123,7 +126,7 @@ return array(
 	),
 	'art_height_unit'    => array(
 		'section'    => 'layout',
-		'effects'    => $wp_swiper_art,
+		'effects'    => $wp_swiper_art_text,
 		'label'      => __( 'Height unit', 'wp-swiper' ),
 		'type'       => 'select',
 		'responsive' => true,
@@ -495,7 +498,7 @@ return array(
 	'art_swap'           => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $wp_swiper_art,
+		'effects' => $wp_swiper_art_text,
 		'label'   => __( 'Swap in the other photos', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => true,
@@ -544,8 +547,8 @@ return array(
 	'art_shape_appear'   => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $wp_swiper_art,
-		'styles'  => array( 'grid-shapes', 'shape' ),
+		'effects' => $wp_swiper_art_text,
+		'styles'  => array( 'grid-shapes', 'shape', 'text' ),
 		'label'   => __( 'Appearance', 'wp-swiper' ),
 		'type'    => 'select',
 		'default' => 'all',
@@ -562,7 +565,7 @@ return array(
 	'art_swap_delay'     => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $wp_swiper_art,
+		'effects' => $wp_swiper_art_text,
 		'label'   => __( 'A new photo every (ms)', 'wp-swiper' ),
 		'type'    => 'number',
 		'default' => 3000,
@@ -574,7 +577,7 @@ return array(
 	'art_swap_speed'     => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $wp_swiper_art,
+		'effects' => $wp_swiper_art_text,
 		'label'   => __( 'Fade (ms)', 'wp-swiper' ),
 		'type'    => 'number',
 		'default' => 800,
@@ -586,9 +589,114 @@ return array(
 	'art_pause'          => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $wp_swiper_art,
+		'effects' => $wp_swiper_art_text,
 		'label'   => __( 'Pause on hover', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => true,
+	),
+
+	/*
+	 * Text mask: a word whose letters are windows onto the photo, each with a
+	 * strip under it (art.js text()). As wide as the column (Height as a
+	 * grid's); the letters as large as fit, no taller than Letter height.
+	 */
+	'text_mask_title'    => array(
+		'section'   => 'layout',
+		'effects'   => array( self::TEXT_EFFECT ),
+		'label'     => __( 'Word', 'wp-swiper' ),
+		'type'      => 'line',
+		'default'   => 'TEXT',
+		'maxlength' => self::TEXT_MAX,
+		'help'      => __( 'Each letter is a window onto the photo, with a strip under it. Spaces leave a wider gap.', 'wp-swiper' ),
+	),
+	// The theme's heading font (a heading's, as the page has it), or a plain one.
+	'text_mask_font'     => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Font', 'wp-swiper' ),
+		'type'    => 'select',
+		'group'   => 'text_mask_font',
+		'default' => 'heading',
+		'choices' => array(
+			'heading' => __( 'The theme\'s headings', 'wp-swiper' ),
+			'serif'   => __( 'Serif', 'wp-swiper' ),
+			'sans'    => __( 'Sans-serif', 'wp-swiper' ),
+		),
+	),
+	'text_mask_weight'   => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Weight', 'wp-swiper' ),
+		'type'    => 'select',
+		'group'   => 'text_mask_font',
+		'default' => '700',
+		'choices' => array(
+			'400' => __( 'Normal', 'wp-swiper' ),
+			'700' => __( 'Bold', 'wp-swiper' ),
+			'900' => __( 'Black', 'wp-swiper' ),
+		),
+		'help'    => __( 'Bold letters make wider windows: thin ones show little of the photo.', 'wp-swiper' ),
+	),
+	// The letters' height at most (% of the Height); narrower columns make them smaller.
+	'text_mask_size'     => array(
+		'section'    => 'layout',
+		'effects'    => array( self::TEXT_EFFECT ),
+		'label'      => __( 'Letter height (%)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 30,
+		'min'        => 10,
+		'max'        => 70,
+		'step'       => 1,
+		'help'       => __( 'Of the Height, at most: the word fills the width, its letters no taller than this.', 'wp-swiper' ),
+	),
+	'text_mask_gap'      => array(
+		'section'    => 'layout',
+		'effects'    => array( self::TEXT_EFFECT ),
+		'label'      => __( 'Gap (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 12,
+		'min'        => 0,
+		'max'        => 60,
+		'step'       => 1,
+	),
+	// How long each letter's strip is, between Shortest and Longest (% of the
+	// height under the letters).
+	'text_mask_strips'   => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Strips', 'wp-swiper' ),
+		'type'    => 'select',
+		'default' => 'random',
+		'choices' => array(
+			'random' => __( 'Different lengths', 'wp-swiper' ),
+			'equal'  => __( 'All the same', 'wp-swiper' ),
+			'middle' => __( 'Longer in the middle', 'wp-swiper' ),
+			'sides'  => __( 'Longer at the sides', 'wp-swiper' ),
+		),
+	),
+	'text_mask_strip_min' => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Shortest (%)', 'wp-swiper' ),
+		'type'    => 'number',
+		'group'   => 'text_mask_strip',
+		'default' => 40,
+		'min'     => 0,
+		'max'     => 100,
+		'step'    => 1,
+	),
+	'text_mask_strip_max' => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Longest (%)', 'wp-swiper' ),
+		'type'    => 'number',
+		'group'   => 'text_mask_strip',
+		'default' => 100,
+		'min'     => 0,
+		'max'     => 100,
+		'step'    => 1,
+		'help'    => __( 'Of the height under the letters. All the same: Longest.', 'wp-swiper' ),
 	),
 );

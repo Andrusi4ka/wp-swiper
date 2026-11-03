@@ -15,6 +15,7 @@ const CASES = [
 	'collage-justified', 'collage-random', 'collage-feature',
 	'art-ring', 'art-ring-text', 'art-grid-circle', 'art-grid-circle-text', 'art-grid-square', 'art-grid-square-text',
 	'art-grid-shapes', 'art-grid-shapes-one', 'art-grid-shapes-background', 'art-ring-background',
+	'art-text-mask', 'art-text-mask-sans',
 ];
 
 // Ones with arrows that move the slides (a marquee runs on its own).
@@ -165,7 +166,9 @@ for ( const name of CASES ) {
 					// Art: the first piece near its left edge, its own there (its
 					// middle may be another piece's: a shape round a hole).
 					const box = await photo.boundingBox();
-					await photo.click( { position: { x: 12, y: box.height / 2 } } );
+					// Text mask: its letter's strip, at the bottom middle (beside a
+					// letter's stem there may be no window).
+					await photo.click( { position: /text-mask/.test( name ) ? { x: box.width / 2, y: box.height - 4 } : { x: 12, y: box.height / 2 } } );
 				} else {
 					await photo.click();
 				}

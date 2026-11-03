@@ -1377,7 +1377,227 @@
 	// No motion wanted: no wave either.
 	var STILL = !! ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches );
 
-	var STYLES = { ring: ring, 'ring-text': ring, 'grid-circle': gridCircle, 'grid-circle-text': gridCircle, 'grid-square': gridCircle, 'grid-square-text': gridCircle, 'grid-shapes': gridShapes, shape: shape };
+	/*
+	 * Text mask (class-wp-swiper-art.php text_config()): a word across the
+	 * stage, each letter a window onto the photo with a strip under it, the
+	 * letter and its strip one window (a piece cut to both with an SVG
+	 * clipPath: its <text> takes the page's fonts, which clip-path: path()
+	 * cannot). The letters as large as fill the width, no taller than Letter
+	 * height (% of the stage), at the top; the strips from inside their
+	 * letters down, as long as Strips says (% of the height under them).
+	 */
+	var TEXT_FONTS = {
+		serif: 'Georgia, "Times New Roman", Times, serif',
+		sans: '"Arial Black", "Helvetica Neue", Arial, Helvetica, sans-serif'
+	};
+	// How far up into its letter a strip reaches (of the letter's height), and how wide it is (of the letter's).
+	var STRIP_INTO = 0.35;
+	var STRIP_WIDTH = 0.8;
+	var textBlocks = 0;
+	var measurer = null;
+
+	// The font family: a plain one, or the theme's headings' (an h2 in the block, as the page styles it).
+	function textFamily( block, text ) {
+		if ( text.font !== 'heading' ) {
+			return TEXT_FONTS[ text.font ] || TEXT_FONTS.serif;
+		}
+		if ( ! block.wpSwiperHeadingFont ) {
+			var probe = document.createElement( 'h2' );
+			probe.className = 'wp-swiper-art__probe';
+			probe.textContent = 'A';
+			block.appendChild( probe );
+			block.wpSwiperHeadingFont = getComputedStyle( probe ).fontFamily || TEXT_FONTS.serif;
+			block.removeChild( probe );
+		}
+		return block.wpSwiperHeadingFont;
+	}
+
+	// Each letter's ink at 100px: from its origin, left and right, up and down; and a space's width.
+	function measureLetters( letters, font ) {
+		measurer = measurer || document.createElement( 'canvas' );
+		var context = measurer.getContext( '2d' );
+		context.font = font;
+		var sizes = letters.map( function ( letter ) {
+			var m = context.measureText( letter );
+			var exact = typeof m.actualBoundingBoxRight === 'number';
+			var left = exact ? m.actualBoundingBoxLeft : 0;
+			var right = exact ? m.actualBoundingBoxRight : m.width;
+			return {
+				left: left,
+				width: Math.max( 1, left + right ),
+				ascent: exact ? m.actualBoundingBoxAscent : 72,
+				descent: exact ? Math.max( 0, m.actualBoundingBoxDescent ) : 0
+			};
+		} );
+		sizes.space = context.measureText( ' ' ).width;
+		return sizes;
+	}
+
+	// The same numbers for the same word each time ("Different lengths").
+	function seeded( seed ) {
+		var state = ( Number( seed ) || 1 ) >>> 0;
+		return function () {
+			state = ( state + 0x6D2B79F5 ) >>> 0;
+			var t = state;
+			t = Math.imul( t ^ ( t >>> 15 ), t | 1 );
+			t ^= t + Math.imul( t ^ ( t >>> 7 ), t | 61 );
+			return ( ( t ^ ( t >>> 14 ) ) >>> 0 ) / 4294967296;
+		};
+	}
+
+	// Each strip's length (0–1 of the height under the letters).
+	function stripLengths( text, count ) {
+		var min = Math.max( 0, Math.min( 100, Number( text.min ) || 0 ) ) / 100;
+		var max = Math.max( min, Math.min( 100, Number( text.max ) || 0 ) / 100 );
+		var random = seeded( text.seed );
+		var lengths = [];
+		for ( var i = 0; i < count; i++ ) {
+			var at = count > 1 ? i / ( count - 1 ) : 0.5;
+			var share = {
+				equal: 1,
+				middle: 1 - Math.abs( 2 * at - 1 ),
+				sides: Math.abs( 2 * at - 1 )
+			}[ text.strips ];
+			lengths.push( min + ( max - min ) * ( typeof share === 'number' ? share : random() ) );
+		}
+		return lengths;
+	}
+
+	function textMask( block, stage, config ) {
+		var width = stage.clientWidth;
+		var height = stage.clientHeight;
+		var text = config.text || {};
+		var letters = text.letters || [];
+		var pieces = stage.querySelectorAll( '.wp-swiper-art__piece' );
+		if ( ! width || ! height || ! letters.length ) {
+			return;
+		}
+		var count = Math.min( letters.length, pieces.length );
+		var family = textFamily( block, text );
+		var weight = Number( text.weight ) || 700;
+		var font = weight + ' 100px ' + family;
+		// A web font not there yet: drawn again once it is (measured with it).
+		if ( document.fonts && document.fonts.load && ! block.wpSwiperFontAsked ) {
+			block.wpSwiperFontAsked = true;
+			document.fonts.load( font, letters.join( '' ) ).then( function () {
+				textMask( block, stage, config );
+			}, function () {} );
+		}
+		var sizes = measureLetters( letters.slice( 0, count ), font );
+		var spaces = ( text.spaces || [] ).filter( function ( at ) {
+			return at > 0 && at < count;
+		} );
+		var gap = Math.max( 0, Number( forDevice( config.gap ) ) || 0 );
+
+		// The scale (of 100px): the word as wide as the stage, the letters no taller than Letter height.
+		var ink = 0;
+		var up = 0;
+		var down = 0;
+		sizes.forEach( function ( size ) {
+			ink += size.width;
+			up = Math.max( up, size.ascent );
+			down = Math.max( down, size.descent );
+		} );
+		var room = width - gap * ( count - 1 + spaces.length );
+		var tallest = height * ( Number( forDevice( text.size ) ) || 30 ) / 100;
+		var scale = Math.min( room / ( ink + spaces.length * sizes.space ), tallest / ( ( up + down ) || 1 ) );
+		if ( ! ( scale > 0 ) ) {
+			for ( var none = 0; none < pieces.length; none++ ) {
+				pieces[ none ].hidden = true;
+			}
+			return;
+		}
+		var used = scale * ( ink + spaces.length * sizes.space ) + gap * ( count - 1 + spaces.length );
+		var x = Math.max( 0, ( width - used ) / 2 );
+		var baseline = scale * up;
+		var under = Math.max( 0, height - baseline );
+		var lengths = stripLengths( text, count );
+
+		// The letters' clip paths, in the block (one SVG, out of view).
+		if ( ! block.wpSwiperTextId ) {
+			block.wpSwiperTextId = 'wp-swiper-text-' + ( ++textBlocks );
+		}
+		var defs = block.querySelector( ':scope > .wp-swiper-art__clips' );
+		if ( ! defs ) {
+			defs = document.createElementNS( SVG, 'svg' );
+			defs.setAttribute( 'class', 'wp-swiper-art__clips' );
+			defs.setAttribute( 'aria-hidden', 'true' );
+			defs.setAttribute( 'focusable', 'false' );
+			block.appendChild( defs );
+		}
+		while ( defs.firstChild ) {
+			defs.removeChild( defs.firstChild );
+		}
+
+		var windows = [];
+		for ( var i = 0; i < count; i++ ) {
+			var size = sizes[ i ];
+			var piece = pieces[ i ];
+			if ( spaces.indexOf( i ) !== -1 ) {
+				x += scale * sizes.space + gap;
+			}
+			var letterWidth = scale * size.width;
+			var letterTop = baseline - scale * size.ascent;
+			var letterBottom = baseline + scale * size.descent;
+			// Its strip: centred under it, from inside it down (none at length 0).
+			var stripWidth = letterWidth * STRIP_WIDTH;
+			var stripLeft = x + ( letterWidth - stripWidth ) / 2;
+			var stripTop = baseline - scale * size.ascent * STRIP_INTO;
+			var stripBottom = baseline + under * lengths[ i ];
+			var strip = stripBottom - stripTop > 1;
+			var box = {
+				left: Math.floor( x ),
+				top: Math.floor( letterTop ),
+				width: 0,
+				height: 0
+			};
+			box.width = Math.ceil( x + letterWidth ) - box.left;
+			box.height = Math.ceil( Math.max( letterBottom, strip ? stripBottom : 0 ) ) - box.top;
+
+			var clip = document.createElementNS( SVG, 'clipPath' );
+			var id = block.wpSwiperTextId + '-' + i;
+			clip.setAttribute( 'id', id );
+			clip.setAttribute( 'clipPathUnits', 'userSpaceOnUse' );
+			var glyph = document.createElementNS( SVG, 'text' );
+			// At its origin: the ink starts `left` before it.
+			glyph.setAttribute( 'x', Math.round( ( x - box.left + scale * size.left ) * 100 ) / 100 );
+			glyph.setAttribute( 'y', Math.round( ( baseline - box.top ) * 100 ) / 100 );
+			// As measured, whatever the page's CSS says of text (inline: over its rules).
+			glyph.style.cssText = 'font-family:' + family + ';font-weight:' + weight + ';font-size:' + ( Math.round( scale * 10000 ) / 100 ) + 'px;font-style:normal;font-variant:normal;letter-spacing:0;text-transform:none;text-anchor:start;dominant-baseline:alphabetic';
+			glyph.textContent = letters[ i ];
+			clip.appendChild( glyph );
+			if ( strip ) {
+				var rect = document.createElementNS( SVG, 'rect' );
+				rect.setAttribute( 'x', Math.round( ( stripLeft - box.left ) * 100 ) / 100 );
+				rect.setAttribute( 'y', Math.round( ( stripTop - box.top ) * 100 ) / 100 );
+				rect.setAttribute( 'width', Math.round( stripWidth * 100 ) / 100 );
+				rect.setAttribute( 'height', Math.round( ( stripBottom - stripTop ) * 100 ) / 100 );
+				clip.appendChild( rect );
+			}
+			defs.appendChild( clip );
+
+			piece.hidden = false;
+			place( piece, box );
+			piece.style.clipPath = 'url(#' + id + ')';
+			piece.classList.remove( 'wp-swiper-art__piece--circle' );
+			// One photo through all the letters (art.css): its part of the photo.
+			piece.style.setProperty( '--wp-swiper-art-ox', box.left + 'px' );
+			piece.style.setProperty( '--wp-swiper-art-oy', box.top + 'px' );
+			windows.push( { box: [ box.left / width, box.top / height, box.width / width, box.height / height ] } );
+			x += letterWidth + gap;
+		}
+		for ( var extra = count; extra < pieces.length; extra++ ) {
+			pieces[ extra ].hidden = true;
+		}
+		block.style.setProperty( '--wp-swiper-art-sw', width + 'px' );
+		block.style.setProperty( '--wp-swiper-art-sh', height + 'px' );
+		// For Appearance (wave()): where each window is, and the stage's proportions.
+		config.windows = windows;
+		config.windowsRatio = width / height;
+		block.wpSwiperArtShown = count;
+	}
+
+	var STYLES = { ring: ring, 'ring-text': ring, 'grid-circle': gridCircle, 'grid-circle-text': gridCircle, 'grid-square': gridCircle, 'grid-square-text': gridCircle, 'grid-shapes': gridShapes, shape: shape, text: textMask };
 
 	/**
 	 * The slides' descriptions (render.php descriptions()): the block right

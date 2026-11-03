@@ -33,6 +33,9 @@ return array(
 			// Not a slider either: photos in a shape of its own (its Style),
 			// all of it in class-wp-swiper-art.php, art.js and art.css.
 			'art'       => __( 'Art', 'wp-swiper' ),
+			// A word whose letters are windows onto a photo, a strip under each:
+			// drawn by Art too (WP_Swiper_Art, style "text").
+			'text-mask' => __( 'Text mask', 'wp-swiper' ),
 		),
 	),
 	// Layout (its Effect block, first): for the effects that can move up and

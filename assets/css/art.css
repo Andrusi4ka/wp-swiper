@@ -318,6 +318,29 @@
 	filter: var(--wp-swiper-art-shadow, none);
 }
 
+/* Text mask: its word as text for screen readers and search (the letters
+   drawn are its pictures); the letters' clip paths and the heading probe
+   (art.js), out of view and taking no room. */
+.wp-swiper-art__word,
+.wp-swiper-art__probe {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	margin: -1px !important;
+	padding: 0 !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
+.wp-swiper-art__clips {
+	position: absolute;
+	width: 0;
+	height: 0;
+	overflow: hidden;
+}
+
 /* Captions on the middle photo only: the ring's pieces show none. */
 .wp-swiper-art--caption-middle .wp-swiper-art__piece:not([data-piece="0"]) .wp-swiper-art__caption {
 	display: none;
