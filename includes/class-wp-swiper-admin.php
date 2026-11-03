@@ -1358,11 +1358,13 @@ class WP_Swiper_Admin {
 			return;
 		}
 
-		update_post_meta( $post_id, WP_Swiper_Settings::META_SLIDES, self::posted_slides() );
+		// wp_slash(): update_post_meta() unslashes, so backslashes in captions,
+		// descriptions and JSON (SVG shapes) would be lost.
+		update_post_meta( $post_id, WP_Swiper_Settings::META_SLIDES, wp_slash( self::posted_slides() ) );
 
 		// Settings.
 		$settings = isset( $_POST['wp_swiper_settings'] ) ? (array) wp_unslash( $_POST['wp_swiper_settings'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized against the schema.
-		update_post_meta( $post_id, WP_Swiper_Settings::META_SETTINGS, WP_Swiper_Settings::sanitize( $settings ) );
+		update_post_meta( $post_id, WP_Swiper_Settings::META_SETTINGS, wp_slash( WP_Swiper_Settings::sanitize( $settings ) ) );
 	}
 
 	/**

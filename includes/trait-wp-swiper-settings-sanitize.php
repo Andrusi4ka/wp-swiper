@@ -23,7 +23,9 @@ trait WP_Swiper_Settings_Sanitize {
 
 		// Layout values of every effect (see layouts()), sent by the editor as
 		// JSON; the chosen effect's are the ones posted as fields.
-		$layouts = isset( $input['layouts'] ) ? json_decode( (string) $input['layouts'], true ) : null;
+		// Anything else (a nested array from a forged request): none.
+		$layouts = isset( $input['layouts'] ) ? $input['layouts'] : null;
+		$layouts = is_string( $layouts ) ? json_decode( $layouts, true ) : $layouts;
 		$layouts = is_array( $layouts ) ? $layouts : array();
 
 		$clean['layouts'] = array();

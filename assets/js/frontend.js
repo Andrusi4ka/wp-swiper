@@ -313,6 +313,11 @@
 			document.documentElement.classList.remove( 'wp-swiper-lightbox-open' );
 
 			setTimeout( function () {
+				players.forEach( function ( video ) {
+					if ( video && video.destroy ) {
+						video.destroy();
+					}
+				} );
 				viewer.destroy( true, true );
 				root.remove();
 			}, 250 );
@@ -655,7 +660,9 @@
 			} );
 		}
 
-		window.addEventListener( 'message', function ( e ) {
+		// Added with the player's iframe, removed by destroy() (the lightbox's
+		// players go with it: no listener left behind for each one opened).
+		function onMessage( e ) {
 			if ( ! iframe || e.source !== iframe.contentWindow ) {
 				return;
 			}
@@ -684,9 +691,10 @@
 			} else if ( message.event === 'ended' || message.event === 'finish' ) {
 				finished();
 			}
-		} );
+		}
 
 		function create() {
+			window.addEventListener( 'message', onMessage );
 			iframe = document.createElement( 'iframe' );
 			iframe.className = 'wp-swiper__embed-frame';
 			iframe.src = address();
@@ -725,7 +733,12 @@
 			onEnded: function ( fn ) {
 				ended.push( fn );
 			},
-			onError: function () {}
+			onError: function () {},
+			destroy: function () {
+				window.removeEventListener( 'message', onMessage );
+				iframe = null;
+				ended = [];
+			}
 		};
 	}
 

@@ -83,6 +83,33 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( 700, $saved['layouts']['fade']['height'] );
 	}
 
+	public function test_save_keeps_backslashes() {
+		$this->as_role( 'editor' );
+		$id     = $this->slider( array() );
+		$slides = $this->one_slide( $this->image() );
+		$slides['caption']     = array( 'C:\\images\\demo' );
+		$slides['description'] = array( '<p>a\\b "c"</p>' );
+		// As WordPress posts them: slashed.
+		$this->post_form( wp_slash( $slides ), wp_slash( array( 'effect' => 'fade' ) ) );
+
+		WP_Swiper_Admin::save( $id );
+		$saved = get_post_meta( $id, WP_Swiper_Settings::META_SLIDES, true );
+
+		$this->assertSame( 'C:\\images\\demo', $saved[0]['caption'] );
+		$this->assertSame( '<p>a\\b "c"</p>', $saved[0]['description'] );
+		$this->assertSame( 'fade', WP_Swiper_Settings::get( $id )['effect'] );
+	}
+
+	public function test_layouts_of_the_wrong_type_are_none() {
+		foreach ( array( array(), array( array( 'x' ) ), 5, 'not json' ) as $layouts ) {
+			$clean = WP_Swiper_Settings::sanitize( array( 'effect' => 'fade', 'layouts' => $layouts ) );
+			$this->assertSame( array( 'fade' ), array_keys( $clean['layouts'] ) );
+		}
+		// Already decoded (an array of effects): taken as the JSON would be.
+		$clean = WP_Swiper_Settings::sanitize( array( 'effect' => 'fade', 'layouts' => array( 'cube' => array( 'height' => '300' ) ) ) );
+		$this->assertSame( 300, $clean['layouts']['cube']['height'] );
+	}
+
 	public function test_posted_slides_are_checked_one_by_one() {
 		$image  = $this->image();
 		$video  = $this->video();
