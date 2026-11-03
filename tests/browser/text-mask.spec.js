@@ -4,8 +4,18 @@ const { test, expect } = require( '@playwright/test' );
 const path = require( 'path' );
 const fixture = '/wp-content/plugins/' + path.basename( path.resolve( __dirname, '../..' ) ) + '/tests/browser/fixture.php';
 
-// Name, word, how many photos, the Gap between the strips where they are all as wide (Strip width "Same for all").
-for ( const [ name, word, photos, gap ] of [ [ 'art-text-mask', 'LAHORE', 1, 12 ], [ 'art-text-mask-sans', 'WPSWIPER', 1, null ], [ 'art-text-mask-each', 'LAHORE', 6, 12 ] ] ) {
+// Name, word, how many photos, the Gap between the strips where they are all
+// as wide (Strip width "Same for all"; null: as the letter), and the axis the
+// word goes along (x: Strips go down; y: right or left, the letters one under another).
+const CASES = [
+	[ 'art-text-mask', 'LAHORE', 1, 12, 'x' ],
+	[ 'art-text-mask-sans', 'WPSWIPER', 1, null, 'x' ],
+	[ 'art-text-mask-each', 'LAHORE', 6, 12, 'x' ],
+	[ 'art-text-mask-right', 'LAHORE', 1, 12, 'y' ],
+	[ 'art-text-mask-left', 'WPSWIPER', 1, null, 'y' ],
+];
+
+for ( const [ name, word, photos, gap, axis ] of CASES ) {
 	test( name + ': a window per letter, cut to it', async ( { page } ) => {
 		const errors = [];
 		page.on( 'pageerror', ( error ) => errors.push( error.message ) );
@@ -24,13 +34,19 @@ for ( const [ name, word, photos, gap ] of [ [ 'art-text-mask', 'LAHORE', 1, 12 
 				pieces: pieces.map( ( piece ) => {
 					const box = piece.getBoundingClientRect();
 					const clip = document.querySelector( piece.style.clipPath.replace( /^url\("?|"?\)$/g, '' ) );
-					// The middle of its strip's bottom: in the window; just left of
-					// its box: not (the gap, or the page).
-					const inside = document.elementFromPoint( box.left + box.width / 2, box.bottom - 3 );
-					const before = document.elementFromPoint( box.left - 1, box.bottom - 3 );
 					const rect = clip && clip.querySelector( 'rect' );
+					// Its strip in the stage: x, y, width, height.
+					const strip = rect ? [ 'x', 'y', 'width', 'height' ].map( ( key ) => Number( rect.getAttribute( key ) ) ) : null;
+					if ( strip ) {
+						strip[ 0 ] += box.left - stage.left;
+						strip[ 1 ] += box.top - stage.top;
+					}
+					// The middle of its strip: in the window; just left of its box:
+					// not (the gap, or the page).
+					const inside = strip ? document.elementFromPoint( stage.left + strip[ 0 ] + strip[ 2 ] / 2, stage.top + strip[ 1 ] + strip[ 3 ] / 2 ) : null;
+					const before = document.elementFromPoint( box.left - 1, box.bottom - 3 );
 					return {
-						strip: rect ? [ box.left - stage.left + Number( rect.getAttribute( 'x' ) ), Number( rect.getAttribute( 'width' ) ) ] : null,
+						strip: strip,
 						box: [ box.left - stage.left, box.top - stage.top, box.width, box.height ].map( Math.round ),
 						letter: clip ? clip.querySelector( 'text' ).textContent : '',
 						photo: ( piece.querySelector( 'img' ) || {} ).currentSrc || '',
@@ -46,24 +62,28 @@ for ( const [ name, word, photos, gap ] of [ [ 'art-text-mask', 'LAHORE', 1, 12 
 		expect( found.word.replace( /\s/g, '' ) ).toBe( word );
 		// One photo through all the letters, or one in each (Photos).
 		expect( new Set( found.pieces.map( ( piece ) => piece.photo ) ).size ).toBe( photos );
-		let right = -Infinity;
+		// Along the word: x (left, width) or y (top, height) of a box.
+		const at = 'x' === axis ? 0 : 1;
+		let end = -Infinity;
 		for ( const piece of found.pieces ) {
 			expect( piece.hit, piece.letter ).toBe( true );
 			expect( piece.missed, piece.letter ).toBe( true );
-			// Left to right, apart, within the stage, from its top.
-			expect( piece.box[ 0 ] ).toBeGreaterThan( right );
-			right = piece.box[ 0 ] + piece.box[ 2 ];
-			expect( right ).toBeLessThanOrEqual( found.stage[ 0 ] + 1 );
+			// In order along the word, apart, within the stage.
+			expect( piece.box[ at ] ).toBeGreaterThan( end );
+			end = piece.box[ at ] + piece.box[ at + 2 ];
+			expect( piece.box[ 0 ] + piece.box[ 2 ] ).toBeLessThanOrEqual( found.stage[ 0 ] + 1 );
 			expect( piece.box[ 1 ] + piece.box[ 3 ] ).toBeLessThanOrEqual( found.stage[ 1 ] + 1 );
 		}
-		expect( Math.min( ...found.pieces.map( ( piece ) => piece.box[ 1 ] ) ) ).toBeLessThanOrEqual( 1 );
+		// The letters along one side: the top (down), the left or right.
+		const side = 'x' === axis ? Math.min( ...found.pieces.map( ( piece ) => piece.box[ 1 ] ) ) : Math.min( ...found.pieces.map( ( piece ) => Math.min( piece.box[ 0 ], found.stage[ 0 ] - piece.box[ 0 ] - piece.box[ 2 ] ) ) );
+		expect( side ).toBeLessThanOrEqual( 1 );
 		// Strip width "Same for all": the strips as wide as each other, Gap apart.
 		if ( null !== gap ) {
 			const strips = found.pieces.map( ( piece ) => piece.strip );
 			expect( strips.every( Boolean ) ).toBe( true );
 			for ( let i = 1; i < strips.length; i++ ) {
-				expect( strips[ i ][ 1 ] ).toBeCloseTo( strips[ 0 ][ 1 ], 1 );
-				expect( strips[ i ][ 0 ] - ( strips[ i - 1 ][ 0 ] + strips[ i - 1 ][ 1 ] ) ).toBeCloseTo( gap, 0 );
+				expect( strips[ i ][ at + 2 ] ).toBeCloseTo( strips[ 0 ][ at + 2 ], 1 );
+				expect( strips[ i ][ at ] - ( strips[ i - 1 ][ at ] + strips[ i - 1 ][ at + 2 ] ) ).toBeCloseTo( gap, 0 );
 			}
 		}
 		expect( 'stage ' + found.stage.join( 'x' ) + '\n' + found.pieces.map( ( piece ) => piece.letter + ' ' + piece.box.join( ' ' ) ).join( '\n' ) + '\n' ).toMatchSnapshot( name + '.windows.txt' );

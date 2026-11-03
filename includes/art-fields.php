@@ -624,6 +624,21 @@ return array(
 		),
 		'help'    => __( 'A photo in each letter: in the slides\' order, repeated when there are fewer; drag a photo onto another letter in the preview to swap them.', 'wp-swiper' ),
 	),
+	// Down: the word across, the strips under its letters. Right / Left: the
+	// letters one under another, upright, the strips going out sideways.
+	'text_mask_direction' => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Strips go', 'wp-swiper' ),
+		'type'    => 'select',
+		'default' => 'down',
+		'choices' => array(
+			'down'  => __( 'Down', 'wp-swiper' ),
+			'right' => __( 'Right', 'wp-swiper' ),
+			'left'  => __( 'Left', 'wp-swiper' ),
+		),
+		'help'    => __( 'Down: the word across, the strips under its letters. Right or Left: the letters one under another (read from the top), the strips going out to that side.', 'wp-swiper' ),
+	),
 	// The theme's heading font (a heading's, as the page has it), or a plain one.
 	'text_mask_font'     => array(
 		'section' => 'layout',
@@ -656,14 +671,14 @@ return array(
 	'text_mask_size'     => array(
 		'section'    => 'layout',
 		'effects'    => array( self::TEXT_EFFECT ),
-		'label'      => __( 'Letter height (%)', 'wp-swiper' ),
+		'label'      => __( 'Letter size (%)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
 		'default'    => 30,
 		'min'        => 10,
 		'max'        => 70,
 		'step'       => 1,
-		'help'       => __( 'Of the Height, at most: the word fills the width, its letters no taller than this.', 'wp-swiper' ),
+		'help'       => __( 'Strips down: of the Height, the letters no taller than this (the word fills the width). Strips right or left: of the width, the letters no wider than this (the word fills the Height).', 'wp-swiper' ),
 	),
 	'text_mask_gap'      => array(
 		'section'    => 'layout',

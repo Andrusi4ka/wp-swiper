@@ -1465,6 +1465,119 @@
 		return lengths;
 	}
 
+	/*
+	 * Where each letter and its strip go, in px of the stage. Strips go:
+	 * Down: the word across the stage, the letters at its top, each strip
+	 * from where its letter ends down. Right / Left: the letters one under
+	 * another, upright, at the stage's left (right) side, each strip from
+	 * where its letter ends across (Letter size: of the width there, not the
+	 * height). The strips as long as Strips says (of the room past the
+	 * letters).
+	 *
+	 * Strip width "Same for all": a column (Left / Right: a row) per letter,
+	 * all as wide, Gap between them (a space half a one more); each strip its
+	 * column, each letter in the middle of its own, the widest one at most
+	 * its column and half the Gap (a quarter of the Gap out each side, never
+	 * touching a neighbour). Letters held smaller by Letter size: the columns
+	 * as narrow as they then need. "As the letter": each strip as its letter
+	 * (STRIP_WIDTH of it), the letters Gap apart.
+	 *
+	 * @return {Object|null} { scale, items: [ { left, top, width, height (the
+	 *                       letter's ink), strip: { x, y, w, h } or null } ] }
+	 */
+	function textLayout( sizes, spaces, count, text, gap, width, height ) {
+		var across = text.direction === 'right' || text.direction === 'left';
+		// Along the word, and from the letters to the strips' ends.
+		var along = across ? height : width;
+		var away = across ? width : height;
+		// Each letter's ink along the word and away from it.
+		var spans = sizes.map( function ( size ) {
+			return across ? size.ascent + size.descent : size.width;
+		} );
+		var depths = sizes.map( function ( size ) {
+			return across ? size.width : size.ascent + size.descent;
+		} );
+		var total = 0;
+		var widest = 0;
+		var deepest = 0;
+		spans.forEach( function ( span, i ) {
+			total += span;
+			widest = Math.max( widest, span );
+			deepest = Math.max( deepest, depths[ i ] );
+		} );
+		// Down: the letters' ink above and below the baseline, all on one line.
+		var up = 0;
+		var down = 0;
+		sizes.forEach( function ( size ) {
+			up = Math.max( up, size.ascent );
+			down = Math.max( down, size.descent );
+		} );
+		if ( ! across ) {
+			deepest = up + down;
+		}
+		var gaps = gap * ( count - 1 + spaces.length );
+		var bySize = away * ( Number( forDevice( text.size ) ) || 30 ) / 100 / ( deepest || 1 );
+		// A space: half a column, or (as the letter) a space's width (down) or half the tallest letter.
+		var space = across ? widest / 2 : sizes.space;
+		var scale;
+		var column = 0;
+		var used;
+		if ( text.width !== 'letter' ) {
+			var units = count + spaces.length / 2;
+			var full = ( along - gaps ) / units;
+			scale = Math.min( ( full + gap / 2 ) / ( widest || 1 ), bySize );
+			column = Math.max( 1, Math.min( full, scale * widest - gap / 2 ) );
+			used = column * units + gaps;
+		} else {
+			scale = Math.min( ( along - gaps ) / ( total + spaces.length * space ), bySize );
+			used = scale * ( total + spaces.length * space ) + gaps;
+		}
+		if ( ! ( scale > 0 ) || ! ( along - gaps > 0 ) ) {
+			return null;
+		}
+		var at = Math.max( 0, ( along - used ) / 2 );
+		// The letters' side: as deep as the deepest one (down: to their
+		// baseline, tails below it); the strips beyond it.
+		var band = scale * ( across ? deepest : up );
+		var room = Math.max( 0, away - band );
+		var lengths = stripLengths( text, count );
+		var items = [];
+		for ( var i = 0; i < count; i++ ) {
+			var size = sizes[ i ];
+			if ( spaces.indexOf( i ) !== -1 ) {
+				at += ( column ? column / 2 : scale * space ) + gap;
+			}
+			var span = scale * spans[ i ];
+			var depth = scale * depths[ i ];
+			// Along the word: in the middle of its column, or where it is.
+			var start = column ? at + ( column - span ) / 2 : at;
+			// The strip along the word: its column, or STRIP_WIDTH of its letter, centred.
+			var stripSpan = column || span * STRIP_WIDTH;
+			var stripStart = column ? at : at + ( span - stripSpan ) / 2;
+			// Away from the word: from where its letter ends (STRIP_JOIN into it) to its length.
+			var end = band + room * lengths[ i ];
+			var item;
+			if ( ! across ) {
+				// Down: all on one baseline at the top.
+				var top = scale * ( up - size.ascent );
+				var from = top + depth - Math.min( STRIP_JOIN, depth / 4 );
+				var bottom = scale * up + room * lengths[ i ];
+				item = { left: start, top: top, width: span, height: depth, strip: bottom - from > 1 ? { x: stripStart, y: from, w: stripSpan, h: bottom - from } : null };
+			} else {
+				var into = depth - Math.min( STRIP_JOIN, depth / 4 );
+				var reach = end - into;
+				if ( text.direction === 'right' ) {
+					item = { left: 0, top: start, width: depth, height: span, strip: reach > 1 ? { x: into, y: stripStart, w: reach, h: stripSpan } : null };
+				} else {
+					item = { left: width - depth, top: start, width: depth, height: span, strip: reach > 1 ? { x: width - end, y: stripStart, w: reach, h: stripSpan } : null };
+				}
+			}
+			items.push( item );
+			at += ( column || span ) + gap;
+		}
+		return { scale: scale, items: items };
+	}
+
 	function textMask( block, stage, config ) {
 		var width = stage.clientWidth;
 		var height = stage.clientHeight;
@@ -1491,52 +1604,14 @@
 		} );
 		var gap = Math.max( 0, Number( forDevice( config.gap ) ) || 0 );
 
-		// The scale (of 100px): the word as wide as the stage, the letters no taller than Letter height.
-		var ink = 0;
-		var widest = 0;
-		var up = 0;
-		var down = 0;
-		sizes.forEach( function ( size ) {
-			ink += size.width;
-			widest = Math.max( widest, size.width );
-			up = Math.max( up, size.ascent );
-			down = Math.max( down, size.descent );
-		} );
-		var gaps = gap * ( count - 1 + spaces.length );
-		var tallest = height * ( Number( forDevice( text.size ) ) || 30 ) / 100;
-		var byHeight = tallest / ( ( up + down ) || 1 );
-		var scale;
-		var used;
-		/*
-		 * Strip width "Same for all": a column per letter, all as wide, Gap
-		 * between them (a space half a column more); each strip its column,
-		 * each letter in the middle of its own, the widest one at most its
-		 * column and half the Gap (it may reach a quarter of the Gap out each
-		 * side, never touching a neighbour). Letters held lower by Letter
-		 * height: the columns as narrow as they then need.
-		 */
-		var column = 0;
-		if ( text.width !== 'letter' ) {
-			var units = count + spaces.length / 2;
-			var full = ( width - gaps ) / units;
-			scale = Math.min( ( full + gap / 2 ) / widest, byHeight );
-			column = Math.max( 1, Math.min( full, scale * widest - gap / 2 ) );
-			used = column * units + gaps;
-		} else {
-			// "As the letter": each strip under its letter, the letters Gap apart.
-			scale = Math.min( ( width - gaps ) / ( ink + spaces.length * sizes.space ), byHeight );
-			used = scale * ( ink + spaces.length * sizes.space ) + gaps;
-		}
-		if ( ! ( scale > 0 ) || ! ( width - gaps > 0 ) ) {
+		var laid = textLayout( sizes, spaces, count, text, gap, width, height );
+		if ( ! laid ) {
 			for ( var none = 0; none < pieces.length; none++ ) {
 				pieces[ none ].hidden = true;
 			}
 			return;
 		}
-		var x = Math.max( 0, ( width - used ) / 2 );
-		var baseline = scale * up;
-		var under = Math.max( 0, height - baseline );
-		var lengths = stripLengths( text, count );
+		var scale = laid.scale;
 
 		// The letters' clip paths, in the block (one SVG, out of view).
 		if ( ! block.wpSwiperTextId ) {
@@ -1558,29 +1633,17 @@
 		for ( var i = 0; i < count; i++ ) {
 			var size = sizes[ i ];
 			var piece = pieces[ i ];
-			if ( spaces.indexOf( i ) !== -1 ) {
-				x += ( column ? column / 2 : scale * sizes.space ) + gap;
-			}
-			var letterWidth = scale * size.width;
-			var letterTop = baseline - scale * size.ascent;
-			var letterBottom = baseline + scale * size.descent;
-			// The letter: in the middle of its column, or where it is (as the letter).
-			var letterLeft = column ? x + ( column - letterWidth ) / 2 : x;
-			// Its strip: its column, or centred under it; from the bottom of its
-			// ink down (below a "p" or "g" its tail, an "O" its curve), none at length 0.
-			var stripWidth = column || letterWidth * STRIP_WIDTH;
-			var stripLeft = column ? x : x + ( letterWidth - stripWidth ) / 2;
-			var stripTop = letterBottom - Math.min( STRIP_JOIN, ( letterBottom - letterTop ) / 4 );
-			var stripBottom = baseline + under * lengths[ i ];
-			var strip = stripBottom - stripTop > 1;
+			var item = laid.items[ i ];
+			var strip = item.strip;
+			// Its box: the letter's ink and its strip.
 			var box = {
-				left: Math.floor( Math.min( letterLeft, strip ? stripLeft : letterLeft ) ),
-				top: Math.floor( letterTop ),
+				left: Math.floor( Math.min( item.left, strip ? strip.x : item.left ) ),
+				top: Math.floor( Math.min( item.top, strip ? strip.y : item.top ) ),
 				width: 0,
 				height: 0
 			};
-			box.width = Math.ceil( Math.max( letterLeft + letterWidth, strip ? stripLeft + stripWidth : 0 ) ) - box.left;
-			box.height = Math.ceil( Math.max( letterBottom, strip ? stripBottom : 0 ) ) - box.top;
+			box.width = Math.ceil( Math.max( item.left + item.width, strip ? strip.x + strip.w : 0 ) ) - box.left;
+			box.height = Math.ceil( Math.max( item.top + item.height, strip ? strip.y + strip.h : 0 ) ) - box.top;
 
 			var clip = document.createElementNS( SVG, 'clipPath' );
 			var id = block.wpSwiperTextId + '-' + i;
@@ -1588,18 +1651,18 @@
 			clip.setAttribute( 'clipPathUnits', 'userSpaceOnUse' );
 			var glyph = document.createElementNS( SVG, 'text' );
 			// At its origin: the ink starts `left` before it.
-			glyph.setAttribute( 'x', Math.round( ( letterLeft - box.left + scale * size.left ) * 100 ) / 100 );
-			glyph.setAttribute( 'y', Math.round( ( baseline - box.top ) * 100 ) / 100 );
+			glyph.setAttribute( 'x', Math.round( ( item.left - box.left + scale * size.left ) * 100 ) / 100 );
+			glyph.setAttribute( 'y', Math.round( ( item.top + scale * size.ascent - box.top ) * 100 ) / 100 );
 			// As measured, whatever the page's CSS says of text (inline: over its rules).
 			glyph.style.cssText = 'font-family:' + family + ';font-weight:' + weight + ';font-size:' + ( Math.round( scale * 10000 ) / 100 ) + 'px;font-style:normal;font-variant:normal;letter-spacing:0;text-transform:none;text-anchor:start;dominant-baseline:alphabetic';
 			glyph.textContent = letters[ i ];
 			clip.appendChild( glyph );
 			if ( strip ) {
 				var rect = document.createElementNS( SVG, 'rect' );
-				rect.setAttribute( 'x', Math.round( ( stripLeft - box.left ) * 100 ) / 100 );
-				rect.setAttribute( 'y', Math.round( ( stripTop - box.top ) * 100 ) / 100 );
-				rect.setAttribute( 'width', Math.round( stripWidth * 100 ) / 100 );
-				rect.setAttribute( 'height', Math.round( ( stripBottom - stripTop ) * 100 ) / 100 );
+				rect.setAttribute( 'x', Math.round( ( strip.x - box.left ) * 100 ) / 100 );
+				rect.setAttribute( 'y', Math.round( ( strip.y - box.top ) * 100 ) / 100 );
+				rect.setAttribute( 'width', Math.round( strip.w * 100 ) / 100 );
+				rect.setAttribute( 'height', Math.round( strip.h * 100 ) / 100 );
 				clip.appendChild( rect );
 			}
 			defs.appendChild( clip );
@@ -1612,7 +1675,6 @@
 			piece.style.setProperty( '--wp-swiper-art-ox', box.left + 'px' );
 			piece.style.setProperty( '--wp-swiper-art-oy', box.top + 'px' );
 			windows.push( { box: [ box.left / width, box.top / height, box.width / width, box.height / height ] } );
-			x += ( column || letterWidth ) + gap;
 		}
 		for ( var extra = count; extra < pieces.length; extra++ ) {
 			pieces[ extra ].hidden = true;

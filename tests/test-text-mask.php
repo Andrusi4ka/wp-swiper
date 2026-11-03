@@ -154,6 +154,18 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		$this->assertSame( 'same', WP_Swiper_Settings::sanitize( array( 'effect' => 'text-mask', 'text_mask_strip_width' => 'wide' ) )['text_mask_strip_width'] );
 	}
 
+	public function test_strips_go_down_or_sideways() {
+		// Down by default (the word across); right or left: the letters one under another.
+		$this->assertSame( 'down', WP_Swiper_Settings::defaults()['text_mask_direction'] );
+		$this->assertSame( array( 'down', 'right', 'left' ), array_keys( WP_Swiper_Settings::fields()['text_mask_direction']['choices'] ) );
+		foreach ( array( 'down', 'right', 'left' ) as $direction ) {
+			$config = $this->config( $this->render( array( 'effect' => 'text-mask', 'text_mask_direction' => $direction ) ), 'data-wp-swiper-art' );
+			$this->assertSame( $direction, $config['text']['direction'] );
+		}
+		$this->assertSame( 'down', WP_Swiper_Art::text_config( $this->text( array( 'text_mask_direction' => 'up' ) ) )['direction'] );
+		$this->assertSame( 'down', WP_Swiper_Settings::sanitize( array( 'effect' => 'text-mask', 'text_mask_direction' => 'up' ) )['text_mask_direction'] );
+	}
+
 	public function test_a_slider_saved_by_the_first_try() {
 		// Saved on 2026-11-02 by an earlier version: its word, font and gap are
 		// taken; its Depth is gone (the Image shadow instead).
