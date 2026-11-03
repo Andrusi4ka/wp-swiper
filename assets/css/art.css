@@ -173,6 +173,22 @@
 	height: var(--wp-swiper-art-sh, 100%);
 }
 
+/* Gradient: over the photos, as large as the stage and where the window is
+   in it (art.js: --wp-swiper-art-gx / -gy / -gw / -gh), so one goes across
+   the whole shape (Text mask: the word); each window's shape cuts it, the
+   gaps stay empty. Under a caption or border; clicks go through. */
+.wp-swiper-art--gradient .wp-swiper-art__piece::after {
+	content: "";
+	position: absolute;
+	top: calc(-1 * var(--wp-swiper-art-gy, 0px));
+	left: calc(-1 * var(--wp-swiper-art-gx, 0px));
+	z-index: 1;
+	width: var(--wp-swiper-art-gw, 100%);
+	height: var(--wp-swiper-art-gh, 100%);
+	background: var(--wp-swiper-art-gradient, none);
+	pointer-events: none;
+}
+
 .wp-swiper-art--one .wp-swiper-art__piece:hover .wp-swiper-art__image,
 .wp-swiper-art--one .wp-swiper-art__piece:focus-visible .wp-swiper-art__image {
 	transform: none;

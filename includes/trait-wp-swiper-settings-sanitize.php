@@ -168,6 +168,11 @@ trait WP_Swiper_Settings_Sanitize {
 				case 'cells': // Art's Grid shapes layout, "4x4:0,0,1,…;1=100"; '' = the default one.
 					$clean[ $key ] = WP_Swiper_Art::sanitize_cells( null === $value ? '' : (string) $value );
 					break;
+
+				case 'gradient': // The photos' Gradient, "linear;left;#ff0080@0;…" (WP_Swiper_Art::parse_gradient()).
+					$gradient      = WP_Swiper_Art::parse_gradient( null === $value ? '' : (string) $value );
+					$clean[ $key ] = $gradient ? WP_Swiper_Art::gradient_value( $gradient ) : $field['default'];
+					break;
 			}
 		}
 

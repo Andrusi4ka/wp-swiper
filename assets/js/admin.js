@@ -669,6 +669,8 @@
 			if ( $input.length && $input.val() !== value ) {
 				$input.val( value ).trigger( 'change' );
 			}
+			// A swatch without an input of its own (a gradient's point) says so.
+			$pick.trigger( 'wpSwiperColor' );
 		}
 
 		// From Pickr: the color it shows, as the field keeps it. Only a new
@@ -828,7 +830,278 @@
 					setColor( $pick, color.hex, color.alpha );
 				}
 			} );
+			syncGradients();
 		}
+
+		/*
+		 * The photos' Gradient (gradient_field() in class-wp-swiper-admin.php),
+		 * edited as WoodMart's: its type and where it starts (or its middle);
+		 * the gradient as a bar, its colors' points under it: a click on the
+		 * bar adds one (the color there), a point is dragged along it (or moved
+		 * with the arrow keys; Delete removes it), the chosen one's color
+		 * (Pickr, with opacity) and Delete under them. Kept in the
+		 * hidden input as "type;where;color@position;…", in order of the
+		 * positions (WP_Swiper_Art::parse_gradient() checks it again).
+		 */
+		var GRADIENT = '.wp-swiper-gradient';
+		var GRADIENT_STOPS = 10;
+
+		function parseGradient( value ) {
+			var parts = String( value || '' ).split( ';' );
+			if ( parts.length < 4 ) {
+				return null;
+			}
+			var type = parts.shift();
+			var where = parts.shift();
+			var at = where.split( ' ' );
+			if ( type === 'linear' ? [ 'left', 'right', 'top', 'bottom' ].indexOf( where ) === -1 : (
+				[ 'circle', 'ellipse' ].indexOf( type ) === -1 || at.length !== 2 ||
+				[ 'left', 'center', 'right' ].indexOf( at[ 0 ] ) === -1 || [ 'top', 'center', 'bottom' ].indexOf( at[ 1 ] ) === -1
+			) ) {
+				return null;
+			}
+			var stops = [];
+			parts.forEach( function ( part ) {
+				var point = part.split( '@' );
+				var color = point.length === 2 ? parseColor( point[ 0 ] ) : null;
+				var position = point.length === 2 ? parseFloat( point[ 1 ] ) : NaN;
+				if ( color && ! isNaN( position ) ) {
+					stops.push( { color: colorValue( color.hex, color.alpha ), at: Math.max( 0, Math.min( 100, position ) ) } );
+				}
+			} );
+			return stops.length < 2 ? null : { type: type, where: where, stops: stops.slice( 0, GRADIENT_STOPS ) };
+		}
+
+		// Its points in order of their positions (those at one place as they are).
+		function gradientSorted( gradient ) {
+			return gradient.stops.map( function ( stop, i ) {
+				return { stop: stop, i: i };
+			} ).sort( function ( a, b ) {
+				return a.stop.at - b.stop.at || a.i - b.i;
+			} ).map( function ( item ) {
+				return item.stop;
+			} );
+		}
+
+		function gradientPosition( at ) {
+			return Math.round( at * 10 ) / 10;
+		}
+
+		// The bar: the colors left to right, whatever the type.
+		function gradientBar( gradient ) {
+			return 'linear-gradient(to right, ' + gradientSorted( gradient ).map( function ( stop ) {
+				return stop.color + ' ' + gradientPosition( stop.at ) + '%';
+			} ).join( ', ' ) + ')';
+		}
+
+		// The color the gradient has at a position (a new point's).
+		function gradientColorAt( gradient, at ) {
+			var stops = gradientSorted( gradient );
+			var before = stops[ 0 ];
+			var after = stops[ stops.length - 1 ];
+			stops.forEach( function ( stop ) {
+				if ( stop.at <= at ) {
+					before = stop;
+				}
+			} );
+			for ( var i = stops.length - 1; i >= 0; i-- ) {
+				if ( stops[ i ].at >= at ) {
+					after = stops[ i ];
+				}
+			}
+			var a = parseColor( before.color );
+			var b = parseColor( after.color );
+			var share = after.at > before.at ? ( at - before.at ) / ( after.at - before.at ) : 0;
+			var mix = function ( x, y ) {
+				return Math.round( x + ( y - x ) * share );
+			};
+			var hex = '#' + [ 1, 3, 5 ].map( function ( i ) {
+				return ( '0' + mix( parseInt( a.hex.substr( i, 2 ), 16 ), parseInt( b.hex.substr( i, 2 ), 16 ) ).toString( 16 ) ).slice( -2 );
+			} ).join( '' );
+			return colorValue( hex, mix( a.alpha, b.alpha ) );
+		}
+
+		// The gradient, the bar and its points as they are now (no new ones).
+		function drawGradientBar( $gradient ) {
+			var gradient = $gradient.data( 'gradient' );
+			$gradient.find( '.wp-swiper-gradient__fill' ).css( 'background-image', gradientBar( gradient ) );
+			$gradient.find( '.wp-swiper-gradient__handle' ).each( function () {
+				var stop = $( this ).data( 'stop' );
+				$( this ).css( 'left', stop.at + '%' )
+					.attr( 'aria-label', stop.color + ', ' + gradientPosition( stop.at ) + '%' )
+					.find( '.wp-swiper-gradient__chip' ).css( 'background-color', stop.color );
+			} );
+		}
+
+		// Everything: the selects, a point for each color, the chosen one's.
+		function drawGradient( $gradient ) {
+			var gradient = $gradient.data( 'gradient' );
+			var chosen = $gradient.data( 'chosen' );
+			var linear = gradient.type === 'linear';
+			$gradient.find( '.wp-swiper-gradient__type' ).val( gradient.type );
+			$gradient.find( '.wp-swiper-gradient__direction' ).prop( 'hidden', ! linear ).val( linear ? gradient.where : 'left' );
+			$gradient.find( '.wp-swiper-gradient__x' ).prop( 'hidden', linear ).val( linear ? 'center' : gradient.where.split( ' ' )[ 0 ] );
+			$gradient.find( '.wp-swiper-gradient__y' ).prop( 'hidden', linear ).val( linear ? 'center' : gradient.where.split( ' ' )[ 1 ] );
+			var $stops = $gradient.find( '.wp-swiper-gradient__stops' ).empty();
+			gradient.stops.forEach( function ( stop ) {
+				$( '<button type="button" class="wp-swiper-gradient__handle" role="option"><span class="wp-swiper-gradient__chip"></span></button>' )
+					.data( 'stop', stop )
+					.attr( 'aria-selected', stop === chosen ? 'true' : 'false' )
+					.toggleClass( 'is-chosen', stop === chosen )
+					.appendTo( $stops );
+			} );
+			var color = parseColor( chosen.color );
+			setColor( $gradient.find( COLOR_PICK ), color.hex, color.alpha );
+			$gradient.find( '.wp-swiper-gradient__delete' ).prop( 'disabled', gradient.stops.length <= 2 );
+			drawGradientBar( $gradient );
+		}
+
+		// Into the input, in order (the preview and Undo take it as any change).
+		function saveGradient( $gradient ) {
+			var gradient = $gradient.data( 'gradient' );
+			gradient.stops = gradientSorted( gradient );
+			var value = gradient.type + ';' + gradient.where + ';' + gradient.stops.map( function ( stop ) {
+				return stop.color + '@' + gradientPosition( stop.at );
+			} ).join( ';' );
+			var $input = $gradient.find( '.wp-swiper-gradient__value' );
+			if ( $input.val() !== value ) {
+				$input.val( value ).trigger( 'change' );
+			}
+		}
+
+		// From the input (on load, after Undo / Redo or another effect's Layout).
+		function loadGradient( $gradient ) {
+			var gradient = parseGradient( $gradient.find( '.wp-swiper-gradient__value' ).val() ) || parseGradient( $gradient.attr( 'data-default' ) );
+			if ( ! gradient ) {
+				return;
+			}
+			var before = $gradient.data( 'gradient' );
+			var index = before ? Math.max( 0, before.stops.indexOf( $gradient.data( 'chosen' ) ) ) : 0;
+			$gradient.data( { gradient: gradient, chosen: gradient.stops[ Math.min( index, gradient.stops.length - 1 ) ] } );
+			drawGradient( $gradient );
+		}
+
+		function syncGradients() {
+			$( '#wp-swiper-settings ' + GRADIENT ).each( function () {
+				loadGradient( $( this ) );
+			} );
+		}
+
+		function chooseStop( $gradient, stop ) {
+			if ( $gradient.data( 'chosen' ) !== stop ) {
+				closeColorPickers();
+			}
+			$gradient.data( 'chosen', stop );
+			drawGradient( $gradient );
+		}
+
+		function gradientHandle( $gradient ) {
+			var chosen = $gradient.data( 'chosen' );
+			return $gradient.find( '.wp-swiper-gradient__handle' ).filter( function () {
+				return $( this ).data( 'stop' ) === chosen;
+			} );
+		}
+
+		function deleteStop( $gradient ) {
+			var gradient = $gradient.data( 'gradient' );
+			if ( gradient.stops.length <= 2 ) {
+				return;
+			}
+			gradient.stops.splice( gradient.stops.indexOf( $gradient.data( 'chosen' ) ), 1 );
+			chooseStop( $gradient, gradientSorted( gradient )[ 0 ] );
+			saveGradient( $gradient );
+		}
+
+		// Where along the bar a pointer is, 0–100.
+		function gradientAt( $gradient, clientX ) {
+			var rect = $gradient.find( '.wp-swiper-gradient__bar' )[ 0 ].getBoundingClientRect();
+			return rect.width ? Math.max( 0, Math.min( 100, Math.round( ( clientX - rect.left ) / rect.width * 100 ) ) ) : 0;
+		}
+
+		$( '#wp-swiper-settings' )
+			.on( 'change', GRADIENT + ' select', function () {
+				var $gradient = $( this ).closest( GRADIENT );
+				var gradient = $gradient.data( 'gradient' );
+				var type = $gradient.find( '.wp-swiper-gradient__type' ).val();
+				if ( type === 'linear' ) {
+					gradient.where = gradient.type === 'linear' ? $gradient.find( '.wp-swiper-gradient__direction' ).val() : 'left';
+				} else {
+					gradient.where = gradient.type === 'linear' ? 'center center' : $gradient.find( '.wp-swiper-gradient__x' ).val() + ' ' + $gradient.find( '.wp-swiper-gradient__y' ).val();
+				}
+				gradient.type = type;
+				drawGradient( $gradient );
+				saveGradient( $gradient );
+			} )
+			// A new color where the bar is clicked, the gradient's color there.
+			.on( 'click', GRADIENT + ' .wp-swiper-gradient__bar', function ( e ) {
+				var $gradient = $( this ).closest( GRADIENT );
+				var gradient = $gradient.data( 'gradient' );
+				if ( gradient.stops.length >= GRADIENT_STOPS ) {
+					return;
+				}
+				var at = gradientAt( $gradient, e.clientX );
+				var stop = { color: gradientColorAt( gradient, at ), at: at };
+				gradient.stops.push( stop );
+				chooseStop( $gradient, stop );
+				saveGradient( $gradient );
+			} )
+			// A point: chosen, and dragged along the bar while held.
+			.on( 'pointerdown', GRADIENT + ' .wp-swiper-gradient__handle', function ( e ) {
+				var $gradient = $( this ).closest( GRADIENT );
+				var stop = $( this ).data( 'stop' );
+				chooseStop( $gradient, stop );
+				var handle = gradientHandle( $gradient )[ 0 ];
+				handle.focus();
+				if ( e.button !== 0 ) {
+					return;
+				}
+				e.preventDefault();
+				var moved = false;
+				var move = function ( event ) {
+					var at = gradientAt( $gradient, event.clientX );
+					if ( at !== stop.at ) {
+						stop.at = at;
+						moved = true;
+						drawGradientBar( $gradient );
+					}
+				};
+				var end = function () {
+					$( document ).off( 'pointermove', move ).off( 'pointerup pointercancel', end );
+					if ( moved ) {
+						saveGradient( $gradient );
+						drawGradient( $gradient );
+						gradientHandle( $gradient ).trigger( 'focus' );
+					}
+				};
+				$( document ).on( 'pointermove', move ).on( 'pointerup pointercancel', end );
+			} )
+			.on( 'keydown', GRADIENT + ' .wp-swiper-gradient__handle', function ( e ) {
+				var $gradient = $( this ).closest( GRADIENT );
+				var stop = $( this ).data( 'stop' );
+				var step = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[ e.key ];
+				if ( step ) {
+					e.preventDefault();
+					stop.at = Math.max( 0, Math.min( 100, Math.round( stop.at ) + step * ( e.shiftKey ? 10 : 1 ) ) );
+					saveGradient( $gradient );
+					chooseStop( $gradient, stop );
+					gradientHandle( $gradient ).trigger( 'focus' );
+				} else if ( e.key === 'Delete' || e.key === 'Backspace' ) {
+					e.preventDefault();
+					deleteStop( $gradient );
+					gradientHandle( $gradient ).trigger( 'focus' );
+				}
+			} )
+			.on( 'click', GRADIENT + ' .wp-swiper-gradient__delete', function () {
+				deleteStop( $( this ).closest( GRADIENT ) );
+			} )
+			.on( 'wpSwiperColor', GRADIENT + ' ' + COLOR_PICK, function () {
+				var $pick = $( this );
+				var $gradient = $pick.closest( GRADIENT );
+				$gradient.data( 'chosen' ).color = colorValue( $pick.data( 'hex' ), $pick.data( 'alpha' ) );
+				drawGradientBar( $gradient );
+				saveGradient( $gradient );
+			} );
+		syncGradients();
 
 		// A size's device icons: which device's value the field shows; then the
 		// other fields and the preview follow (shareDevice()).
@@ -1873,6 +2146,8 @@
 			field( 'navigation_size' ).toggle( $( '#wp-swiper-navigation' ).is( ':checked' ) );
 			// Rounded corners: the radius once it is on (as Image border).
 			field( 'border_radius' ).toggle( $( '#wp-swiper-border_rounded' ).is( ':checked' ) );
+			// Gradient: its colors once it is on.
+			field( 'image_gradient' ).toggle( $( '#wp-swiper-image_gradient_on' ).is( ':checked' ) );
 			// Image border: its width and color once it is on.
 			var border = $( '#wp-swiper-image_border' ).is( ':checked' );
 			field( 'image_border_width' ).toggle( border );
@@ -2080,6 +2355,11 @@
 				if ( ! $( '#wp-swiper-art_rounded' ).is( ':checked' ) ) {
 					field( 'art_radius' ).hide();
 				}
+				// Text mask's strips too (and which end).
+				if ( ! $( '#wp-swiper-text_mask_rounded' ).is( ':checked' ) ) {
+					field( 'text_mask_radius' ).hide();
+					field( 'text_mask_corners' ).hide();
+				}
 				// Image border: its width and color only while it is on (as a slider's).
 				if ( ! $( '#wp-swiper-art_border' ).is( ':checked' ) ) {
 					field( 'art_border_width' ).hide();
@@ -2100,6 +2380,11 @@
 				// Text mask: the font's name only with Font "By name".
 				if ( textMask && $( '#wp-swiper-text_mask_font' ).val() !== 'name' ) {
 					field( 'text_mask_font_name' ).hide();
+				}
+				// Text mask, strips right or left: the word fills the Height, its
+				// letters as large as that leaves (art.js textLayout()): no Letter size.
+				if ( textMask && [ 'right', 'left' ].indexOf( $( '#wp-swiper-text_mask_direction' ).val() ) !== -1 ) {
+					field( 'text_mask_size' ).hide();
 				}
 				// Text mask: What changes only with a photo in each letter (its "One
 				// photo through all windows" is Photos' to say: not offered there),
@@ -2446,7 +2731,7 @@
 
 		/*
 		 * A select shown as icons (a field's "tiles": the Collage's and Art's
-		 * Style): the choice of the device shown is marked; on tablet and mobile
+		 * Style, Text mask's Strips go): the choice of the device shown is marked; on tablet and mobile
 		 * the Inherit tile too, and while it inherits, the larger screen's choice
 		 * (dashed). A click puts the tile's value into that device's select,
 		 * hidden; a field with one value for every screen (Art's) has one select.
@@ -2554,8 +2839,9 @@
 
 		/*
 		 * Preview (WP_Swiper_Preview): the form's slides and settings, saved or
-		 * not, posted into the frame when the screen opens and on "Update" only
-		 * (not on every change). The frame is drawn at the device's size and
+		 * not, posted into the frame when the screen opens, on "Update", and at
+		 * once for another Effect or Style (autoUpdate; not on every change).
+		 * The frame is drawn at the device's size and
 		 * scaled down to the column, so the slider shows that device's settings.
 		 */
 		var $preview = $( '.wp-swiper-preview' );
@@ -2714,9 +3000,35 @@
 				$form[ 0 ].submit();
 				$form.remove();
 				$update.removeClass( 'is-stale' );
+				markShown();
+			};
+
+			// The Styles (fields shown as icons) the preview shows now.
+			var markShown = function () {
+				$( '#wp-swiper-settings .wp-swiper-field--tiles select' ).each( function () {
+					$( this ).data( 'shown', $( this ).val() );
+				} );
 			};
 
 			$update.on( 'click', updatePreview );
+
+			// Another Effect, or a Style picked from its icons (the Collage's,
+			// Art's, Text mask's Strips go): the preview follows at once (each
+			// new post into the frame replaces the one before). Only the choices
+			// made here: Undo / Redo set the values without "change" (the
+			// preview stays, Update says it is out of date); the other settings
+			// wait for Update.
+			var autoUpdate = function () {
+				updatePreview();
+			};
+			$( '#wp-swiper-effect' ).on( 'change', autoUpdate );
+			$( '#wp-swiper-settings' ).on( 'change', '.wp-swiper-field--tiles select', function () {
+				// The Style the preview shows clicked again: nothing new to show.
+				if ( $( this ).data( 'shown' ) !== $( this ).val() ) {
+					autoUpdate();
+				}
+			} );
+			markShown();
 
 			// Developer mode: the boxes and empty spaces drawn over the preview
 			// (preview-dev.js in the frame), again after every update; kept for

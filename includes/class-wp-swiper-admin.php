@@ -420,6 +420,69 @@ class WP_Swiper_Admin {
 	}
 
 	/**
+	 * A gradient setting (the photos' Gradient), edited as WoodMart's: its
+	 * type and where it starts (or its middle), the gradient as a bar with its
+	 * colors' points under it (click: a new one; drag: move it), the chosen
+	 * point's color (with opacity) and Delete. admin.js draws it
+	 * and keeps the stored value (WP_Swiper_Art::parse_gradient()) in the input.
+	 *
+	 * @param array  $field The field.
+	 * @param string $id    The type select's id (the label's).
+	 * @param string $name  The input's name.
+	 * @param string $value The gradient kept.
+	 */
+	private static function gradient_field( $field, $id, $name, $value ) {
+		$sides = array(
+			'left'   => __( 'Left', 'wp-swiper' ),
+			'right'  => __( 'Right', 'wp-swiper' ),
+			'top'    => __( 'Top', 'wp-swiper' ),
+			'bottom' => __( 'Bottom', 'wp-swiper' ),
+		);
+		?>
+		<div class="wp-swiper-gradient" data-default="<?php echo esc_attr( $field['default'] ); ?>">
+			<input type="hidden" class="wp-swiper-gradient__value" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>">
+			<div class="wp-swiper-gradient__selects">
+				<select class="wp-swiper-gradient__type" id="<?php echo esc_attr( $id ); ?>" aria-label="<?php esc_attr_e( 'Gradient type', 'wp-swiper' ); ?>">
+					<option value="linear"><?php esc_html_e( 'Linear', 'wp-swiper' ); ?></option>
+					<option value="circle"><?php esc_html_e( 'Radial - Circle', 'wp-swiper' ); ?></option>
+					<option value="ellipse"><?php esc_html_e( 'Radial - Ellipse', 'wp-swiper' ); ?></option>
+				</select>
+				<select class="wp-swiper-gradient__direction" aria-label="<?php esc_attr_e( 'Starts at', 'wp-swiper' ); ?>">
+					<?php foreach ( $sides as $side => $label ) : ?>
+						<option value="<?php echo esc_attr( $side ); ?>"><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<select class="wp-swiper-gradient__x" aria-label="<?php esc_attr_e( 'Middle across', 'wp-swiper' ); ?>" hidden>
+					<option value="center"><?php esc_html_e( 'Center', 'wp-swiper' ); ?></option>
+					<option value="left"><?php echo esc_html( $sides['left'] ); ?></option>
+					<option value="right"><?php echo esc_html( $sides['right'] ); ?></option>
+				</select>
+				<select class="wp-swiper-gradient__y" aria-label="<?php esc_attr_e( 'Middle down', 'wp-swiper' ); ?>" hidden>
+					<option value="center"><?php esc_html_e( 'Center', 'wp-swiper' ); ?></option>
+					<option value="top"><?php echo esc_html( $sides['top'] ); ?></option>
+					<option value="bottom"><?php echo esc_html( $sides['bottom'] ); ?></option>
+				</select>
+			</div>
+			<?php // The gradient left to right, its colors' points under it (admin.js). ?>
+			<div class="wp-swiper-gradient__bar" title="<?php esc_attr_e( 'Click to add a color', 'wp-swiper' ); ?>"><span class="wp-swiper-gradient__fill"></span></div>
+			<div class="wp-swiper-gradient__stops" role="listbox" aria-label="<?php esc_attr_e( 'Gradient colors', 'wp-swiper' ); ?>"></div>
+			<div class="wp-swiper-gradient__stop">
+				<?php
+				self::color_pick(
+					array(
+						'default' => '#000000',
+						'alpha'   => true,
+						'label'   => __( 'Color', 'wp-swiper' ),
+					)
+				);
+				?>
+				<button type="button" class="button-link wp-swiper-gradient__delete"><?php esc_html_e( 'Delete', 'wp-swiper' ); ?></button>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
 	 * A color setting (color: "#rrggbb"; alpha_color: with opacity).
 	 *
 	 * @param array  $field   The field.
@@ -1046,6 +1109,8 @@ class WP_Swiper_Admin {
 					<?php self::shape_box( $id, $name, $value, 'desktop' ); ?>
 				<?php elseif ( in_array( $field['type'], array( 'color', 'alpha_color' ), true ) ) : ?>
 					<?php self::color_field( $field, $id, $name, $value, false ); ?>
+				<?php elseif ( 'gradient' === $field['type'] ) : ?>
+					<?php self::gradient_field( $field, $id, $name, $value ); ?>
 				<?php elseif ( 'editor' === $field['type'] ) : ?>
 					<?php // WordPress's editor (admin.js starts it once the field is in view), as a slide's description's. ?>
 					<textarea class="wp-swiper-settings-editor" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" rows="6"><?php echo esc_textarea( $value ); ?></textarea>

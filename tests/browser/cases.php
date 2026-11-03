@@ -68,6 +68,10 @@ return array(
 		),
 		'block'    => true,
 	),
+	// Gradient: over each photo of a slider and a collage, one across Art's ring.
+	'slide-gradient'   => array( 'settings' => $slider + array( 'effect' => 'slide', 'slides_per_view' => '3', 'space_between' => '12', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100' ) ),
+	'collage-gradient' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'lightbox' => '1', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100' ) ),
+	'art-ring-gradient' => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'lightbox' => '1', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100' ) ),
 	'collage-scatter'  => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'collage_count' => '6', 'lightbox' => '1' ) ),
 	'collage-freeform' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'freeform', 'collage_count' => '7', 'lightbox' => '1' ) ),
 	'collage-grid'     => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'lightbox' => '1' ) ),
@@ -144,6 +148,21 @@ return array(
 	// Stretch letters: held low by Letter size, widened to fill their columns.
 	'art-text-mask-stretch' => array(
 		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_size' => '25', 'text_mask_stretch' => '1', 'text_mask_title' => 'WIDE', 'text_mask_font' => 'sans', 'art_height' => '420', 'lightbox' => '1' ),
+		'photos'   => 1,
+	),
+	// Strips into letters: as art-text-mask, the strips 20% into their letters.
+	'art-text-mask-join' => array(
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'text_mask_join' => '20', 'art_height' => '520', 'lightbox' => '1' ) + $shadow,
+		'photos'   => 1,
+	),
+	// Rounded corners: the strips' far ends, 30px (on mobile: half the strip at most).
+	'art-text-mask-rounded' => array(
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'text_mask_strips' => 'equal', 'text_mask_rounded' => '1', 'text_mask_radius' => '30', 'art_height' => '520', 'lightbox' => '1' ),
+		'photos'   => 1,
+	),
+	// Gradient: over the photo in the letters and strips, one across the word.
+	'art-text-mask-gradient' => array(
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100', 'art_height' => '520', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// A ring as its block's background, its proportions kept: filling the

@@ -1,0 +1,12 @@
+{
+	"scripts": [
+		"swiper",
+		"wp-swiper",
+		"wp-swiper-slider"
+	],
+	"styles": [
+		"swiper",
+		"wp-swiper",
+		"wp-swiper-slider"
+	]
+}

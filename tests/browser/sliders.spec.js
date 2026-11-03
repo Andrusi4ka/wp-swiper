@@ -8,6 +8,7 @@ const FIXTURE = '/wp-content/plugins/' + require( 'path' ).basename( require( 'p
 
 const CASES = [
 	'slide', 'slide-loop', 'slide-captions', 'expand', 'auto-width', 'marquee',
+	'slide-gradient', 'collage-gradient', 'art-ring-gradient',
 	'expand-shadow', 'slide-loop-shadow', 'marquee-shadow',
 	'fade', 'fade-shadow', 'fade-shadow-contain', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'creative-carousel',
 	'thumbs', 'video', 'background',
@@ -15,12 +16,12 @@ const CASES = [
 	'collage-justified', 'collage-random', 'collage-feature',
 	'art-ring', 'art-ring-text', 'art-grid-circle', 'art-grid-circle-text', 'art-grid-square', 'art-grid-square-text',
 	'art-grid-shapes', 'art-grid-shapes-one', 'art-grid-shapes-background', 'art-ring-background',
-	'art-text-mask', 'art-text-mask-sans', 'art-text-mask-each', 'art-text-mask-right', 'art-text-mask-left', 'art-text-mask-name', 'art-text-mask-auto', 'art-text-mask-stretch',
+	'art-text-mask', 'art-text-mask-sans', 'art-text-mask-each', 'art-text-mask-right', 'art-text-mask-left', 'art-text-mask-name', 'art-text-mask-auto', 'art-text-mask-stretch', 'art-text-mask-join', 'art-text-mask-rounded', 'art-text-mask-gradient',
 ];
 
 // Ones with arrows that move the slides (a marquee runs on its own).
 const NAVIGATES = [
-	'slide', 'slide-loop', 'slide-captions', 'expand', 'auto-width', 'expand-shadow', 'slide-loop-shadow',
+	'slide', 'slide-loop', 'slide-captions', 'expand', 'auto-width', 'expand-shadow', 'slide-loop-shadow', 'slide-gradient',
 	'fade', 'fade-shadow', 'fade-shadow-contain', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'creative-carousel', 'thumbs', 'video',
 ];
 
@@ -167,10 +168,10 @@ for ( const name of CASES ) {
 					// middle may be another piece's: a shape round a hole).
 					const box = await photo.boundingBox();
 					// Text mask: the middle of its letter's strip (its clip path's
-					// rect; beside a letter's stem there may be no window).
+					// rect or path; beside a letter's stem there may be no window).
 					const strip = /text-mask/.test( name ) ? await photo.evaluate( ( piece ) => {
-						const rect = document.querySelector( piece.style.clipPath.replace( /^url\("?|"?\)$/g, '' ) ).querySelector( 'rect' );
-						return { x: Number( rect.getAttribute( 'x' ) ) + Number( rect.getAttribute( 'width' ) ) / 2, y: Number( rect.getAttribute( 'y' ) ) + Number( rect.getAttribute( 'height' ) ) / 2 };
+						const bounds = document.querySelector( piece.style.clipPath.replace( /^url\("?|"?\)$/g, '' ) ).querySelector( 'rect, path' ).getBBox();
+						return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
 					} ) : null;
 					await photo.click( { position: strip || { x: 12, y: box.height / 2 } } );
 				} else {

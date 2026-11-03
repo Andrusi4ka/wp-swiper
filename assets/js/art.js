@@ -1392,9 +1392,8 @@
 		sans: '"Arial Black", "Helvetica Neue", Arial, Helvetica, sans-serif'
 	};
 	// How far up into its letter a strip reaches (px: no seam between them, the
-	// letter still whole), and how wide it is (of the letter's).
+	// letter still whole).
 	var STRIP_JOIN = 2;
-	var STRIP_WIDTH = 0.8;
 	// Letter size Auto: at most this share of the stage away from the word; Stretch letters: at most this much.
 	var TEXT_AUTO = 0.7;
 	var TEXT_STRETCH = 2;
@@ -1487,8 +1486,8 @@
 	 * column, each letter in the middle of its own, the widest one at most
 	 * its column and half the Gap (a quarter of the Gap out each side, never
 	 * touching a neighbour). Letters held smaller by Letter size: the columns
-	 * as narrow as they then need. "As the letter": each strip as its letter
-	 * (STRIP_WIDTH of it), the letters Gap apart.
+	 * as narrow as they then need. "As the letter": each strip as wide as its
+	 * letter, the letters and so the strips Gap apart.
 	 *
 	 * @return {Object|null} { scale, items: [ { left, top, width, height (the
 	 *                       letter's ink), strip: { x, y, w, h } or null } ] }
@@ -1526,7 +1525,9 @@
 		var gaps = gap * ( count - 1 + spaces.length );
 		// Letter size: its % of the stage (away from the word), or Auto: as
 		// large as the word can be, at most TEXT_AUTO of it (room left for the strips).
-		var share = forDevice( text.auto ) ? TEXT_AUTO : ( Number( forDevice( text.size ) ) || 30 ) / 100;
+		// Right or left: no Letter size, the word fills the Height (Gap takes
+		// from the letters); at most TEXT_AUTO of the width.
+		var share = across || forDevice( text.auto ) ? TEXT_AUTO : ( Number( forDevice( text.size ) ) || 30 ) / 100;
 		var bySize = away * share / ( deepest || 1 );
 		// A space: half a column, or (as the letter) a space's width (down) or half the tallest letter.
 		var space = across ? widest / 2 : sizes.space;
@@ -1538,8 +1539,11 @@
 		if ( text.width !== 'letter' ) {
 			var units = count + spaces.length / 2;
 			var full = ( along - gaps ) / units;
-			scale = Math.min( ( full + gap / 2 ) / ( widest || 1 ), bySize );
-			column = Math.max( 1, Math.min( full, scale * widest - gap / 2 ) );
+			// Down: the widest letter may stand out of its column by a quarter
+			// of Gap. Right or left: the tallest one as tall as its strip, the
+			// Gap between the letters as between the strips.
+			scale = Math.min( ( full + ( across ? 0 : gap / 2 ) ) / ( widest || 1 ), bySize );
+			column = Math.max( 1, Math.min( full, scale * widest - ( across ? 0 : gap / 2 ) ) );
 			// Stretched, they fill their columns: the columns as wide as there is room.
 			if ( text.stretch ) {
 				column = Math.max( column, Math.min( full, scale * widest * TEXT_STRETCH ) );
@@ -1561,6 +1565,12 @@
 		var band = scale * ( across ? deepest : up );
 		var room = Math.max( 0, away - band );
 		var lengths = stripLengths( text, count );
+		// How far a strip goes into its letter: STRIP_JOIN (no seam), or
+		// Strips into letters, a share of the letter's depth (at most 0.3).
+		var joinShare = Math.max( 0, Math.min( 0.3, Number( text.join ) || 0 ) );
+		var joinInto = function ( depth ) {
+			return Math.max( Math.min( STRIP_JOIN, depth / 4 ), depth * joinShare );
+		};
 		var items = [];
 		for ( var i = 0; i < count; i++ ) {
 			var size = sizes[ i ];
@@ -1573,20 +1583,20 @@
 			var depth = scale * depths[ i ];
 			// Along the word: in the middle of its column, or where it is.
 			var start = column ? at + ( column - span ) / 2 : at;
-			// The strip along the word: its column, or STRIP_WIDTH of its letter, centred.
-			var stripSpan = column || span * STRIP_WIDTH;
-			var stripStart = column ? at : at + ( span - stripSpan ) / 2;
+			// The strip along the word: its column, or as wide as its letter.
+			var stripSpan = column || span;
+			var stripStart = at;
 			// Away from the word: from where its letter ends (STRIP_JOIN into it) to its length.
 			var end = band + room * lengths[ i ];
 			var item;
 			if ( ! across ) {
 				// Down: all on one baseline at the top.
 				var top = scale * ( up - size.ascent );
-				var from = top + depth - Math.min( STRIP_JOIN, depth / 4 );
+				var from = top + depth - joinInto( depth );
 				var bottom = scale * up + room * lengths[ i ];
 				item = { left: start, top: top, width: span, height: depth, strip: bottom - from > 1 ? { x: stripStart, y: from, w: stripSpan, h: bottom - from } : null };
 			} else {
-				var into = depth - Math.min( STRIP_JOIN, depth / 4 );
+				var into = depth - joinInto( depth );
 				var reach = end - into;
 				if ( text.direction === 'right' ) {
 					item = { left: 0, top: start, width: depth, height: span, strip: reach > 1 ? { x: into, y: stripStart, w: reach, h: stripSpan } : null };
@@ -1600,6 +1610,45 @@
 			at += ( column || span ) + gap;
 		}
 		return { scale: scale, items: items };
+	}
+
+	/**
+	 * A strip in its letter's clip path: a rect, or with Rounded corners a
+	 * path, its corners at the far end rounded (Corners "both": by the letter
+	 * too). The radius no more than half the strip's width, nor than its
+	 * length (half of it, both ends).
+	 */
+	function stripShape( x, y, w, h, radius, text ) {
+		var round = function ( value ) {
+			return Math.round( value * 100 ) / 100;
+		};
+		var sideways = text.direction === 'right' || text.direction === 'left';
+		var both = text.corners === 'both';
+		var r = Math.max( 0, Math.min( radius, ( sideways ? h : w ) / 2, ( sideways ? w : h ) / ( both ? 2 : 1 ) ) );
+		var shape;
+		if ( ! ( r > 0 ) ) {
+			shape = document.createElementNS( SVG, 'rect' );
+			shape.setAttribute( 'x', round( x ) );
+			shape.setAttribute( 'y', round( y ) );
+			shape.setAttribute( 'width', round( w ) );
+			shape.setAttribute( 'height', round( h ) );
+			return shape;
+		}
+		// Top left, top right, bottom right, bottom left: the far end's.
+		var far = text.direction === 'right' ? [ 0, 1, 1, 0 ] : ( text.direction === 'left' ? [ 1, 0, 0, 1 ] : [ 0, 0, 1, 1 ] );
+		var c = far.map( function ( at ) {
+			return at || both ? r : 0;
+		} );
+		var arc = function ( radius, toX, toY ) {
+			return radius ? 'A' + round( radius ) + ' ' + round( radius ) + ' 0 0 1 ' + round( toX ) + ' ' + round( toY ) : 'L' + round( toX ) + ' ' + round( toY );
+		};
+		shape = document.createElementNS( SVG, 'path' );
+		shape.setAttribute( 'd', 'M' + round( x + c[ 0 ] ) + ' ' + round( y ) +
+			'H' + round( x + w - c[ 1 ] ) + arc( c[ 1 ], x + w, y + c[ 1 ] ) +
+			'V' + round( y + h - c[ 2 ] ) + arc( c[ 2 ], x + w - c[ 2 ], y + h ) +
+			'H' + round( x + c[ 3 ] ) + arc( c[ 3 ], x, y + h - c[ 3 ] ) +
+			'V' + round( y + c[ 0 ] ) + arc( c[ 0 ], x + c[ 0 ], y ) + 'Z' );
+		return shape;
 	}
 
 	function textMask( block, stage, config ) {
@@ -1620,6 +1669,7 @@
 			block.wpSwiperFontAsked = true;
 			document.fonts.load( font, letters.join( '' ) ).then( function () {
 				textMask( block, stage, config );
+				gradientPlaces( block, stage );
 			}, function () {} );
 		}
 		var sizes = measureLetters( letters.slice( 0, count ), font );
@@ -1627,6 +1677,8 @@
 			return at > 0 && at < count;
 		} );
 		var gap = Math.max( 0, Number( forDevice( config.gap ) ) || 0 );
+		// The strips' Rounded corners (off: 0).
+		var radius = Math.max( 0, Number( forDevice( text.radius ) ) || 0 );
 
 		var laid = textLayout( sizes, spaces, count, text, gap, width, height );
 		if ( ! laid ) {
@@ -1694,12 +1746,7 @@
 			glyph.textContent = letters[ i ];
 			clip.appendChild( glyph );
 			if ( strip ) {
-				var rect = document.createElementNS( SVG, 'rect' );
-				rect.setAttribute( 'x', Math.round( ( strip.x - box.left ) * 100 ) / 100 );
-				rect.setAttribute( 'y', Math.round( ( strip.y - box.top ) * 100 ) / 100 );
-				rect.setAttribute( 'width', Math.round( strip.w * 100 ) / 100 );
-				rect.setAttribute( 'height', Math.round( strip.h * 100 ) / 100 );
-				clip.appendChild( rect );
+				clip.appendChild( stripShape( strip.x - box.left, strip.y - box.top, strip.w, strip.h, radius, text ) );
 			}
 			defs.appendChild( clip );
 
@@ -1721,6 +1768,22 @@
 		config.windows = windows;
 		config.windowsRatio = width / height;
 		block.wpSwiperArtShown = count;
+	}
+
+	/*
+	 * The Gradient (art.css): one across the whole stage, each window showing
+	 * its part: where the window is in the stage, and the stage's size.
+	 */
+	function gradientPlaces( block, stage ) {
+		if ( ! block.classList.contains( 'wp-swiper-art--gradient' ) ) {
+			return;
+		}
+		block.style.setProperty( '--wp-swiper-art-gw', stage.clientWidth + 'px' );
+		block.style.setProperty( '--wp-swiper-art-gh', stage.clientHeight + 'px' );
+		[].slice.call( stage.querySelectorAll( '.wp-swiper-art__piece' ) ).forEach( function ( piece ) {
+			piece.style.setProperty( '--wp-swiper-art-gx', piece.offsetLeft + 'px' );
+			piece.style.setProperty( '--wp-swiper-art-gy', piece.offsetTop + 'px' );
+		} );
 	}
 
 	var STYLES = { ring: ring, 'ring-text': ring, 'grid-circle': gridCircle, 'grid-circle-text': gridCircle, 'grid-square': gridCircle, 'grid-square-text': gridCircle, 'grid-shapes': gridShapes, shape: shape, text: textMask };
@@ -1927,8 +1990,14 @@
 		var pool = block.querySelector( 'template.wp-swiper-art__pool' );
 		var photos = pool ? [].slice.call( pool.content.children ) : [];
 		var pieces = stage ? [].slice.call( stage.querySelectorAll( '.wp-swiper-art__piece' ) ) : [];
-		var draw = STYLES[ config.style ];
-		if ( ! stage || ! draw || ! photos.length ) {
+		var drawStyle = STYLES[ config.style ];
+		// The Gradient (art.css): one across the whole stage, each window
+		// showing its part (where it is in the stage, the stage's size).
+		var draw = function ( block, stage, config ) {
+			drawStyle( block, stage, config );
+			gradientPlaces( block, stage );
+		};
+		if ( ! stage || ! drawStyle || ! photos.length ) {
 			return null;
 		}
 		var current = null;

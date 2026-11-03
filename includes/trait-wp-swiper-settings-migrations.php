@@ -429,4 +429,32 @@ trait WP_Swiper_Settings_Migrations {
 		}
 		return $saved;
 	}
+
+	/**
+	 * Text mask's Gradient (its own fields for a while, text_mask_gradient_on
+	 * and text_mask_gradient) is every effect's now (image_gradient_on,
+	 * image_gradient): the slider's, and Text mask's layout.
+	 *
+	 * @param array $saved Saved settings.
+	 * @return array
+	 */
+	public static function merge_text_mask_gradient( $saved ) {
+		if ( ! is_array( $saved ) || ! $saved ) {
+			return $saved;
+		}
+		$move = function ( $values ) {
+			foreach ( array( 'text_mask_gradient_on' => 'image_gradient_on', 'text_mask_gradient' => 'image_gradient' ) as $old => $new ) {
+				if ( array_key_exists( $old, $values ) && ! array_key_exists( $new, $values ) ) {
+					$values[ $new ] = $values[ $old ];
+				}
+				unset( $values[ $old ] );
+			}
+			return $values;
+		};
+		$saved = $move( $saved );
+		if ( isset( $saved['layouts']['text-mask'] ) && is_array( $saved['layouts']['text-mask'] ) ) {
+			$saved['layouts']['text-mask'] = $move( $saved['layouts']['text-mask'] );
+		}
+		return $saved;
+	}
 }

@@ -946,6 +946,8 @@ class WP_Swiper_Render {
 			// A click on a video slide opens the lightbox (its play button says so).
 			$videos && $settings['lightbox'] && ! empty( $settings['lightbox_videos'] ) ? 'wp-swiper--lightbox-videos' : '',
 			$settings['image_border'] ? 'wp-swiper--border' : '',
+			// Gradient over each photo (frontend.css).
+			'' !== WP_Swiper_Settings::gradient( $settings ) ? 'wp-swiper--gradient' : '',
 			// Image shadow (frontend.css), with room kept around the photos for it.
 			$shadow ? 'wp-swiper--shadow' : '',
 			// Caption: a weight saved for the whole slider (until 2.8) overrides the
@@ -1170,6 +1172,11 @@ class WP_Swiper_Render {
 				$style[] = '--wp-swiper-border-width' . self::SUFFIX[ $device ] . ':' . (int) $width . 'px';
 			}
 			$style[] = '--wp-swiper-border-color:' . $settings['image_border_color'];
+		}
+		// Gradient over each photo.
+		$gradient = WP_Swiper_Settings::gradient( $settings );
+		if ( '' !== $gradient ) {
+			$style[] = '--wp-swiper-gradient:' . $gradient;
 		}
 		// Image shadow: as CSS box-shadow, out of the slider's box (no room
 		// taken from the photos): how far the slider shows past its sides for

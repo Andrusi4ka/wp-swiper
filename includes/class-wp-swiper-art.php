@@ -26,6 +26,13 @@ class WP_Swiper_Art {
 	// Text mask: the most characters of its word.
 	const TEXT_MAX = 24;
 
+	// The photos' Gradient (as WoodMart's): "type;where;color@position;…",
+	// see parse_gradient(). By default from pink to blue, half see-through.
+	const GRADIENT_DEFAULT = 'linear;left;rgba(255,0,128,0.55)@0;rgba(0,96,255,0.55)@100';
+
+	// The most color points of a gradient.
+	const GRADIENT_STOPS = 10;
+
 	/**
 	 * Whether this class draws the slider (Art or Text mask).
 	 *
@@ -439,12 +446,12 @@ class WP_Swiper_Art {
 	public static function blocks() {
 		return array(
 			'layout'   => array(
-				// Text mask's own fields here too (its Height is Art's): the
-				// block's title says which (admin.js, `titles`).
+				// Text mask's word here too (Strips go, Word, Photos; its Height
+				// is Art's): the block's title says which (admin.js, `titles`).
 				'art'        => array(
 					'title'  => __( 'Art', 'wp-swiper' ),
 					'titles' => array( self::TEXT_EFFECT => __( 'Text mask', 'wp-swiper' ) ),
-					'fields' => array( 'art_style', 'text_mask_title', 'text_mask_photos', 'text_mask_direction', 'text_mask_font', 'text_mask_weight', 'text_mask_font_name', 'text_mask_size', 'text_mask_stretch', 'text_mask_gap', 'text_mask_strip_width', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_height', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ),
+					'fields' => array( 'art_style', 'text_mask_direction', 'text_mask_title', 'text_mask_photos', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_height', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ),
 				),
 				// Ring + text: what is in the middle, a block of its own (shown
 				// for that Style only, as its fields are).
@@ -456,6 +463,17 @@ class WP_Swiper_Art {
 				'art_opening' => array(
 					'title'  => __( 'Opening', 'wp-swiper' ),
 					'fields' => array( 'art_opening', 'art_ring_opening', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
+				),
+				// Text mask: its letters and its strips, blocks of their own (after
+				// Art's own blocks, hidden there as these are for Art: right after
+				// the word's block on screen).
+				'text_letters' => array(
+					'title'  => __( 'Letters', 'wp-swiper' ),
+					'fields' => array( 'text_mask_font', 'text_mask_weight', 'text_mask_font_name', 'text_mask_size', 'text_mask_stretch', 'text_mask_gap' ),
+				),
+				'text_strips'  => array(
+					'title'  => __( 'Strips', 'wp-swiper' ),
+					'fields' => array( 'text_mask_strip_width', 'text_mask_join', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max' ),
 				),
 			),
 			// As the Collage's own (the same block and fields).
@@ -832,6 +850,9 @@ class WP_Swiper_Art {
 		// Ring + text: the image and text in the middle (art.js places them).
 		$center = in_array( $style, array( 'ring-text', 'grid-circle-text', 'grid-square-text' ), true ) && $settings['art_center'] ? self::center( $settings ) : '';
 
+		// The Gradient, while it is on: its CSS ('' none), one across the whole shape (art.js, art.css).
+		$gradient = WP_Swiper_Settings::gradient( $settings );
+
 		$classes = array_filter(
 			array_merge(
 				array(
@@ -853,6 +874,8 @@ class WP_Swiper_Art {
 				array( $shadow ? 'wp-swiper-art--shadow' : '' ),
 				// "Zoom on hover" (art.css): the photo under the pointer.
 				array( WP_Swiper_Settings::hover_zoom( $settings ) ? 'wp-swiper-art--hover-zoom' : '' ),
+				// Gradient (art.css): over the photos, one across the whole shape.
+				array( '' !== $gradient ? 'wp-swiper-art--gradient' : '' ),
 				// The block's background (art.js, art.css), with a color over it; a
 				// ring or SVG shape placed in the block (its size and position).
 				array( $background ? 'wp-swiper-art--background' : '' ),
@@ -892,6 +915,7 @@ class WP_Swiper_Art {
 			$shadow ? array(
 				'--wp-swiper-art-shadow:drop-shadow(' . $shadow['x'] . 'px ' . $shadow['y'] . 'px ' . $shadow['blur'] . 'px ' . $shadow['color'] . ')',
 			) : array(),
+			'' !== $gradient ? array( '--wp-swiper-art-gradient:' . $gradient ) : array(),
 			// The background's Overlay color (art.css).
 			$background && '' !== WP_Swiper_Settings::background_overlay( $settings ) ? array( '--wp-swiper-bg-overlay:' . WP_Swiper_Settings::background_overlay( $settings ) ) : array(),
 			// A ring or SVG shape as a background: its size and place in the block.
@@ -968,6 +992,112 @@ class WP_Swiper_Art {
 	}
 
 	/**
+	 * A gradient as stored (the photos' Gradient, admin.js draws its editor):
+	 * "linear;left;#ff0080@0;rgba(0,96,255,0.5)@100". Its type (linear, or
+	 * radial: circle / ellipse), where it starts (linear: left, right, top,
+	 * bottom) or its middle (radial: "left|center|right top|center|bottom"),
+	 * then 2 to GRADIENT_STOPS colors with their positions (0-100), in order.
+	 *
+	 * @param string $value Stored value.
+	 * @return array|null [ 'type', 'where', 'stops' => [ [ color, position ] ] ], null if not one.
+	 */
+	public static function parse_gradient( $value ) {
+		$parts = explode( ';', (string) $value );
+		if ( count( $parts ) < 4 ) {
+			return null;
+		}
+		$type  = array_shift( $parts );
+		$where = array_shift( $parts );
+		if ( 'linear' === $type ) {
+			if ( ! in_array( $where, array( 'left', 'right', 'top', 'bottom' ), true ) ) {
+				return null;
+			}
+		} elseif ( in_array( $type, array( 'circle', 'ellipse' ), true ) ) {
+			$at = explode( ' ', $where );
+			if ( 2 !== count( $at ) || ! in_array( $at[0], array( 'left', 'center', 'right' ), true ) || ! in_array( $at[1], array( 'top', 'center', 'bottom' ), true ) ) {
+				return null;
+			}
+		} else {
+			return null;
+		}
+		$stops = array();
+		foreach ( $parts as $part ) {
+			$point = explode( '@', $part );
+			if ( 2 !== count( $point ) || ! is_numeric( $point[1] ) ) {
+				continue;
+			}
+			$color = WP_Swiper_Settings::sanitize_slide_color( $point[0] );
+			if ( '' !== $color ) {
+				$stops[] = array( $color, round( max( 0, min( 100, (float) $point[1] ) ), 1 ) );
+			}
+		}
+		$stops = array_slice( $stops, 0, self::GRADIENT_STOPS );
+		if ( count( $stops ) < 2 ) {
+			return null;
+		}
+		// In order of their positions (those at one place as they came).
+		$order = array_keys( $stops );
+		usort(
+			$order,
+			function ( $a, $b ) use ( $stops ) {
+				return $stops[ $a ][1] === $stops[ $b ][1] ? $a - $b : ( $stops[ $a ][1] < $stops[ $b ][1] ? -1 : 1 );
+			}
+		);
+		return array(
+			'type'  => $type,
+			'where' => $where,
+			'stops' => array_map(
+				function ( $i ) use ( $stops ) {
+					return $stops[ $i ];
+				},
+				$order
+			),
+		);
+	}
+
+	/**
+	 * A gradient (parse_gradient()) as stored.
+	 *
+	 * @param array $gradient The gradient.
+	 * @return string
+	 */
+	public static function gradient_value( $gradient ) {
+		$points = array();
+		foreach ( $gradient['stops'] as $stop ) {
+			$points[] = $stop[0] . '@' . ( 0.0 === fmod( $stop[1], 1 ) ? (int) $stop[1] : $stop[1] );
+		}
+		return $gradient['type'] . ';' . $gradient['where'] . ';' . implode( ';', $points );
+	}
+
+	/**
+	 * A stored gradient as CSS (its start "left" as WoodMart's: towards the
+	 * right); '' if it is not one.
+	 *
+	 * @param string $value Stored value.
+	 * @return string
+	 */
+	public static function gradient_css( $value ) {
+		$gradient = self::parse_gradient( $value );
+		if ( ! $gradient ) {
+			return '';
+		}
+		$points = array();
+		foreach ( $gradient['stops'] as $stop ) {
+			$points[] = $stop[0] . ' ' . $stop[1] . '%';
+		}
+		if ( 'linear' === $gradient['type'] ) {
+			$towards = array(
+				'left'   => 'right',
+				'right'  => 'left',
+				'top'    => 'bottom',
+				'bottom' => 'top',
+			);
+			return 'linear-gradient(to ' . $towards[ $gradient['where'] ] . ', ' . implode( ', ', $points ) . ')';
+		}
+		return 'radial-gradient(' . $gradient['type'] . ' at ' . $gradient['where'] . ', ' . implode( ', ', $points ) . ')';
+	}
+
+	/**
 	 * Text mask, for art.js text(): the letters (its windows, in order), where
 	 * the spaces were (a wider gap before that letter), the font, the
 	 * letters' height at most per device (% of the stage's), and the strips:
@@ -1012,6 +1142,11 @@ class WP_Swiper_Art {
 			'stretch' => ! empty( $settings['text_mask_stretch'] ),
 			'direction' => in_array( $settings['text_mask_direction'], array( 'down', 'right', 'left' ), true ) ? $settings['text_mask_direction'] : 'down',
 			'width'   => 'letter' === $settings['text_mask_strip_width'] ? 'letter' : 'same',
+			// Strips into letters: a share of each letter's depth (0-0.3).
+			'join'    => max( 0, min( 30, (int) $settings['text_mask_join'] ) ) / 100,
+			// Rounded corners: the strips' radius per device (off: 0), and which end.
+			'radius'  => empty( $settings['text_mask_rounded'] ) ? array_fill_keys( array( 'desktop', 'tablet', 'mobile' ), 0 ) : self::per_device( $settings, 'text_mask_radius', 0, 200 ),
+			'corners' => 'both' === $settings['text_mask_corners'] ? 'both' : 'end',
 			'strips'  => in_array( $settings['text_mask_strips'], array( 'random', 'equal', 'middle', 'sides' ), true ) ? $settings['text_mask_strips'] : 'random',
 			'min'     => min( $min, $max ),
 			'max'     => max( $min, $max ),

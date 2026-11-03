@@ -760,6 +760,26 @@ return array(
 	// Image shadow: one for every screen, where the photos stand apart
 	// (see shadow() for when it applies). Its offsets, blur and spread
 	// in one row, its color (with opacity) under them.
+	// A gradient over the photos (WP_Swiper_Art::parse_gradient()), edited as
+	// WoodMart's (admin.js): over each photo of a slider or collage (not a
+	// video's); one across the whole shape of Art and Text mask (its gaps
+	// stay empty). The switch, its colors under it.
+	'image_gradient_on'     => array(
+		'section' => 'layout',
+		'effects' => self::GRADIENT_EFFECTS,
+		'label'   => __( 'Gradient', 'wp-swiper' ),
+		'type'    => 'checkbox',
+		'default' => false,
+		'help'    => __( 'A gradient over the photos: over each photo of a slider or collage (not over videos); one across the whole shape of Art and Text mask, the gaps staying empty. See-through colors let the photo show.', 'wp-swiper' ),
+	),
+	'image_gradient'        => array(
+		'section' => 'layout',
+		'effects' => self::GRADIENT_EFFECTS,
+		'label'   => __( 'Gradient colors', 'wp-swiper' ),
+		'type'    => 'gradient',
+		'default' => WP_Swiper_Art::GRADIENT_DEFAULT,
+		'help'    => __( 'Click the bar to add a color, drag a color along it, pick one to change or delete it.', 'wp-swiper' ),
+	),
 	// The photo under the pointer zooms a little in its box (its frame and
 	// corners stay). Off by default; on for Art, which always had it
 	// (merge_hover_zoom(), layouts()).

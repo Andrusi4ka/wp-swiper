@@ -77,6 +77,12 @@ class WP_Swiper_Settings {
 	const HOVER_ZOOM_EFFECTS = array( 'slide', 'fade', 'creative', 'thumbs', 'collage', 'art', 'text-mask' );
 
 	/**
+	 * Effects whose photos can have a Gradient over them: all of them (a
+	 * slider's and collage's each photo, Art's and Text mask's whole shape).
+	 */
+	const GRADIENT_EFFECTS = array( 'slide', 'fade', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'thumbs', 'collage', 'art', 'text-mask' );
+
+	/**
 	 * The CSS a caption's or description's markup may keep (its editor's: a
 	 * color, underline, alignment): sanitize_rich_text().
 	 */
@@ -251,6 +257,20 @@ class WP_Swiper_Settings {
 			// No pointer reaches a background; the main image already zooms.
 			&& ! self::is_background( $settings )
 			&& ! self::is_zoom( $settings );
+	}
+
+	/**
+	 * The Gradient over the photos, as CSS: '' while it is off (or the
+	 * effect has none, or it is not one).
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string
+	 */
+	public static function gradient( $settings ) {
+		if ( empty( $settings['image_gradient_on'] ) || ! in_array( $settings['effect'], self::GRADIENT_EFFECTS, true ) || ! isset( $settings['image_gradient'] ) ) {
+			return '';
+		}
+		return WP_Swiper_Art::gradient_css( $settings['image_gradient'] );
 	}
 
 	/**
@@ -702,10 +722,11 @@ class WP_Swiper_Settings {
 					'fields' => array( 'height', 'slide_ratio', 'slide_ratio_custom', 'slide_distribution', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
 				),
 				// Art's Rounded corners and Image border here too (its own fields,
-				// where a slider's are): the shadow under them on both.
+				// where a slider's are), and Text mask's Rounded corners (its
+				// strips'): the shadow under them on both.
 				'look'        => array(
 					'title'  => __( 'Look', 'wp-swiper' ),
-					'fields' => array( 'border_rounded', 'border_radius', 'art_rounded', 'art_radius', 'image_border', 'image_border_width', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_hover_zoom', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
+					'fields' => array( 'border_rounded', 'border_radius', 'art_rounded', 'art_radius', 'text_mask_rounded', 'text_mask_radius', 'text_mask_corners', 'image_border', 'image_border_width', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_gradient_on', 'image_gradient', 'image_hover_zoom', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
 				),
 				'zoom'        => array(
 					'title'  => __( 'Zoom', 'wp-swiper' ),
@@ -906,6 +927,7 @@ class WP_Swiper_Settings {
 		$saved = self::merge_art_height( $saved );
 		// Art's photos always zoomed under the pointer: Zoom on hover on there.
 		$saved = self::merge_hover_zoom( $saved );
+		$saved = self::merge_text_mask_gradient( $saved );
 		if ( ! empty( $saved['layouts'] ) && is_array( $saved['layouts'] ) ) {
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_ratio_fields' ), array_filter( $saved['layouts'], 'is_array' ) );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_overlay_opacity' ), $saved['layouts'] );

@@ -626,10 +626,13 @@ return array(
 	),
 	// Down: the word across, the strips under its letters. Right / Left: the
 	// letters one under another, upright, the strips going out sideways.
+	// Shown as icons, assets/images/text-mask/{direction}.svg (as Art's Style),
+	// first in the block.
 	'text_mask_direction' => array(
 		'section' => 'layout',
 		'effects' => array( self::TEXT_EFFECT ),
 		'label'   => __( 'Strips go', 'wp-swiper' ),
+		'tiles'   => 'text-mask',
 		'type'    => 'select',
 		'default' => 'down',
 		'choices' => array(
@@ -692,7 +695,7 @@ return array(
 		'min'        => 10,
 		'max'        => 70,
 		'step'       => 1,
-		'help'       => __( 'Auto: the word as wide as it can be (the letters at most 70% of the Height, or of the width with strips right or left). %: strips down, of the Height, the letters no taller than this; strips right or left, of the width, no wider than this.', 'wp-swiper' ),
+		'help'       => __( 'Auto: the word as wide as it can be (the letters at most 70% of the Height). %: of the Height, the letters no taller than this. With strips right or left there is no Letter size: the word fills the Height.', 'wp-swiper' ),
 	),
 	// Auto: no Letter size of its own, the letters as large as fill the width.
 	'text_mask_size_unit' => array(
@@ -741,7 +744,7 @@ return array(
 			'same'   => __( 'Same for all', 'wp-swiper' ),
 			'letter' => __( 'As the letter', 'wp-swiper' ),
 		),
-		'help'    => __( 'Same for all: the strips as wide as each other, Gap apart, each letter in the middle of its strip (the widest letter sets the size). As the letter: each strip under its letter, the letters Gap apart.', 'wp-swiper' ),
+		'help'    => __( 'Same for all: the strips as wide as each other, Gap apart, each letter in the middle of its strip (the widest letter sets the size). As the letter: each strip as wide as its letter, the letters and their strips Gap apart.', 'wp-swiper' ),
 	),
 	// How long each letter's strip is, between Shortest and Longest (% of the
 	// height under the letters).
@@ -757,6 +760,21 @@ return array(
 			'middle' => __( 'Longer in the middle', 'wp-swiper' ),
 			'sides'  => __( 'Longer at the sides', 'wp-swiper' ),
 		),
+	),
+	// How far the strips go into their letters: a share of each letter's
+	// depth (down: its height; right / left: its width), one for every screen
+	// (the same look at any size). 0: the letters whole (STRIP_JOIN only).
+	'text_mask_join'     => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Strips into letters (%)', 'wp-swiper' ),
+		'type'    => 'number',
+		'default' => 0,
+		'min'     => 0,
+		'max'     => 30,
+		'step'    => 1,
+		'range'   => array( 0, 30 ),
+		'help'    => __( 'How far each strip goes into its letter, of the letter\'s size: the letter\'s end merges into the strip. 0: the letters whole.', 'wp-swiper' ),
 	),
 	'text_mask_strip_min' => array(
 		'section' => 'layout',
@@ -780,5 +798,39 @@ return array(
 		'max'     => 100,
 		'step'    => 1,
 		'help'    => __( 'Of the height under the letters. All the same: Longest.', 'wp-swiper' ),
+	),
+	// The strips' corners (in Look, as a slider's Rounded corners): the switch, the
+	// radius per device under it (no larger than half a strip's width, nor
+	// than its length), and which end (Corners).
+	'text_mask_rounded'  => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Rounded corners', 'wp-swiper' ),
+		'type'    => 'checkbox',
+		'default' => false,
+	),
+	'text_mask_radius'   => array(
+		'section'    => 'layout',
+		'effects'    => array( self::TEXT_EFFECT ),
+		'label'      => __( 'Radius (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 12,
+		'min'        => 0,
+		'max'        => 200,
+		'step'       => 1,
+		'help'       => __( 'At most half the strip\'s width: a larger one rounds its end in a half circle.', 'wp-swiper' ),
+	),
+	'text_mask_corners'  => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Corners', 'wp-swiper' ),
+		'type'    => 'select',
+		'default' => 'end',
+		'choices' => array(
+			'end'  => __( 'At the strip\'s end', 'wp-swiper' ),
+			'both' => __( 'At both ends', 'wp-swiper' ),
+		),
+		'help'    => __( 'At both ends: by the letter too (where the strip is wider than the letter\'s foot).', 'wp-swiper' ),
 	),
 );

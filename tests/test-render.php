@@ -774,8 +774,8 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 
 	public function test_rounded_corners_switch_before_its_radius_in_look() {
 		$look = WP_Swiper_Settings::blocks()['layout']['look']['fields'];
-		// Art's Rounded corners where a slider's radius is (only one of them shows), then the borders.
-		$this->assertSame( array( 'border_rounded', 'border_radius', 'art_rounded', 'art_radius', 'image_border' ), array_slice( $look, 0, 5 ) );
+		// Art's and Text mask's Rounded corners where a slider's radius is (only one of them shows), then the borders.
+		$this->assertSame( array( 'border_rounded', 'border_radius', 'art_rounded', 'art_radius', 'text_mask_rounded', 'text_mask_radius', 'text_mask_corners', 'image_border' ), array_slice( $look, 0, 8 ) );
 		$this->assertNotContains( 'art_radius', WP_Swiper_Settings::blocks()['layout']['art']['fields'] );
 	}
 

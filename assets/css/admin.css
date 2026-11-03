@@ -1565,6 +1565,117 @@ body.wp-swiper-modal-open {
 	height: 30px;
 }
 
+/* A gradient (gradient_field(), as WoodMart's): its selects in a row, the
+   gradient as a bar (over a checkerboard: see-through colors show as such),
+   its colors' points under it (the chosen one in the accent color), the
+   chosen one's color and Delete (red). */
+.wp-swiper-gradient__selects {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 10px;
+}
+
+.wp-swiper-gradient__selects select {
+	flex: 1 1 120px;
+	min-width: 0;
+}
+
+.wp-swiper-gradient__selects select[hidden] {
+	display: none;
+}
+
+.wp-swiper-gradient__bar {
+	position: relative;
+	height: 28px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: repeating-conic-gradient(#dcdcde 0% 25%, #fff 0% 50%) 0 0 / 10px 10px;
+	cursor: copy;
+}
+
+.wp-swiper-gradient__fill {
+	position: absolute;
+	inset: 0;
+	border-radius: 3px;
+}
+
+.wp-swiper-gradient__stops {
+	position: relative;
+	height: 26px;
+	margin-bottom: 8px;
+}
+
+.wp-swiper-gradient__handle {
+	position: absolute;
+	top: 4px;
+	width: 18px;
+	height: 18px;
+	margin-left: -9px;
+	padding: 2px;
+	border: 1px solid #8c8f94;
+	border-radius: 3px;
+	background: repeating-conic-gradient(#dcdcde 0% 25%, #fff 0% 50%) 0 0 / 6px 6px;
+	cursor: ew-resize;
+	touch-action: none;
+}
+
+/* Its tip, up to the bar. */
+.wp-swiper-gradient__handle::before {
+	content: "";
+	position: absolute;
+	top: -5px;
+	left: 50%;
+	margin-left: -4px;
+	border: 4px solid transparent;
+	border-top: 0;
+	border-bottom: 4px solid #8c8f94;
+}
+
+.wp-swiper-gradient__chip {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 1px;
+}
+
+.wp-swiper-gradient__handle.is-chosen,
+.wp-swiper-gradient__handle:focus-visible {
+	border-color: var(--wp-admin-theme-color, #2271b1);
+	outline: none;
+	box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #2271b1);
+}
+
+.wp-swiper-gradient__handle.is-chosen::before {
+	border-bottom-color: var(--wp-admin-theme-color, #2271b1);
+}
+
+.wp-swiper-gradient__stop {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+}
+
+/* Delete: red text, as WordPress's own delete links. */
+.wp-swiper-gradient .wp-swiper-gradient__delete {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #d63638;
+	cursor: pointer;
+}
+
+.wp-swiper-gradient .wp-swiper-gradient__delete:hover,
+.wp-swiper-gradient .wp-swiper-gradient__delete:focus {
+	color: #b32d2e;
+}
+
+.wp-swiper-gradient .wp-swiper-gradient__delete:disabled {
+	color: #a7aaad;
+	cursor: default;
+}
+
 /* The picker (Pickr's classic theme, in the body): over the Slide info
    window (z-index 100050), under the editor's link window (100105). */
 .pcr-app.wp-swiper-pcr {

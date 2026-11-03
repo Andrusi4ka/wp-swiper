@@ -1087,8 +1087,8 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 			$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/collage/' . $style . '.svg', $style );
 			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="[^"]+" aria-label="[^"]+">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
 		}
-		// The Collage's ten, and Art's Styles with those to come (below).
-		$this->assertSame( 10 + count( WP_Swiper_Art::styles() ) + count( WP_Swiper_Art::soon() ), substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
+		// The Collage's ten, Art's Styles with those to come (below), Text mask's Strips go.
+		$this->assertSame( 10 + count( WP_Swiper_Art::styles() ) + count( WP_Swiper_Art::soon() ) + 3, substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
 		$this->assertStringContainsString( 'class="wp-swiper-tiles__tile wp-swiper-tiles__tile--inherit" data-value="" role="radio" aria-checked="false" hidden>Inherit</button>', $html );
 	}
 

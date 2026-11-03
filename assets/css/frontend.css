@@ -368,6 +368,19 @@
 	}
 }
 
+/* Gradient: over each photo's box (.wp-swiper__media: with "Contain" the
+   image itself), its corners as the photo's; under the caption and the
+   frame; not over a video. Clicks go through. */
+.wp-swiper--gradient .swiper-slide:not(.wp-swiper-slide--video) > .wp-swiper__media::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border-radius: inherit;
+	background: var(--wp-swiper-gradient, none);
+	pointer-events: none;
+}
+
 /* Image border: a frame over the image box (.wp-swiper__media), so it takes
    no room, follows the corners, and with "Contain" frames the image itself.
    Over the caption (z-index 2) too, whose background would darken it; the
