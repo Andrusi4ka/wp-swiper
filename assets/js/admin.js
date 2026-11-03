@@ -2039,7 +2039,7 @@
 			$( '#wp-swiper-page-controls .wp-swiper-field' ).not( '[data-effects~="collage"]' ).toggleClass( 'is-not-applicable', collage );
 
 			// Art: the preview says its photos swap by dragging.
-			$( '.wp-swiper-preview__hint[data-effect="art"]' ).prop( 'hidden', effect !== 'art' );
+			$( '.wp-swiper-preview__hint[data-effect="art"]' ).prop( 'hidden', effect !== 'art' && ! ( effect === 'text-mask' && $( '#wp-swiper-text_mask_photos' ).val() === 'each' ) );
 			// Grid shapes: its shapes are drawn there (preview-art.js).
 			$( '.wp-swiper-preview__hint[data-effect="art-cells"]' ).prop( 'hidden', effect !== 'art' || $( '#wp-swiper-art_style' ).val() !== 'grid-shapes' );
 			// Art (class-wp-swiper-art.php): its own fields only, those of its Style
@@ -2094,9 +2094,19 @@
 						field( name ).hide();
 					} );
 				}
+				// Text mask: What changes only with a photo in each letter (its "One
+				// photo through all windows" is Photos' to say: not offered there),
+				// and only while photos swap; with one photo, as that choice.
+				var eachLetter = textMask && $( '#wp-swiper-text_mask_photos' ).val() === 'each';
+				var $target = $( '#wp-swiper-art_shape_target' );
+				$target.find( 'option[value="one"]' ).prop( { hidden: textMask, disabled: textMask } );
+				if ( textMask && ( ! eachLetter || ! $( '#wp-swiper-art_swap' ).is( ':checked' ) ) ) {
+					field( 'art_shape_target' ).hide();
+				}
+				var target = textMask ? ( eachLetter ? ( $target.val() === 'one' ? 'any' : $target.val() ) : 'one' ) : $target.val();
 				// SVG shape: the order windows show a new photo in, only where they all
-				// change at once (Text mask: always, one photo through all its letters).
-				if ( ! textMask && [ 'one', 'advance' ].indexOf( $( '#wp-swiper-art_shape_target' ).val() ) === -1 ) {
+				// change at once.
+				if ( [ 'one', 'advance' ].indexOf( target ) === -1 ) {
 					field( 'art_shape_appear' ).hide();
 				}
 				// Opening: its size and content (image and text, either or both) only

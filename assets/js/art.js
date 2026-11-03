@@ -1383,15 +1383,17 @@
 	 * letter and its strip one window (a piece cut to both with an SVG
 	 * clipPath: its <text> takes the page's fonts, which clip-path: path()
 	 * cannot). The letters as large as fill the width, no taller than Letter
-	 * height (% of the stage), at the top; the strips from inside their
-	 * letters down, as long as Strips says (% of the height under them).
+	 * height (% of the stage), at the top, each whole; the strips from where
+	 * their letters end down, as long as Strips says (% of the height under
+	 * the letters).
 	 */
 	var TEXT_FONTS = {
 		serif: 'Georgia, "Times New Roman", Times, serif',
 		sans: '"Arial Black", "Helvetica Neue", Arial, Helvetica, sans-serif'
 	};
-	// How far up into its letter a strip reaches (of the letter's height), and how wide it is (of the letter's).
-	var STRIP_INTO = 0.35;
+	// How far up into its letter a strip reaches (px: no seam between them, the
+	// letter still whole), and how wide it is (of the letter's).
+	var STRIP_JOIN = 2;
 	var STRIP_WIDTH = 0.8;
 	var textBlocks = 0;
 	var measurer = null;
@@ -1491,23 +1493,46 @@
 
 		// The scale (of 100px): the word as wide as the stage, the letters no taller than Letter height.
 		var ink = 0;
+		var widest = 0;
 		var up = 0;
 		var down = 0;
 		sizes.forEach( function ( size ) {
 			ink += size.width;
+			widest = Math.max( widest, size.width );
 			up = Math.max( up, size.ascent );
 			down = Math.max( down, size.descent );
 		} );
-		var room = width - gap * ( count - 1 + spaces.length );
+		var gaps = gap * ( count - 1 + spaces.length );
 		var tallest = height * ( Number( forDevice( text.size ) ) || 30 ) / 100;
-		var scale = Math.min( room / ( ink + spaces.length * sizes.space ), tallest / ( ( up + down ) || 1 ) );
-		if ( ! ( scale > 0 ) ) {
+		var byHeight = tallest / ( ( up + down ) || 1 );
+		var scale;
+		var used;
+		/*
+		 * Strip width "Same for all": a column per letter, all as wide, Gap
+		 * between them (a space half a column more); each strip its column,
+		 * each letter in the middle of its own, the widest one at most its
+		 * column and half the Gap (it may reach a quarter of the Gap out each
+		 * side, never touching a neighbour). Letters held lower by Letter
+		 * height: the columns as narrow as they then need.
+		 */
+		var column = 0;
+		if ( text.width !== 'letter' ) {
+			var units = count + spaces.length / 2;
+			var full = ( width - gaps ) / units;
+			scale = Math.min( ( full + gap / 2 ) / widest, byHeight );
+			column = Math.max( 1, Math.min( full, scale * widest - gap / 2 ) );
+			used = column * units + gaps;
+		} else {
+			// "As the letter": each strip under its letter, the letters Gap apart.
+			scale = Math.min( ( width - gaps ) / ( ink + spaces.length * sizes.space ), byHeight );
+			used = scale * ( ink + spaces.length * sizes.space ) + gaps;
+		}
+		if ( ! ( scale > 0 ) || ! ( width - gaps > 0 ) ) {
 			for ( var none = 0; none < pieces.length; none++ ) {
 				pieces[ none ].hidden = true;
 			}
 			return;
 		}
-		var used = scale * ( ink + spaces.length * sizes.space ) + gap * ( count - 1 + spaces.length );
 		var x = Math.max( 0, ( width - used ) / 2 );
 		var baseline = scale * up;
 		var under = Math.max( 0, height - baseline );
@@ -1534,24 +1559,27 @@
 			var size = sizes[ i ];
 			var piece = pieces[ i ];
 			if ( spaces.indexOf( i ) !== -1 ) {
-				x += scale * sizes.space + gap;
+				x += ( column ? column / 2 : scale * sizes.space ) + gap;
 			}
 			var letterWidth = scale * size.width;
 			var letterTop = baseline - scale * size.ascent;
 			var letterBottom = baseline + scale * size.descent;
-			// Its strip: centred under it, from inside it down (none at length 0).
-			var stripWidth = letterWidth * STRIP_WIDTH;
-			var stripLeft = x + ( letterWidth - stripWidth ) / 2;
-			var stripTop = baseline - scale * size.ascent * STRIP_INTO;
+			// The letter: in the middle of its column, or where it is (as the letter).
+			var letterLeft = column ? x + ( column - letterWidth ) / 2 : x;
+			// Its strip: its column, or centred under it; from the bottom of its
+			// ink down (below a "p" or "g" its tail, an "O" its curve), none at length 0.
+			var stripWidth = column || letterWidth * STRIP_WIDTH;
+			var stripLeft = column ? x : x + ( letterWidth - stripWidth ) / 2;
+			var stripTop = letterBottom - Math.min( STRIP_JOIN, ( letterBottom - letterTop ) / 4 );
 			var stripBottom = baseline + under * lengths[ i ];
 			var strip = stripBottom - stripTop > 1;
 			var box = {
-				left: Math.floor( x ),
+				left: Math.floor( Math.min( letterLeft, strip ? stripLeft : letterLeft ) ),
 				top: Math.floor( letterTop ),
 				width: 0,
 				height: 0
 			};
-			box.width = Math.ceil( x + letterWidth ) - box.left;
+			box.width = Math.ceil( Math.max( letterLeft + letterWidth, strip ? stripLeft + stripWidth : 0 ) ) - box.left;
 			box.height = Math.ceil( Math.max( letterBottom, strip ? stripBottom : 0 ) ) - box.top;
 
 			var clip = document.createElementNS( SVG, 'clipPath' );
@@ -1560,7 +1588,7 @@
 			clip.setAttribute( 'clipPathUnits', 'userSpaceOnUse' );
 			var glyph = document.createElementNS( SVG, 'text' );
 			// At its origin: the ink starts `left` before it.
-			glyph.setAttribute( 'x', Math.round( ( x - box.left + scale * size.left ) * 100 ) / 100 );
+			glyph.setAttribute( 'x', Math.round( ( letterLeft - box.left + scale * size.left ) * 100 ) / 100 );
 			glyph.setAttribute( 'y', Math.round( ( baseline - box.top ) * 100 ) / 100 );
 			// As measured, whatever the page's CSS says of text (inline: over its rules).
 			glyph.style.cssText = 'font-family:' + family + ';font-weight:' + weight + ';font-size:' + ( Math.round( scale * 10000 ) / 100 ) + 'px;font-style:normal;font-variant:normal;letter-spacing:0;text-transform:none;text-anchor:start;dominant-baseline:alphabetic';
@@ -1584,7 +1612,7 @@
 			piece.style.setProperty( '--wp-swiper-art-ox', box.left + 'px' );
 			piece.style.setProperty( '--wp-swiper-art-oy', box.top + 'px' );
 			windows.push( { box: [ box.left / width, box.top / height, box.width / width, box.height / height ] } );
-			x += letterWidth + gap;
+			x += ( column || letterWidth ) + gap;
 		}
 		for ( var extra = count; extra < pieces.length; extra++ ) {
 			pieces[ extra ].hidden = true;

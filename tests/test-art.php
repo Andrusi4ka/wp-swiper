@@ -20,7 +20,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 	public function test_art_settings_are_its_own() {
 		$fields = WP_Swiper_Settings::fields();
 		// Text mask (drawn by Art) uses these of Art's too.
-		$shared = array( 'art_height', 'art_height_unit', 'art_swap', 'art_shape_appear', 'art_swap_delay', 'art_swap_speed', 'art_pause' );
+		$shared = array( 'art_height', 'art_height_unit', 'art_swap', 'art_shape_target', 'art_shape_appear', 'art_swap_delay', 'art_swap_speed', 'art_pause' );
 		foreach ( WP_Swiper_Art::fields() as $key => $field ) {
 			// Text mask's own: for it only, on the Layout page.
 			if ( 0 === strpos( $key, 'text_mask_' ) ) {

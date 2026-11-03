@@ -106,8 +106,6 @@ return array(
 		'photos'   => 10,
 		'block'    => true,
 	),
-	// A ring as its block's background, its proportions kept: filling the
-	// block (Cover) at the right on desktop, all of it (Contain) at the top on mobile.
 	// Text mask (drawn by Art): one photo through the letters, a strip under each.
 	// Plain fonts (Georgia, Arial Black): the same on any theme.
 	'art-text-mask'      => array(
@@ -115,9 +113,16 @@ return array(
 		'photos'   => 3,
 	),
 	'art-text-mask-sans' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'WP SWIPER', 'text_mask_font' => 'sans', 'text_mask_strips' => 'middle', 'text_mask_gap' => '6', 'text_mask_size' => '45', 'art_height' => '360', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'WP SWIPER', 'text_mask_font' => 'sans', 'text_mask_strip_width' => 'letter', 'text_mask_strips' => 'middle', 'text_mask_gap' => '6', 'text_mask_size' => '45', 'art_height' => '360', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
+	// A photo in each letter (as many photos as letters).
+	'art-text-mask-each' => array(
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_photos' => 'each', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ),
+		'photos'   => 6,
+	),
+	// A ring as its block's background, its proportions kept: filling the
+	// block (Cover) at the right on desktop, all of it (Contain) at the top on mobile.
 	'art-ring-background' => array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'art_rounded' => '1', 'background' => '1', 'background_class' => 'fixture-bg', 'art_bg_size' => 'cover', 'art_bg_position' => 'right center', 'art_bg_size_mobile' => 'contain', 'art_bg_position_mobile' => 'center top' ),
 		'photos'   => 8,

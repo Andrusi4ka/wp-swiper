@@ -104,9 +104,54 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		$this->assertTrue( wp_script_is( 'wp-swiper-art', 'enqueued' ) );
 	}
 
+	public function test_a_photo_in_each_letter() {
+		$this->assertSame( 'one', WP_Swiper_Settings::defaults()['text_mask_photos'] );
+		$this->assertSame( array( 'grid-shapes', 'shape', 'text' ), WP_Swiper_Settings::fields()['art_shape_target']['styles'] );
+		$slides = $this->slides( 3 );
+		$ids    = wp_list_pluck( $slides, 'id' );
+		$each   = array(
+			'effect'           => 'text-mask',
+			'text_mask_title'  => 'LAHORE',
+			'text_mask_photos' => 'each',
+			'art_swap'         => true,
+		);
+
+		// Not one photo: each letter its own, in the order set for the device.
+		$html   = $this->render( $each + array( 'art_shape_target' => 'turn', 'art_order_mobile' => $ids[2] . ',' . $ids[0] ), $slides );
+		$config = $this->config( $html, 'data-wp-swiper-art' );
+		$this->assertArrayNotHasKey( 'one', $config );
+		$this->assertStringNotContainsString( 'wp-swiper-art--one', $html );
+		$this->assertSame( 'turn', $config['swap']['target'] );
+		$this->assertSame( array( 2, 0, 1 ), $config['order']['mobile'] );
+		$this->assertFalse( $config['order']['desktop'] );
+		$this->assertSame( 6, substr_count( $html, 'class="wp-swiper-art__piece"' ) );
+		// All at once: in the order Appearance says.
+		$config = $this->config( $this->render( $each + array( 'art_shape_target' => 'advance', 'art_shape_appear' => 'ltr' ), $slides ), 'data-wp-swiper-art' );
+		$this->assertSame( array( 'advance', 'ltr' ), array( $config['swap']['target'], $config['appear'] ) );
+		// What changes "One photo through all windows" is Photos' to say: a letter at random.
+		$config = $this->config( $this->render( $each + array( 'art_shape_target' => 'one' ), $slides ), 'data-wp-swiper-art' );
+		$this->assertArrayNotHasKey( 'one', $config );
+		$this->assertSame( 'any', $config['swap']['target'] );
+
+		// One photo: whatever What changes says.
+		$config = $this->config( $this->render( array( 'text_mask_photos' => 'one', 'art_shape_target' => 'turn' ) + $each, $slides ), 'data-wp-swiper-art' );
+		$this->assertTrue( $config['one'] );
+		$this->assertSame( 'one', $config['swap']['target'] );
+		// An unknown value: one photo.
+		$this->assertSame( 'one', WP_Swiper_Settings::sanitize( array( 'effect' => 'text-mask', 'text_mask_photos' => 'all' ) )['text_mask_photos'] );
+	}
+
 	public function test_unknown_values_fall_back() {
-		$text = WP_Swiper_Art::text_config( $this->text( array( 'text_mask_font' => 'comic', 'text_mask_weight' => '100', 'text_mask_strips' => 'zigzag' ) ) );
-		$this->assertSame( array( 'heading', 700, 'random' ), array( $text['font'], $text['weight'], $text['strips'] ) );
+		$text = WP_Swiper_Art::text_config( $this->text( array( 'text_mask_font' => 'comic', 'text_mask_weight' => '100', 'text_mask_strips' => 'zigzag', 'text_mask_strip_width' => 'wide' ) ) );
+		$this->assertSame( array( 'heading', 700, 'random', 'same' ), array( $text['font'], $text['weight'], $text['strips'], $text['width'] ) );
+	}
+
+	public function test_strip_width() {
+		// All as wide by default (a column per letter); or each as its letter.
+		$this->assertSame( 'same', WP_Swiper_Settings::defaults()['text_mask_strip_width'] );
+		$this->assertSame( 'same', WP_Swiper_Art::text_config( $this->text() )['width'] );
+		$this->assertSame( 'letter', WP_Swiper_Art::text_config( $this->text( array( 'text_mask_strip_width' => 'letter' ) ) )['width'] );
+		$this->assertSame( 'same', WP_Swiper_Settings::sanitize( array( 'effect' => 'text-mask', 'text_mask_strip_width' => 'wide' ) )['text_mask_strip_width'] );
 	}
 
 	public function test_a_slider_saved_by_the_first_try() {

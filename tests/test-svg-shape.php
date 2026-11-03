@@ -240,7 +240,7 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 		// What changes: a window at random by default; in turn; or all at once (as a slider).
 		$this->assertSame( 'any', $config['swap']['target'] );
 		$field = WP_Swiper_Settings::fields()['art_shape_target'];
-		$this->assertSame( array( 'grid-shapes', 'shape' ), $field['styles'] );
+		$this->assertSame( array( 'grid-shapes', 'shape', 'text' ), $field['styles'] );
 		$this->assertSame( array( 'advanced', 'controls' ), array( $field['section'], $field['panel'] ) );
 		$this->assertSame( array( 'any', 'turn', 'advance', 'one' ), array_keys( $field['choices'] ) );
 		$this->assertArrayNotHasKey( 'one', $config );

@@ -444,7 +444,7 @@ class WP_Swiper_Art {
 				'art'        => array(
 					'title'  => __( 'Art', 'wp-swiper' ),
 					'titles' => array( self::TEXT_EFFECT => __( 'Text mask', 'wp-swiper' ) ),
-					'fields' => array( 'art_style', 'text_mask_title', 'text_mask_font', 'text_mask_weight', 'text_mask_size', 'text_mask_gap', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_height', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ),
+					'fields' => array( 'art_style', 'text_mask_title', 'text_mask_photos', 'text_mask_font', 'text_mask_weight', 'text_mask_size', 'text_mask_gap', 'text_mask_strip_width', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_height', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ),
 				),
 				// Ring + text: what is in the middle, a block of its own (shown
 				// for that Style only, as its fields are).
@@ -682,9 +682,15 @@ class WP_Swiper_Art {
 
 		$style   = self::style_of( $settings );
 		// Text mask: one photo through all its letters (the word is the
-		// stencil), no captions on it (each letter would cut one up).
+		// stencil), or a photo in each letter, changing as What changes says
+		// (its "one" is Photos' to say: there a window at random instead). No
+		// captions on it (each letter would cut one up).
 		if ( 'text' === $style ) {
-			$settings['art_shape_target'] = 'one';
+			if ( 'each' !== $settings['text_mask_photos'] ) {
+				$settings['art_shape_target'] = 'one';
+			} elseif ( ! in_array( $settings['art_shape_target'], array( 'any', 'turn', 'advance' ), true ) ) {
+				$settings['art_shape_target'] = 'any';
+			}
 			$slides                       = array_map(
 				function ( $slide ) {
 					$slide['caption'] = '';
@@ -993,6 +999,7 @@ class WP_Swiper_Art {
 			'font'    => in_array( $settings['text_mask_font'], array( 'heading', 'serif', 'sans' ), true ) ? $settings['text_mask_font'] : 'heading',
 			'weight'  => in_array( (string) $settings['text_mask_weight'], array( '400', '700', '900' ), true ) ? (int) $settings['text_mask_weight'] : 700,
 			'size'    => self::per_device( $settings, 'text_mask_size', 10, 70 ),
+			'width'   => 'letter' === $settings['text_mask_strip_width'] ? 'letter' : 'same',
 			'strips'  => in_array( $settings['text_mask_strips'], array( 'random', 'equal', 'middle', 'sides' ), true ) ? $settings['text_mask_strips'] : 'random',
 			'min'     => min( $min, $max ),
 			'max'     => max( $min, $max ),

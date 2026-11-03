@@ -527,8 +527,8 @@ return array(
 	'art_shape_target'   => array(
 		'section' => 'advanced',
 		'panel'   => 'controls',
-		'effects' => $wp_swiper_art,
-		'styles'  => array( 'grid-shapes', 'shape' ),
+		'effects' => $wp_swiper_art_text,
+		'styles'  => array( 'grid-shapes', 'shape', 'text' ),
 		'label'   => __( 'What changes', 'wp-swiper' ),
 		'type'    => 'select',
 		'default' => 'any',
@@ -609,6 +609,21 @@ return array(
 		'maxlength' => self::TEXT_MAX,
 		'help'      => __( 'Each letter is a window onto the photo, with a strip under it. Spaces leave a wider gap.', 'wp-swiper' ),
 	),
+	// One photo through all the letters (the word a stencil over it), or a
+	// photo in each, in the slides' order (or the order set by dragging in
+	// the preview, per device), repeated when there are fewer.
+	'text_mask_photos'   => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Photos', 'wp-swiper' ),
+		'type'    => 'select',
+		'default' => 'one',
+		'choices' => array(
+			'one'  => __( 'One photo through all letters', 'wp-swiper' ),
+			'each' => __( 'A photo in each letter', 'wp-swiper' ),
+		),
+		'help'    => __( 'A photo in each letter: in the slides\' order, repeated when there are fewer; drag a photo onto another letter in the preview to swap them.', 'wp-swiper' ),
+	),
 	// The theme's heading font (a heading's, as the page has it), or a plain one.
 	'text_mask_font'     => array(
 		'section' => 'layout',
@@ -660,6 +675,20 @@ return array(
 		'min'        => 0,
 		'max'        => 60,
 		'step'       => 1,
+	),
+	// The strips all as wide (a column per letter, Gap between them, each
+	// letter in the middle of its own), or each as its letter.
+	'text_mask_strip_width' => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Strip width', 'wp-swiper' ),
+		'type'    => 'select',
+		'default' => 'same',
+		'choices' => array(
+			'same'   => __( 'Same for all', 'wp-swiper' ),
+			'letter' => __( 'As the letter', 'wp-swiper' ),
+		),
+		'help'    => __( 'Same for all: the strips as wide as each other, Gap apart, each letter in the middle of its strip (the widest letter sets the size). As the letter: each strip under its letter, the letters Gap apart.', 'wp-swiper' ),
 	),
 	// How long each letter's strip is, between Shortest and Longest (% of the
 	// height under the letters).
