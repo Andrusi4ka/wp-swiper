@@ -2308,6 +2308,18 @@
 			field( 'collage_columns' ).toggle( collageUses( [ 'grid', 'masonry' ] ) );
 			field( 'collage_row_height' ).toggle( collageUses( [ 'justified' ] ) );
 			field( 'collage_row_exact' ).toggle( collageUses( [ 'justified' ] ) );
+			// Rotation: the Styles laid out in the Height (collage.js orient());
+			// Fill or Fit once this device's angle (its own or inherited) is not
+			// 0, not for Scattered and Freeform (always as large as fits).
+			var turnable = collageUses( [ 'grid', 'random', 'scatter', 'freeform' ].concat( TEMPLATES ) );
+			var turnFits = collageUses( [ 'grid', 'random' ].concat( TEMPLATES ) );
+			var collageAngle = '';
+			field( 'collage_rotate' ).find( '.wp-swiper-devices__input' ).each( function () {
+				collageAngle = $( this ).val() !== '' ? $( this ).val() : collageAngle;
+				return $( this ).data( 'device' ) !== ( currentDevice || 'desktop' );
+			} );
+			field( 'collage_rotate' ).toggle( turnable );
+			field( 'collage_rotate_fit' ).toggle( turnFits && Number( collageAngle ) !== 0 );
 			var swapping = collage && $( '#wp-swiper-collage_swap' ).is( ':checked' );
 			[ 'collage_swap_delay', 'collage_swap_speed', 'collage_pause' ].forEach( function ( name ) {
 				field( name ).toggle( swapping );
@@ -3039,11 +3051,12 @@
 			try {
 				devOn = window.localStorage.getItem( DEV_KEY ) === '1';
 			} catch ( e ) {}
-			// It draws a slider's slides only: hidden where there are none to
-			// draw (Collage, Art; a slider with no slides yet), its place kept (the
-			// bar stays as it is); the choice is kept for when it is back.
+			// It draws a slider's slides and a collage's places (preview-dev.js):
+			// hidden where there are none to draw (Art and Text mask; no slides
+			// yet), its place kept (the bar stays as it is); the choice is kept
+			// for when it is back.
 			var devAvailable = function () {
-				return [ 'collage', 'art' ].indexOf( $( '#wp-swiper-effect' ).val() ) === -1 && $list.children().length > 0;
+				return [ 'art', 'text-mask' ].indexOf( $( '#wp-swiper-effect' ).val() ) === -1 && $list.children().length > 0;
 			};
 			var applyDev = function () {
 				var available = devAvailable();

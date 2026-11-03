@@ -5,7 +5,8 @@
  * slide around its image ("Space around", "Contain"), hatched, and the
  * distance between the images and from the slider's edges. Checked every
  * frame while it is on (redrawn when something moved), so it follows the
- * moving slides.
+ * moving slides. A collage: its places, the space between them, its
+ * grid's box (turned, Rotation) and the block's (drawCollage()).
  * admin.js turns it on and off: wpSwiperDev( true | false ).
  */
 ( function () {
@@ -155,6 +156,95 @@
 		node.style.top = at.y + 'px';
 		node.textContent = value;
 		layer.appendChild( node );
+		return node;
+	}
+
+	/*
+	 * A collage: a layer in its grid (turned with it, Rotation; its labels
+	 * upright, preview-dev.css), each place's box with its size, the space
+	 * between neighbouring places (hatched, the distance on it), the grid's
+	 * own box with its size (and angle); and over the block, its box with its
+	 * size (a turned grid's edges cut off by it, or its corners empty).
+	 */
+	function drawCollage( block ) {
+		var grid = block.querySelector( '.wp-swiper-collage__grid' );
+		if ( ! grid ) {
+			return;
+		}
+		var layer = grid.querySelector( ':scope > .wp-swiper-dev' );
+		if ( ! layer ) {
+			layer = document.createElement( 'div' );
+			layer.className = 'wp-swiper-dev wp-swiper-dev--collage';
+			grid.appendChild( layer );
+		}
+		var outer = block.querySelector( ':scope > .wp-swiper-dev' );
+		if ( ! outer ) {
+			outer = document.createElement( 'div' );
+			outer.className = 'wp-swiper-dev wp-swiper-dev--block';
+			block.appendChild( outer );
+		}
+		var angle = grid.wpAngle || 0;
+		var places = [].slice.call( grid.querySelectorAll( ':scope > .wp-swiper-collage__cell' ) ).map( function ( cell ) {
+			var left = cell.offsetLeft;
+			var top = cell.offsetTop;
+			return { left: left, top: top, width: cell.offsetWidth, height: cell.offsetHeight, right: left + cell.offsetWidth, bottom: top + cell.offsetHeight };
+		} );
+		var size = { width: grid.offsetWidth, height: grid.offsetHeight };
+		var key = [ angle, size.width, size.height, block.offsetWidth, block.offsetHeight ].concat( places.map( function ( p ) {
+			return [ p.left, p.top, p.width, p.height ].map( round ).join( ',' );
+		} ) ).join( ';' );
+		if ( layer.getAttribute( 'data-key' ) === key ) {
+			return;
+		}
+		layer.setAttribute( 'data-key', key );
+		layer.textContent = '';
+		outer.textContent = '';
+
+		// The space to each place's nearest neighbour to the right and below
+		// (sharing some of its height, or width), where nothing is between.
+		var between = function ( a, b, across ) {
+			var from = across ? Math.max( a.top, b.top ) : Math.max( a.left, b.left );
+			var to = across ? Math.min( a.bottom, b.bottom ) : Math.min( a.right, b.right );
+			var space = across ? b.left - a.right : b.top - a.bottom;
+			if ( to - from < 1 || space < 0.5 ) {
+				return null;
+			}
+			return across
+				? { left: a.right, top: from, width: space, height: to - from, space: space }
+				: { left: from, top: a.bottom, width: to - from, height: space, space: space };
+		};
+		places.forEach( function ( a ) {
+			[ true, false ].forEach( function ( across ) {
+				var nearest = null;
+				places.forEach( function ( b ) {
+					var gap = b !== a ? between( a, b, across ) : null;
+					if ( gap && ( ! nearest || gap.space < nearest.space ) ) {
+						nearest = gap;
+					}
+				} );
+				if ( nearest ) {
+					box( layer, 'gap', nearest );
+					dimension( layer, { x: nearest.left + nearest.width / 2, y: nearest.top + nearest.height / 2 }, round( nearest.space ) );
+				}
+			} );
+		} );
+		places.forEach( function ( p ) {
+			box( layer, 'media', p );
+			dimension( layer, { x: p.left + p.width / 2, y: p.top + p.height / 2 }, round( p.width ) + ' × ' + round( p.height ) ).classList.add( 'wp-swiper-dev__size' );
+		} );
+		// The grid's box where it is not the block's (Fill, Fit: larger or
+		// smaller, turned); the block's label says the angle and that size
+		// (the box's own corner may be cut off).
+		var other = Math.abs( size.width - block.offsetWidth ) > 1 || Math.abs( size.height - block.offsetHeight ) > 1;
+		if ( angle && other ) {
+			box( layer, 'grid', { left: 0, top: 0, width: size.width, height: size.height } );
+		}
+		box( outer, 'cell', { left: 0, top: 0, width: block.offsetWidth, height: block.offsetHeight } );
+		var label = round( block.offsetWidth ) + ' × ' + round( block.offsetHeight );
+		if ( angle ) {
+			label += ', ' + angle + '°' + ( other ? ', laid out in ' + round( size.width ) + ' × ' + round( size.height ) : '' );
+		}
+		dimension( outer, { x: block.offsetWidth / 2, y: 12 }, label ).classList.add( 'wp-swiper-dev__block-size' );
 	}
 
 	function frame() {
@@ -162,6 +252,7 @@
 			return;
 		}
 		[].forEach.call( document.querySelectorAll( '.wp-swiper .swiper.swiper-initialized' ), draw );
+		[].forEach.call( document.querySelectorAll( '.wp-swiper .wp-swiper-collage' ), drawCollage );
 		requestAnimationFrame( frame );
 	}
 
@@ -176,6 +267,10 @@
 			layers.forEach( function ( layer ) {
 				layer.textContent = '';
 				layer.removeAttribute( 'data-key' );
+			} );
+			// A collage's layers go (its grid is built again, with them or not).
+			[].forEach.call( document.querySelectorAll( '.wp-swiper-collage .wp-swiper-dev' ), function ( layer ) {
+				layer.remove();
 			} );
 		}
 	};

@@ -612,6 +612,36 @@ return array(
 		'max'             => 60,
 		'step'            => 1,
 	),
+	// The whole collage turned (collage.js orient()), its photos upright, per
+	// device: Grid, Random mosaic and the templates (laid out in the Height:
+	// in a larger (Fill) or smaller (Fit) box that, turned, covers or fits the
+	// block, so the Gap and the places keep their sizes), Scattered and
+	// Freeform (turned where they are, as large as fits the block turned);
+	// not Justified rows or Masonry (their height is their photos').
+	'collage_rotate'        => array(
+		'section'    => 'layout',
+		'effects'    => array( 'collage' ),
+		'label'      => __( 'Rotation (°)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 0,
+		'min'        => -45,
+		'max'        => 45,
+		'step'       => 1,
+		'help'       => __( 'Grid, Random mosaic, the templates, Scattered and Freeform: the whole collage turned, its photos upright (Scattered and Freeform as large as fits the block turned). 0: not turned. Tablet and mobile can have their own.', 'wp-swiper' ),
+	),
+	'collage_rotate_fit'    => array(
+		'section'    => 'layout',
+		'effects'    => array( 'collage' ),
+		'label'      => __( 'Turned collage', 'wp-swiper' ),
+		'type'       => 'select',
+		'responsive' => true,
+		'default'    => 'fill',
+		'choices'    => array(
+			'fill' => __( 'Fill the block (its edges cut off)', 'wp-swiper' ),
+			'fit'  => __( 'All of it (the corners empty)', 'wp-swiper' ),
+		),
+	),
 	// Photo swapping: on the Controls page, with the other settings of how it moves.
 	'collage_swap'          => array(
 		'section' => 'advanced',

@@ -448,15 +448,26 @@
 	 * @param {number} gap    px.
 	 * @return {number} px per unit.
 	 */
-	function scatterFit( layout, width, height, gap ) {
+	/*
+	 * An angle's cosine and sine, both positive (a box turned by it: its
+	 * width * cos + height * sin wide, width * sin + height * cos tall).
+	 */
+	function turned( angle ) {
+		var turn = ( Number( angle ) || 0 ) * Math.PI / 180;
+		return { cos: Math.abs( Math.cos( turn ) ), sin: Math.abs( Math.sin( turn ) ) };
+	}
+
+	function scatterFit( layout, width, height, gap, angle ) {
 		// Several layouts (a photo being moved, see scatterMoves()): all of them fit.
+		// Turned (Rotation): their box turned fits.
+		var turn = turned( angle );
 		var layouts = Array.isArray( layout ) ? layout : [ layout ];
 		var low = 0;
 		var high = Math.max( width, height, 1 );
 		for ( var i = 0; i < 32; i++ ) {
 			var scale = ( low + high ) / 2;
 			var box = scatterBox( scatterAllRects( layouts, scale, gap ) );
-			if ( box.width <= width && box.height <= height ) {
+			if ( box.width * turn.cos + box.height * turn.sin <= width && box.width * turn.sin + box.height * turn.cos <= height ) {
 				low = scale;
 			} else {
 				high = scale;
@@ -777,9 +788,11 @@
 	 * @param {number} height The block's, px.
 	 * @return {Object} { scale: px per unit, x, y: where the frame's 0, 0 is }.
 	 */
-	function freeFit( layout, width, height ) {
+	function freeFit( layout, width, height, angle ) {
 		var box = scatterBox( layout.places.concat( [ { x: 0, y: 0, w: layout.aspect, h: 1 } ] ) );
-		var scale = Math.max( 0.0001, Math.min( width / box.width, height / box.height ) );
+		// Turned (Rotation): its box turned fits.
+		var turn = turned( angle );
+		var scale = Math.max( 0.0001, Math.min( width / ( box.width * turn.cos + box.height * turn.sin ), height / ( box.width * turn.sin + box.height * turn.cos ) ) );
 		return {
 			scale: scale,
 			x: ( width - box.width * scale ) / 2 - box.left * scale,
@@ -1035,10 +1048,109 @@
 			return node;
 		}
 
-		// The image file the browser picks: the width it is drawn at (cropped to the place).
+		/*
+		 * Rotation (collage.css --turned): the Styles laid out in the Height
+		 * (Grid, Random mosaic, the templates; Scattered and Freeform turned
+		 * where they are, as large as fits turned) turned by this device's angle.
+		 * The grid is laid out in a box that, turned, covers the block (Fill:
+		 * its edges cut off) or fits in it (Fit), so the Gap and the places
+		 * keep their sizes; the block keeps the height it has unturned. Each
+		 * photo is turned back, upright (sizeImages()), a shadow falls as on
+		 * the page. Measured unturned each time (the Height, its proportions,
+		 * a column's height).
+		 */
+		var TURNED = [ 'grid', 'random', 'scatter', 'freeform' ];
+		// Laid out in the block itself, as large as fits it: turned where they are.
+		var TURNED_IN_PLACE = [ 'scatter', 'freeform' ];
+		function angleNow() {
+			var layout = config.layout[ current ] || 'grid';
+			if ( TURNED.indexOf( layout ) === -1 && ! COLLAGE_TEMPLATES[ layout ] ) {
+				return 0;
+			}
+			var angle = Number( config.rotate && config.rotate[ current ] ) || 0;
+			return Math.max( -45, Math.min( 45, angle ) );
+		}
+		function orient() {
+			var angle = angleNow();
+			if ( grid.wpTurned ) {
+				[ 'position', 'left', 'top', 'width', 'height', 'transform' ].forEach( function ( property ) {
+					grid.style[ property ] = '';
+				} );
+				grid.style.removeProperty( '--wp-swiper-collage-turn' );
+				grid.style.removeProperty( '--wp-swiper-shadow' );
+				el.style.height = '';
+				grid.wpTurned = false;
+			}
+			var inPlace = TURNED_IN_PLACE.indexOf( config.layout[ current ] ) !== -1;
+			grid.wpAngle = angle;
+			el.classList.toggle( 'wp-swiper-collage--turned', !! angle );
+			el.classList.toggle( 'wp-swiper-collage--turned-fit', !! angle && ( inPlace || !! ( config.rotateFit && config.rotateFit[ current ] ) ) );
+			if ( ! angle ) {
+				return;
+			}
+			var width = grid.clientWidth;
+			var height = grid.clientHeight;
+			if ( ! width || ! height ) {
+				return;
+			}
+			var turn = angle * Math.PI / 180;
+			var cos = Math.abs( Math.cos( turn ) );
+			var sin = Math.abs( Math.sin( turn ) );
+			var w = width * cos + height * sin;
+			var h = width * sin + height * cos;
+			if ( inPlace ) {
+				// Scattered, Freeform: the grid stays the block, turned about its
+				// middle; their photos laid out as large as fits it turned
+				// (scatterFit(), freeFit() with the angle).
+				w = width;
+				h = height;
+			} else if ( config.rotateFit && config.rotateFit[ current ] ) {
+				// Turned, as large as fits the block (its proportions kept).
+				var k = Math.min( width / w, height / h );
+				w = width * k;
+				h = height * k;
+			}
+			el.style.height = height + 'px';
+			grid.style.position = 'absolute';
+			grid.style.left = ( width - w ) / 2 + 'px';
+			grid.style.top = ( height - h ) / 2 + 'px';
+			grid.style.width = w + 'px';
+			grid.style.height = h + 'px';
+			grid.style.transform = 'rotate(' + angle + 'deg)';
+			grid.style.setProperty( '--wp-swiper-collage-turn', angle + 'deg' );
+			// Image shadow: its offset turned back, so it falls as on the page.
+			var shadow = /^\s*(-?[\d.]+)px\s+(-?[\d.]+)px\s+(.*)$/.exec( getComputedStyle( root ).getPropertyValue( '--wp-swiper-shadow' ) );
+			if ( shadow ) {
+				var x = Number( shadow[ 1 ] );
+				var y = Number( shadow[ 2 ] );
+				var back = -turn;
+				grid.style.setProperty( '--wp-swiper-shadow', Math.round( ( x * Math.cos( back ) - y * Math.sin( back ) ) * 10 ) / 10 + 'px ' + Math.round( ( x * Math.sin( back ) + y * Math.cos( back ) ) * 10 ) / 10 + 'px ' + shadow[ 3 ] );
+			}
+			grid.wpTurned = true;
+		}
+
+		// The image file the browser picks: the width it is drawn at (cropped to
+		// the place). Turned: the photo upright, as large as covers its place
+		// (collage.css), its caption no wider than fits in the place.
 		function sizeImages( cell ) {
 			var w = cell.clientWidth;
 			var h = cell.clientHeight;
+			var angle = grid.wpAngle || 0;
+			if ( angle ) {
+				var turn = angle * Math.PI / 180;
+				var cos = Math.abs( Math.cos( turn ) );
+				var sin = Math.abs( Math.sin( turn ) );
+				var upright = { w: w * cos + h * sin, h: w * sin + h * cos };
+				cell.style.setProperty( '--wp-swiper-collage-uw', upright.w + 'px' );
+				cell.style.setProperty( '--wp-swiper-collage-uh', upright.h + 'px' );
+				cell.style.setProperty( '--wp-swiper-collage-cw', Math.min( w, h ) / ( cos + sin ) + 'px' );
+				w = upright.w;
+				h = upright.h;
+			} else {
+				[ 'uw', 'uh', 'cw' ].forEach( function ( name ) {
+					cell.style.removeProperty( '--wp-swiper-collage-' + name );
+				} );
+			}
 			[].forEach.call( cell.querySelectorAll( 'img.wp-swiper__image' ), function ( img ) {
 				var ratio = img.getAttribute( 'width' ) / img.getAttribute( 'height' ) || 1;
 				var drawn = Math.ceil( Math.max( w, h * ratio ) );
@@ -1103,6 +1215,8 @@
 		function place() {
 			var layout = config.layout[ current ];
 			var gap = Number( config.gap[ current ] ) || 0;
+			// Turned (or back): the box to lay out in first.
+			orient();
 			var width = grid.clientWidth;
 			if ( ! width ) {
 				return;
@@ -1130,7 +1244,7 @@
 					// move under the pointer shown (each cell at its place after it).
 					var held = moving || frozen;
 					var move = moving && moving.shown >= 0 ? moving.moves[ moving.shown ] : null;
-					var scale = held ? held.scale : scatterFit( scatter, width, gridHeight, gap );
+					var scale = held ? held.scale : scatterFit( scatter, width, gridHeight, gap, grid.wpAngle );
 					var rects = scatterRects( move ? move.layout : scatter, scale, gap );
 					var box = scatterBox( rects );
 					var originX = held ? held.x : ( width - box.width ) / 2 - box.left;
@@ -1148,7 +1262,7 @@
 				// middle (held where it is while a photo is moved in the preview).
 				mosaicLines = [];
 				if ( free ) {
-					var view = freeHeld || freeFit( free, width, grid.clientHeight );
+					var view = freeHeld || freeFit( free, width, grid.clientHeight, grid.wpAngle );
 					cells.forEach( function ( cell, c ) {
 						var r = free.places[ c ];
 						if ( r ) {
@@ -1317,6 +1431,7 @@
 			if ( positioned ) {
 				place();
 			} else {
+				orient();
 				grid.style.gap = gap + 'px';
 				var columns = Math.max( 1, Math.min( count, Number( config.columns[ current ] ) || 1 ) );
 				grid.style.gridTemplateColumns = 'repeat(' + columns + ', 1fr)';
@@ -1482,6 +1597,7 @@
 					}
 					place();
 				} else {
+					orient();
 					cells.forEach( sizeImages );
 				}
 			} );
@@ -1622,7 +1738,7 @@
 					var layouts = [ scatter ].concat( moves.map( function ( move ) {
 						return move.layout;
 					} ) );
-					var scale = Math.min( scatterView.scale, scatterFit( layouts, width, height, gap ) );
+					var scale = Math.min( scatterView.scale, scatterFit( layouts, width, height, gap, grid.wpAngle ) );
 					var box = scatterBox( scatterAllRects( layouts, scale, gap ) );
 					moving = { from: from, moves: moves, shown: -1, scale: scale, x: ( width - box.width ) / 2 - box.left, y: ( height - box.height ) / 2 - box.top };
 					place();

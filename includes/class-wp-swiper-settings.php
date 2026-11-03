@@ -711,7 +711,7 @@ class WP_Swiper_Settings {
 				),
 				'arrangement' => array(
 					'title'  => __( 'Arrangement', 'wp-swiper' ),
-					'fields' => array( 'collage_layout', 'collage_order', 'collage_count', 'collage_columns', 'collage_row_height', 'collage_row_exact', 'collage_gap' ),
+					'fields' => array( 'collage_layout', 'collage_order', 'collage_count', 'collage_columns', 'collage_row_height', 'collage_row_exact', 'collage_gap', 'collage_rotate', 'collage_rotate_fit' ),
 				),
 				'slides'      => array(
 					'title'  => __( 'Slides', 'wp-swiper' ),
@@ -773,7 +773,7 @@ class WP_Swiper_Settings {
 			'caption'     => array(
 				'caption_text'       => array(
 					'title'  => __( 'Text', 'wp-swiper' ),
-					'fields' => array( 'art_caption_middle', 'caption_size', 'caption_color', 'caption_orientation', 'caption_shadow' ),
+					'fields' => array( 'caption_size', 'caption_color', 'art_caption_middle', 'caption_orientation', 'caption_shadow' ),
 				),
 				'caption_background' => array(
 					'title'  => __( 'Background', 'wp-swiper' ),
