@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.1.0
+Stable tag: 3.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,14 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.2.0 =
+* A new effect, Text mask: a word whose letters are windows onto your photos, a strip under each letter — one photo through all the letters, or a photo in each (drag them onto other letters in the preview to swap them). The strips go down, right or left (the letters one under another), with lengths that differ, are all the same, or grow towards the middle or the sides.
+* Text mask, letters: the theme's heading font, a serif or sans-serif one, or one by name (the fonts the site already loads are listed); the weight; Letter size Auto (the word as wide as the slider) or a share of the Height; Stretch letters to fill their columns.
+* Text mask, strips: as wide as each other or each as wide as its letter, a Gap apart; Strips into letters, so a letter's foot merges into its strip; Rounded corners at the strip's end or both ends.
+* Gradient (Layout, Look), for every effect: one or more colors, see-through or not, over the photos — over each photo of a slider or collage (not over videos), and one across the whole shape of Art and Text mask, the gaps staying empty. Edited as a bar of colors: click to add one, drag it, pick its color, Delete; linear from any side, or radial (a circle or an ellipse) round any middle.
+* Editor: the preview follows a new Effect or Style at once; Text mask's settings in three cards (the word, Letters, Strips); one device for the whole editor (a field's device icons switch the preview and every field to it).
+* Fixed: saving lost the backslashes in captions, descriptions and SVG shapes; the lightbox left a listener behind for each embedded video it opened; an odd request could give a PHP notice when saving.
 
 = 3.1.0 =
 * Art: a new Style, Grid shapes — a grid of Columns x Rows whose cells you join into shapes in the preview: drag across cells to make one shape, click a shape for its corners, split it into its cells or empty them. Outward corners are rounded, inward ones too, so the gap between the shapes stays even, and a shape can go round a hole. Each corner can have a radius of its own (click its dot). The shapes are drawn at the size of the page, so the grid stretches to any column and Height. Its windows change as an SVG shape's do, one photo through all of them included.
