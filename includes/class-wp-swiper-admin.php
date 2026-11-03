@@ -49,6 +49,8 @@ class WP_Swiper_Admin {
 			wp_enqueue_style( 'wp-swiper-pickr', WP_SWIPER_URL . 'assets/vendor/pickr/classic.min.css', array(), '1.9.1' );
 			wp_enqueue_script( 'wp-swiper-pickr', WP_SWIPER_URL . 'assets/vendor/pickr/pickr.min.js', array(), '1.9.1', true );
 			wp_enqueue_script( 'wp-swiper-admin', WP_SWIPER_URL . 'assets/js/admin.js', array( 'jquery', 'jquery-ui-sortable', 'wp-swiper-pickr' ), wp_swiper_asset_version( 'assets/js/admin.js' ), true );
+			// A font name's list (Text mask's Font name), on its own: nothing of admin.js in it.
+			wp_enqueue_script( 'wp-swiper-font-picker', WP_SWIPER_URL . 'assets/js/font-picker.js', array(), wp_swiper_asset_version( 'assets/js/font-picker.js' ), true );
 			wp_localize_script(
 				'wp-swiper-admin',
 				'wpSwiperAdmin',
@@ -1018,6 +1020,17 @@ class WP_Swiper_Admin {
 						placeholder="<?php echo esc_attr( isset( $field['placeholder'] ) ? $field['placeholder'] : '' ); ?>"
 						<?php echo isset( $field['maxlength'] ) ? ' maxlength="' . (int) $field['maxlength'] . '"' : ''; ?>
 						spellcheck="false">
+				<?php elseif ( 'font' === $field['type'] ) : ?>
+					<?php // A font name: typed, or picked from those the site names, in groups (WP_Swiper_Fonts; font-picker.js draws the list). ?>
+					<div class="wp-swiper-font" data-fonts="<?php echo esc_attr( wp_json_encode( WP_Swiper_Fonts::suggestions() ) ); ?>">
+						<input type="text" class="regular-text wp-swiper-font__input" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>"
+							value="<?php echo esc_attr( $value ); ?>" maxlength="100" autocomplete="off"
+							role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="<?php echo esc_attr( $id ); ?>-list"
+							placeholder="<?php echo esc_attr( isset( $field['placeholder'] ) ? $field['placeholder'] : '' ); ?>"
+							spellcheck="false">
+						<button type="button" class="wp-swiper-font__toggle" tabindex="-1" aria-label="<?php esc_attr_e( 'Fonts', 'wp-swiper' ); ?>"><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></button>
+						<ul class="wp-swiper-font__list" id="<?php echo esc_attr( $id ); ?>-list" role="listbox" aria-label="<?php esc_attr_e( 'Fonts', 'wp-swiper' ); ?>" hidden></ul>
+					</div>
 				<?php elseif ( 'image' === $field['type'] ) : ?>
 					<?php
 					// The ID is the value kept; the buttons pick it from the media library (admin.js).

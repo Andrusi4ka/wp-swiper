@@ -543,7 +543,8 @@
 			FONT_DEVICES.forEach( function ( device, i ) {
 				fontField( $control, device ).filter( 'input' ).val( values[ i ] || '' );
 			} );
-			showFontDevice( $control, 'desktop' );
+			// The editor's device (shareDevice()), as every field shows.
+			showFontDevice( $control, DEVICES.indexOf( currentDevice ) !== -1 ? currentDevice : 'desktop' );
 			syncFontInherits( $control );
 		}
 
@@ -829,9 +830,11 @@
 			} );
 		}
 
-		// A size's device icons: which device's value the field shows.
+		// A size's device icons: which device's value the field shows; then the
+		// other fields and the preview follow (shareDevice()).
 		$modal.on( 'click', '.wp-swiper-modal__size .wp-swiper-devices__btn', function () {
 			var $control = $( this ).closest( '.wp-swiper-modal__size' );
+			shareDevice( $( this ).data( 'device' ) );
 			showFontDevice( $control, $( this ).data( 'device' ) );
 			$control.find( '.wp-swiper-modal__size-input:not([hidden])' ).trigger( 'focus' );
 		} );
@@ -2094,6 +2097,10 @@
 						field( name ).hide();
 					} );
 				}
+				// Text mask: the font's name only with Font "By name".
+				if ( textMask && $( '#wp-swiper-text_mask_font' ).val() !== 'name' ) {
+					field( 'text_mask_font_name' ).hide();
+				}
 				// Text mask: What changes only with a photo in each letter (its "One
 				// photo through all windows" is Photos' to say: not offered there),
 				// and only while photos swap; with one photo, as that choice.
@@ -2380,18 +2387,41 @@
 			syncResponsive( $( this ) );
 		} );
 
+		/*
+		 * Which device's value a field with device icons shows: its icon marked,
+		 * its value (and its unit, where it has one of its own) in view, its
+		 * value focused if asked. A field without icons (sizes side by side,
+		 * all in view) is left as it is.
+		 */
+		function showFieldDevice( $field, device, focus ) {
+			var $btn = $field.find( '.wp-swiper-devices__btn[data-device="' + device + '"]' );
+			if ( ! $btn.length ) {
+				return;
+			}
+			$field.find( '.wp-swiper-devices__btn' ).removeClass( 'is-active' ).attr( 'aria-pressed', 'false' );
+			$btn.addClass( 'is-active' ).attr( 'aria-pressed', 'true' );
+			var $value = $field.find( '.wp-swiper-devices__input' ).prop( 'hidden', true )
+				.filter( '[data-device="' + device + '"]' ).prop( 'hidden', false );
+			if ( focus ) {
+				$value.first().trigger( 'focus' );
+			}
+			// A Style shown as icons (tiles): the choice of that device marked.
+			if ( $field.hasClass( 'wp-swiper-field--tiles' ) && typeof syncTiles === 'function' ) {
+				syncTiles( $field );
+			}
+		}
+
 		$( '#wp-swiper-settings' )
 			// A field's own device icons: which device's value it shows.
+			// Every field and the preview follow (shareDevice()); then its value takes the focus.
 			.on( 'click', '.wp-swiper-devices__btn', function () {
-				var $btn = $( this );
-				var $field = $btn.closest( '.wp-swiper-field--responsive' );
-				var device = $btn.data( 'device' );
-
-				$field.find( '.wp-swiper-devices__btn' ).removeClass( 'is-active' ).attr( 'aria-pressed', 'false' );
-				$btn.addClass( 'is-active' ).attr( 'aria-pressed', 'true' );
-				$field.find( '.wp-swiper-devices__input' ).prop( 'hidden', true )
-					// Its value (and its unit, where it has one of its own); the value takes the focus.
-					.filter( '[data-device="' + device + '"]' ).prop( 'hidden', false ).first().trigger( 'focus' );
+				var device = $( this ).data( 'device' );
+				shareDevice( device );
+				showFieldDevice( $( this ).closest( '.wp-swiper-field--responsive' ), device, true );
+			} )
+			// A size per device side by side: its tablet or mobile value edited, the preview that device.
+			.on( 'focusin', '.wp-swiper-inline-devices .wp-swiper-devices__input', function () {
+				shareDevice( $( this ).data( 'device' ) );
 			} )
 			.on( 'input change', '.wp-swiper-devices__input', function () {
 				syncResponsive( $( this ).closest( '.wp-swiper-field--responsive' ) );
@@ -2484,11 +2514,34 @@
 			} );
 		}
 
-		$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-device-switch .wp-swiper-segmented__btn', function () {
-			setDevice( $( this ).data( 'device' ) );
+		/*
+		 * One device for the whole editor: a device chosen anywhere (a field's
+		 * icons, a size side by side, a font size in Slide info, the preview's
+		 * Desktop / Tablet / Mobile) is the preview's (its frame only: the
+		 * values as Update last drew them) and every field shows its value
+		 * there. Kept for the next visit (this browser only).
+		 */
+		function shareDevice( device ) {
+			if ( DEVICES.indexOf( device ) === -1 || device === currentDevice ) {
+				return;
+			}
+			setDevice( device );
 			try {
 				window.localStorage.setItem( DEVICE_KEY, currentDevice );
 			} catch ( e ) {}
+		}
+
+		deviceListeners.push( function ( device ) {
+			$( '#wp-swiper-settings .wp-swiper-field--responsive' ).each( function () {
+				showFieldDevice( $( this ), device, false );
+			} );
+			$modal.find( '.wp-swiper-modal__size' ).each( function () {
+				showFontDevice( $( this ), device );
+			} );
+		} );
+
+		$( '#wp-swiper-settings' ).on( 'click', '.wp-swiper-device-switch .wp-swiper-segmented__btn', function () {
+			shareDevice( $( this ).data( 'device' ) );
 		} );
 		setDevice( currentDevice );
 
@@ -2972,23 +3025,6 @@
 					device: device
 				} );
 			} );
-
-			// A responsive field shows `device`'s value (as its icons do, without the focus).
-			var showFieldDevice = function ( $field, device ) {
-				if ( ! $field.find( '.wp-swiper-devices__btn[data-device="' + device + '"]' ).length ) {
-					return;
-				}
-				$field.find( '.wp-swiper-devices__btn' ).each( function () {
-					var on = $( this ).data( 'device' ) === device;
-					$( this ).toggleClass( 'is-active', on ).attr( 'aria-pressed', on ? 'true' : 'false' );
-				} );
-				$field.find( '.wp-swiper-devices__input' ).each( function () {
-					this.hidden = $( this ).data( 'device' ) !== device;
-				} );
-				if ( $field.is( '.wp-swiper-field--tiles' ) ) {
-					syncTiles( $field );
-				}
-			};
 
 			// The fields whose values went back or forth: shown, lit for a moment, in view.
 			var markChanged = function ( before, after ) {

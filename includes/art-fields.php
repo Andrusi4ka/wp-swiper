@@ -651,6 +651,7 @@ return array(
 			'heading' => __( 'The theme\'s headings', 'wp-swiper' ),
 			'serif'   => __( 'Serif', 'wp-swiper' ),
 			'sans'    => __( 'Sans-serif', 'wp-swiper' ),
+			'name'    => __( 'By name', 'wp-swiper' ),
 		),
 	),
 	'text_mask_weight'   => array(
@@ -666,6 +667,18 @@ return array(
 			'900' => __( 'Black', 'wp-swiper' ),
 		),
 		'help'    => __( 'Bold letters make wider windows: thin ones show little of the photo.', 'wp-swiper' ),
+	),
+	// Font "By name": a font the site already loads (nothing is fetched for
+	// it), typed or picked from those the theme and WordPress name
+	// (WP_Swiper_Fonts::suggestions()).
+	'text_mask_font_name' => array(
+		'section'     => 'layout',
+		'effects'     => array( self::TEXT_EFFECT ),
+		'label'       => __( 'Font name', 'wp-swiper' ),
+		'type'        => 'font',
+		'default'     => '',
+		'placeholder' => 'Playfair Display',
+		'help'        => __( 'A font the site already loads (the theme\'s are in the list), or any on every computer. One the page does not load shows in a plain font instead: nothing is fetched for it. Another font: have the theme load it first (WoodMart: Theme settings > Typography > Advanced typography, a rule with that font; Local Google fonts keeps it on your server). It is then in the list.', 'wp-swiper' ),
 	),
 	// The letters' height at most (% of the Height); narrower columns make them smaller.
 	'text_mask_size'     => array(

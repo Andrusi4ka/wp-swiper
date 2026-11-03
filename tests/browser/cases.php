@@ -131,6 +131,11 @@ return array(
 		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'WP SWIPER', 'text_mask_direction' => 'left', 'text_mask_font' => 'sans', 'text_mask_strip_width' => 'letter', 'text_mask_strips' => 'sides', 'art_height' => '640', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
+	// A font by name (Impact: on every Windows computer).
+	'art-text-mask-name' => array(
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'name', 'text_mask_font_name' => 'Impact', 'text_mask_weight' => '400', 'art_height' => '520', 'lightbox' => '1' ),
+		'photos'   => 1,
+	),
 	// A ring as its block's background, its proportions kept: filling the
 	// block (Cover) at the right on desktop, all of it (Contain) at the top on mobile.
 	'art-ring-background' => array(

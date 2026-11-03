@@ -13,6 +13,7 @@ const CASES = [
 	[ 'art-text-mask-each', 'LAHORE', 6, 12, 'x' ],
 	[ 'art-text-mask-right', 'LAHORE', 1, 12, 'y' ],
 	[ 'art-text-mask-left', 'WPSWIPER', 1, null, 'y' ],
+	[ 'art-text-mask-name', 'LAHORE', 1, 12, 'x' ],
 ];
 
 for ( const [ name, word, photos, gap, axis ] of CASES ) {
@@ -49,6 +50,7 @@ for ( const [ name, word, photos, gap, axis ] of CASES ) {
 						strip: strip,
 						box: [ box.left - stage.left, box.top - stage.top, box.width, box.height ].map( Math.round ),
 						letter: clip ? clip.querySelector( 'text' ).textContent : '',
+						family: clip ? clip.querySelector( 'text' ).style.fontFamily : '',
 						photo: ( piece.querySelector( 'img' ) || {} ).currentSrc || '',
 						hit: !! ( inside && inside.closest( '.wp-swiper-art__piece' ) === piece ),
 						missed: ! ( before && before.closest( '.wp-swiper-art__piece' ) === piece ),
@@ -60,6 +62,10 @@ for ( const [ name, word, photos, gap, axis ] of CASES ) {
 		expect( errors ).toEqual( [] );
 		expect( found.pieces.map( ( piece ) => piece.letter ).join( '' ) ).toBe( word );
 		expect( found.word.replace( /\s/g, '' ) ).toBe( word );
+		// Font by name: that font first (quoted), a plain one after it.
+		if ( 'art-text-mask-name' === name ) {
+			expect( found.pieces[ 0 ].family ).toMatch( /^"?Impact"?, Georgia/ );
+		}
 		// One photo through all the letters, or one in each (Photos).
 		expect( new Set( found.pieces.map( ( piece ) => piece.photo ) ).size ).toBe( photos );
 		// Along the word: x (left, width) or y (top, height) of a box.

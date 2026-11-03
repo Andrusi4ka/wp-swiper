@@ -444,7 +444,7 @@ class WP_Swiper_Art {
 				'art'        => array(
 					'title'  => __( 'Art', 'wp-swiper' ),
 					'titles' => array( self::TEXT_EFFECT => __( 'Text mask', 'wp-swiper' ) ),
-					'fields' => array( 'art_style', 'text_mask_title', 'text_mask_photos', 'text_mask_direction', 'text_mask_font', 'text_mask_weight', 'text_mask_size', 'text_mask_gap', 'text_mask_strip_width', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_height', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ),
+					'fields' => array( 'art_style', 'text_mask_title', 'text_mask_photos', 'text_mask_direction', 'text_mask_font', 'text_mask_weight', 'text_mask_font_name', 'text_mask_size', 'text_mask_gap', 'text_mask_strip_width', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_height', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ),
 				),
 				// Ring + text: what is in the middle, a block of its own (shown
 				// for that Style only, as its fields are).
@@ -991,12 +991,15 @@ class WP_Swiper_Art {
 				$index++;
 			}
 		}
-		$min = max( 0, min( 100, (int) $settings['text_mask_strip_min'] ) );
+		$family = 'name' === $settings['text_mask_font'] ? WP_Swiper_Fonts::sanitize( $settings['text_mask_font_name'] ) : '';
+		$min    = max( 0, min( 100, (int) $settings['text_mask_strip_min'] ) );
 		$max = max( 0, min( 100, (int) $settings['text_mask_strip_max'] ) );
 		return array(
 			'letters' => self::letters( $settings ),
 			'spaces'  => array_values( array_map( 'intval', array_keys( $spaces ) ) ),
-			'font'    => in_array( $settings['text_mask_font'], array( 'heading', 'serif', 'sans' ), true ) ? $settings['text_mask_font'] : 'heading',
+			// "By name" with a name (none: the theme's headings).
+			'font'    => in_array( $settings['text_mask_font'], array( 'heading', 'serif', 'sans' ), true ) || ( 'name' === $settings['text_mask_font'] && '' !== $family ) ? $settings['text_mask_font'] : 'heading',
+			'family'  => $family,
 			'weight'  => in_array( (string) $settings['text_mask_weight'], array( '400', '700', '900' ), true ) ? (int) $settings['text_mask_weight'] : 700,
 			'size'    => self::per_device( $settings, 'text_mask_size', 10, 70 ),
 			'direction' => in_array( $settings['text_mask_direction'], array( 'down', 'right', 'left' ), true ) ? $settings['text_mask_direction'] : 'down',

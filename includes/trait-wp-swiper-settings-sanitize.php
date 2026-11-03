@@ -133,6 +133,10 @@ trait WP_Swiper_Settings_Sanitize {
 					$clean[ $key ] = isset( $field['maxlength'] ) ? mb_substr( $value, 0, (int) $field['maxlength'] ) : $value;
 					break;
 
+				case 'font': // A font family as typed (it goes into CSS: WP_Swiper_Fonts::sanitize()).
+					$clean[ $key ] = WP_Swiper_Fonts::sanitize( null === $value ? $field['default'] : (string) $value );
+					break;
+
 				case 'id': // An HTML id.
 					$clean[ $key ] = self::sanitize_id( (string) $value );
 					break;

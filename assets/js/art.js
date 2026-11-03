@@ -1398,8 +1398,13 @@
 	var textBlocks = 0;
 	var measurer = null;
 
-	// The font family: a plain one, or the theme's headings' (an h2 in the block, as the page styles it).
+	// The font family: one by name (the page's, if it loads it), a plain one,
+	// or the theme's headings' (an h2 in the block, as the page styles it).
 	function textFamily( block, text ) {
+		if ( text.font === 'name' && text.family ) {
+			// A name as typed ("Playfair Display"), quoted; a list ("A", serif) as it is.
+			return /[,"']/.test( text.family ) ? text.family : '"' + text.family + '", ' + TEXT_FONTS.serif;
+		}
 		if ( text.font !== 'heading' ) {
 			return TEXT_FONTS[ text.font ] || TEXT_FONTS.serif;
 		}
