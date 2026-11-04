@@ -1367,3 +1367,114 @@ html.wp-swiper-lightbox-open {
 	background: var(--wp-swiper-bg-overlay, transparent);
 	pointer-events: none;
 }
+
+/* Content in a place of its own (render.php content_box()): a Collage's
+   place, an Art window. An image over text on its background, in its middle
+   (or at its top or bottom); cut at a word where it does not fit, or with a
+   shortcode's markup scrolling (content.js). The place positions it
+   (collage.css, art.css). */
+.wp-swiper-content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	background: var(--wp-swiper-content-bg, transparent);
+}
+
+.wp-swiper-content__inner {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	width: 100%;
+	height: 100%;
+	padding: var(--wp-swiper-content-padding, 16px);
+	overflow: hidden;
+	font-size: var(--wp-swiper-content-font, 18px);
+	line-height: 1.4;
+	text-align: center;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper-content__inner {
+		padding: var(--wp-swiper-content-padding-tablet, var(--wp-swiper-content-padding, 16px));
+		font-size: var(--wp-swiper-content-font-tablet, var(--wp-swiper-content-font, 18px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-content__inner {
+		padding: var(--wp-swiper-content-padding-mobile, var(--wp-swiper-content-padding-tablet, var(--wp-swiper-content-padding, 16px)));
+		font-size: var(--wp-swiper-content-font-mobile, var(--wp-swiper-content-font-tablet, var(--wp-swiper-content-font, 18px)));
+	}
+}
+
+.wp-swiper-content--top .wp-swiper-content__inner {
+	justify-content: flex-start;
+}
+
+.wp-swiper-content--bottom .wp-swiper-content__inner {
+	justify-content: flex-end;
+}
+
+/* With a shortcode's markup (a form, buttons…): never cut, it scrolls in
+   its place where it is too tall (from the top then, nothing out of reach). */
+.wp-swiper-content--scroll .wp-swiper-content__inner {
+	justify-content: flex-start;
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+
+@supports (justify-content: safe center) {
+	.wp-swiper-content--scroll.wp-swiper-content--center .wp-swiper-content__inner {
+		justify-content: safe center;
+	}
+
+	.wp-swiper-content--scroll.wp-swiper-content--bottom .wp-swiper-content__inner {
+		justify-content: safe flex-end;
+	}
+}
+
+/* The image: its share of the width inside, its proportions kept; with text
+   under it, at most half the height. */
+.wp-swiper-content .wp-swiper-content__image {
+	display: block;
+	flex: 0 1 auto;
+	width: var(--wp-swiper-content-image, 50%);
+	max-width: 100%;
+	height: auto;
+	min-height: 0;
+	object-fit: contain;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper-content .wp-swiper-content__image {
+		width: var(--wp-swiper-content-image-tablet, var(--wp-swiper-content-image, 50%));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-content .wp-swiper-content__image {
+		width: var(--wp-swiper-content-image-mobile, var(--wp-swiper-content-image-tablet, var(--wp-swiper-content-image, 50%)));
+	}
+}
+
+.wp-swiper-content .wp-swiper-content__image:not(:only-child) {
+	max-height: 50%;
+}
+
+.wp-swiper-content__text {
+	flex: 0 0 auto;
+	max-width: 100%;
+	overflow-wrap: break-word;
+}
+
+.wp-swiper-content .wp-swiper-content__text > :is(p, h1, h2, h3, h4, h5, h6, ul, ol) {
+	margin: 0 0 0.5em;
+}
+
+.wp-swiper-content .wp-swiper-content__text > :last-child {
+	margin-bottom: 0;
+}

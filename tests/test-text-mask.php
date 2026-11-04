@@ -329,12 +329,12 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 
 	public function test_three_blocks_the_word_its_letters_its_strips() {
 		$blocks = WP_Swiper_Settings::blocks()['layout'];
-		// After Art's blocks (Content in the middle and Opening: Art's only, so
-		// on screen right after the word's block).
+		// After Art's blocks (Content in the middle, Opening and Content in a
+		// window: Art's only, so on screen right after the word's block).
 		$names = array_keys( $blocks );
 		$art   = array_search( 'art', $names, true );
-		$this->assertSame( array( 'art', 'art_middle', 'art_opening', 'text_letters', 'text_strips' ), array_slice( $names, $art, 5 ) );
-		foreach ( array_merge( $blocks['art_middle']['fields'], $blocks['art_opening']['fields'] ) as $key ) {
+		$this->assertSame( array( 'art', 'art_middle', 'art_opening', 'art_content', 'text_letters', 'text_strips' ), array_slice( $names, $art, 6 ) );
+		foreach ( array_merge( $blocks['art_middle']['fields'], $blocks['art_opening']['fields'], $blocks['art_content']['fields'] ) as $key ) {
 			$this->assertSame( array( 'art' ), WP_Swiper_Settings::fields()[ $key ]['effects'], $key );
 		}
 		$this->assertSame( array( 'text_mask_font', 'text_mask_weight', 'text_mask_font_name', 'text_mask_size', 'text_mask_stretch', 'text_mask_gap' ), $blocks['text_letters']['fields'] );

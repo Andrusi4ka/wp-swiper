@@ -1841,9 +1841,19 @@
 		// A photo pointed at (or focused): its description stays, whatever swaps.
 		var pointing = false;
 
+		// The main photo: the first window's (or, with Content in a window there, the next one's).
+		function mainPhoto() {
+			for ( var i = 0; i < pieces.length; i++ ) {
+				if ( pieces[ i ].wpReal >= 0 ) {
+					return pieces[ i ].wpReal;
+				}
+			}
+			return -1;
+		}
+
 		function rest() {
 			pointing = false;
-			show( pieces[ 0 ].wpReal );
+			show( mainPhoto() );
 		}
 
 		function point( e ) {
@@ -1873,7 +1883,7 @@
 			// The middle photo was swapped: its description, unless another is pointed at.
 			refresh: function () {
 				if ( ! pointing ) {
-					show( pieces[ 0 ].wpReal );
+					show( mainPhoto() );
 				}
 			}
 		};
@@ -1991,11 +2001,28 @@
 		var photos = pool ? [].slice.call( pool.content.children ) : [];
 		var pieces = stage ? [].slice.call( stage.querySelectorAll( '.wp-swiper-art__piece' ) ) : [];
 		var drawStyle = STYLES[ config.style ];
+		// SVG shape, Content in a window (WP_Swiper_Render::content_box()): this
+		// very node moved into its window, not a copy (a shortcode's scripts find
+		// it, a form keeps what was typed); back in its hidden holder without one.
+		var contentNode = config.content && config.shapes ? block.querySelector( ':scope > .wp-swiper-art__content-pool > .wp-swiper-content' ) : null;
+		var contentPool = contentNode ? contentNode.parentNode : null;
+		// Its text fitted to the window (content.js), once it is in one.
+		var fitContent = function () {
+			if ( contentNode && contentNode.parentNode !== contentPool && window.wpSwiperContent ) {
+				window.wpSwiperContent.fit( contentNode );
+			}
+		};
+		if ( contentNode ) {
+			[].forEach.call( contentNode.querySelectorAll( 'img' ), function ( img ) {
+				img.addEventListener( 'load', fitContent );
+			} );
+		}
 		// The Gradient (art.css): one across the whole stage, each window
 		// showing its part (where it is in the stage, the stage's size).
 		var draw = function ( block, stage, config ) {
 			drawStyle( block, stage, config );
 			gradientPlaces( block, stage );
+			fitContent();
 		};
 		if ( ! stage || ! drawStyle || ! photos.length ) {
 			return null;
@@ -2022,6 +2049,36 @@
 			return Math.max( 1, Math.min( pieces.length, middlePhoto + ( Number( forDevice( config.count ) ) || pieces.length - middlePhoto ) ) );
 		}
 
+		// Content in a window: which window has it on this device (from 0; -1:
+		// none, or the shape's only window).
+		function contentAt() {
+			var shown = shownCount();
+			if ( ! contentNode || shown < 2 ) {
+				return -1;
+			}
+			var at = Math.round( Number( forDevice( config.content.window ) ) || 1 );
+			return Math.max( 0, Math.min( shown, at ) - 1 );
+		}
+
+		// A window with content or a photo again: as a photo's, a button (lightbox()).
+		function markContent( piece, on ) {
+			if ( on === piece.classList.contains( 'wp-swiper-art__piece--content' ) ) {
+				return;
+			}
+			piece.classList.toggle( 'wp-swiper-art__piece--content', on );
+			if ( on ) {
+				piece.wpSwiperButton = [ piece.getAttribute( 'role' ), piece.getAttribute( 'tabindex' ) ];
+				piece.removeAttribute( 'role' );
+				piece.removeAttribute( 'tabindex' );
+			} else if ( piece.wpSwiperButton ) {
+				[ 'role', 'tabindex' ].forEach( function ( name, i ) {
+					if ( null !== piece.wpSwiperButton[ i ] ) {
+						piece.setAttribute( name, piece.wpSwiperButton[ i ] );
+					}
+				} );
+			}
+		}
+
 		/*
 		 * The photos in the pieces, in the order of the device (the order set
 		 * there, else the slides'); they repeat when there are fewer, and with
@@ -2041,9 +2098,25 @@
 				} );
 			}
 			order = order.map( Number );
+			// Content in a window: in its window instead of a photo (-1 in the
+			// order the preview gets: pieces()), the photos in the others in turn.
+			var content = contentAt();
+			var next = 0;
 			pieces.forEach( function ( piece, index ) {
+				if ( index === content ) {
+					[].slice.call( piece.querySelectorAll( ':scope > .wp-swiper-art__photo' ) ).forEach( function ( photo ) {
+						piece.removeChild( photo );
+					} );
+					piece.wpReal = -1;
+					markContent( piece, true );
+					if ( contentNode.parentNode !== piece ) {
+						piece.appendChild( contentNode );
+					}
+					return;
+				}
+				markContent( piece, false );
 				// One photo through all the windows: the first in each.
-				var real = config.one ? order[ 0 ] : order[ index % order.length ];
+				var real = config.one ? order[ 0 ] : order[ next++ % order.length ];
 				if ( ! photos[ real ] || piece.wpReal === real ) {
 					return;
 				}
@@ -2054,7 +2127,12 @@
 				} );
 				piece.appendChild( photos[ real ].cloneNode( true ) );
 			} );
-			var shown = shownCount();
+			if ( contentNode && content < 0 && contentNode.parentNode !== contentPool ) {
+				contentPool.appendChild( contentNode );
+			}
+			fitContent();
+			// The windows with photos.
+			var shown = shownCount() - ( content >= 0 ? 1 : 0 );
 			queue = ! config.one && order.length > shown ? order.slice( shown ) : [];
 			sequence = order;
 			middleAt = 0;
@@ -2096,9 +2174,15 @@
 				release = resolve;
 			} ) : null;
 			var loads = [];
+			// Content in a window stays; the photos move on in the others.
+			var content = contentAt();
+			var next = 0;
 			for ( var k = 0; k < shown; k++ ) {
+				if ( k === content ) {
+					continue;
+				}
 				// One photo through all the windows: the same in each.
-				var real = sequence[ ( at + ( config.one ? 0 : k ) ) % sequence.length ];
+				var real = sequence[ ( at + ( config.one ? 0 : next++ ) ) % sequence.length ];
 				if ( pieces[ k ].wpReal !== real ) {
 					loads.push( fadeTo( pieces[ k ], real, shares ? shares[ k ] * spread : 0, gate ) );
 				}
@@ -2137,13 +2221,22 @@
 				if ( ! queue.length ) {
 					return;
 				}
+				// Content in a window never changes.
+				var content = contentAt();
+				var windows = shown - ( content >= 0 ? 1 : 0 );
+				if ( windows < 1 ) {
+					return;
+				}
 				if ( config.swap.target === 'turn' ) {
 					// SVG shape, "in turn": the main window, then the next, and so on.
 					index = ( lastSwapped + 1 ) % shown;
+					if ( index === content ) {
+						index = ( index + 1 ) % shown;
+					}
 				} else {
 					do {
 						index = Math.floor( Math.random() * shown );
-					} while ( shown > 1 && index === lastSwapped );
+					} while ( index === content || ( windows > 1 && index === lastSwapped ) );
 				}
 				lastSwapped = index;
 				real = queue.shift();
@@ -2373,10 +2466,32 @@
 					return piece.wpReal;
 				} );
 			},
+			// A new order for this device (as pieces() gives it: -1, Content in a
+			// window, where it is in it; moved with the photos, it moves).
 			setOrder: function ( list ) {
 				config.order = config.order || {};
-				config.order[ current ] = list;
+				var at = list.indexOf( -1 );
+				if ( at !== -1 && config.content ) {
+					this.setContentWindow( at + 1 );
+				}
+				config.order[ current ] = list.filter( function ( real ) {
+					return real !== -1;
+				} );
 				fill( true );
+			},
+			// Content in a window: where it is on this device (from 1; 0: none),
+			// and another window for it (laid out with the next fill()).
+			contentWindow: function () {
+				return contentAt() + 1;
+			},
+			setContentWindow: function ( number ) {
+				if ( ! config.content || ! ( number >= 1 ) ) {
+					return;
+				}
+				if ( typeof config.content.window !== 'object' || ! config.content.window ) {
+					config.content.window = { desktop: config.content.window, tablet: config.content.window, mobile: config.content.window };
+				}
+				config.content.window[ current ] = number;
 			},
 			// Ring: the middle circle's size for this device (% of the whole), drawn at once.
 			setCenter: function ( share ) {

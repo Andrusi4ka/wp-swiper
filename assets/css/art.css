@@ -173,6 +173,27 @@
 	height: var(--wp-swiper-art-sh, 100%);
 }
 
+/* SVG shape, Content in a window (art.js fill()): until it is moved into its
+   window, hidden (should a theme show [hidden] elements); there, it fills
+   the window's box and its shape cuts it, its background too (frontend.css
+   draws it). No photo to open, no Gradient over it. */
+.wp-swiper-art__content-pool {
+	display: none;
+}
+
+.wp-swiper-art__piece > .wp-swiper-content {
+	position: absolute;
+	inset: 0;
+}
+
+.wp-swiper-art--lightbox .wp-swiper-art__piece.wp-swiper-art__piece--content {
+	cursor: auto;
+}
+
+.wp-swiper-art--gradient .wp-swiper-art__piece.wp-swiper-art__piece--content::after {
+	content: none;
+}
+
 /* Gradient: over the photos, as large as the stage and where the window is
    in it (art.js: --wp-swiper-art-gx / -gy / -gw / -gh), so one goes across
    the whole shape (Text mask: the word); each window's shape cuts it, the

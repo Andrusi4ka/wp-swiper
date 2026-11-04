@@ -71,7 +71,8 @@ class WP_Swiper_Art {
 
 	public static function register_assets() {
 		wp_register_style( 'wp-swiper-art', WP_SWIPER_URL . 'assets/css/art.css', array(), wp_swiper_asset_version( 'assets/css/art.css' ) );
-		wp_register_script( 'wp-swiper-art', WP_SWIPER_URL . 'assets/js/art.js', array(), wp_swiper_asset_version( 'assets/js/art.js' ), true );
+		WP_Swiper_Render::register_content();
+		wp_register_script( 'wp-swiper-art', WP_SWIPER_URL . 'assets/js/art.js', array( 'wp-swiper-content' ), wp_swiper_asset_version( 'assets/js/art.js' ), true );
 	}
 
 	/**
@@ -464,6 +465,11 @@ class WP_Swiper_Art {
 					'title'  => __( 'Opening', 'wp-swiper' ),
 					'fields' => array( 'art_opening', 'art_ring_opening', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
 				),
+				// SVG shape: a window with content instead of a photo, a block of its own.
+				'art_content' => array(
+					'title'  => __( 'Content in a window', 'wp-swiper' ),
+					'fields' => array( 'art_content', 'art_content_window', 'art_content_image', 'art_content_image_size', 'art_content_text', 'art_content_font_size', 'art_content_padding', 'art_content_valign', 'art_content_bg' ),
+				),
 				// Text mask: its letters and its strips, blocks of their own (after
 				// Art's own blocks, hidden there as these are for Art: right after
 				// the word's block on screen).
@@ -849,6 +855,14 @@ class WP_Swiper_Art {
 		}
 		// Ring + text: the image and text in the middle (art.js places them).
 		$center = in_array( $style, array( 'ring-text', 'grid-circle-text', 'grid-square-text' ), true ) && $settings['art_center'] ? self::center( $settings ) : '';
+		// SVG shape: a window with an image and text instead of a photo (art.js
+		// fill() moves it there), its window per device; not as a background.
+		$content = 'shape' === $style && ! empty( $settings['art_content'] ) && ! $background && $shape ? WP_Swiper_Render::content_box( $settings, 'art_content' ) : '';
+		if ( '' !== $content ) {
+			$config['content'] = array( 'window' => self::per_device( $settings, 'art_content_window', 1, 100 ) );
+			// Its look is frontend.css's (as a Collage's place's).
+			WP_Swiper_Render::style( 'wp-swiper' );
+		}
 
 		// The Gradient, while it is on: its CSS ('' none), one across the whole shape (art.js, art.css).
 		$gradient = WP_Swiper_Settings::gradient( $settings );
@@ -968,6 +982,10 @@ class WP_Swiper_Art {
 				<span class="wp-swiper-art__word"><?php echo esc_html( trim( (string) $settings['text_mask_title'] ) ); ?></span>
 			<?php endif; ?>
 			<?php echo $opening . $center; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where they are built. ?>
+			<?php if ( '' !== $content ) : ?>
+				<?php // On the page itself, hidden: art.js moves this very node into its window (a shortcode's scripts find it). ?>
+				<div class="wp-swiper-art__content-pool" hidden><?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?></div>
+			<?php endif; ?>
 			<template class="wp-swiper-art__pool">
 				<?php
 				foreach ( $slides as $index => $slide ) {

@@ -6,7 +6,9 @@
  * distance between the images and from the slider's edges. Checked every
  * frame while it is on (redrawn when something moved), so it follows the
  * moving slides. A collage: its places, the space between them, its
- * grid's box (turned, Rotation) and the block's (drawCollage()).
+ * grid's box (turned, Rotation) and the block's (drawCollage()). Art, SVG
+ * shape: its windows' boxes and outlines, Content in a window's area
+ * (drawArt()).
  * admin.js turns it on and off: wpSwiperDev( true | false ).
  */
 ( function () {
@@ -268,12 +270,93 @@
 		dimension( outer, { x: block.offsetWidth / 2, y: 12 }, label ).classList.add( 'wp-swiper-dev__block-size' );
 	}
 
+	var SVG = 'http://www.w3.org/2000/svg';
+
+	/*
+	 * Art, SVG shape: a layer over its stage; each window's box (the
+	 * rectangle the window is cut from, dashed) with its size, the window's
+	 * own outline over it (the shape that shows); with Content in a window,
+	 * the area its image and text are laid in (the box less the Padding),
+	 * with its size, and whether its text was cut to fit; the stage's size
+	 * at its top.
+	 */
+	function drawArt( block ) {
+		var stage = block.querySelector( '.wp-swiper-art__stage' );
+		if ( ! stage ) {
+			return;
+		}
+		var layer = stage.querySelector( ':scope > .wp-swiper-dev' );
+		if ( ! layer ) {
+			layer = document.createElement( 'div' );
+			layer.className = 'wp-swiper-dev wp-swiper-dev--art';
+			stage.appendChild( layer );
+		}
+		var pieces = [].slice.call( stage.querySelectorAll( ':scope > .wp-swiper-art__piece' ) ).filter( function ( piece ) {
+			return ! piece.hidden && piece.offsetWidth > 0;
+		} );
+		var content = stage.querySelector( ':scope > .wp-swiper-art__piece--content .wp-swiper-content' );
+		var inner = content && content.querySelector( '.wp-swiper-content__inner' );
+		var text = content && content.querySelector( '.wp-swiper-content__text' );
+		var key = [ stage.offsetWidth, stage.offsetHeight, inner ? inner.clientWidth + 'x' + inner.clientHeight : '', text ? text.textContent.length : '' ].concat( pieces.map( function ( piece ) {
+			return [ piece.offsetLeft, piece.offsetTop, piece.offsetWidth, piece.offsetHeight, piece.classList.contains( 'wp-swiper-art__piece--content' ) ? 'c' : '' ].map( function ( value ) {
+				return typeof value === 'number' ? round( value ) : value;
+			} ).join( ',' );
+		} ) ).join( ';' );
+		if ( layer.getAttribute( 'data-key' ) === key ) {
+			return;
+		}
+		layer.setAttribute( 'data-key', key );
+		layer.textContent = '';
+
+		// The windows' outlines: their clip paths (px of their boxes) where the boxes are.
+		var svg = document.createElementNS( SVG, 'svg' );
+		svg.setAttribute( 'class', 'wp-swiper-dev__outlines' );
+		svg.setAttribute( 'width', stage.offsetWidth );
+		svg.setAttribute( 'height', stage.offsetHeight );
+		pieces.forEach( function ( piece, i ) {
+			var rect = { left: piece.offsetLeft, top: piece.offsetTop, width: piece.offsetWidth, height: piece.offsetHeight };
+			var own = piece.classList.contains( 'wp-swiper-art__piece--content' );
+			box( layer, own ? 'window wp-swiper-dev__window--content' : 'window', rect, ( i + 1 ) + ': ' + round( rect.width ) + ' × ' + round( rect.height ) );
+			var d = /"([^"]+)"/.exec( piece.style.clipPath || '' );
+			if ( d ) {
+				var path = document.createElementNS( SVG, 'path' );
+				path.setAttribute( 'd', d[ 1 ] );
+				path.setAttribute( 'transform', 'translate(' + rect.left + ' ' + rect.top + ')' );
+				path.setAttribute( 'fill-rule', /evenodd/.test( piece.style.clipPath ) ? 'evenodd' : 'nonzero' );
+				svg.appendChild( path );
+			}
+		} );
+		layer.appendChild( svg );
+
+		// Content in a window: where its image and text go (inside the Padding).
+		if ( inner ) {
+			var piece = content.parentNode;
+			var style = getComputedStyle( inner );
+			var pad = {
+				left: parseFloat( style.paddingLeft ) || 0,
+				top: parseFloat( style.paddingTop ) || 0,
+				right: parseFloat( style.paddingRight ) || 0,
+				bottom: parseFloat( style.paddingBottom ) || 0
+			};
+			var area = {
+				left: piece.offsetLeft + inner.offsetLeft + pad.left,
+				top: piece.offsetTop + inner.offsetTop + pad.top,
+				width: Math.max( 0, inner.clientWidth - pad.left - pad.right ),
+				height: Math.max( 0, inner.clientHeight - pad.top - pad.bottom )
+			};
+			var cut = !! text && ( text.hidden || text.textContent.trim().slice( -1 ) === '…' );
+			box( layer, 'area', area, round( area.width ) + ' × ' + round( area.height ) + ', padding ' + round( pad.top ) + ( cut ? ', text cut' : '' ) );
+		}
+		dimension( layer, { x: stage.offsetWidth / 2, y: 12 }, round( stage.offsetWidth ) + ' × ' + round( stage.offsetHeight ) ).classList.add( 'wp-swiper-dev__block-size' );
+	}
+
 	function frame() {
 		if ( ! on ) {
 			return;
 		}
 		[].forEach.call( document.querySelectorAll( '.wp-swiper .swiper.swiper-initialized' ), draw );
 		[].forEach.call( document.querySelectorAll( '.wp-swiper .wp-swiper-collage' ), drawCollage );
+		[].forEach.call( document.querySelectorAll( '.wp-swiper-art.wp-swiper-art--shape' ), drawArt );
 		requestAnimationFrame( frame );
 	}
 
@@ -290,7 +373,7 @@
 				layer.removeAttribute( 'data-key' );
 			} );
 			// A collage's layers go (its grid is built again, with them or not).
-			[].forEach.call( document.querySelectorAll( '.wp-swiper-collage .wp-swiper-dev' ), function ( layer ) {
+			[].forEach.call( document.querySelectorAll( '.wp-swiper-collage .wp-swiper-dev, .wp-swiper-art .wp-swiper-dev' ), function ( layer ) {
 				layer.remove();
 			} );
 		}

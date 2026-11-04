@@ -190,6 +190,10 @@
 						return id > 0;
 					} )
 				}, window.location.origin );
+				// Content in a window moved with the photos (-1 in the order): its window.
+				if ( list.indexOf( -1 ) !== -1 && api.contentWindow ) {
+					window.parent.postMessage( { wpSwiper: 'art-content', device: api.device(), window: api.contentWindow() }, window.location.origin );
+				}
 			}
 			return;
 		}
@@ -375,6 +379,10 @@
 					block.wpSwiperArtEditor.corner = null;
 					refresh( block.wpSwiperArtEditor );
 				}
+			}
+			// Content in a window: its window as it was (laid out with the order).
+			if ( api.setContentWindow && state.contentWindow > 0 ) {
+				api.setContentWindow( state.contentWindow );
 			}
 			api.setOrder( order );
 			done = true;

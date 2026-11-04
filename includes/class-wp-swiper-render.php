@@ -174,7 +174,8 @@ class WP_Swiper_Render {
 
 		wp_register_script( 'swiper', WP_SWIPER_URL . 'assets/vendor/swiper/swiper-bundle.min.js', array(), WP_SWIPER_SWIPER_VERSION, true );
 		wp_register_script( 'wp-swiper', WP_SWIPER_URL . 'assets/js/frontend.js', array(), wp_swiper_asset_version( 'assets/js/frontend.js' ), true );
-		wp_register_script( 'wp-swiper-collage', WP_SWIPER_URL . 'assets/js/collage.js', array( 'wp-swiper' ), wp_swiper_asset_version( 'assets/js/collage.js' ), true );
+		self::register_content();
+		wp_register_script( 'wp-swiper-collage', WP_SWIPER_URL . 'assets/js/collage.js', array( 'wp-swiper', 'wp-swiper-content' ), wp_swiper_asset_version( 'assets/js/collage.js' ), true );
 		// The sliders themselves, after Swiper and frontend.js (enqueue()): a
 		// page with only a Collage or Art does without them.
 		wp_register_script( 'wp-swiper-slider', WP_SWIPER_URL . 'assets/js/slider.js', array( 'swiper', 'wp-swiper' ), wp_swiper_asset_version( 'assets/js/slider.js' ), true );
@@ -1517,14 +1518,20 @@ class WP_Swiper_Render {
 	}
 
 	/**
-	 * Collage, Content in a place: an image over the editor's text (either or
-	 * both) on the place's background, its sizes per device as CSS variables;
-	 * '' when it is off, has neither, the Style is Justified rows or Masonry
-	 * on every device, or the collage is a background. Shortcodes in the text
-	 * run (a form, a theme's HTML block…), once the text is sanitized: their
-	 * markup is theirs; with any, the place scrolls rather than cutting it
-	 * (collage.js fitContent()). Not inside itself (a slider whose content
-	 * shows a slider whose content…).
+	 * content.js: content in a place of its own (a Collage's place, an Art
+	 * window), its text fitted; registered for collage.js and art.js (WP_Swiper_Art
+	 * registers its files on its own: either may come first).
+	 */
+	public static function register_content() {
+		if ( ! wp_script_is( 'wp-swiper-content', 'registered' ) ) {
+			wp_register_script( 'wp-swiper-content', WP_SWIPER_URL . 'assets/js/content.js', array(), wp_swiper_asset_version( 'assets/js/content.js' ), true );
+		}
+	}
+
+	/**
+	 * Collage, Content in a place: content_box() for its place; '' when it is
+	 * off, the Style is Justified rows or Masonry on every device, or the
+	 * collage is a background.
 	 *
 	 * @param array $settings Slider settings.
 	 * @return string Markup.
@@ -1534,11 +1541,26 @@ class WP_Swiper_Render {
 			return '';
 		}
 		$styles = array_diff( WP_Swiper_Settings::responsive( $settings, 'collage_layout' ), array( 'justified', 'masonry' ) );
-		if ( ! $styles ) {
-			return '';
-		}
-		$image = wp_get_attachment_image( (int) $settings['collage_content_image'], 'large', false, array( 'class' => 'wp-swiper-collage__content-image', 'loading' => 'lazy' ) );
-		$text  = WP_Swiper_Settings::sanitize_description( $settings['collage_content_text'] );
+		return $styles ? self::content_box( $settings, 'collage_content' ) : '';
+	}
+
+	/**
+	 * Content in a place of its own (a Collage's place, an Art window): an
+	 * image over the editor's text (either or both) on its background, its
+	 * sizes per device as CSS variables (frontend.css); '' with neither. The
+	 * settings are `{$key}_image`, `_image_size`, `_text`, `_font_size`,
+	 * `_padding`, `_valign` and `_bg`. Shortcodes in the text run (a form, a
+	 * theme's HTML block…), once the text is sanitized: their markup is
+	 * theirs; with any, the place scrolls rather than cutting it (content.js).
+	 * Not inside itself (a slider whose content shows a slider whose content…).
+	 *
+	 * @param array  $settings Slider settings.
+	 * @param string $key      The settings' prefix ("collage_content", "art_content").
+	 * @return string Markup.
+	 */
+	public static function content_box( $settings, $key ) {
+		$image = wp_get_attachment_image( (int) $settings[ $key . '_image' ], 'large', false, array( 'class' => 'wp-swiper-content__image', 'loading' => 'lazy' ) );
+		$text  = WP_Swiper_Settings::sanitize_description( $settings[ $key . '_text' ] );
 		if ( '' === $image && '' === $text ) {
 			return '';
 		}
@@ -1558,25 +1580,25 @@ class WP_Swiper_Render {
 
 		$style = array();
 		$vars  = array(
-			'collage_content_image_size' => array( '--wp-swiper-collage-content-image', '%', 10, 100 ),
-			'collage_content_font_size'  => array( '--wp-swiper-collage-content-font', 'px', 8, 120 ),
-			'collage_content_padding'    => array( '--wp-swiper-collage-content-padding', 'px', 0, 200 ),
+			'_image_size' => array( '--wp-swiper-content-image', '%', 10, 100 ),
+			'_font_size'  => array( '--wp-swiper-content-font', 'px', 8, 120 ),
+			'_padding'    => array( '--wp-swiper-content-padding', 'px', 0, 200 ),
 		);
-		foreach ( $vars as $key => $var ) {
-			foreach ( WP_Swiper_Settings::responsive( $settings, $key ) as $device => $value ) {
+		foreach ( $vars as $suffix => $var ) {
+			foreach ( WP_Swiper_Settings::responsive( $settings, $key . $suffix ) as $device => $value ) {
 				$style[] = $var[0] . self::SUFFIX[ $device ] . ':' . max( $var[2], min( $var[3], (int) $value ) ) . $var[1];
 			}
 		}
-		$bg = WP_Swiper_Settings::sanitize_slide_color( (string) $settings['collage_content_bg'] );
+		$bg = WP_Swiper_Settings::sanitize_slide_color( (string) $settings[ $key . '_bg' ] );
 		if ( '' !== $bg ) {
-			$style[] = '--wp-swiper-collage-content-bg:' . $bg;
+			$style[] = '--wp-swiper-content-bg:' . $bg;
 		}
-		$align = in_array( $settings['collage_content_valign'], array( 'top', 'bottom' ), true ) ? $settings['collage_content_valign'] : 'center';
+		$align = in_array( $settings[ $key . '_valign' ], array( 'top', 'bottom' ), true ) ? $settings[ $key . '_valign' ] : 'center';
 
-		return '<div class="wp-swiper-collage__content wp-swiper-collage__content--' . $align . ( $scroll ? ' wp-swiper-collage__content--scroll' : '' ) . '" style="' . esc_attr( implode( ';', $style ) ) . '">'
-			. '<div class="wp-swiper-collage__content-inner">'
+		return '<div class="wp-swiper-content wp-swiper-content--' . $align . ( $scroll ? ' wp-swiper-content--scroll' : '' ) . '" style="' . esc_attr( implode( ';', $style ) ) . '">'
+			. '<div class="wp-swiper-content__inner">'
 			. $image
-			. ( '' === $text ? '' : '<div class="wp-swiper-collage__content-text">' . $text . '</div>' )
+			. ( '' === $text ? '' : '<div class="wp-swiper-content__text">' . $text . '</div>' )
 			. '</div></div>';
 	}
 

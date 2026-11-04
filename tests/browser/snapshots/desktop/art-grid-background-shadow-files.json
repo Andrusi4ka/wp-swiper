@@ -1,5 +1,6 @@
 {
 	"scripts": [
+		"wp-swiper-content",
 		"wp-swiper-art"
 	],
 	"styles": [

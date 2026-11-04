@@ -1,0 +1,140 @@
+// SVG shape, Content in a window (cases.php art-shape-content): an image over
+// text in one window instead of a photo, the window set per device; the
+// photos in the others; no lightbox or button for it, no Gradient over it,
+// its text cut; moved with the photos (the preview's order with -1).
+const { test, expect } = require( '@playwright/test' );
+const path = require( 'path' );
+const fixture = '/wp-content/plugins/' + path.basename( path.resolve( __dirname, '../..' ) ) + '/tests/browser/fixture.php';
+
+async function open( page, name ) {
+	const errors = [];
+	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
+	await page.goto( fixture + '?case=' + name );
+	await page.waitForLoadState( 'networkidle' );
+	await page.waitForTimeout( 800 );
+	return errors;
+}
+
+function state( page ) {
+	return page.evaluate( () => {
+		const pieces = [].slice.call( document.querySelectorAll( '.wp-swiper-art__piece' ) ).filter( ( piece ) => ! piece.hidden );
+		const piece = document.querySelector( '.wp-swiper-art__piece--content' );
+		const box = piece && piece.querySelector( '.wp-swiper-content' );
+		const inner = box && box.querySelector( '.wp-swiper-content__inner' );
+		const text = box && box.querySelector( '.wp-swiper-content__text' );
+		return {
+			windows: pieces.length,
+			index: pieces.indexOf( piece ),
+			contents: document.querySelectorAll( '.wp-swiper-art__piece--content' ).length,
+			photos: pieces.filter( ( p ) => p !== piece ).map( ( p ) => p.wpReal ),
+			hasPhoto: !! ( piece && piece.querySelector( '.wp-swiper-art__photo' ) ),
+			role: piece ? piece.getAttribute( 'role' ) : 'none',
+			gradient: piece ? getComputedStyle( piece, '::after' ).content : '',
+			background: box ? getComputedStyle( box ).backgroundColor : '',
+			image: !! ( box && box.querySelector( 'img.wp-swiper-content__image' ) ),
+			fits: !! inner && inner.scrollHeight <= inner.clientHeight + 1,
+			cut: !! text && text.textContent.trim().endsWith( '…' ),
+		};
+	} );
+}
+
+test( 'art-shape-content: the content in the window set for the device', async ( { page } ) => {
+	const errors = await open( page, 'art-shape-content' );
+	const found = await state( page );
+	const mobile = page.viewportSize().width < 768;
+	expect( found.windows ).toBe( 3 );
+	expect( found.contents ).toBe( 1 );
+	// Window 2 on desktop, 1 on mobile.
+	expect( found.index ).toBe( mobile ? 0 : 1 );
+	expect( found.hasPhoto ).toBe( false );
+	expect( found.photos.every( ( real ) => real >= 0 ) ).toBe( true );
+	expect( new Set( found.photos ).size ).toBe( 2 );
+	// No photo to open: no button; no Gradient over it.
+	expect( found.role ).toBeNull();
+	expect( found.gradient ).toBe( 'none' );
+	expect( found.background ).toBe( 'rgb(30, 60, 90)' );
+	expect( found.image ).toBe( true );
+	expect( found.fits ).toBe( true );
+	expect( found.cut ).toBe( true );
+	// A click on it opens no lightbox (on it: other windows of the drawing lie over parts of it).
+	await page.evaluate( () => document.querySelector( '.wp-swiper-art__piece--content .wp-swiper-content__text' ).click() );
+	await page.waitForTimeout( 400 );
+	expect( await page.locator( '.wp-swiper-lightbox.is-open' ).count() ).toBe( 0 );
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'art-shape-content: moved with the photos, a photo where it was', async ( { page } ) => {
+	const errors = await open( page, 'art-shape-content' );
+	const moved = await page.evaluate( () => {
+		const api = document.querySelector( '.wp-swiper-art' ).wpSwiperArt;
+		const list = api.pieces().slice();
+		const from = list.indexOf( -1 );
+		const to = from === 2 ? 0 : 2;
+		list[ from ] = list[ to ];
+		list[ to ] = -1;
+		api.setOrder( list );
+		const pieces = [].slice.call( document.querySelectorAll( '.wp-swiper-art__piece' ) );
+		return {
+			window: api.contentWindow(),
+			at: pieces.findIndex( ( p ) => p.classList.contains( 'wp-swiper-art__piece--content' ) ),
+			to,
+			// The window it left has a photo and is a button again.
+			left: pieces[ from ].wpReal >= 0 && !! pieces[ from ].querySelector( '.wp-swiper-art__photo' ) && ! pieces[ from ].querySelector( '.wp-swiper-content' ),
+			role: pieces[ from ].getAttribute( 'role' ),
+			nodes: document.querySelectorAll( '.wp-swiper-content' ).length,
+		};
+	} );
+	expect( moved.at ).toBe( moved.to );
+	expect( moved.window ).toBe( moved.to + 1 );
+	expect( moved.left ).toBe( true );
+	expect( moved.role ).toBe( 'button' );
+	// The same node moved, not copied.
+	expect( moved.nodes ).toBe( 1 );
+	expect( errors ).toEqual( [] );
+} );
+
+// Developer mode of the preview (preview-dev.js, loaded here as the preview
+// does): each window's box with its number and size and its outline; the
+// content's area inside the Padding, its size and that its text was cut;
+// gone when off.
+test( 'art-shape-content: Developer mode draws the windows and the content area', async ( { page } ) => {
+	const errors = await open( page, 'art-shape-content' );
+	const base = fixture.replace( 'tests/browser/fixture.php', '' );
+	await page.addStyleTag( { url: base + 'assets/css/preview-dev.css' } );
+	await page.addScriptTag( { url: base + 'assets/js/preview-dev.js' } );
+	await page.evaluate( () => window.wpSwiperDev( true ) );
+	await page.waitForTimeout( 300 );
+	const drawn = await page.evaluate( () => {
+		const stage = document.querySelector( '.wp-swiper-art__stage' );
+		const pieces = [].slice.call( stage.querySelectorAll( ':scope > .wp-swiper-art__piece' ) ).filter( ( p ) => ! p.hidden );
+		const windows = [].slice.call( stage.querySelectorAll( '.wp-swiper-dev__window' ) );
+		const area = stage.querySelector( '.wp-swiper-dev__area' );
+		const inner = stage.querySelector( '.wp-swiper-art__piece--content .wp-swiper-content__inner' );
+		const piece = inner.closest( '.wp-swiper-art__piece' );
+		return {
+			pieces: pieces.length,
+			windows: windows.length,
+			// Each box where its window is, its number and size.
+			boxes: pieces.every( ( p, i ) => {
+				const w = windows[ i ];
+				return w && Math.abs( w.offsetLeft - p.offsetLeft ) <= 1 && Math.abs( w.offsetWidth - p.offsetWidth ) <= 1 && w.textContent.indexOf( ( i + 1 ) + ': ' ) === 0;
+			} ),
+			content: stage.querySelectorAll( '.wp-swiper-dev__window--content' ).length,
+			outlines: stage.querySelectorAll( '.wp-swiper-dev__outlines path' ).length,
+			// The area: the content's box less its Padding (16px by default).
+			area: area && Math.abs( area.offsetLeft - ( piece.offsetLeft + 16 ) ) <= 1 && Math.abs( area.offsetWidth - ( inner.clientWidth - 32 ) ) <= 1,
+			label: area ? area.textContent : '',
+			size: stage.querySelector( '.wp-swiper-dev__block-size' ).textContent,
+		};
+	} );
+	expect( drawn.windows ).toBe( drawn.pieces );
+	expect( drawn.boxes ).toBe( true );
+	expect( drawn.content ).toBe( 1 );
+	expect( drawn.outlines ).toBe( drawn.pieces );
+	expect( drawn.area ).toBe( true );
+	expect( drawn.label ).toMatch( /^[\d.]+ × [\d.]+, padding 16, text cut$/ );
+	expect( drawn.size ).toMatch( /^[\d.]+ × [\d.]+$/ );
+	await page.evaluate( () => window.wpSwiperDev( false ) );
+	expect( await page.locator( '.wp-swiper-art .wp-swiper-dev' ).count() ).toBe( 0 );
+	expect( errors ).toEqual( [] );
+} );

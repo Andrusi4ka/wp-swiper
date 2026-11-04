@@ -20,15 +20,15 @@ function state( page ) {
 		const cells = [].slice.call( document.querySelectorAll( '.wp-swiper-collage__cell' ) );
 		const content = cells.filter( ( cell ) => cell.classList.contains( 'wp-swiper-collage__cell--content' ) );
 		const cell = content[ 0 ];
-		const inner = cell && cell.querySelector( '.wp-swiper-collage__content-inner' );
-		const text = cell && cell.querySelector( '.wp-swiper-collage__content-text' );
+		const inner = cell && cell.querySelector( '.wp-swiper-content__inner' );
+		const text = cell && cell.querySelector( '.wp-swiper-content__text' );
 		const box = inner && inner.getBoundingClientRect();
 		const place = cell && cell.getBoundingClientRect();
 		return {
 			cells: cells.length,
 			contents: content.length,
 			index: cells.indexOf( cell ),
-			image: !! ( cell && cell.querySelector( 'img.wp-swiper-collage__content-image' ) ),
+			image: !! ( cell && cell.querySelector( 'img.wp-swiper-content__image' ) ),
 			text: text ? text.textContent : '',
 			// All of the text inside: nothing over the edges.
 			fits: !! inner && inner.scrollHeight <= inner.clientHeight + 1,
@@ -85,7 +85,7 @@ test( 'collage-content-feature: in a template\'s place, at its bottom', async ( 
 	expect( found.index ).toBe( 0 );
 	const gap = await page.evaluate( () => {
 		const cell = document.querySelector( '.wp-swiper-collage__cell--content' ).getBoundingClientRect();
-		const text = document.querySelector( '.wp-swiper-collage__content-text' ).getBoundingClientRect();
+		const text = document.querySelector( '.wp-swiper-content__text' ).getBoundingClientRect();
 		return { bottom: cell.bottom - text.bottom, top: text.top - cell.top };
 	} );
 	// Bottom: nearer the bottom than the top (the padding there).
@@ -124,7 +124,7 @@ test( 'collage-content-shortcode: a form that works and scrolls', async ( { page
 		const api = document.querySelector( '.wp-swiper-collage' ).wpSwiperCollage;
 		// Laid out again (as on another device, or a photo dragged in the preview).
 		api.setOrder( api.places().order.slice() );
-		const inner = document.querySelector( '.wp-swiper-collage__cell--content .wp-swiper-collage__content-inner' );
+		const inner = document.querySelector( '.wp-swiper-collage__cell--content .wp-swiper-content__inner' );
 		return {
 			typed: document.querySelector( '.wp-swiper-collage__cell--content input' ).value,
 			forms: document.querySelectorAll( 'form.fixture-form' ).length,

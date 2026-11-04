@@ -1,0 +1,11 @@
+{
+	"scripts": [
+		"wp-swiper-content",
+		"wp-swiper-art",
+		"wp-swiper"
+	],
+	"styles": [
+		"wp-swiper-art",
+		"wp-swiper"
+	]
+}

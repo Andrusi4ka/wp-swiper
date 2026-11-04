@@ -120,6 +120,11 @@ return array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-square-text', 'art_center' => '1', 'art_center_text' => '<h3>Hello</h3><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', 'lightbox' => '1' ),
 		'photos'   => 10,
 	),
+	// SVG shape (tests/data/ex-3.svg), Content in a window: an image over text in
+	// its second window instead of a photo, its first on mobile.
+	'art-shape-content' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => file_get_contents( dirname( __DIR__ ) . '/data/ex-3.svg' ), 'art_height' => '420', 'art_content' => '1', 'art_content_window' => '2', 'art_content_window_mobile' => '1', 'art_content_image' => '{image}', 'art_content_text' => '<p><strong>Hello</strong> from a window of the shape. ' . str_repeat( 'More text than it can hold in it, so that it is cut at a word. ', 24 ) . '</p>', 'art_content_bg' => 'rgba(30,60,90,1)', 'image_gradient_on' => '1', 'lightbox' => '1' ),
+	),
 	// Grid shapes, the default layout (4 x 4, two of its shapes circles).
 	'art-grid-shapes' => array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_rounded' => '1', 'lightbox' => '1' ),

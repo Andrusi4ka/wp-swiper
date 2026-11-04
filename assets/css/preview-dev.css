@@ -389,3 +389,61 @@
 	left: 4px;
 	background: #00a32a;
 }
+
+/* Art, SVG shape (preview-dev.js drawArt()): each window's box dashed, its
+   number and size in its top left corner; the window's own outline (the
+   shape that shows) over it; with Content in a window, the area its image
+   and text are laid in (inside the Padding) solid blue, its size (and
+   whether the text was cut) at its bottom. Over the pieces, never clicked. */
+.wp-swiper-dev__window {
+	outline: 1px dashed #2271b1;
+	outline-offset: -1px;
+}
+
+.wp-swiper-dev__window .wp-swiper-dev__label {
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	background: #2271b1;
+}
+
+.wp-swiper-dev__window--content {
+	outline-color: #8a2be2;
+}
+
+.wp-swiper-dev__window--content .wp-swiper-dev__label {
+	background: #8a2be2;
+}
+
+.wp-swiper-dev > .wp-swiper-dev__outlines {
+	position: absolute;
+	top: 0;
+	left: 0;
+	overflow: visible;
+}
+
+.wp-swiper-dev__outlines path {
+	fill: none;
+	stroke: #00a32a;
+	stroke-width: 2;
+	vector-effect: non-scaling-stroke;
+}
+
+.wp-swiper-dev__area {
+	outline: 2px solid #8a2be2;
+	outline-offset: -2px;
+	background: rgba(138, 43, 226, 0.08);
+}
+
+.wp-swiper-dev__area .wp-swiper-dev__label {
+	position: absolute;
+	bottom: 4px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: #8a2be2;
+}
+
+/* The stage's own box: its size at its top (as a collage's block). */
+.wp-swiper-dev--art {
+	overflow: visible;
+}

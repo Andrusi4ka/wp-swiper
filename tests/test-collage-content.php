@@ -29,8 +29,8 @@ class Test_WP_Swiper_Collage_Content extends WP_Swiper_TestCase {
 	public function test_the_content_and_its_place_per_device() {
 		$html = $this->render( $this->values( array( 'collage_content_place' => 3, 'collage_content_place_mobile' => 1 ) ) );
 		// On the page, hidden (collage.js moves this node into its place).
-		$this->assertStringContainsString( '<div class="wp-swiper-collage__content-pool" hidden><div class="wp-swiper-collage__content wp-swiper-collage__content--center" style=', $html );
-		$this->assertStringContainsString( '<div class="wp-swiper-collage__content-text"><p>Hello <strong>there</strong></p></div>', $html );
+		$this->assertStringContainsString( '<div class="wp-swiper-collage__content-pool" hidden><div class="wp-swiper-content wp-swiper-content--center" style=', $html );
+		$this->assertStringContainsString( '<div class="wp-swiper-content__text"><p>Hello <strong>there</strong></p></div>', $html );
 		// Tablet as desktop, mobile its own.
 		$this->assertSame( array( 'desktop' => 3, 'tablet' => 3, 'mobile' => 1 ), $this->config( $html, 'data-wp-swiper-collage' )['content']['place'] );
 	}
@@ -49,16 +49,16 @@ class Test_WP_Swiper_Collage_Content extends WP_Swiper_TestCase {
 				)
 			)
 		);
-		$this->assertSame( 1, preg_match( '/<div class="wp-swiper-collage__content-inner"><img [^>]*class="wp-swiper-collage__content-image"/', $html ) );
-		$this->assertStringContainsString( 'wp-swiper-collage__content--bottom', $html );
-		$this->assertStringContainsString( '--wp-swiper-collage-content-image:40%', $html );
-		$this->assertStringContainsString( '--wp-swiper-collage-content-font-mobile:14px', $html );
+		$this->assertSame( 1, preg_match( '/<div class="wp-swiper-content__inner"><img [^>]*class="wp-swiper-content__image"/', $html ) );
+		$this->assertStringContainsString( 'wp-swiper-content--bottom', $html );
+		$this->assertStringContainsString( '--wp-swiper-content-image:40%', $html );
+		$this->assertStringContainsString( '--wp-swiper-content-font-mobile:14px', $html );
 		// Kept to its range.
-		$this->assertStringContainsString( '--wp-swiper-collage-content-padding:200px', $html );
-		$this->assertStringContainsString( '--wp-swiper-collage-content-bg:rgba(10,20,30,0.5)', $html );
+		$this->assertStringContainsString( '--wp-swiper-content-padding:200px', $html );
+		$this->assertStringContainsString( '--wp-swiper-content-bg:rgba(10,20,30,0.5)', $html );
 
 		// The image alone is content enough.
-		$this->assertStringContainsString( 'wp-swiper-collage__content-image', $this->render( $this->values( array( 'collage_content_image' => $image, 'collage_content_text' => '' ) ) ) );
+		$this->assertStringContainsString( 'wp-swiper-content__image', $this->render( $this->values( array( 'collage_content_image' => $image, 'collage_content_text' => '' ) ) ) );
 	}
 
 	public function test_none_without_image_or_text() {
@@ -95,7 +95,7 @@ class Test_WP_Swiper_Collage_Content extends WP_Swiper_TestCase {
 		remove_shortcode( 'wp_swiper_test_button' );
 		// Its markup as it gives it (after the text is sanitized: an input stays).
 		$this->assertStringContainsString( '<p>Before</p><a class="btn" href="#go">Go</a><input name="q">', $html );
-		$this->assertStringContainsString( 'wp-swiper-collage__content--scroll', $html );
+		$this->assertStringContainsString( 'wp-swiper-content--scroll', $html );
 
 		// Brackets that are no shortcode: cut as text (no scrolling).
 		$html = $this->render( $this->values( array( 'collage_content_text' => '<p>[not one]</p>' ) ) );

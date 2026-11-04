@@ -1137,90 +1137,10 @@
 			return Math.max( 0, Math.min( count, place ) - 1 );
 		}
 
-		/*
-		 * The content's text cut at a word, with "…", where it does not fit in
-		 * its place (as art.js fitText(): the font size is the one set).
-		 */
+		// The content's text cut where it does not fit (content.js).
 		function fitContent( cell ) {
-			// With a shortcode's markup (a form, buttons…): never cut, it scrolls
-			// instead (collage.css --scroll); its nodes stay as they are.
-			if ( cell.querySelector( '.wp-swiper-collage__content--scroll' ) ) {
-				return;
-			}
-			var inner = cell.querySelector( '.wp-swiper-collage__content-inner' );
-			var text = inner && inner.querySelector( '.wp-swiper-collage__content-text' );
-			if ( ! text ) {
-				return;
-			}
-			if ( undefined === text.wpSwiperFull ) {
-				text.wpSwiperFull = text.innerHTML;
-			}
-			text.innerHTML = text.wpSwiperFull;
-			text.hidden = false;
-			var fits = function () {
-				return inner.scrollHeight <= inner.clientHeight + 1 && inner.scrollWidth <= inner.clientWidth + 1;
-			};
-			if ( ! inner.clientHeight || fits() ) {
-				return;
-			}
-			var nodes = function () {
-				var walker = document.createTreeWalker( text, NodeFilter.SHOW_TEXT );
-				var list = [];
-				while ( walker.nextNode() ) {
-					list.push( walker.currentNode );
-				}
-				return list;
-			};
-			var total = nodes().reduce( function ( sum, node ) {
-				return sum + node.nodeValue.length;
-			}, 0 );
-			// The first `count` characters (back to a word), "…" after them,
-			// nothing after it; false if nothing is left.
-			var cutAt = function ( count, atWord ) {
-				text.innerHTML = text.wpSwiperFull;
-				var left = count;
-				var list = nodes();
-				var at = -1;
-				for ( var i = 0; i < list.length; i++ ) {
-					if ( left <= list[ i ].nodeValue.length ) {
-						at = i;
-						break;
-					}
-					left -= list[ i ].nodeValue.length;
-				}
-				if ( at < 0 ) {
-					return true;
-				}
-				var value = list[ at ].nodeValue.slice( 0, left );
-				if ( atWord && /\S$/.test( value ) && /^\S/.test( list[ at ].nodeValue.slice( left ) ) ) {
-					value = value.replace( /\S+$/, '' );
-				}
-				list[ at ].nodeValue = value.replace( /\s+$/, '' ) + '…';
-				// Everything after the cut: the rest of its nodes, then any element left empty.
-				for ( var j = at + 1; j < list.length; j++ ) {
-					list[ j ].nodeValue = '';
-				}
-				[].slice.call( text.querySelectorAll( '*' ) ).reverse().forEach( function ( node ) {
-					if ( ! node.textContent.trim() && ! node.querySelector( 'img' ) && node.tagName !== 'BR' ) {
-						node.parentNode.removeChild( node );
-					}
-				} );
-				return '…' !== text.textContent.trim();
-			};
-			var low = 0;
-			var high = total - 1;
-			while ( low < high ) {
-				var mid = Math.ceil( ( low + high ) / 2 );
-				cutAt( mid, false );
-				if ( fits() ) {
-					low = mid;
-				} else {
-					high = mid - 1;
-				}
-			}
-			if ( ! cutAt( low, true ) || ! fits() ) {
-				text.innerHTML = '';
-				text.hidden = true;
+			if ( window.wpSwiperContent ) {
+				window.wpSwiperContent.fit( cell.querySelector( '.wp-swiper-content' ) );
 			}
 		}
 
@@ -1392,7 +1312,7 @@
 			if ( cell.wpReal === -1 ) {
 				fitContent( cell );
 				// Its image not loaded yet: fitted again once it is.
-				[].forEach.call( cell.querySelectorAll( 'img.wp-swiper-collage__content-image' ), function ( img ) {
+				[].forEach.call( cell.querySelectorAll( 'img.wp-swiper-content__image' ), function ( img ) {
 					if ( ! img.complete && ! img.wpSwiperFit ) {
 						img.wpSwiperFit = true;
 						img.addEventListener( 'load', function () {

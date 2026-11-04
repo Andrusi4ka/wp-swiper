@@ -17,7 +17,7 @@ const CASES = [
 	'collage-justified', 'collage-random', 'collage-feature',
 	'collage-content', 'collage-content-scatter', 'collage-content-feature', 'collage-content-shortcode',
 	'art-ring', 'art-ring-text', 'art-grid-circle', 'art-grid-circle-text', 'art-grid-square', 'art-grid-square-text',
-	'art-grid-shapes', 'art-grid-shapes-one', 'art-grid-shapes-background', 'art-ring-background', 'collage-background-shadow', 'art-grid-background-shadow',
+	'art-grid-shapes', 'art-grid-shapes-one', 'art-shape-content', 'art-grid-shapes-background', 'art-ring-background', 'collage-background-shadow', 'art-grid-background-shadow',
 	'art-text-mask', 'art-text-mask-sans', 'art-text-mask-each', 'art-text-mask-right', 'art-text-mask-left', 'art-text-mask-name', 'art-text-mask-auto', 'art-text-mask-stretch', 'art-text-mask-join', 'art-text-mask-rounded', 'art-text-mask-gradient',
 ];
 
@@ -162,7 +162,8 @@ for ( const name of CASES ) {
 			test( 'a photo opens the lightbox', async ( { page } ) => {
 				const errors = await open( page, name );
 				const photo = /^art-/.test( name )
-					? page.locator( '.wp-swiper-art__piece:visible' ).first()
+					// A photo's window, not Content in a window's (no lightbox).
+					? page.locator( '.wp-swiper-art__piece:not(.wp-swiper-art__piece--content):visible' ).first()
 					: /^collage-/.test( name )
 						// A photo's place, not Content in a place's (no lightbox).
 						? page.locator( '.wp-swiper-collage__cell:not(.wp-swiper-collage__cell--content) img:visible' ).first()

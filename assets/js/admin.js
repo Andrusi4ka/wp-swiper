@@ -2397,6 +2397,16 @@
 						field( name ).hide();
 					} );
 				}
+				// SVG shape, Content in a window: not as a background (render
+				// leaves it out there); its own settings only while it is on.
+				if ( background ) {
+					field( 'art_content' ).hide();
+				}
+				if ( background || ! $( '#wp-swiper-art_content' ).is( ':checked' ) ) {
+					[ 'art_content_window', 'art_content_image', 'art_content_image_size', 'art_content_text', 'art_content_font_size', 'art_content_padding', 'art_content_valign', 'art_content_bg' ].forEach( function ( name ) {
+						field( name ).hide();
+					} );
+				}
 				// Photo swapping's own settings only while it is on (as the Collage's).
 				if ( ! $( '#wp-swiper-art_swap' ).is( ':checked' ) ) {
 					[ 'art_swap_target', 'art_swap_delay', 'art_swap_speed', 'art_pause' ].forEach( function ( name ) {
@@ -3091,12 +3101,14 @@
 			try {
 				devOn = window.localStorage.getItem( DEV_KEY ) === '1';
 			} catch ( e ) {}
-			// It draws a slider's slides and a collage's places (preview-dev.js):
-			// hidden where there are none to draw (Art and Text mask; no slides
-			// yet), its place kept (the bar stays as it is); the choice is kept
-			// for when it is back.
+			// It draws a slider's slides, a collage's places and an SVG shape's
+			// windows (preview-dev.js): hidden where there are none to draw (Text
+			// mask, Art's other Styles; no slides yet), its place kept (the bar
+			// stays as it is); the choice is kept for when it is back.
 			var devAvailable = function () {
-				return [ 'art', 'text-mask' ].indexOf( $( '#wp-swiper-effect' ).val() ) === -1 && $list.children().length > 0;
+				var effect = $( '#wp-swiper-effect' ).val();
+				var art = effect === 'art' && $( '#wp-swiper-art_style' ).val() === 'shape';
+				return ( art || [ 'art', 'text-mask' ].indexOf( effect ) === -1 ) && $list.children().length > 0;
 			};
 			var applyDev = function () {
 				var available = devAvailable();
@@ -3108,7 +3120,7 @@
 					}
 				} catch ( e ) {}
 			};
-			$( '#wp-swiper-effect' ).on( 'change', applyDev );
+			$( '#wp-swiper-effect, #wp-swiper-art_style' ).on( 'change', applyDev );
 			// A slide added or removed (toggleEmpty()).
 			$list.on( 'wpswiperslides', applyDev );
 			$dev.on( 'click', function () {
@@ -3487,6 +3499,8 @@
 							device: device,
 							order: idsOf( resolved( 'art_order', device ) ),
 							center: isFinite( center ) ? center : null,
+							// SVG shape: the window with Content in a window.
+							contentWindow: Number( resolved( 'art_content_window', device ) ) || 0,
 							// Grid shapes: its layout (one for every device), only where
 							// it changed (none kept, the default one: the preview cannot).
 							cells: cellsChanged ? String( $( '#wp-swiper-art_cells' ).val() || '' ) : undefined
@@ -3686,6 +3700,11 @@
 					$( '#wp-swiper-art_order' + suffix ).val( data.ids.map( Number ).filter( function ( id ) {
 						return id > 0;
 					} ).join( ',' ) );
+				} else if ( data.wpSwiper === 'art-content' && data.window >= 1 && data.window <= 100 ) {
+					// SVG shape, Content in a window dragged onto another window (with
+					// the order just before it: one step back with Undo).
+					input( 'art_content_window', data.device ).val( Math.round( data.window ) );
+					syncResponsive( field( 'art_content_window' ) );
 				} else if ( data.wpSwiper === 'art-center' && isFinite( data.center ) ) {
 					// Checked again when saved (20–75).
 					$( '#wp-swiper-art_ring_center' + suffix ).val( Math.round( Math.max( 20, Math.min( 75, Number( data.center ) ) ) * 10 ) / 10 );

@@ -43,13 +43,15 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertTrue( wp_script_is( 'wp-swiper-collage', 'enqueued' ) );
 		$this->assertTrue( wp_style_is( 'wp-swiper-collage', 'enqueued' ) );
 		$this->assertTrue( wp_style_is( 'wp-swiper', 'enqueued' ) );
-		$this->assertSame( array( 'wp-swiper' ), wp_scripts()->query( 'wp-swiper-collage' )->deps );
+		// And the shared one for Content in a place (content.js).
+		$this->assertSame( array( 'wp-swiper', 'wp-swiper-content' ), wp_scripts()->query( 'wp-swiper-collage' )->deps );
 		$this->assertSame( array( 'wp-swiper' ), wp_styles()->query( 'wp-swiper-collage' )->deps );
 		wp_scripts()->all_deps( wp_scripts()->queue );
 		$this->assertSame( array( 'wp-swiper', 'wp-swiper-collage' ), array_values( array_intersect( wp_scripts()->to_do, array( 'wp-swiper', 'wp-swiper-collage' ) ) ) );
 
 		// The files exist where they are registered.
 		$this->assertFileExists( WP_SWIPER_DIR . 'assets/js/collage.js' );
+		$this->assertFileExists( WP_SWIPER_DIR . 'assets/js/content.js' );
 		$this->assertFileExists( WP_SWIPER_DIR . 'assets/css/collage.css' );
 	}
 
