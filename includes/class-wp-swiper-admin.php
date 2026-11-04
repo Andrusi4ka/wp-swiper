@@ -116,6 +116,7 @@ class WP_Swiper_Admin {
 					'zoomEffects' => WP_Swiper_Settings::ZOOM_EFFECTS,
 					// Effects whose photos can have a shadow ("Image shadow").
 					'shadowEffects' => WP_Swiper_Settings::SHADOW_EFFECTS,
+					'shadowBackgroundEffects' => WP_Swiper_Settings::SHADOW_BACKGROUND_EFFECTS,
 					// The collage's template Styles: their sizes kept apart (collage_cuts).
 					'collageTemplates' => WP_Swiper_Settings::COLLAGE_TEMPLATES,
 					// What Height measures (admin.js): each slide across a horizontal

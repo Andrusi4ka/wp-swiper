@@ -15,6 +15,8 @@
 	var ZOOM_EFFECTS = i18n.zoomEffects || [];
 	// Effects whose photos can have a shadow (Image shadow).
 	var SHADOW_EFFECTS = i18n.shadowEffects || [];
+	// Of those, the ones that keep it as a background (Collage, Art).
+	var SHADOW_BACKGROUND_EFFECTS = i18n.shadowBackgroundEffects || [];
 
 	$( function () {
 		var $list = $( '#wp-swiper-slide-list' );
@@ -2159,11 +2161,12 @@
 			field( 'thumbs_border_color' ).toggle( thumbsFrame );
 			field( 'thumbs_active_color' ).toggle( thumbsFrame );
 			// Image shadow: where the photos stand apart (WP_Swiper_Settings::shadow()
-			// checks the same), and Fade's one photo: not a background; Creative:
+			// checks the same), and Fade's one photo: not a background (but Collage and Art,
+			// whose photos stand apart there too); Creative:
 			// the carousel; Slide: more than one slide in view, of their own
 			// widths or a continuous scroll. Its settings once on; Art has no
 			// spread (drop-shadow).
-			var canShadow = SHADOW_EFFECTS.indexOf( effect ) !== -1 && ! background
+			var canShadow = SHADOW_EFFECTS.indexOf( effect ) !== -1 && ( ! background || SHADOW_BACKGROUND_EFFECTS.indexOf( effect ) !== -1 )
 				&& ( effect !== 'creative' || carousel )
 				&& ( ! slide || marquee || autoWidth || expand || maxPerView() > 1 );
 			var shadowOn = canShadow && $( '#wp-swiper-image_shadow' ).is( ':checked' );

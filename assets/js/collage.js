@@ -1176,7 +1176,7 @@
 			}, 0 );
 			// The first `count` characters (back to a word), "…" after them,
 			// nothing after it; false if nothing is left.
-			var cut = function ( count, atWord ) {
+			var cutAt = function ( count, atWord ) {
 				text.innerHTML = text.wpSwiperFull;
 				var left = count;
 				var list = nodes();
@@ -1211,14 +1211,14 @@
 			var high = total - 1;
 			while ( low < high ) {
 				var mid = Math.ceil( ( low + high ) / 2 );
-				cut( mid, false );
+				cutAt( mid, false );
 				if ( fits() ) {
 					low = mid;
 				} else {
 					high = mid - 1;
 				}
 			}
-			if ( ! cut( low, true ) || ! fits() ) {
+			if ( ! cutAt( low, true ) || ! fits() ) {
 				text.innerHTML = '';
 				text.hidden = true;
 			}
@@ -1644,8 +1644,10 @@
 			var gap = Number( config.gap[ current ] ) || 0;
 			// A template has its places (photos repeat when there are fewer); the
 			// others show as many as set, at most the photos there are.
-			// Content in a place takes one of them (one more than the photos at most).
-			var count = template ? mosaicLeaves( template ).length : Math.min( slides.length + ( contentNode ? 1 : 0 ), Math.max( 1, Number( config.count[ current ] ) || 1 ) );
+			// Content in a place takes one of them (one more than the photos at most;
+			// not Justified rows or Masonry, which have none: no photo twice there).
+			var withContent = !! contentNode && layout !== 'justified' && layout !== 'masonry';
+			var count = template ? mosaicLeaves( template ).length : Math.min( slides.length + ( withContent ? 1 : 0 ), Math.max( 1, Number( config.count[ current ] ) || 1 ) );
 			var content = contentPlace( count );
 			// The places for photos, in turn.
 			var shown = 0;

@@ -17,7 +17,7 @@ const CASES = [
 	'collage-justified', 'collage-random', 'collage-feature',
 	'collage-content', 'collage-content-scatter', 'collage-content-feature', 'collage-content-shortcode',
 	'art-ring', 'art-ring-text', 'art-grid-circle', 'art-grid-circle-text', 'art-grid-square', 'art-grid-square-text',
-	'art-grid-shapes', 'art-grid-shapes-one', 'art-grid-shapes-background', 'art-ring-background',
+	'art-grid-shapes', 'art-grid-shapes-one', 'art-grid-shapes-background', 'art-ring-background', 'collage-background-shadow', 'art-grid-background-shadow',
 	'art-text-mask', 'art-text-mask-sans', 'art-text-mask-each', 'art-text-mask-right', 'art-text-mask-left', 'art-text-mask-name', 'art-text-mask-auto', 'art-text-mask-stretch', 'art-text-mask-join', 'art-text-mask-rounded', 'art-text-mask-gradient',
 ];
 
@@ -140,7 +140,8 @@ for ( const name of CASES ) {
 			} );
 		}
 
-		if ( /-shadow$/.test( name ) && ! /^fade/.test( name ) ) {
+		// Sliders only (Collage and Art have no neighbour slides).
+		if ( /-shadow$/.test( name ) && ! /^(fade|collage|art)/.test( name ) ) {
 			test( 'no neighbour shows in the room for the shadow', async ( { page } ) => {
 				await open( page, name );
 				expect( await inRoom( page, /^marquee/.test( name ) ) ).toBe( 0 );

@@ -136,3 +136,16 @@ test( 'collage-content-shortcode: a form that works and scrolls', async ( { page
 	expect( found ).toEqual( { typed: 'typed', forms: 1, cut: false, scrolls: 'auto', taller: true } );
 	expect( errors ).toEqual( [] );
 } );
+
+// Justified rows or Masonry have no content: as many places as photos, each
+// once (not one more); on a device with Grid, the content and every photo.
+test( 'collage-content-masonry: no photo twice where there is no content', async ( { page } ) => {
+	const errors = await open( page, 'collage-content-masonry' );
+	const found = await state( page );
+	const mobile = page.viewportSize().width < 768;
+	expect( found.contents ).toBe( mobile ? 1 : 0 );
+	expect( found.cells ).toBe( mobile ? 5 : 4 );
+	expect( new Set( found.photos ).size ).toBe( 4 );
+	expect( found.photos.length ).toBe( 4 );
+	expect( errors ).toEqual( [] );
+} );

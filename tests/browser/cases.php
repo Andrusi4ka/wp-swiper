@@ -94,6 +94,11 @@ return array(
 	'collage-content-scatter' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'collage_count' => '6', 'collage_rotate' => '14', 'collage_content' => '1', 'collage_content_place' => '1', 'collage_content_text' => '<p>' . str_repeat( 'A long text that does not fit in its place. ', 30 ) . '</p>', 'collage_content_bg' => 'rgba(30,60,90,1)', 'lightbox' => '1' ) ),
 	// A shortcode in it (fixture.php: a form whose script marks it once the page is there).
 	'collage-content-shortcode' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'collage_count' => '6', 'collage_content' => '1', 'collage_content_place' => '3', 'collage_content_text' => '<p>' . str_repeat( 'Write to us. ', 40 ) . '</p>[wp_swiper_fixture_form]', 'height' => '420', 'lightbox' => '1' ) ),
+	// Masonry on desktop (no content there), Grid on mobile: each photo once on both.
+	'collage-content-masonry' => array(
+		'settings' => array( 'effect' => 'collage', 'collage_layout' => 'masonry', 'collage_layout_mobile' => 'grid', 'collage_count' => '10', 'collage_content' => '1', 'collage_content_text' => '<p>Hello</p>' ),
+		'photos'   => 4,
+	),
 	'collage-content-feature' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'feature-left', 'collage_content' => '1', 'collage_content_place' => '1', 'collage_content_text' => '<p>The big place</p>', 'collage_content_valign' => 'bottom', 'lightbox' => '1' ) ),
 	'art-ring'         => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'lightbox' => '1' ) ),
 	'art-ring-text'    => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring-text', 'art_center' => '1', 'art_center_text' => '<p>Hello</p>', 'lightbox' => '1' ) ),
@@ -183,6 +188,15 @@ return array(
 	),
 	// A ring as its block's background, its proportions kept: filling the
 	// block (Cover) at the right on desktop, all of it (Contain) at the top on mobile.
+	// A background with Image shadow (Collage and Art keep it there).
+	'collage-background-shadow' => array(
+		'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'collage_gap' => '20', 'background' => '1', 'background_class' => 'fixture-bg', 'height_unit' => 'auto', 'image_shadow' => '1', 'image_shadow_y' => '8', 'image_shadow_blur' => '16', 'image_shadow_color' => 'rgba(0,0,0,0.6)' ),
+		'block'    => true,
+	),
+	'art-grid-background-shadow' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'background' => '1', 'background_class' => 'fixture-bg', 'image_shadow' => '1', 'image_shadow_y' => '8', 'image_shadow_blur' => '16', 'image_shadow_color' => 'rgba(0,0,0,0.6)' ),
+		'block'    => true,
+	),
 	'art-ring-background' => array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'art_rounded' => '1', 'background' => '1', 'background_class' => 'fixture-bg', 'art_bg_size' => 'cover', 'art_bg_position' => 'right center', 'art_bg_size_mobile' => 'contain', 'art_bg_position_mobile' => 'center top' ),
 		'photos'   => 8,

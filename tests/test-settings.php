@@ -615,10 +615,14 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		// Blur + spread, less or more the offset on each side.
 		$this->assertSame( array( 'top' => 12, 'right' => 26, 'bottom' => 32, 'left' => 18 ), $shadow['room'] );
 
-		// Off; not a background; not for an effect with one photo in view (but Fade).
+		// Off; as a background only for Collage and Art (their photos stand apart
+		// there too); not for an effect with one photo in view (but Fade).
 		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( array( 'effect' => 'collage' ) ) ) );
-		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'collage', 'background' => true, 'background_class' => 'hero' ) ) ) );
-		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'fade', 'background' => true, 'background_class' => 'hero' ) ) ) );
+		$background = array( 'background' => true, 'background_class' => 'hero' );
+		$this->assertSame( 20, WP_Swiper_Settings::shadow( $this->settings( $on + $background + array( 'effect' => 'collage' ) ) )['blur'] );
+		$this->assertSame( 20, WP_Swiper_Settings::shadow( $this->settings( $on + $background + array( 'effect' => 'art' ) ) )['blur'] );
+		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + $background + array( 'effect' => 'fade' ) ) ) );
+		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + $background + array( 'effect' => 'slide', 'slides_per_view' => 3 ) ) ) );
 		foreach ( array( 'cube', 'flip', 'thumbs' ) as $effect ) {
 			$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => $effect ) ) ), $effect );
 		}

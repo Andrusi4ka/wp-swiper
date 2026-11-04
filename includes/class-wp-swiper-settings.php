@@ -78,6 +78,12 @@ class WP_Swiper_Settings {
 	const SHADOW_EFFECTS = array( 'slide', 'fade', 'coverflow', 'cards', 'creative', 'collage', 'art', 'text-mask' );
 
 	/**
+	 * Of those, the ones that keep it as a background (Use as background): their
+	 * photos stand apart there too (a sliders' photo fills the block).
+	 */
+	const SHADOW_BACKGROUND_EFFECTS = array( 'collage', 'art' );
+
+	/**
 	 * Effects whose photos can zoom under the pointer (Zoom on hover): not
 	 * those that turn in 3D (Cube, Flip, Coverflow, Cards).
 	 */
@@ -223,7 +229,8 @@ class WP_Swiper_Settings {
 	 */
 	public static function shadow( $settings ) {
 		$effect = $settings['effect'];
-		if ( empty( $settings['image_shadow'] ) || ! in_array( $effect, self::SHADOW_EFFECTS, true ) || self::is_background( $settings ) ) {
+		if ( empty( $settings['image_shadow'] ) || ! in_array( $effect, self::SHADOW_EFFECTS, true )
+			|| ( self::is_background( $settings ) && ! in_array( $effect, self::SHADOW_BACKGROUND_EFFECTS, true ) ) ) {
 			return false;
 		}
 		// Creative: only the carousel has photos side by side.

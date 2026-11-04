@@ -194,6 +194,12 @@
 	max-width: var(--wp-swiper-collage-cw, 100%);
 }
 
+/* Content in a place, until collage.js moves it into its place: hidden
+   (should a theme show [hidden] elements). */
+.wp-swiper-collage__content-pool {
+	display: none;
+}
+
 /* Content in a place (render.php collage_content(), collage.js build()): an
    image over text on the place's background, in its middle (or at its top
    or bottom), cut at a word where it does not fit (fitContent()). A place
