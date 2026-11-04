@@ -1,0 +1,245 @@
+/* WP Swiper admin: color fields (the swatch and Pickr's window) and the gradient editor.
+ * One of admin.css's parts, loaded after it in this order (WP_Swiper_Admin::STYLES). */
+
+/* Every color field (color_pick()): a swatch, the color over a checkerboard
+   (so a see-through one shows as such), that opens the picker (Pickr). As
+   tall as the selects next to it; smaller on a field's row (compact) and in
+   the Slide info window. */
+.wp-swiper-color-pick {
+	display: inline-flex;
+	vertical-align: middle;
+}
+
+.wp-swiper-color-pick[hidden] {
+	display: none;
+}
+
+.wp-swiper-color-pick__swatch {
+	display: block;
+	width: 64px;
+	height: 40px;
+	padding: 3px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: #fff;
+	cursor: pointer;
+}
+
+.wp-swiper-color-pick__swatch:hover {
+	border-color: #2c3338;
+}
+
+.wp-swiper-color-pick__swatch:focus-visible,
+.wp-swiper-color-pick__swatch[aria-expanded="true"] {
+	border-color: var(--wp-admin-theme-color, #2271b1);
+	outline: none;
+	box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #2271b1);
+}
+
+.wp-swiper-color-pick__chip {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 2px;
+	background: repeating-conic-gradient(#dcdcde 0% 25%, #fff 0% 50%) 0 0 / 10px 10px;
+}
+
+.wp-swiper-color-pick--compact .wp-swiper-color-pick__swatch {
+	width: 36px;
+	height: 24px;
+	padding: 2px;
+}
+
+.wp-swiper-modal__color .wp-swiper-color-pick__swatch {
+	height: 30px;
+}
+
+/* A gradient (gradient_field(), as WoodMart's): its selects in a row, the
+   gradient as a bar (over a checkerboard: see-through colors show as such),
+   its colors' points under it (the chosen one in the accent color), the
+   chosen one's color and Delete (red). */
+.wp-swiper-gradient__selects {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 10px;
+}
+
+.wp-swiper-gradient__selects select {
+	flex: 1 1 120px;
+	min-width: 0;
+}
+
+.wp-swiper-gradient__selects select[hidden] {
+	display: none;
+}
+
+.wp-swiper-gradient__bar {
+	position: relative;
+	height: 28px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: repeating-conic-gradient(#dcdcde 0% 25%, #fff 0% 50%) 0 0 / 10px 10px;
+	cursor: copy;
+}
+
+.wp-swiper-gradient__fill {
+	position: absolute;
+	inset: 0;
+	border-radius: 3px;
+}
+
+.wp-swiper-gradient__stops {
+	position: relative;
+	height: 26px;
+	margin-bottom: 8px;
+}
+
+.wp-swiper-gradient__handle {
+	position: absolute;
+	top: 4px;
+	width: 18px;
+	height: 18px;
+	margin-left: -9px;
+	padding: 2px;
+	border: 1px solid #8c8f94;
+	border-radius: 3px;
+	background: repeating-conic-gradient(#dcdcde 0% 25%, #fff 0% 50%) 0 0 / 6px 6px;
+	cursor: ew-resize;
+	touch-action: none;
+}
+
+/* Its tip, up to the bar. */
+.wp-swiper-gradient__handle::before {
+	content: "";
+	position: absolute;
+	top: -5px;
+	left: 50%;
+	margin-left: -4px;
+	border: 4px solid transparent;
+	border-top: 0;
+	border-bottom: 4px solid #8c8f94;
+}
+
+.wp-swiper-gradient__chip {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 1px;
+}
+
+.wp-swiper-gradient__handle.is-chosen,
+.wp-swiper-gradient__handle:focus-visible {
+	border-color: var(--wp-admin-theme-color, #2271b1);
+	outline: none;
+	box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #2271b1);
+}
+
+.wp-swiper-gradient__handle.is-chosen::before {
+	border-bottom-color: var(--wp-admin-theme-color, #2271b1);
+}
+
+.wp-swiper-gradient__stop {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+}
+
+/* Delete: red text, as WordPress's own delete links. */
+.wp-swiper-gradient .wp-swiper-gradient__delete {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #d63638;
+	cursor: pointer;
+}
+
+.wp-swiper-gradient .wp-swiper-gradient__delete:hover,
+.wp-swiper-gradient .wp-swiper-gradient__delete:focus {
+	color: #b32d2e;
+}
+
+.wp-swiper-gradient .wp-swiper-gradient__delete:disabled {
+	color: #a7aaad;
+	cursor: default;
+}
+
+/* The picker (Pickr's classic theme, in the body): over the Slide info
+   window (z-index 100050), under the editor's link window (100105). */
+.pcr-app.wp-swiper-pcr {
+	z-index: 100060;
+}
+
+/* Squarer than Pickr's own (28.5em wide, the palette 8em tall): narrower,
+   the palette taller; the color's code on a row of its own, taller too. */
+.pcr-app.wp-swiper-pcr[data-theme="classic"] {
+	width: 20em;
+}
+
+.pcr-app.wp-swiper-pcr[data-theme="classic"] .pcr-selection .pcr-color-palette {
+	height: 11em;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-result {
+	flex: 1 0 100%;
+	height: 2.6em;
+	font-size: 0.85em;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-type,
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-cancel,
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-clear {
+	flex: 1 1 auto;
+}
+
+/* Closing (it fades out): a click there goes through, it changes no color. */
+.pcr-app.wp-swiper-pcr:not(.visible) {
+	pointer-events: none;
+}
+
+/* Cancel grey, as the format buttons; Default red (Pickr's Clear). */
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-cancel {
+	background: #f1f3f4;
+	color: #75797e;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-cancel:hover {
+	filter: brightness(0.92);
+}
+
+/* WordPress's own input styles off Pickr's: its sizes as its theme has them. */
+.pcr-app.wp-swiper-pcr .pcr-interaction input {
+	min-height: 0;
+	box-shadow: none;
+	line-height: normal;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-result {
+	padding: 0 0.6em;
+	border: 0;
+	border-radius: 0.15em;
+	background: #f1f3f4;
+	color: #75797e;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-result:focus {
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 0 3px rgba(66, 133, 244, 0.75);
+}
+
+.wp-swiper-modal__size-unit {
+	color: #646970;
+}
+
+.wp-swiper-modal__body textarea {
+	width: 100%;
+}
+
+.wp-swiper-modal__foot {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	padding: 12px 20px;
+	border-top: 1px solid #dcdcde;
+}
+

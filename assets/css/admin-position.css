@@ -1,0 +1,122 @@
+/* WP Swiper admin: the Image position window (the point and the crops).
+ * One of admin.css's parts, loaded after it in this order (WP_Swiper_Admin::STYLES). */
+
+/* Image position window: the image with its point, the crops beside it
+   (under it on narrow screens). */
+.wp-swiper-modal--position .wp-swiper-modal__box {
+	width: min(980px, 100%);
+}
+
+.wp-swiper-modal--position .wp-swiper-modal__body > .description {
+	margin: 0 0 12px;
+}
+
+.wp-swiper-focus {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.wp-swiper-focus__stage {
+	position: relative;
+	flex: 0 1 auto;
+	min-width: 0;
+	line-height: 0;
+	cursor: crosshair;
+	touch-action: none;
+	user-select: none;
+	border-radius: 4px;
+	outline-offset: 2px;
+}
+
+.wp-swiper-focus__stage:focus-visible {
+	outline: 2px solid var(--wp-admin-theme-color, #2271b1);
+}
+
+.wp-swiper-focus__image {
+	display: block;
+	max-width: 100%;
+	max-height: min(60vh, 560px);
+	border-radius: 4px;
+	pointer-events: none;
+}
+
+.wp-swiper-focus__point {
+	position: absolute;
+	width: 22px;
+	height: 22px;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	background: rgba(34, 113, 177, 0.55);
+	box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.4);
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+}
+
+/* Not set: the middle, dimmed. */
+.wp-swiper-focus__point.is-default {
+	background: rgba(255, 255, 255, 0.25);
+	border-style: dashed;
+}
+
+.wp-swiper-focus__frames {
+	display: flex;
+	flex: 0 0 150px;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.wp-swiper-focus__frame {
+	display: block;
+	overflow: hidden;
+	border-radius: 4px;
+	background: #f0f0f1;
+}
+
+.wp-swiper-focus__frame img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.wp-swiper-focus__frame--wide {
+	aspect-ratio: 16 / 9;
+}
+
+.wp-swiper-focus__frame--square {
+	width: 96px;
+	aspect-ratio: 1;
+}
+
+.wp-swiper-focus__frame--tall {
+	width: 72px;
+	aspect-ratio: 9 / 16;
+}
+
+.wp-swiper-focus__value {
+	margin: 12px 0 0;
+	color: #50575e;
+}
+
+/* Reset on the left, the buttons on the right. */
+.wp-swiper-focus__reset {
+	margin-right: auto !important;
+}
+
+@media (max-width: 782px) {
+	.wp-swiper-focus {
+		flex-direction: column;
+	}
+
+	.wp-swiper-focus__frames {
+		flex: none;
+		flex-direction: row;
+		align-items: flex-start;
+	}
+
+	.wp-swiper-focus__frame--wide {
+		width: 140px;
+	}
+}
+

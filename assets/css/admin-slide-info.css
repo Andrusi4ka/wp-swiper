@@ -1,0 +1,335 @@
+/* WP Swiper admin: the Slide info window (its tabs, thumbnail, title, the text editors' sizes and colors).
+ * One of admin.css's parts, loaded after it in this order (WP_Swiper_Admin::STYLES). */
+
+/* A slide's button that opens its window, and the marks of what it has. */
+.wp-swiper-slide .wp-swiper-slide__edit {
+	width: 100%;
+	text-align: center;
+}
+
+.wp-swiper-slide__marks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.wp-swiper-slide__mark {
+	padding: 0 6px;
+	border-radius: 3px;
+	background: #f0f6fc;
+	color: var(--wp-swiper-accent);
+	font-size: 11px;
+	line-height: 18px;
+}
+
+.wp-swiper-slide__mark[hidden] {
+	display: none;
+}
+
+/* The slide's window: over the admin bar, under the editor's own link
+   window (#wp-link-wrap, z-index 100105). */
+body.wp-swiper-modal-open {
+	overflow: hidden;
+}
+
+.wp-swiper-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100050;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+}
+
+.wp-swiper-modal[hidden] {
+	display: none;
+}
+
+.wp-swiper-modal__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.6);
+}
+
+.wp-swiper-modal__box {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: min(760px, 100%);
+	max-height: 100%;
+	border-radius: 4px;
+	background: #fff;
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+	--wp-admin-theme-color: #2271b1;
+}
+
+.wp-swiper-modal__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 12px 12px 20px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+/* The slide's thumbnail, before the title. */
+.wp-swiper-modal__thumb {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 128px;
+	height: 96px;
+	overflow: hidden;
+	border-radius: 4px;
+	background: #1d2327;
+	color: #fff;
+}
+
+.wp-swiper-modal__thumb-media {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
+.wp-swiper-modal__thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* The title and, under it, the Replace photo button. */
+.wp-swiper-modal__heading {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	min-width: 0;
+}
+
+.wp-swiper-modal__replace.button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.wp-swiper-modal__replace .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+}
+
+.wp-swiper-modal__title {
+	flex: 1 1 auto;
+	margin: 0;
+	font-size: 16px;
+	line-height: 1.4;
+}
+
+.wp-swiper-modal__slide {
+	color: #646970;
+	font-weight: 400;
+}
+
+.wp-swiper-modal__close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	border-radius: 4px;
+	background: none;
+	color: #50575e;
+	cursor: pointer;
+}
+
+.wp-swiper-modal__close:hover,
+.wp-swiper-modal__close:focus {
+	background: #f0f0f1;
+	color: #1d2327;
+}
+
+.wp-swiper-modal__body {
+	overflow-y: auto;
+	padding: 16px 20px;
+}
+
+/* Its parts: caption, description, link (no Link tab for a video slide),
+   one tab each, under the title. The tab in view and its part are one grey
+   card (as the settings' blocks), the tab its top joined to it; a dot on a
+   tab whose part has something in it. */
+.wp-swiper-modal__tabs {
+	display: flex;
+	gap: 4px;
+	padding: 16px 20px 0;
+}
+
+.wp-swiper-modal__tab {
+	position: relative;
+	z-index: 1;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 -1px;
+	padding: 9px 14px 10px;
+	border: 1px solid transparent;
+	border-bottom: 0;
+	border-radius: 6px 6px 0 0;
+	background: none;
+	color: #50575e;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.wp-swiper-modal__tab[hidden] {
+	display: none;
+}
+
+.wp-swiper-modal__tab:hover {
+	background: #f6f7f7;
+	color: #1d2327;
+}
+
+.wp-swiper-modal__tab:focus-visible {
+	outline: 2px solid var(--wp-admin-theme-color, #2271b1);
+	outline-offset: -2px;
+}
+
+/* In view: grey, its bottom over the card's top line. */
+.wp-swiper-modal__tab[aria-selected="true"] {
+	border-color: #e4e4e4;
+	background: #f2f2f2;
+	color: #1d2327;
+}
+
+/* As tall as with the Description tab (its editor the tallest part), so
+   the window keeps its size from tab to tab; no taller than the screen. */
+#wp-swiper-slide-modal .wp-swiper-modal__box {
+	height: min(692px, 100%);
+}
+
+#wp-swiper-slide-modal .wp-swiper-modal__body {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+	padding: 0 20px 16px;
+}
+
+/* The part in view: the card, down to the window's foot. */
+#wp-swiper-slide-modal .wp-swiper-modal__section {
+	flex: 1 0 auto;
+	padding: 12px;
+	border: 1px solid #e4e4e4;
+	border-radius: 6px;
+	background: #f2f2f2;
+}
+
+/* Under the first tab: no round corner there. */
+#wp-swiper-slide-modal .wp-swiper-modal__tabs:has(> .wp-swiper-modal__tab:first-child[aria-selected="true"]) + .wp-swiper-modal__body .wp-swiper-modal__section {
+	border-top-left-radius: 0;
+}
+
+.wp-swiper-modal__tab-dot {
+	display: none;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #00a32a;
+}
+
+.wp-swiper-modal__tab.has-value .wp-swiper-modal__tab-dot {
+	display: block;
+}
+
+.wp-swiper-modal__section[hidden] {
+	display: none;
+}
+
+.wp-swiper-modal__label {
+	margin: 0 0 4px;
+	font-size: 14px;
+}
+
+.wp-swiper-modal__section > .description {
+	margin: 0 0 8px;
+}
+
+.wp-swiper-modal__new-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.wp-swiper-modal__new-tab input {
+	margin: 0;
+}
+
+/* Under a text's editor: its font size, weight and color side by side (one
+   under another in a narrow window), each its label over its field. */
+.wp-swiper-modal__text-style {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px 16px;
+	margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+	.wp-swiper-modal__text-style {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.wp-swiper-modal__size {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+/* The label, and a size's device icons at the end of its line. */
+.wp-swiper-modal__size-head {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 26px;
+}
+
+.wp-swiper-modal__size-label {
+	font-weight: 600;
+}
+
+.wp-swiper-modal__size .wp-swiper-modal__weight,
+.wp-swiper-modal__size .wp-swiper-modal__color-mode {
+	width: 100%;
+	max-width: none;
+}
+
+.wp-swiper-modal__size-field,
+.wp-swiper-modal__color-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.wp-swiper-modal__size-input,
+.wp-swiper-modal__color-row .wp-swiper-modal__color-mode {
+	flex: 1 1 auto;
+	width: auto;
+	min-width: 0;
+}
+
+.wp-swiper-modal__size-input[hidden] {
+	display: none;
+}
+

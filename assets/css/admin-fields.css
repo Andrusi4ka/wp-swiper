@@ -1,0 +1,286 @@
+/* WP Swiper admin: a field's label row and device switcher, tiles, help tips, the blocks (cards).
+ * One of admin.css's parts, loaded after it in this order (WP_Swiper_Admin::STYLES). */
+
+/* A field's label row: the label, its help icon and (per-device fields)
+   the desktop / tablet / mobile icons, at the end. */
+.wp-swiper-field__head {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 4px;
+}
+
+.wp-swiper-field__head label,
+.wp-swiper-field__head .wp-swiper-field__label {
+	margin: 0;
+	font-weight: 500;
+}
+
+/* A field's own desktop / tablet / mobile switcher. */
+.wp-swiper-devices {
+	display: inline-flex;
+	gap: 2px;
+	margin-left: auto;
+}
+
+.wp-swiper-devices__btn {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	border: 0;
+	border-radius: 3px;
+	background: none;
+	color: #a7aaad;
+	cursor: pointer;
+}
+
+.wp-swiper-devices__btn .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+}
+
+.wp-swiper-devices__btn:hover {
+	color: #50575e;
+}
+
+.wp-swiper-devices__btn.is-active {
+	color: var(--wp-swiper-accent, #2271b1);
+}
+
+/* Tablet/mobile has its own value (not inherited). */
+.wp-swiper-devices__btn.has-value::after {
+	content: "";
+	position: absolute;
+	top: 3px;
+	right: 3px;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #00a32a;
+}
+
+.wp-swiper-devices__btn:focus-visible {
+	outline: 2px solid var(--wp-swiper-accent, #2271b1);
+	outline-offset: 0;
+}
+
+/* Nothing to switch between: every device shows the fixed value. */
+.wp-swiper-field.is-disabled .wp-swiper-devices__btn,
+.wp-swiper-field.is-unused .wp-swiper-devices__btn {
+	color: var(--wp-swiper-disabled-text);
+	pointer-events: none;
+}
+
+.wp-swiper-field--responsive input[type="number"],
+.wp-swiper-field--responsive input[type="text"] {
+	width: 100%;
+}
+
+.wp-swiper-field__row .wp-swiper-devices__input[hidden] {
+	display: none;
+}
+
+/* A select shown as icons ("tiles": the collage's Style): the select stays
+   behind them; as many in a row as fit, evenly (the rest in the next row),
+   the chosen one in the accent color, the one a tablet / mobile Inherit
+   takes dashed. */
+.wp-swiper-field--tiles .wp-swiper-devices__input,
+.wp-swiper-field--tiles .wp-swiper-tiles__select {
+	display: none !important;
+}
+
+.wp-swiper-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+	gap: 6px;
+	width: 100%;
+}
+
+.wp-swiper-tiles__tile {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1;
+	padding: 2px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+	color: #b3b3b3;
+	cursor: pointer;
+}
+
+.wp-swiper-tiles__tile[hidden] {
+	display: none;
+}
+
+.wp-swiper-tiles__icon {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.wp-swiper-tiles__tile:hover {
+	border-color: #8c8f94;
+	color: #8c8f94;
+}
+
+.wp-swiper-tiles__tile:focus-visible {
+	outline: 2px solid var(--wp-swiper-accent);
+	outline-offset: 1px;
+}
+
+.wp-swiper-tiles__tile.is-selected {
+	border-color: var(--wp-swiper-accent);
+	box-shadow: 0 0 0 1px var(--wp-swiper-accent);
+	color: var(--wp-swiper-accent);
+}
+
+.wp-swiper-tiles__tile.is-inherited {
+	border-style: dashed;
+	border-color: var(--wp-swiper-accent);
+	color: #72aee6;
+}
+
+.wp-swiper-tiles__tile--inherit {
+	padding: 2px;
+	color: #50575e;
+	font-size: 11px;
+	line-height: 1.2;
+	text-align: center;
+}
+
+/* A Style to come: greyed, not to be picked. */
+.wp-swiper-tiles__tile.wp-swiper-tiles__tile--soon,
+.wp-swiper-tiles__tile.wp-swiper-tiles__tile--soon:hover {
+	border-style: dashed;
+	border-color: #dcdcde;
+	background: #f6f7f7;
+	color: #dcdcde;
+	cursor: not-allowed;
+}
+
+.wp-swiper-field.is-disabled .wp-swiper-tiles__tile {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+/* A value its unit leaves unused on that device (Art's Size, the Height,
+   "Auto"): greyed, kept. */
+.wp-swiper-field .wp-swiper-devices__input.is-unused {
+	opacity: 0.45;
+}
+
+/* Help text behind an "i" icon: shown on hover and keyboard focus. */
+.wp-swiper-tip {
+	position: relative;
+	display: inline-flex;
+	flex: 0 0 auto;
+	color: #a7aaad;
+	cursor: help;
+}
+
+.wp-swiper-tip[hidden] {
+	display: none;
+}
+
+.wp-swiper-tip .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+}
+
+.wp-swiper-tip:hover,
+.wp-swiper-tip:focus-visible {
+	color: var(--wp-swiper-accent, #2271b1);
+	outline: none;
+}
+
+.wp-swiper-tip::after {
+	content: attr(data-tip);
+	position: absolute;
+	/* From the icon rightwards: icons sit near the column's left edge. */
+	top: calc(100% + 6px);
+	left: -8px;
+	z-index: 20;
+	width: max-content;
+	max-width: 240px;
+	padding: 8px 10px;
+	border-radius: 4px;
+	background: #1d2327;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.45;
+	white-space: normal;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.1s;
+	pointer-events: none;
+}
+
+.wp-swiper-tip:hover::after,
+.wp-swiper-tip:focus-visible::after {
+	opacity: 1;
+	visibility: visible;
+}
+
+/* A switch and its help icon on one line. */
+.wp-swiper-field--checkbox {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* A page's blocks of fields (Movement, Arrows and keyboard…): each on a grey
+   card with its title, close to the next one. */
+.wp-swiper-block {
+	margin-top: 5px;
+	padding: 12px;
+	border: 1px solid #e4e4e4;
+	border-radius: 6px;
+	background: #f2f2f2;
+}
+
+/* The first block left on a page (admin.js; before it runs, the first one). */
+.wp-swiper-page > legend + .wp-swiper-block,
+.wp-swiper-block.is-first {
+	margin-top: 4px;
+}
+
+/* Fields after the blocks (in none): apart from the last card. */
+.wp-swiper-block + .wp-swiper-field,
+.wp-swiper-block + .wp-swiper-field-group {
+	margin-top: 14px;
+}
+
+/* A block's title (Thumbnails: Placement, Size, Look). */
+.wp-swiper-subheading {
+	margin: 0 0 10px;
+	color: #646970;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+/* The preview's device buttons: icon and name. */
+.wp-swiper-device-switch .wp-swiper-segmented__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	padding: 4px 8px;
+}
+
+.wp-swiper-device-switch .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+}
+

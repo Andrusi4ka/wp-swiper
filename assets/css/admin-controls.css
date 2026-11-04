@@ -1,0 +1,502 @@
+/* WP Swiper admin: field states (unavailable, unused), rows of fields (groups, units), button rows, range sliders, switches, sizes per device, the font picker.
+ * One of admin.css's parts, loaded after it in this order (WP_Swiper_Admin::STYLES). */
+
+/* Unavailable field: lightbox while images have links, wider active slide
+   while Image fit is "Contain", Slides per view and Direction with Fade.
+   One look for all of them, in explicit colors: no opacity, which WordPress
+   already applies to disabled controls and would stack up. */
+.wp-swiper-field.is-disabled label,
+.wp-swiper-field.is-disabled .description,
+.wp-swiper-field.is-unused label,
+.wp-swiper-field.is-unused .description,
+.wp-swiper-field.is-disabled .wp-swiper-field__label,
+.wp-swiper-field.is-unused .wp-swiper-field__label {
+	color: var(--wp-swiper-disabled-text);
+	cursor: not-allowed;
+}
+
+/* A color swatch draws over its background: fade the swatch itself; it
+   opens no picker. */
+.wp-swiper-field.is-disabled .wp-swiper-color-pick__swatch,
+.wp-swiper-field.is-unused .wp-swiper-color-pick__swatch,
+.wp-swiper-color-pick__swatch:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+/* .is-unused: the Controls fields the Thumbnails effect does not use (all but the arrows). */
+.wp-swiper-field.is-disabled input,
+.wp-swiper-field.is-disabled select,
+.wp-swiper-field.is-unused input,
+.wp-swiper-field.is-unused select {
+	border-color: var(--wp-swiper-disabled);
+	background-color: #f6f7f7;
+	box-shadow: none;
+	color: var(--wp-swiper-disabled-text);
+	opacity: 1;
+	cursor: not-allowed;
+}
+
+/* Number input and its unit select on one row (Height + px / vh / %). */
+.wp-swiper-field__row {
+	display: flex;
+	gap: 6px;
+}
+
+/* Collage Order: Shuffle, then Reset as a link beside it. */
+.wp-swiper-field[data-field="collage_order"] .wp-swiper-field__row {
+	align-items: center;
+	gap: 12px;
+}
+
+/* Red, like WordPress's own Remove / Delete links (it clears what was set). */
+.wp-swiper-field .wp-swiper-order-reset {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #b32d2e;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.wp-swiper-field .wp-swiper-order-reset:hover,
+.wp-swiper-field .wp-swiper-order-reset:focus {
+	color: #8a2424;
+}
+
+/* Nothing to reset on this device: grey, as a link that does nothing. */
+.wp-swiper-field .wp-swiper-order-reset:disabled {
+	color: #a7aaad;
+	text-decoration: none;
+	cursor: default;
+}
+
+.wp-swiper-field__row input[type="number"],
+.wp-swiper-field__row input[type="text"] {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.wp-swiper-field .wp-swiper-field__row select {
+	flex: 0 0 auto;
+	width: auto;
+	min-width: 72px;
+}
+
+/* A select that is the per-device value itself (Thumbnails position). */
+.wp-swiper-field .wp-swiper-field__row select.wp-swiper-devices__input {
+	flex: 1 1 auto;
+	width: 100%;
+	max-width: none;
+}
+
+/* Fields sharing a "group": one row; the first takes the free width. */
+.wp-swiper-field-group {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	margin: 0 0 14px;
+}
+
+.wp-swiper-field-group > .wp-swiper-field {
+	margin-bottom: 0;
+}
+
+.wp-swiper-field-group > .wp-swiper-field:first-child {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.wp-swiper-field-group > .wp-swiper-field + .wp-swiper-field {
+	flex: 0 0 auto;
+}
+
+/* Side by side, the labels on one line and the controls under them on
+   another: every head as tall as one with device buttons (26px). */
+.wp-swiper-field-group > .wp-swiper-field > .wp-swiper-field__head {
+	min-height: 26px;
+}
+
+/* Two numbers of one thing (the lightbox text's width and its limit):
+   halves, their inputs level even where a label takes two lines. */
+.wp-swiper-field-group[data-group="description_lightbox_width"] {
+	align-items: flex-end;
+}
+
+.wp-swiper-field-group[data-group="description_lightbox_width"] > .wp-swiper-field {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+/* Image shadow: its four numbers in equal columns, their inputs level even
+   where a label takes two lines. */
+.wp-swiper-field-group[data-group="image_shadow"] {
+	align-items: flex-end;
+}
+
+.wp-swiper-field-group[data-group="image_shadow"] > .wp-swiper-field {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.wp-swiper-field-group[data-group="image_shadow"] input[type="number"] {
+	width: 100%;
+	min-width: 0;
+}
+
+/* A compact field (no label above) sits right after the one before it, on its line. */
+.wp-swiper-field-group:has(> .wp-swiper-field--compact) {
+	align-items: center;
+}
+
+.wp-swiper-field-group > .wp-swiper-field:first-child:has(+ .wp-swiper-field--compact) {
+	flex: 0 0 auto;
+}
+
+/* Label of a field whose control is not a single input (button rows). */
+.wp-swiper-field__label {
+	display: block;
+	margin-bottom: 4px;
+	font-weight: 500;
+}
+
+/* Buttons over a select (Direction): the select itself stays hidden. */
+.wp-swiper-field--segmented select {
+	display: none;
+}
+
+.wp-swiper-segmented {
+	display: flex;
+	gap: 4px;
+	padding: 3px;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	background: #f6f7f7;
+}
+
+.wp-swiper-segmented__btn {
+	flex: 1 1 0;
+	min-width: 0;
+	padding: 6px 8px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	background: none;
+	color: #50575e;
+	font: inherit;
+	cursor: pointer;
+}
+
+.wp-swiper-segmented__btn:hover {
+	color: #1d2327;
+}
+
+.wp-swiper-segmented__btn[aria-pressed="true"] {
+	border-color: var(--wp-swiper-accent, #2271b1);
+	background: #fff;
+	color: var(--wp-swiper-accent, #2271b1);
+	font-weight: 600;
+}
+
+.wp-swiper-segmented__btn:focus-visible {
+	outline: 2px solid var(--wp-swiper-accent, #2271b1);
+	outline-offset: 1px;
+}
+
+.wp-swiper-segmented__btn:disabled {
+	color: var(--wp-swiper-disabled-text);
+	cursor: not-allowed;
+}
+
+.wp-swiper-segmented__btn[aria-pressed="true"]:disabled {
+	border-color: var(--wp-swiper-disabled);
+	background: #fff;
+	color: var(--wp-swiper-disabled-text);
+}
+
+/* A slider beside its number (Transition speed, Delay). */
+.wp-swiper-field__row--range {
+	align-items: center;
+	gap: 12px;
+}
+
+.wp-swiper-field .wp-swiper-field__row--range input[type="range"] {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	accent-color: var(--wp-swiper-accent, #2271b1);
+	cursor: pointer;
+}
+
+.wp-swiper-field .wp-swiper-field__row--range input[type="number"] {
+	flex: 0 0 90px;
+	width: 90px;
+}
+
+.wp-swiper-field .wp-swiper-field__row--range input[type="range"]:disabled {
+	accent-color: var(--wp-swiper-disabled);
+	cursor: not-allowed;
+}
+
+/* Switches instead of checkboxes (Advanced). */
+.wp-swiper-switches .wp-swiper-field--checkbox > label {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+}
+
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"] {
+	position: relative;
+	flex: 0 0 auto;
+	width: 36px;
+	height: 20px;
+	margin: 0;
+	border: 0;
+	border-radius: 10px;
+	background: #c3c4c7;
+	box-shadow: none;
+	appearance: none;
+	transition: background-color 0.15s;
+	cursor: pointer;
+}
+
+/* The knob; also overrides WordPress's tick on checked boxes. */
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]::before,
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:checked::before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	float: none;
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	transition: transform 0.15s;
+}
+
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:checked {
+	background: var(--wp-swiper-accent, #2271b1);
+}
+
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:checked::before {
+	transform: translateX(16px);
+}
+
+.wp-swiper-switches .wp-swiper-field--checkbox input[type="checkbox"]:focus-visible {
+	outline: 2px solid var(--wp-swiper-accent, #2271b1);
+	outline-offset: 2px;
+}
+
+.wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"],
+.wp-swiper-switches .wp-swiper-field.is-unused input[type="checkbox"],
+.wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"]:checked,
+.wp-swiper-switches .wp-swiper-field.is-unused input[type="checkbox"]:checked {
+	background: var(--wp-swiper-disabled);
+}
+
+/* The knob white whether on or off: WordPress fades that of a disabled box
+   that is checked (in a disabled box, the Caption page without captions). */
+.wp-swiper-switches .wp-swiper-field.is-disabled input[type="checkbox"]::before,
+.wp-swiper-switches .wp-swiper-field.is-unused input[type="checkbox"]::before {
+	opacity: 1;
+}
+
+/* A size per device side by side (Caption and Description Size): Desktop,
+   the button, then Tablet and Mobile once it is pressed; each a number with
+   its unit after it. */
+.wp-swiper-inline-devices {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 8px;
+}
+
+.wp-swiper-inline-devices__item {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.wp-swiper-inline-devices:not(.is-open) .wp-swiper-inline-devices__item:not([data-device="desktop"]) {
+	display: none;
+}
+
+.wp-swiper-inline-devices__item label {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: #50575e;
+}
+
+.wp-swiper-inline-devices__item .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+	color: #8c8f94;
+}
+
+.wp-swiper-inline-devices__box {
+	display: inline-flex;
+	align-items: stretch;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: #fff;
+	overflow: hidden;
+}
+
+.wp-swiper-inline-devices__box:focus-within {
+	border-color: var(--wp-swiper-accent, #2271b1);
+	box-shadow: 0 0 0 1px var(--wp-swiper-accent, #2271b1);
+}
+
+#wp-swiper-settings .wp-swiper-inline-devices__box input[type="number"] {
+	width: 48px;
+	min-height: 40px;
+	padding: 0 8px;
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	-moz-appearance: textfield;
+}
+
+.wp-swiper-inline-devices__box input[type="number"]::-webkit-inner-spin-button,
+.wp-swiper-inline-devices__box input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.wp-swiper-inline-devices__unit {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 8px;
+	border-left: 1px solid #dcdcde;
+	background: #f6f7f7;
+	color: #1d2327;
+	font-weight: 600;
+}
+
+#wp-swiper-settings .wp-swiper-inline-devices__toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 40px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #50575e;
+	cursor: pointer;
+}
+
+#wp-swiper-settings .wp-swiper-inline-devices__toggle:hover,
+#wp-swiper-settings .wp-swiper-inline-devices__toggle[aria-expanded="true"] {
+	color: var(--wp-swiper-accent, #2271b1);
+}
+
+/* A font name's field (font-picker.js): its list under it, as wide, the
+   fonts in their groups, each name in its own font; an arrow as a select's. */
+.wp-swiper-font {
+	position: relative;
+}
+
+#wp-swiper-settings .wp-swiper-font__input {
+	padding-right: 36px;
+}
+
+.wp-swiper-font__toggle {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 34px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #50575e;
+	cursor: pointer;
+}
+
+.wp-swiper-font__toggle .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+	transition: transform 0.15s ease;
+}
+
+.wp-swiper-font.is-open .wp-swiper-font__toggle .dashicons {
+	transform: rotate(180deg);
+}
+
+.wp-swiper-font__list {
+	position: absolute;
+	z-index: 30;
+	top: calc(100% + 4px);
+	left: 0;
+	right: 0;
+	max-height: 300px;
+	margin: 0;
+	padding: 4px 0;
+	overflow-y: auto;
+	list-style: none;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.wp-swiper-font__list[hidden] {
+	display: none;
+}
+
+.wp-swiper-font__group {
+	margin: 0;
+	padding: 8px 12px 4px;
+	color: #646970;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.wp-swiper-font__group:not(:first-child) {
+	margin-top: 4px;
+	border-top: 1px solid #f0f0f1;
+}
+
+.wp-swiper-font__option {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0;
+	padding: 7px 12px;
+	cursor: pointer;
+}
+
+.wp-swiper-font__option.is-active {
+	background: #f0f6fc;
+}
+
+.wp-swiper-font__option[aria-selected="true"] .wp-swiper-font__name {
+	color: var(--wp-swiper-accent, #2271b1);
+}
+
+.wp-swiper-font__name {
+	overflow: hidden;
+	color: #1d2327;
+	font-size: 16px;
+	line-height: 1.3;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.wp-swiper-font__where {
+	flex: none;
+	color: #646970;
+	font-size: 12px;
+}

@@ -27,6 +27,13 @@
   Реліз робиться тільки на прохання.
 - Користувач теж пушить, з роботи й з дому. Перед роботою роби `git fetch`
   і, якщо гілка відстає, `git pull --ff-only`.
+- **Не оновлювати WP Swiper через WordPress на сайті, де лежить робоча
+  копія.** 2026-11-04 вдома оновлення з релізу v3.3.0 стерло теку
+  `wp-swiper` (лишилась лише `.git/objects`: пакети git у Windows «лише
+  читання») і поставило `wp-swiper-main`. Код був на GitHub, тож склоновано
+  заново; залишок — `C:/OSPanel/home/_backups/wp-swiper-git-leftover-2026-11-04`
+  (там лише старі stash). Активною має бути `wp-swiper/wp-swiper.php` —
+  браузерні тести беруть саме активну копію.
 
 ## Стан
 
@@ -525,7 +532,11 @@
   responsive, effects, `inline_in`, `tiles`, `styles`, `soon`…). Його
   повертає `WP_Swiper_Settings::fields()` (`require` всередині методу, тож
   `self::` там — цей клас), Art додає свої з `WP_Swiper_Art::fields()`
-  (так само `require` файлу `includes/art-fields.php`).
+  (так само `require` файлу `includes/art-fields.php`). Сам файл лише
+  зливає частини з `includes/settings-fields/` у порядку: `general`,
+  `layout-collage`, `layout-look`, `layout-effects`, `content` (що в
+  якій — у doc кожної). Порядок полів той самий, що був; ключ двічі —
+  падає тест.
 - `includes/class-wp-swiper-settings.php` — `get()`, `defaults()`,
   `pages()` / `blocks()` (меню й блоки адмінки), перевірки ефектів
   (`is_*`), висоти, `layouts`, усі константи. Решта методів класу — у
@@ -559,6 +570,28 @@
   є; висота вікна стала (за Description). Редактор опису стартує при
   першому показі його вкладки (TinyMCE, запущений у прихованому блоці,
   малюється криво).
+- Великі класи розбито на трейти так само, як `WP_Swiper_Settings`
+  (2026-11-05, лише перенесення методів, без змін коду). Новий метод — у
+  трейт своєї теми; `self::` у трейті — клас, константи — у класі:
+  - `WP_Swiper_Admin` (`init`, `enqueue`, вікно налаштувань, `save`) +
+    `trait-wp-swiper-admin-slides.php` (Slides box, рядки слайдів,
+    `posted_slides()`), `-controls` (шрифт, колір Pickr, градієнт, іконки),
+    `-fields` (блоки й усі типи полів, `tiles()`), `-list` (колонки списку,
+    Clone);
+  - `WP_Swiper_Render` (`render_slider()`, `markup()`, описи, слайд) +
+    `trait-wp-swiper-render-assets.php` (реєстрація й підключення файлів,
+    стилі в `<head>`), `-config` (`js_config()` і числа для нього), `-media`
+    (відео, embed, постери), `-collage` (колаж і Content in a place);
+  - `WP_Swiper_Art` (стилі, `fields()`, `blocks()`, `render()`) +
+    `trait-wp-swiper-art-cells.php` (Grid shapes, `art_cells`), `-sizes`
+    (кількості й висоти), `-gradient` (Gradient усіх ефектів), `-parts`
+    (шматки розмітки `render()`).
+- `admin.css` розрізано на частини в тому самому порядку
+  (`WP_Swiper_Admin::STYLES`, кожна після попередньої): `admin.css` (база,
+  Slides box), `admin-settings.css` (меню, сторінки, прев'ю), `-fields`,
+  `-slide-info`, `-color` (і Pickr, і градієнт), `-position`, `-controls`
+  (стани полів, ряди, перемикачі, розміри, font picker). Нове правило — у
+  частину своєї теми; новий файл — рядок у `STYLES`.
 - `includes/class-wp-swiper-admin.php`: адмінка, вікно Slide info, рядки
   слайдів (значення слайду в прихованих `wp_swiper_slides[...]`),
   `posted_slides()`, плитки `tiles()`. Іконки інлайн через `svg_icon()`;
@@ -638,7 +671,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 415 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 417 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.

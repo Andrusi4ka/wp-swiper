@@ -1058,6 +1058,29 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '"default":"Default"', $data );
 	}
 
+	public function test_admin_styles_load_in_their_order() {
+		$this->as_role( 'administrator' );
+		set_current_screen( 'edit' );
+		get_current_screen()->post_type = WP_Swiper_Settings::POST_TYPE;
+
+		WP_Swiper_Admin::enqueue( 'edit.php' );
+
+		// Every part, its file there, each after the one before (the cascade
+		// as admin.css's was in one file).
+		$before = array();
+		foreach ( WP_Swiper_Admin::STYLES as $handle => $file ) {
+			$this->assertTrue( wp_style_is( $handle, 'enqueued' ), $handle );
+			$this->assertFileExists( WP_SWIPER_DIR . 'assets/css/' . $file );
+			$this->assertSame( $before, wp_styles()->registered[ $handle ]->deps, $handle );
+			$before = array( $handle );
+		}
+		$this->assertSame( 'wp-swiper-admin', array_key_first( WP_Swiper_Admin::STYLES ) );
+		// Every admin-*.css is one of them.
+		foreach ( glob( WP_SWIPER_DIR . 'assets/css/admin*.css' ) as $path ) {
+			$this->assertContains( basename( $path ), WP_Swiper_Admin::STYLES );
+		}
+	}
+
 	public function test_art_opening_text_has_an_editor() {
 		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'art', 'art_opening_text' => '<p>Hi <a href="https://example.com">there</a></p>' ) );

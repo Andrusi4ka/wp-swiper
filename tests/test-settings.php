@@ -15,6 +15,24 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		}
 	}
 
+	public function test_the_schema_parts_have_no_field_twice() {
+		// settings-fields.php merges its parts: a key in two of them would
+		// silently take the later one.
+		$keys = array();
+		foreach ( glob( WP_SWIPER_DIR . 'includes/settings-fields/*.php' ) as $path ) {
+			preg_match_all( "/^\t'([a-z0-9_]+)'\s+=> array\(/m", file_get_contents( $path ), $found );
+			$this->assertNotEmpty( $found[1], $path );
+			$keys = array_merge( $keys, $found[1] );
+		}
+		$this->assertSame( array_unique( $keys ), $keys );
+		$fields = WP_Swiper_Settings::fields();
+		foreach ( $keys as $key ) {
+			$this->assertArrayHasKey( $key, $fields );
+		}
+		// Art's are its own (art-fields.php), the rest all from the parts.
+		$this->assertCount( count( $fields ), array_merge( $keys, array_keys( WP_Swiper_Art::fields() ) ) );
+	}
+
 	public function test_every_field_is_valid() {
 		$pages = WP_Swiper_Settings::pages();
 		foreach ( WP_Swiper_Settings::fields() as $key => $field ) {
