@@ -9,6 +9,7 @@ const FIXTURE = '/wp-content/plugins/' + require( 'path' ).basename( require( 'p
 const CASES = [
 	'slide', 'slide-loop', 'slide-captions', 'expand', 'auto-width', 'marquee',
 	'slide-gradient', 'collage-gradient', 'art-ring-gradient', 'collage-rotate', 'collage-rotate-fit', 'collage-rotate-scatter', 'collage-rotate-free',
+	'collage-rotate-scatter-auto', 'collage-rotate-free-auto',
 	'expand-shadow', 'slide-loop-shadow', 'marquee-shadow',
 	'fade', 'fade-shadow', 'fade-shadow-contain', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'creative-carousel',
 	'thumbs', 'video', 'background',

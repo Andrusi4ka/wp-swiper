@@ -439,6 +439,60 @@
 	}
 
 	/**
+	 * Rotation: rectangles ({ x, y, w, h }) turned by `angle` (degrees, as CSS
+	 * rotate()) about 0, 0. Their bounds on the page: from the farthest turned
+	 * corner of any of them to the farthest on the other side.
+	 *
+	 * @param {Object[]} rects  The rectangles.
+	 * @param {number}   angle  Degrees.
+	 * @return {Object} { width, height, x, y: the bounds' middle }.
+	 */
+	function turnedBounds( rects, angle ) {
+		var turn = ( Number( angle ) || 0 ) * Math.PI / 180;
+		var cos = Math.cos( turn );
+		var sin = Math.sin( turn );
+		var left = Infinity;
+		var top = Infinity;
+		var right = -Infinity;
+		var bottom = -Infinity;
+		rects.forEach( function ( r ) {
+			var cx = r.x + r.w / 2;
+			var cy = r.y + r.h / 2;
+			var x = cx * cos - cy * sin;
+			var y = cx * sin + cy * cos;
+			var halfW = ( r.w * Math.abs( cos ) + r.h * Math.abs( sin ) ) / 2;
+			var halfH = ( r.w * Math.abs( sin ) + r.h * Math.abs( cos ) ) / 2;
+			left = Math.min( left, x - halfW );
+			right = Math.max( right, x + halfW );
+			top = Math.min( top, y - halfH );
+			bottom = Math.max( bottom, y + halfH );
+		} );
+		return { width: right - left, height: bottom - top, x: ( left + right ) / 2, y: ( top + bottom ) / 2 };
+	}
+
+	/**
+	 * Where the rectangles' 0, 0 goes in a box width × height turned by
+	 * `angle` about its middle, for their turned bounds to be in its middle
+	 * (not turned: their box in its middle).
+	 *
+	 * @param {Object[]} rects  The rectangles.
+	 * @param {number}   angle  Degrees.
+	 * @param {number}   width  The box's, px.
+	 * @param {number}   height The box's, px.
+	 * @return {Object} { x, y }.
+	 */
+	function turnedOrigin( rects, angle, width, height ) {
+		var bounds = turnedBounds( rects, angle );
+		var turn = ( Number( angle ) || 0 ) * Math.PI / 180;
+		var cos = Math.cos( turn );
+		var sin = Math.sin( turn );
+		return {
+			x: width / 2 - ( bounds.x * cos + bounds.y * sin ),
+			y: height / 2 - ( bounds.y * cos - bounds.x * sin )
+		};
+	}
+
+	/**
 	 * The largest scale at which the layout fits the block, the gaps kept
 	 * as they are (they do not scale).
 	 *
@@ -448,26 +502,17 @@
 	 * @param {number} gap    px.
 	 * @return {number} px per unit.
 	 */
-	/*
-	 * An angle's cosine and sine, both positive (a box turned by it: its
-	 * width * cos + height * sin wide, width * sin + height * cos tall).
-	 */
-	function turned( angle ) {
-		var turn = ( Number( angle ) || 0 ) * Math.PI / 180;
-		return { cos: Math.abs( Math.cos( turn ) ), sin: Math.abs( Math.sin( turn ) ) };
-	}
-
 	function scatterFit( layout, width, height, gap, angle ) {
 		// Several layouts (a photo being moved, see scatterMoves()): all of them fit.
-		// Turned (Rotation): their box turned fits.
-		var turn = turned( angle );
+		// Turned (Rotation): the photos' turned corners fit, not their box turned
+		// (Scattered is a cross: the box's corners are empty).
 		var layouts = Array.isArray( layout ) ? layout : [ layout ];
 		var low = 0;
 		var high = Math.max( width, height, 1 );
 		for ( var i = 0; i < 32; i++ ) {
 			var scale = ( low + high ) / 2;
-			var box = scatterBox( scatterAllRects( layouts, scale, gap ) );
-			if ( box.width * turn.cos + box.height * turn.sin <= width && box.width * turn.sin + box.height * turn.cos <= height ) {
+			var box = turnedBounds( scatterAllRects( layouts, scale, gap ), angle );
+			if ( box.width <= width && box.height <= height ) {
 				low = scale;
 			} else {
 				high = scale;
@@ -781,18 +826,27 @@
 
 	/**
 	 * Where a Freeform layout goes in a block: the frame (and any place out of
-	 * it) as large as fits, in the middle.
+	 * it) as large as fits, in the middle. Turned (Rotation): the photos'
+	 * turned corners as large as fit, in the middle (the frame, turned, is
+	 * not what shows).
 	 *
 	 * @param {Object} layout See freeLayout().
 	 * @param {number} width  The block's, px.
 	 * @param {number} height The block's, px.
+	 * @param {number} angle  Rotation, degrees.
 	 * @return {Object} { scale: px per unit, x, y: where the frame's 0, 0 is }.
 	 */
 	function freeFit( layout, width, height, angle ) {
+		if ( angle ) {
+			var bounds = turnedBounds( layout.places, angle );
+			var size = Math.max( 0.0001, Math.min( width / ( bounds.width || 1 ), height / ( bounds.height || 1 ) ) );
+			var origin = turnedOrigin( layout.places.map( function ( r ) {
+				return { x: r.x * size, y: r.y * size, w: r.w * size, h: r.h * size };
+			} ), angle, width, height );
+			return { scale: size, x: origin.x, y: origin.y };
+		}
 		var box = scatterBox( layout.places.concat( [ { x: 0, y: 0, w: layout.aspect, h: 1 } ] ) );
-		// Turned (Rotation): its box turned fits.
-		var turn = turned( angle );
-		var scale = Math.max( 0.0001, Math.min( width / ( box.width * turn.cos + box.height * turn.sin ), height / ( box.width * turn.sin + box.height * turn.cos ) ) );
+		var scale = Math.max( 0.0001, Math.min( width / box.width, height / box.height ) );
 		return {
 			scale: scale,
 			x: ( width - box.width * scale ) / 2 - box.left * scale,
@@ -860,6 +914,13 @@
 		// background (it fills its block anyway).
 		var stretchy = !! config.fill && ! root.classList.contains( 'wp-swiper--background' );
 		var stretched = false;
+		// The column's free height it was given then (stretch()), the block's
+		// height before trim() took the empty bands off.
+		var freeHeight = '';
+		// Rotation, Height "Auto" (Scattered, Freeform): the block cut to the
+		// photos' top-most and bottom-most points (trim()): its height and how far
+		// up the turned grid goes for that.
+		var trimmed = null;
 		// Random mosaic and the templates: their cuts as last laid out (place()),
 		// for the preview.
 		var mosaicLines = [];
@@ -911,6 +972,7 @@
 				root.style.height = '';
 				stretched = false;
 			}
+			freeHeight = root.style.height;
 			el.classList.toggle( 'wp-swiper-collage--stretch', stretched );
 			grid.classList.toggle( 'wp-swiper-collage__grid--stretch', stretched );
 			return Math.abs( root.offsetHeight - before ) > 1;
@@ -1079,10 +1141,16 @@
 				grid.style.removeProperty( '--wp-swiper-collage-turn' );
 				grid.style.removeProperty( '--wp-swiper-shadow' );
 				el.style.height = '';
+				// Cut by trim(): the column's free height back, to measure in.
+				if ( trimmed && stretched ) {
+					root.style.height = freeHeight;
+				}
 				grid.wpTurned = false;
 			}
 			var inPlace = TURNED_IN_PLACE.indexOf( config.layout[ current ] ) !== -1;
 			grid.wpAngle = angle;
+			// For the preview (preview-dev.js): the grid is the block, turned.
+			grid.wpInPlace = inPlace && !! angle;
 			el.classList.toggle( 'wp-swiper-collage--turned', !! angle );
 			el.classList.toggle( 'wp-swiper-collage--turned-fit', !! angle && ( inPlace || !! ( config.rotateFit && config.rotateFit[ current ] ) ) );
 			if ( ! angle ) {
@@ -1127,6 +1195,41 @@
 				grid.style.setProperty( '--wp-swiper-shadow', Math.round( ( x * Math.cos( back ) - y * Math.sin( back ) ) * 10 ) / 10 + 'px ' + Math.round( ( x * Math.sin( back ) + y * Math.cos( back ) ) * 10 ) / 10 + 'px ' + shadow[ 3 ] );
 			}
 			grid.wpTurned = true;
+		}
+
+		/**
+		 * Rotation, Height "Auto" (Scattered, Freeform; not a background): the
+		 * block cut to the photos' top-most and bottom-most points, no empty
+		 * bands above or below; the photos stay as large as they are. While a
+		 * photo is moved or resized in the preview (`held`), as it was cut.
+		 *
+		 * @param {boolean} held The places held where they are.
+		 */
+		function trim( held ) {
+			var places = cells.filter( function ( cell ) {
+				return !! cell.style.width;
+			} ).map( function ( cell ) {
+				return { x: parseFloat( cell.style.left ), y: parseFloat( cell.style.top ), w: parseFloat( cell.style.width ), h: parseFloat( cell.style.height ) };
+			} );
+			if ( ! grid.wpInPlace || ! fills( config ) || root.classList.contains( 'wp-swiper--background' ) || ! places.length ) {
+				trimmed = null;
+				return;
+			}
+			var width = grid.offsetWidth;
+			var height = grid.offsetHeight;
+			if ( ! held || ! trimmed ) {
+				// Turned about the grid's middle, as on the page.
+				var bounds = turnedBounds( places.map( function ( r ) {
+					return { x: r.x - width / 2, y: r.y - height / 2, w: r.w, h: r.h };
+				} ), grid.wpAngle );
+				trimmed = { height: Math.max( 1, bounds.height ), top: height / 2 + bounds.y - bounds.height / 2 };
+			}
+			var extra = root.offsetHeight - el.offsetHeight;
+			el.style.height = trimmed.height + 'px';
+			grid.style.top = -trimmed.top + 'px';
+			if ( stretched ) {
+				root.style.height = trimmed.height + extra + 'px';
+			}
 		}
 
 		// The image file the browser picks: the width it is drawn at (cropped to
@@ -1246,9 +1349,9 @@
 					var move = moving && moving.shown >= 0 ? moving.moves[ moving.shown ] : null;
 					var scale = held ? held.scale : scatterFit( scatter, width, gridHeight, gap, grid.wpAngle );
 					var rects = scatterRects( move ? move.layout : scatter, scale, gap );
-					var box = scatterBox( rects );
-					var originX = held ? held.x : ( width - box.width ) / 2 - box.left;
-					var originY = held ? held.y : ( gridHeight - box.height ) / 2 - box.top;
+					var origin = held ? held : turnedOrigin( rects, grid.wpAngle, width, gridHeight );
+					var originX = origin.x;
+					var originY = origin.y;
 					cells.forEach( function ( cell, c ) {
 						var r = rects[ move ? scatterMovedIndex( c, moving.from, move.index ) : c ];
 						if ( r ) {
@@ -1256,6 +1359,7 @@
 						}
 					} );
 					scatterView = { scale: scale, x: originX, y: originY, rects: rects };
+					trim( !! held );
 				}
 			} else if ( layout === 'freeform' ) {
 				// The block keeps its Height; the frame as large as fits it, in its
@@ -1270,6 +1374,7 @@
 						}
 					} );
 					freeView = view;
+					trim( !! freeHeld );
 				}
 			} else if ( layout === 'random' || COLLAGE_TEMPLATES[ layout ] ) {
 				// The block keeps its Height; the cuts are laid over it, gaps between.
@@ -1739,8 +1844,8 @@
 						return move.layout;
 					} ) );
 					var scale = Math.min( scatterView.scale, scatterFit( layouts, width, height, gap, grid.wpAngle ) );
-					var box = scatterBox( scatterAllRects( layouts, scale, gap ) );
-					moving = { from: from, moves: moves, shown: -1, scale: scale, x: ( width - box.width ) / 2 - box.left, y: ( height - box.height ) / 2 - box.top };
+					var origin = turnedOrigin( scatterAllRects( layouts, scale, gap ), grid.wpAngle, width, height );
+					moving = { from: from, moves: moves, shown: -1, scale: scale, x: origin.x, y: origin.y };
 					place();
 					return moves.map( function ( move ) {
 						var r = scatterRects( move.layout, scale, gap )[ move.index ];

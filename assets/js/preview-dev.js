@@ -235,9 +235,30 @@
 		// The grid's box where it is not the block's (Fill, Fit: larger or
 		// smaller, turned); the block's label says the angle and that size
 		// (the box's own corner may be cut off).
-		var other = Math.abs( size.width - block.offsetWidth ) > 1 || Math.abs( size.height - block.offsetHeight ) > 1;
+		// Scattered, Freeform turned (collage.js orient(): the grid is the block,
+		// turned): the box round the photos instead, turned with them.
+		var inPlace = !! grid.wpInPlace;
+		var other = ! inPlace && ( Math.abs( size.width - block.offsetWidth ) > 1 || Math.abs( size.height - block.offsetHeight ) > 1 );
 		if ( angle && other ) {
 			box( layer, 'grid', { left: 0, top: 0, width: size.width, height: size.height } );
+		}
+		if ( angle && inPlace && places.length ) {
+			var left = Math.min.apply( null, places.map( function ( p ) {
+				return p.left;
+			} ) );
+			var top = Math.min.apply( null, places.map( function ( p ) {
+				return p.top;
+			} ) );
+			box( layer, 'grid', {
+				left: left,
+				top: top,
+				width: Math.max.apply( null, places.map( function ( p ) {
+					return p.right;
+				} ) ) - left,
+				height: Math.max.apply( null, places.map( function ( p ) {
+					return p.bottom;
+				} ) ) - top
+			} );
 		}
 		box( outer, 'cell', { left: 0, top: 0, width: block.offsetWidth, height: block.offsetHeight } );
 		var label = round( block.offsetWidth ) + ' × ' + round( block.offsetHeight );

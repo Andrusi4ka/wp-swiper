@@ -99,7 +99,8 @@ test( 'collage-rotate-fit: all of it in the block, the frame on the place, the c
 	const found = await state( page );
 	expect( found.angle ).toBe( -20 );
 	expect( found.transform ).toBe( 'rotate(-20deg)' );
-	expect( found.overflow ).toBe( 'visible' );
+	// The turned grid's empty corners cut off (the shadows shown past the edges).
+	expect( found.overflow ).toBe( 'clip' );
 	// Fit: the block's corners empty.
 	expect( found.corners ).toEqual( [ false, false, false, false ] );
 	for ( const place of found.places ) {
@@ -114,26 +115,45 @@ test( 'collage-rotate-fit: all of it in the block, the frame on the place, the c
 
 // Scattered and Freeform: turned where they are, every place (its corners,
 // turned) inside the block, the photos upright and covering their places.
-for ( const [ name, angle ] of [ [ 'collage-rotate-scatter', 25 ], [ 'collage-rotate-free', -30 ] ] ) {
+// As large as fits: the photos' outermost corners (not their box turned)
+// touch the block's top and bottom or its sides. Height "Auto": the block
+// from the top-most point to the bottom-most. No page scrollbar from the
+// turned grid's corners.
+for ( const [ name, angle, auto ] of [ [ 'collage-rotate-scatter', 25, false ], [ 'collage-rotate-free', -30, false ], [ 'collage-rotate-scatter-auto', 14, true ], [ 'collage-rotate-free-auto', 20, true ] ] ) {
 	test( name + ': turned in the block, all of it in it', async ( { page } ) => {
 		const errors = await open( page, name );
 		const found = await state( page );
 		expect( found.angle ).toBe( angle );
 		expect( found.transform ).toBe( 'rotate(' + angle + 'deg)' );
-		expect( found.overflow ).toBe( 'visible' );
+		expect( found.overflow ).toBe( 'clip' );
 		expect( found.places.length ).toBeGreaterThan( 3 );
 		for ( const place of found.places ) {
 			expect( Math.abs( place.drawn[ 0 ] - place.size[ 0 ] ) ).toBeLessThanOrEqual( 1 );
 			expect( place.covered ).toBe( true );
 		}
-		const inside = await page.evaluate( () => {
+		const fit = await page.evaluate( () => {
 			const block = document.querySelector( '.wp-swiper-collage' ).getBoundingClientRect();
-			return [].slice.call( document.querySelectorAll( '.wp-swiper-collage__cell' ) ).every( ( cell ) => {
-				const r = cell.getBoundingClientRect();
-				return r.left >= block.left - 1 && r.right <= block.right + 1 && r.top >= block.top - 1 && r.bottom <= block.bottom + 1;
-			} );
+			const cells = [].slice.call( document.querySelectorAll( '.wp-swiper-collage__cell' ) ).map( ( cell ) => cell.getBoundingClientRect() );
+			const reach = ( pick, side ) => Math[ side ].apply( null, cells.map( pick ) );
+			return {
+				inside: cells.every( ( r ) => r.left >= block.left - 1 && r.right <= block.right + 1 && r.top >= block.top - 1 && r.bottom <= block.bottom + 1 ),
+				// How far the photos are from each of the block's edges.
+				top: reach( ( r ) => r.top, 'min' ) - block.top,
+				bottom: block.bottom - reach( ( r ) => r.bottom, 'max' ),
+				left: reach( ( r ) => r.left, 'min' ) - block.left,
+				right: block.right - reach( ( r ) => r.right, 'max' ),
+				scroll: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+			};
 		} );
-		expect( inside ).toBe( true );
+		expect( fit.inside ).toBe( true );
+		// In the middle, touching one pair of edges.
+		expect( Math.abs( fit.top - fit.bottom ) ).toBeLessThanOrEqual( 1 );
+		expect( Math.abs( fit.left - fit.right ) ).toBeLessThanOrEqual( 1 );
+		expect( Math.min( fit.top + fit.bottom, fit.left + fit.right ) ).toBeLessThanOrEqual( 2 );
+		if ( auto ) {
+			expect( fit.top + fit.bottom ).toBeLessThanOrEqual( 2 );
+		}
+		expect( fit.scroll ).toBeLessThanOrEqual( 0 );
 		expect( errors ).toEqual( [] );
 	} );
 }
@@ -177,6 +197,75 @@ for ( const name of [ 'collage-grid', 'collage-rotate-fit' ] ) {
 		}
 		await page.evaluate( () => window.wpSwiperDev( false ) );
 		expect( await page.locator( '.wp-swiper-collage .wp-swiper-dev' ).count() ).toBe( 0 );
+		expect( errors ).toEqual( [] );
+	} );
+}
+
+// Developer mode, Scattered turned: the box round the photos (turned with
+// them), not the block's; the block's label with the angle only.
+test( 'collage-rotate-scatter-auto: Developer mode boxes the photos', async ( { page } ) => {
+	const errors = await open( page, 'collage-rotate-scatter-auto' );
+	const base = fixture.replace( 'tests/browser/fixture.php', '' );
+	await page.addStyleTag( { url: base + 'assets/css/preview-dev.css' } );
+	await page.addScriptTag( { url: base + 'assets/js/preview-dev.js' } );
+	await page.evaluate( () => window.wpSwiperDev( true ) );
+	await page.waitForTimeout( 300 );
+	const drawn = await page.evaluate( () => {
+		const cells = [].slice.call( document.querySelectorAll( '.wp-swiper-collage__cell' ) );
+		const frame = document.querySelectorAll( '.wp-swiper-dev__grid' );
+		const box = frame[ 0 ] ? { left: frame[ 0 ].offsetLeft, top: frame[ 0 ].offsetTop, right: frame[ 0 ].offsetLeft + frame[ 0 ].offsetWidth, bottom: frame[ 0 ].offsetTop + frame[ 0 ].offsetHeight } : null;
+		return {
+			frames: frame.length,
+			// The photos' box in the grid: each photo in it, one at each of its edges.
+			tight: !! box && [ 'left', 'top' ].every( ( side ) => cells.some( ( c ) => Math.abs( ( 'left' === side ? c.offsetLeft : c.offsetTop ) - box[ side ] ) <= 1 ) ) &&
+				cells.some( ( c ) => Math.abs( c.offsetLeft + c.offsetWidth - box.right ) <= 1 ) &&
+				cells.some( ( c ) => Math.abs( c.offsetTop + c.offsetHeight - box.bottom ) <= 1 ),
+			block: document.querySelector( '.wp-swiper-dev--block .wp-swiper-dev__block-size' ).textContent,
+		};
+	} );
+	expect( drawn.frames ).toBe( 1 );
+	expect( drawn.tight ).toBe( true );
+	expect( drawn.block ).toMatch( /^[\d.]+ × [\d.]+, 14°$/ );
+	expect( errors ).toEqual( [] );
+} );
+
+// Height "Auto" in a tall column (more free height than the turned photos
+// need: they touch the sides first): the block cut to them, no empty bands;
+// as before once the column is short again.
+for ( const name of [ 'collage-rotate-scatter-auto', 'collage-rotate-free-auto' ] ) {
+	test( name + ': in a tall column, cut to the photos', async ( { page } ) => {
+		const errors = await open( page, name );
+		const measure = () => page.evaluate( () => {
+			const block = document.querySelector( '.wp-swiper-collage' ).getBoundingClientRect();
+			const cells = [].slice.call( document.querySelectorAll( '.wp-swiper-collage__cell' ) ).map( ( cell ) => cell.getBoundingClientRect() );
+			return {
+				height: block.height,
+				root: document.querySelector( '.wp-swiper' ).getBoundingClientRect().height,
+				top: Math.min.apply( null, cells.map( ( r ) => r.top ) ) - block.top,
+				bottom: block.bottom - Math.max.apply( null, cells.map( ( r ) => r.bottom ) ),
+				sides: Math.min.apply( null, cells.map( ( r ) => r.left ) ) - block.left + block.right - Math.max.apply( null, cells.map( ( r ) => r.right ) ),
+			};
+		} );
+		const before = await measure();
+		await page.evaluate( () => {
+			document.querySelector( '.fixture' ).style.height = '2000px';
+			window.dispatchEvent( new Event( 'resize' ) );
+		} );
+		await page.waitForTimeout( 300 );
+		const tall = await measure();
+		expect( tall.sides ).toBeLessThanOrEqual( 2 );
+		expect( tall.top + tall.bottom ).toBeLessThanOrEqual( 2 );
+		expect( Math.abs( tall.root - tall.height ) ).toBeLessThanOrEqual( 1 );
+		expect( tall.height ).toBeLessThan( 1900 );
+		await page.evaluate( () => window.dispatchEvent( new Event( 'resize' ) ) );
+		await page.waitForTimeout( 300 );
+		expect( Math.abs( ( await measure() ).height - tall.height ) ).toBeLessThanOrEqual( 1 );
+		await page.evaluate( () => {
+			document.querySelector( '.fixture' ).style.height = '';
+			window.dispatchEvent( new Event( 'resize' ) );
+		} );
+		await page.waitForTimeout( 300 );
+		expect( Math.abs( ( await measure() ).height - before.height ) ).toBeLessThanOrEqual( 1 );
 		expect( errors ).toEqual( [] );
 	} );
 }

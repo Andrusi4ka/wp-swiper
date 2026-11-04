@@ -78,6 +78,9 @@ return array(
 	// Rotation of Scattered and Freeform: turned where they are, all of it in the block.
 	'collage-rotate-scatter' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'collage_count' => '6', 'collage_rotate' => '25', 'lightbox' => '1' ) ),
 	'collage-rotate-free' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'freeform', 'collage_count' => '7', 'collage_rotate' => '-30', 'lightbox' => '1' ) ),
+	// Height "Auto": the block from the photos' top-most point to their bottom-most.
+	'collage-rotate-scatter-auto' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'collage_count' => '9', 'collage_rotate' => '14', 'height_unit' => 'auto', 'lightbox' => '1' ) ),
+	'collage-rotate-free-auto' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'freeform', 'collage_count' => '7', 'collage_rotate' => '20', 'height_unit' => 'auto', 'lightbox' => '1' ) ),
 	'collage-scatter'  => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'collage_count' => '6', 'lightbox' => '1' ) ),
 	'collage-freeform' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'freeform', 'collage_count' => '7', 'lightbox' => '1' ) ),
 	'collage-grid'     => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'lightbox' => '1' ) ),

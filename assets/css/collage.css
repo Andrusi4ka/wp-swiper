@@ -121,8 +121,20 @@
 	overflow: hidden;
 }
 
+/* Fit, Scattered, Freeform: all the photos are in the block, but the turned
+   grid's corners (empty) are not; cut those off, the photos' shadows shown
+   past the edges (as sliders, frontend.css). Where a browser cannot show
+   past them (Safari), cut at the edges, shadows too: uncut, the corners
+   would widen the page (a scrollbar). */
 .wp-swiper-collage.wp-swiper-collage--turned.wp-swiper-collage--turned-fit {
-	overflow: visible;
+	overflow: hidden;
+}
+
+@supports (overflow-clip-margin: 1px) {
+	.wp-swiper-collage.wp-swiper-collage--turned.wp-swiper-collage--turned-fit {
+		overflow: clip;
+		overflow-clip-margin: var(--wp-swiper-shadow-reach, 0px);
+	}
 }
 
 .wp-swiper .wp-swiper-collage--turned .wp-swiper-collage__cell > .wp-swiper-collage__item {
