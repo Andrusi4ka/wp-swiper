@@ -46,7 +46,7 @@ return array(
 			// Its two numbers: the field below.
 			'custom' => __( 'Custom', 'wp-swiper' ),
 		),
-		'help'       => __( 'Every image is as tall as the Height and as wide as these proportions make it; Slides per view of them share the row and the free width goes around them (Distribution). Space between slides is the least space left; where they do not fit with it, they get smaller. Off: the images fill the row.', 'wp-swiper' ),
+		'help'       => __( 'Every image is as tall as the Height and as wide as these proportions make it; Slides per view of them share the row and the free width goes around them (Distribution). The Gap is the least space left; where they do not fit with it, they get smaller. Off: the images fill the row.', 'wp-swiper' ),
 	),
 	// Shown while a device has "Custom" (like thumbs_ratio_custom).
 	'slide_ratio_custom'    => array(

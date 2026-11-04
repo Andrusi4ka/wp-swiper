@@ -156,4 +156,35 @@ abstract class WP_Swiper_TestCase extends WP_UnitTestCase {
 		preg_match( '/<div[^>]* class="wp-swiper [^"]*" style="([^"]*)"/', $html, $match );
 		return isset( $match[1] ) ? html_entity_decode( $match[1] ) : '';
 	}
+
+	/**
+	 * The Layout blocks an effect shows, in order, each with its fields for
+	 * that effect (as admin.js leaves them: a field for every effect is not
+	 * Art's or Text mask's, which show only their own).
+	 *
+	 * @param string $effect Effect.
+	 * @return array Block name => its field names.
+	 */
+	protected function layout_for( $effect ) {
+		$fields = WP_Swiper_Settings::fields();
+		$own    = in_array( $effect, WP_Swiper_Art::EFFECTS, true );
+		$shown  = array();
+		foreach ( WP_Swiper_Settings::blocks()['layout'] as $name => $block ) {
+			$in = array_values(
+				array_filter(
+					$block['fields'],
+					function ( $key ) use ( $fields, $effect, $own ) {
+						if ( ! isset( $fields[ $key ] ) || ! empty( $fields[ $key ]['inline_in'] ) ) {
+							return false;
+						}
+						return empty( $fields[ $key ]['effects'] ) ? ! $own : in_array( $effect, (array) $fields[ $key ]['effects'], true );
+					}
+				)
+			);
+			if ( $in ) {
+				$shown[ $name ] = $in;
+			}
+		}
+		return $shown;
+	}
 }

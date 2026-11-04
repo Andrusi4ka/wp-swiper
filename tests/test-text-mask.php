@@ -329,20 +329,19 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 
 	public function test_three_blocks_the_word_its_letters_its_strips() {
 		$blocks = WP_Swiper_Settings::blocks()['layout'];
-		// After Art's blocks (Content in the middle, Opening and Content in a
-		// window: Art's only, so on screen right after the word's block).
-		$names = array_keys( $blocks );
-		$art   = array_search( 'art', $names, true );
-		$this->assertSame( array( 'art', 'art_middle', 'art_opening', 'art_content', 'text_letters', 'text_strips' ), array_slice( $names, $art, 6 ) );
+		// On screen: the word's block, Size (as every effect's), its letters,
+		// its strips (Art's own blocks between them are Art's only).
+		$this->assertSame( array( 'art', 'size', 'text_letters', 'text_strips' ), array_slice( array_keys( $this->layout_for( 'text-mask' ) ), 0, 4 ) );
 		foreach ( array_merge( $blocks['art_middle']['fields'], $blocks['art_opening']['fields'], $blocks['art_content']['fields'] ) as $key ) {
 			$this->assertSame( array( 'art' ), WP_Swiper_Settings::fields()[ $key ]['effects'], $key );
 		}
-		$this->assertSame( array( 'text_mask_font', 'text_mask_weight', 'text_mask_font_name', 'text_mask_size', 'text_mask_stretch', 'text_mask_gap' ), $blocks['text_letters']['fields'] );
+		$this->assertSame( array( 'text_mask_font', 'text_mask_weight', 'text_mask_font_name', 'text_mask_size', 'text_mask_stretch' ), $blocks['text_letters']['fields'] );
 		$this->assertSame( array( 'text_mask_strip_width', 'text_mask_join', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max' ), $blocks['text_strips']['fields'] );
 		// The word's block: Text mask's fields only those of the word.
 		$word = array_values( preg_grep( '/^text_mask_/', $blocks['art']['fields'] ) );
 		$this->assertSame( array( 'text_mask_direction', 'text_mask_title', 'text_mask_photos' ), $word );
-		$this->assertContains( 'art_height', $blocks['art']['fields'] );
+		// Its Height and Gap in Size, as every effect's.
+		$this->assertSame( array( 'art_height', 'text_mask_gap' ), $this->layout_for( 'text-mask' )['size'] );
 		// Text mask's fields only: hidden for Art (admin.js, no field shown).
 		$fields = WP_Swiper_Settings::fields();
 		foreach ( array_merge( $blocks['text_letters']['fields'], $blocks['text_strips']['fields'] ) as $key ) {

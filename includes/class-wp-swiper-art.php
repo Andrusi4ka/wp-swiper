@@ -244,12 +244,13 @@ class WP_Swiper_Art {
 	public static function blocks() {
 		return array(
 			'layout'   => array(
-				// Text mask's word here too (Strips go, Word, Photos; its Height
-				// is Art's): the block's title says which (admin.js, `titles`).
+				// Text mask's word here too (Strips go, Word, Photos): the block's
+				// title says which (admin.js, `titles`). Height, Gap and Alignment
+				// are in the Size block, as every effect's (WP_Swiper_Settings::blocks()).
 				'art'        => array(
 					'title'  => __( 'Art', 'wp-swiper' ),
 					'titles' => array( self::TEXT_EFFECT => __( 'Text mask', 'wp-swiper' ) ),
-					'fields' => array( 'art_style', 'text_mask_direction', 'text_mask_title', 'text_mask_photos', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_height', 'art_align', 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ),
+					'fields' => array( 'art_style', 'text_mask_direction', 'text_mask_title', 'text_mask_photos', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_ring_count', 'art_grid_count', 'art_grid_columns' ),
 				),
 				// Ring + text: what is in the middle, a block of its own (shown
 				// for that Style only, as its fields are).
@@ -272,7 +273,7 @@ class WP_Swiper_Art {
 				// the word's block on screen).
 				'text_letters' => array(
 					'title'  => __( 'Letters', 'wp-swiper' ),
-					'fields' => array( 'text_mask_font', 'text_mask_weight', 'text_mask_font_name', 'text_mask_size', 'text_mask_stretch', 'text_mask_gap' ),
+					'fields' => array( 'text_mask_font', 'text_mask_weight', 'text_mask_font_name', 'text_mask_size', 'text_mask_stretch' ),
 				),
 				'text_strips'  => array(
 					'title'  => __( 'Strips', 'wp-swiper' ),

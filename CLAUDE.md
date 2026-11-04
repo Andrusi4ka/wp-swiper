@@ -164,6 +164,16 @@
 
 ## Рішення користувача (не міняти без прохання)
 
+- **Layout однаковий для всіх ефектів** (2026-11-05): головний блок ефекту
+  (Effect / Arrangement / Art чи Text mask) → **Size** → власні блоки
+  ефекту (Content…, Slides, Letters, Strips) → Look → Zoom → Background.
+  У Size спершу Height (`height` / `art_height`), далі Gap
+  (`space_between` / `collage_gap` / `art_gap` / `text_mask_gap`, усі
+  звуться «Gap (px)»), далі Alignment Art, потім Image fit і пропорції
+  слайдерів. Порядок задає кінець `WP_Swiper_Settings::blocks()`; нове поле
+  розміру — у блок `size`. Тест `test_every_effect_has_its_size_in_one_place`
+  (допоміжна `layout_for()` у `class-wp-swiper-testcase.php`).
+
 - **Лише адміністратори** (2026-11-04, v3.2.1): меню, слайдери (додати,
   редагувати, копіювати, видалити), прев'ю, What's new, елемент WPBakery і
   повідомлення на сторінках («slider not found», фон без класу, SVG shape
@@ -248,8 +258,8 @@
   «LAHORE»): окремий пункт у списку ефектів (`text-mask`), але малює його
   Art як стиль `text` (`WP_Swiper_Art::style_of()`, `is_art()`, `EFFECTS`).
   Layout — три картки (рішення користувача): Text mask (блок `art`: Strips
-  go, Word, Photos, Height), Letters (`text_letters`: шрифт, Letter size,
-  Stretch, Gap — Gap тут), Strips (`text_strips`: ширина, Strips into
+  go, Word, Photos), Letters (`text_letters`: шрифт, Letter size,
+  Stretch; Height і Gap — у блоці Size, як в усіх), Strips (`text_strips`: ширина, Strips into
   letters, довжини). У `blocks()` вони після `art_middle`/`art_opening`
   (ті лише Art, тож на екрані одразу за першою). Кожна літера + смуга під нею — одне вікно. Photos (`text_mask_photos`):
   одне фото крізь усі літери (за замовч.; `art_shape_target` примусово
@@ -671,7 +681,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 417 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 418 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.

@@ -663,9 +663,9 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$saved = WP_Swiper_Settings::sanitize( array( 'effect' => 'collage', 'collage_rotate' => '-80', 'collage_rotate_fit' => 'stretch' ) );
 		$this->assertSame( -45, $saved['collage_rotate'] );
 		$this->assertSame( 'fill', $saved['collage_rotate_fit'] );
-		// In the collage's block, after the Gap.
+		// Last in the collage's block (its Gap in Size).
 		$fields = WP_Swiper_Settings::blocks()['layout']['arrangement']['fields'];
-		$this->assertSame( array( 'collage_gap', 'collage_rotate', 'collage_rotate_fit' ), array_slice( $fields, -3 ) );
+		$this->assertSame( array( 'collage_rotate', 'collage_rotate_fit' ), array_slice( $fields, -2 ) );
 		$this->assertSame( array( 'collage' ), WP_Swiper_Settings::fields()['collage_rotate']['effects'] );
 		$this->assertTrue( WP_Swiper_Settings::fields()['collage_rotate']['responsive'] );
 		$this->assertTrue( WP_Swiper_Settings::fields()['collage_rotate_fit']['responsive'] );
@@ -791,9 +791,10 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertSame( 24, $this->config( $html, 'data-wp-swiper-collage' )['lightbox']['radius']['desktop'] );
 	}
 
-	public function test_width_from_image_under_space_between_slides() {
+	public function test_width_from_image_under_slides_per_group() {
+		// The Gap above it went to Size (as every effect's).
 		$slides = WP_Swiper_Settings::blocks()['layout']['slides']['fields'];
-		$this->assertSame( array_search( 'space_between', $slides, true ) + 1, array_search( 'auto_width', $slides, true ) );
+		$this->assertSame( array( 'slides_per_view', 'slides_per_group', 'auto_width' ), array_slice( $slides, 0, 3 ) );
 	}
 
 	public function test_rounded_corners_switch_before_its_radius_in_look() {

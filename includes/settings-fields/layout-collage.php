@@ -175,7 +175,7 @@ return array(
 	'collage_gap'           => array(
 		'section'         => 'layout',
 		'effects'         => array( 'collage' ),
-		'label'           => __( 'Gap between photos (px)', 'wp-swiper' ),
+		'label'           => __( 'Gap (px)', 'wp-swiper' ),
 		'type'            => 'number',
 		'responsive'      => true,
 		'default'         => 8,

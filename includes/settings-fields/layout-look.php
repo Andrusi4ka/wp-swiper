@@ -63,7 +63,7 @@ return array(
 	'space_between'         => array(
 		'section'    => 'layout',
 		'effects'    => array( 'slide', 'coverflow' ),
-		'label'      => __( 'Space between slides (px)', 'wp-swiper' ),
+		'label'      => __( 'Gap (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
 		'default'    => 0,

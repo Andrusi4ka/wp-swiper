@@ -33,6 +33,49 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertCount( count( $fields ), array_merge( $keys, array_keys( WP_Swiper_Art::fields() ) ) );
 	}
 
+	public function test_every_effect_has_its_size_in_one_place() {
+		$heights = array(
+			'art'       => 'art_height',
+			'text-mask' => 'art_height',
+		);
+		$gaps    = array(
+			'slide'     => 'space_between',
+			'coverflow' => 'space_between',
+			'collage'   => 'collage_gap',
+			'art'       => 'art_gap',
+			'text-mask' => 'text_mask_gap',
+		);
+		foreach ( array_keys( WP_Swiper_Settings::fields()['effect']['choices'] ) as $effect ) {
+			$layout = $this->layout_for( $effect );
+			$names  = array_keys( $layout );
+			// Size right after the effect's main block (Fade has none: first).
+			$at = array_search( 'size', $names, true );
+			$this->assertNotFalse( $at, $effect );
+			$this->assertSame( array(), array_diff( array_slice( $names, 0, $at ), array( 'effect', 'arrangement', 'art' ) ), $effect );
+			// In it first the Height, then the Gap, then Art's Alignment.
+			$size   = $layout['size'];
+			$height = isset( $heights[ $effect ] ) ? $heights[ $effect ] : 'height';
+			$this->assertSame( $height, $size[0], $effect );
+			if ( isset( $gaps[ $effect ] ) ) {
+				$this->assertSame( $gaps[ $effect ], $size[1], $effect );
+			}
+			if ( 'art' === $effect ) {
+				$this->assertSame( 'art_align', $size[2] );
+			}
+			// And nowhere else.
+			foreach ( $layout as $name => $in ) {
+				if ( 'size' !== $name ) {
+					$this->assertEmpty( array_intersect( $in, array_merge( array( $height ), $gaps ) ), $effect . ' ' . $name );
+				}
+			}
+		}
+		// One name for every effect's Gap.
+		foreach ( array_unique( $gaps ) as $key ) {
+			$this->assertSame( 'Gap (px)', WP_Swiper_Settings::fields()[ $key ]['label'], $key );
+		}
+		$this->assertSame( 'Size', WP_Swiper_Settings::blocks()['layout']['size']['title'] );
+	}
+
 	public function test_every_field_is_valid() {
 		$pages = WP_Swiper_Settings::pages();
 		foreach ( WP_Swiper_Settings::fields() as $key => $field ) {

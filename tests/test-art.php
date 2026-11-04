@@ -52,9 +52,9 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 				$this->assertNotContains( 'art', $field['effects'], $key );
 			}
 		}
-		// Its blocks first on their pages: Art on Layout, Photo swapping on Controls.
+		// Its blocks first: Art the first of Layout's it shows, Photo swapping on Controls.
 		$blocks = WP_Swiper_Settings::blocks();
-		$this->assertSame( 'art', array_keys( $blocks['layout'] )[0] );
+		$this->assertSame( 'art', array_keys( $this->layout_for( 'art' ) )[0] );
 		$this->assertSame( 'art_swap', array_keys( $blocks['controls'] )[0] );
 		$this->assertArrayNotHasKey( 'art_swap', $blocks['layout'] );
 	}
@@ -364,9 +364,8 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '--wp-swiper-art-margin:0 auto;', $this->render( array( 'effect' => 'art' ) ) );
 		$html = $this->render( array( 'effect' => 'art', 'art_align' => 'right', 'art_align_mobile' => 'left' ) );
 		$this->assertStringContainsString( '--wp-swiper-art-margin:0 0 0 auto;--wp-swiper-art-margin-tablet:0 0 0 auto;--wp-swiper-art-margin-mobile:0 auto 0 0', $html );
-		// Right under Height.
-		$fields = WP_Swiper_Art::blocks()['layout']['art']['fields'];
-		$this->assertSame( array_search( 'art_height', $fields, true ) + 1, array_search( 'art_align', $fields, true ) );
+		// In Size, under Height and Gap (as every effect's).
+		$this->assertSame( array( 'art_height', 'art_gap', 'art_align' ), array_slice( $this->layout_for( 'art' )['size'], 0, 3 ) );
 
 		$clean = WP_Swiper_Settings::sanitize( array( 'effect' => 'art', 'art_align' => 'middle', 'art_align_tablet' => 'left' ) );
 		$this->assertSame( array( 'center', 'left', '' ), array( $clean['art_align'], $clean['art_align_tablet'], $clean['art_align_mobile'] ) );
@@ -613,8 +612,9 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 			$this->assertContains( $key, WP_Swiper_Settings::blocks()['layout']['art_middle']['fields'], $key );
 			$this->assertNotContains( $key, WP_Swiper_Settings::blocks()['layout']['art']['fields'], $key );
 		}
-		$layout = array_keys( WP_Swiper_Settings::blocks()['layout'] );
-		$this->assertSame( array( 'art', 'art_middle' ), array_slice( $layout, 0, 2 ) );
+		// After Art's own and Size (as every effect's).
+		$layout = array_keys( $this->layout_for( 'art' ) );
+		$this->assertSame( array( 'art', 'size', 'art_middle' ), array_slice( $layout, 0, 3 ) );
 		$this->assertSame( 'Content in the middle', WP_Swiper_Settings::blocks()['layout']['art_middle']['title'] );
 		// Ring's only: the opening. With a middle photo (Ring, Grid + circle):
 		// captions on it only, swapping it.
@@ -762,10 +762,11 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertSame( 9, $defaults['art_grid_count'] );
 		$this->assertSame( 3, $defaults['art_grid_columns'] );
 		$this->assertArrayNotHasKey( 'art_grid_height', $fields );
-		// After the ring's Photos around: Photos, Columns, the Gap.
+		// After the ring's Photos around: Photos, Columns (the Gap in Size).
 		$block = WP_Swiper_Settings::blocks()['layout']['art']['fields'];
 		$at    = array_search( 'art_ring_count', $block, true );
-		$this->assertSame( array( 'art_ring_count', 'art_grid_count', 'art_grid_columns', 'art_gap' ), array_slice( $block, $at, 4 ) );
+		$this->assertSame( array( 'art_ring_count', 'art_grid_count', 'art_grid_columns' ), array_slice( $block, $at, 3 ) );
+		$this->assertContains( 'art_gap', WP_Swiper_Settings::blocks()['layout']['size']['fields'] );
 		// The middle circle's size for it too (dragged in the preview).
 		$this->assertContains( 'grid-circle', $fields['art_ring_center']['styles'] );
 
@@ -864,7 +865,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$fields = WP_Swiper_Settings::fields();
 		$blocks = WP_Swiper_Settings::blocks()['layout'];
 		// A block of its own after Content in the middle: the switch, then the size and what is in it.
-		$this->assertSame( array( 'art', 'art_middle', 'art_opening' ), array_slice( array_keys( $blocks ), 0, 3 ) );
+		$this->assertSame( array( 'art', 'size', 'art_middle', 'art_opening' ), array_slice( array_keys( $this->layout_for( 'art' ) ), 0, 4 ) );
 		$this->assertSame( 'Opening', $blocks['art_opening']['title'] );
 		$this->assertSame( array( 'art_opening', 'art_ring_opening', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ), $blocks['art_opening']['fields'] );
 		foreach ( $blocks['art_opening']['fields'] as $key ) {

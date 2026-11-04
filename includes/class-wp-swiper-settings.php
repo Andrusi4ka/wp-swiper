@@ -735,15 +735,18 @@ class WP_Swiper_Settings {
 				),
 				'arrangement' => array(
 					'title'  => __( 'Arrangement', 'wp-swiper' ),
-					'fields' => array( 'collage_layout', 'collage_order', 'collage_count', 'collage_columns', 'collage_row_height', 'collage_row_exact', 'collage_gap', 'collage_rotate', 'collage_rotate_fit' ),
+					'fields' => array( 'collage_layout', 'collage_order', 'collage_count', 'collage_columns', 'collage_row_height', 'collage_row_exact', 'collage_rotate', 'collage_rotate_fit' ),
+				),
+				// Every effect's Height, Gap and Alignment, in this block and this
+				// order (each effect sees its own fields: a slider's, the
+				// Collage's, Art's, Text mask's), then the slider's image fit.
+				'size'        => array(
+					'title'  => __( 'Size', 'wp-swiper' ),
+					'fields' => array( 'height', 'art_height', 'space_between', 'collage_gap', 'art_gap', 'text_mask_gap', 'art_align', 'slide_ratio', 'slide_ratio_custom', 'slide_distribution', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
 				),
 				'slides'      => array(
 					'title'  => __( 'Slides', 'wp-swiper' ),
-					'fields' => array( 'slides_per_view', 'slides_per_group', 'space_between', 'auto_width', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_direction', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),
-				),
-				'size'        => array(
-					'title'  => __( 'Size and fit', 'wp-swiper' ),
-					'fields' => array( 'height', 'slide_ratio', 'slide_ratio_custom', 'slide_distribution', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
+					'fields' => array( 'slides_per_view', 'slides_per_group', 'auto_width', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_direction', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),
 				),
 				// Collage: a place with an image and text instead of a photo.
 				'collage_content' => array(
@@ -841,6 +844,14 @@ class WP_Swiper_Settings {
 		foreach ( WP_Swiper_Art::blocks() as $page => $art_blocks ) {
 			$blocks[ $page ] = $art_blocks + $blocks[ $page ];
 		}
+		// Layout: one order for every effect (each sees only the blocks with
+		// its fields): its main block (Effect, Arrangement, Art / Text mask),
+		// Size, its own blocks, then Look, Zoom and Background.
+		$layout = array();
+		foreach ( array( 'effect', 'arrangement', 'art', 'size', 'collage_content', 'slides' ) as $name ) {
+			$layout[ $name ] = $blocks['layout'][ $name ];
+		}
+		$blocks['layout'] = $layout + $blocks['layout'];
 		return $blocks;
 	}
 
