@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.2.1
+Stable tag: 3.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,14 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.3.0 =
+* Collage: Rotation (-45 to 45°, per device) for Grid, Random mosaic, the templates, Scattered and Freeform: the whole collage turned, each photo upright and covering its place. Grid, mosaic and templates fill the block (edges cut off) or fit in it; Scattered and Freeform turn where they are, as large as their photos' outermost corners allow, and with Height Auto the block is cut to them. Photos dragged and resized at the angle in the preview.
+* Collage: Content in a place: an image and text (shortcodes too: a form, a theme's HTML block with buttons) in one place instead of a photo, its place per device or dragged onto a photo in the preview. It stays there while the photos swap; text that does not fit is cut at a word, a shortcode's content scrolls. Not for Justified rows and Masonry.
+* Art, SVG shape: Content in a window: the same in one window of the drawing, its background along the window's shape.
+* Image shadow as a background (Use as background) for Collage and Art.
+* Developer mode for collages (each place, the spaces between them, the angle) and SVG shapes (each window's box and outline, the content's area).
+* Under the settings menu, a card on what the chosen effect can do (it folds).
 
 = 3.2.1 =
 * WP Swiper is for administrators only: only they see its menu, add, edit, copy and delete sliders, use the preview and the WPBakery element. Editors, authors and the other roles do not see WP Swiper in the admin at all (nor its "What's new"). Visitors see the sliders on the pages as before, and sliders already placed on pages stay there.
