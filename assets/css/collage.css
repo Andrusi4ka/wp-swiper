@@ -251,6 +251,24 @@
 	height: var(--wp-swiper-collage-ih, 100%);
 }
 
+/* With a shortcode's markup (a form, buttons…): never cut, it scrolls in
+   its place where it is too tall (from the top then, nothing out of reach). */
+.wp-swiper-collage__content--scroll .wp-swiper-collage__content-inner {
+	justify-content: flex-start;
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+
+@supports (justify-content: safe center) {
+	.wp-swiper-collage__content--scroll.wp-swiper-collage__content--center .wp-swiper-collage__content-inner {
+		justify-content: safe center;
+	}
+
+	.wp-swiper-collage__content--scroll.wp-swiper-collage__content--bottom .wp-swiper-collage__content-inner {
+		justify-content: safe flex-end;
+	}
+}
+
 /* The image: its share of the width inside, its proportions kept; with text
    under it, at most half the height. */
 .wp-swiper .wp-swiper-collage__content-image {

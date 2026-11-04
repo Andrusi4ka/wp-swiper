@@ -110,3 +110,29 @@ test( 'collage-content: moved with the photos', async ( { page } ) => {
 	expect( moved ).toEqual( { place: 5, index: 4, order: 4 } );
 	expect( errors ).toEqual( [] );
 } );
+
+// A shortcode's markup (fixture.php: a form): the very node on the page,
+// so its script found it; laid out again, what was typed stays; never cut,
+// it scrolls instead.
+test( 'collage-content-shortcode: a form that works and scrolls', async ( { page } ) => {
+	const errors = await open( page, 'collage-content-shortcode' );
+	const form = page.locator( '.wp-swiper-collage__cell--content form.fixture-form' );
+	await expect( form ).toHaveCount( 1 );
+	await expect( form ).toHaveAttribute( 'data-ready', '1' );
+	await form.locator( 'input' ).fill( 'typed' );
+	const found = await page.evaluate( () => {
+		const api = document.querySelector( '.wp-swiper-collage' ).wpSwiperCollage;
+		// Laid out again (as on another device, or a photo dragged in the preview).
+		api.setOrder( api.places().order.slice() );
+		const inner = document.querySelector( '.wp-swiper-collage__cell--content .wp-swiper-collage__content-inner' );
+		return {
+			typed: document.querySelector( '.wp-swiper-collage__cell--content input' ).value,
+			forms: document.querySelectorAll( 'form.fixture-form' ).length,
+			cut: inner.textContent.indexOf( '…' ) !== -1,
+			scrolls: getComputedStyle( inner ).overflowY,
+			taller: inner.scrollHeight > inner.clientHeight,
+		};
+	} );
+	expect( found ).toEqual( { typed: 'typed', forms: 1, cut: false, scrolls: 'auto', taller: true } );
+	expect( errors ).toEqual( [] );
+} );

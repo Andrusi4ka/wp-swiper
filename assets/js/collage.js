@@ -900,8 +900,14 @@
 		var slides = pool ? [].slice.call( pool.content.children ) : [];
 		// Content in a place (render.php collage_content()): an image over text
 		// in one place instead of a photo, kept there while the photos swap.
-		var contentPool = el.querySelector( 'template.wp-swiper-collage__content-pool' );
-		var contentNode = contentPool && config.content ? contentPool.content.firstElementChild : null;
+		// This very node is moved into its place (not a copy): the scripts of a
+		// shortcode in it find it, a form keeps what was typed. Back in its
+		// hidden holder while the places are made again (build()).
+		var contentPool = el.querySelector( ':scope > .wp-swiper-collage__content-pool' );
+		var contentNode = contentPool && config.content ? contentPool.firstElementChild : null;
+		if ( contentNode ) {
+			contentNode.classList.add( 'wp-swiper-collage__item' );
+		}
 		var order = [];
 		var cells = [];
 		var queue = [];
@@ -1136,6 +1142,11 @@
 		 * its place (as art.js fitText(): the font size is the one set).
 		 */
 		function fitContent( cell ) {
+			// With a shortcode's markup (a form, buttons…): never cut, it scrolls
+			// instead (collage.css --scroll); its nodes stay as they are.
+			if ( cell.querySelector( '.wp-swiper-collage__content--scroll' ) ) {
+				return;
+			}
 			var inner = cell.querySelector( '.wp-swiper-collage__content-inner' );
 			var text = inner && inner.querySelector( '.wp-swiper-collage__content-text' );
 			if ( ! text ) {
@@ -1639,6 +1650,10 @@
 			// The places for photos, in turn.
 			var shown = 0;
 
+			// The content back in its holder first: not lost with the old places.
+			if ( contentNode && contentNode.parentNode !== contentPool ) {
+				contentPool.appendChild( contentNode );
+			}
 			grid.innerHTML = '';
 			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( positioned ? ' wp-swiper-collage__grid--free' : '' ) + ( cuts ? ' wp-swiper-collage__grid--cuts' : '' ) + ( fills( config ) ? ' wp-swiper-collage__grid--ratio' : '' ) + ( stretched ? ' wp-swiper-collage__grid--stretch' : '' );
 			grid.style.cssText = '';
@@ -1653,9 +1668,7 @@
 					cell.wpRatio = 1;
 					cell.wpReal = -1;
 					// As a photo is, for the preview, Rotation and the swap (collage.css).
-					var item = contentNode.cloneNode( true );
-					item.classList.add( 'wp-swiper-collage__item' );
-					cell.appendChild( item );
+					cell.appendChild( contentNode );
 				} else {
 					var real = order[ shown++ % slides.length ];
 					// A place's proportions stay those of the photo it got first.

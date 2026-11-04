@@ -704,6 +704,40 @@ class WP_Swiper_Admin {
 		<?php
 	}
 
+	/**
+	 * Under the settings menu: what the chosen effect can do, a few points
+	 * (WP_Swiper_Settings::effect_notes()), and a line for every effect. A box
+	 * that folds (admin.js keeps it as it was left); every effect's list is
+	 * there, the chosen one shown (admin.js on a new Effect).
+	 *
+	 * @param string $effect The effect chosen now.
+	 */
+	public static function effect_notes( $effect ) {
+		$notes   = WP_Swiper_Settings::effect_notes();
+		$choices = WP_Swiper_Settings::fields()['effect']['choices'];
+		echo '<details class="wp-swiper-notes" open>';
+		echo '<summary class="wp-swiper-notes__summary">';
+		foreach ( $notes['effects'] as $name => $points ) {
+			printf(
+				'<span class="wp-swiper-notes__title" data-effect="%1$s"%2$s>%3$s</span>',
+				esc_attr( $name ),
+				$name === $effect ? '' : ' hidden',
+				/* translators: %s: effect name, as in the Effect list (Slide, Collage…). */
+				esc_html( sprintf( __( 'What %s can do', 'wp-swiper' ), isset( $choices[ $name ] ) ? $choices[ $name ] : $name ) )
+			);
+		}
+		echo '</summary>';
+		foreach ( $notes['effects'] as $name => $points ) {
+			printf( '<ul class="wp-swiper-notes__list" data-effect="%1$s"%2$s>', esc_attr( $name ), $name === $effect ? '' : ' hidden' );
+			foreach ( $points as $point ) {
+				echo '<li>' . esc_html( $point ) . '</li>';
+			}
+			echo '</ul>';
+		}
+		echo '<p class="wp-swiper-notes__all">' . esc_html( $notes['all'] ) . '</p>';
+		echo '</details>';
+	}
+
 	public static function render_settings_box( $post ) {
 		$values = WP_Swiper_Settings::get( $post->ID );
 		$fields = WP_Swiper_Settings::fields();
@@ -738,6 +772,8 @@ class WP_Swiper_Admin {
 			);
 		}
 		echo '</nav>';
+
+		self::effect_notes( $values['effect'] );
 
 		// At the foot of the column (admin.css), the box's bottom left corner.
 		printf(

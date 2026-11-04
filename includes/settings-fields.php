@@ -693,6 +693,7 @@ return array(
 		'label'   => __( 'Text', 'wp-swiper' ),
 		'type'    => 'editor',
 		'default' => '',
+		'help'    => __( 'Shortcodes work here too: a form, a theme\x27s HTML block with buttons… With one, nothing is cut: the place scrolls where it is too tall.', 'wp-swiper' ),
 	),
 	'collage_content_font_size' => array(
 		'section'    => 'layout',

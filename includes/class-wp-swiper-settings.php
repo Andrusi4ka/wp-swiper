@@ -133,6 +133,16 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * What each effect can do, a few points each, and a line for every
+	 * effect (includes/effect-notes.php), for the box under the settings menu.
+	 *
+	 * @return array { effects: effect => string[], all: string }
+	 */
+	public static function effect_notes() {
+		return require __DIR__ . '/effect-notes.php';
+	}
+
+	/**
 	 * "Use as background": on, with an effect that can be one.
 	 *
 	 * @param array $settings Slider settings.
@@ -720,11 +730,6 @@ class WP_Swiper_Settings {
 					'title'  => __( 'Arrangement', 'wp-swiper' ),
 					'fields' => array( 'collage_layout', 'collage_order', 'collage_count', 'collage_columns', 'collage_row_height', 'collage_row_exact', 'collage_gap', 'collage_rotate', 'collage_rotate_fit' ),
 				),
-				// Collage: a place with an image and text instead of a photo.
-				'collage_content' => array(
-					'title'  => __( 'Content in a place', 'wp-swiper' ),
-					'fields' => array( 'collage_content', 'collage_content_place', 'collage_content_image', 'collage_content_image_size', 'collage_content_text', 'collage_content_font_size', 'collage_content_padding', 'collage_content_valign', 'collage_content_bg' ),
-				),
 				'slides'      => array(
 					'title'  => __( 'Slides', 'wp-swiper' ),
 					'fields' => array( 'slides_per_view', 'slides_per_group', 'space_between', 'auto_width', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_direction', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),
@@ -732,6 +737,11 @@ class WP_Swiper_Settings {
 				'size'        => array(
 					'title'  => __( 'Size and fit', 'wp-swiper' ),
 					'fields' => array( 'height', 'slide_ratio', 'slide_ratio_custom', 'slide_distribution', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
+				),
+				// Collage: a place with an image and text instead of a photo.
+				'collage_content' => array(
+					'title'  => __( 'Content in a place', 'wp-swiper' ),
+					'fields' => array( 'collage_content', 'collage_content_place', 'collage_content_image', 'collage_content_image_size', 'collage_content_text', 'collage_content_font_size', 'collage_content_padding', 'collage_content_valign', 'collage_content_bg' ),
 				),
 				// Art's Rounded corners and Image border here too (its own fields,
 				// where a slider's are), and Text mask's Rounded corners (its

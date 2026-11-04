@@ -82,6 +82,16 @@ foreach ( $wp_swiper_ids as $wp_swiper_index => $wp_swiper_id ) {
 	);
 }
 
+// A shortcode of the page's own (cases.php collage-content-shortcode): a
+// form whose script marks it once the page is there, as another plugin's would.
+add_shortcode(
+	'wp_swiper_fixture_form',
+	function () {
+		return '<form class="fixture-form"><input name="q" value=""><button type="button">Go</button></form>'
+			. '<script>document.addEventListener("DOMContentLoaded",function(){document.querySelectorAll(".fixture-form").forEach(function(f){f.setAttribute("data-ready","1");});});</script>';
+	}
+);
+
 // "{image}" in a setting: the last of those images (Content in a place's image, say).
 foreach ( $wp_swiper_case['settings'] as $wp_swiper_key => $wp_swiper_value ) {
 	if ( '{image}' === $wp_swiper_value ) {

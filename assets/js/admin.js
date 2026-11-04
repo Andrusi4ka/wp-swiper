@@ -2558,6 +2558,32 @@
 		} catch ( e ) {}
 
 		/*
+		 * Under the menu: what the chosen effect can do (WP_Swiper_Admin::
+		 * effect_notes()), its list shown on a new Effect; open or folded as
+		 * it was left (for this browser).
+		 */
+		var NOTES_KEY = 'wpSwiperNotes';
+		var $notes = $( '.wp-swiper-notes' );
+		var showNotes = function () {
+			var effect = $( '#wp-swiper-effect' ).val();
+			$notes.find( '[data-effect]' ).each( function () {
+				this.hidden = $( this ).data( 'effect' ) !== effect;
+			} );
+		};
+		$( '#wp-swiper-effect' ).on( 'change', showNotes );
+		showNotes();
+		try {
+			if ( window.localStorage.getItem( NOTES_KEY ) === 'closed' ) {
+				$notes.prop( 'open', false );
+			}
+		} catch ( e ) {}
+		$notes.on( 'toggle', function () {
+			try {
+				window.localStorage.setItem( NOTES_KEY, this.open ? 'open' : 'closed' );
+			} catch ( e ) {}
+		} );
+
+		/*
 		 * A setting edited in WordPress's editor (type "editor": Art's text in the
 		 * opening): started the first time it is in view (an editor started out of
 		 * view is drawn wrong), as a slide description's (links, lists...). Its

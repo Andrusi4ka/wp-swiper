@@ -28,6 +28,14 @@ class WP_Swiper_Render {
 	);
 
 	/**
+	 * How deep in Content in a place's shortcodes (collage_content()): inside
+	 * one, a content's shortcodes do not run again.
+	 *
+	 * @var int
+	 */
+	private static $content_depth = 0;
+
+	/**
 	 * Whether the page's first image got fetchpriority="high" (render_slide()).
 	 *
 	 * @var bool
@@ -1499,7 +1507,8 @@ class WP_Swiper_Render {
 					?>
 				</template>
 				<?php if ( '' !== $content ) : ?>
-					<template class="wp-swiper-collage__content-pool"><?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?></template>
+					<?php // On the page itself, hidden (not a <template>): collage.js moves this very node into its place, so the scripts of a shortcode in it find it, and a form keeps what was typed. ?>
+					<div class="wp-swiper-collage__content-pool" hidden><?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?></div>
 				<?php endif; ?>
 			</div>
 		</div>
@@ -1511,7 +1520,11 @@ class WP_Swiper_Render {
 	 * Collage, Content in a place: an image over the editor's text (either or
 	 * both) on the place's background, its sizes per device as CSS variables;
 	 * '' when it is off, has neither, the Style is Justified rows or Masonry
-	 * on every device, or the collage is a background.
+	 * on every device, or the collage is a background. Shortcodes in the text
+	 * run (a form, a theme's HTML block…), once the text is sanitized: their
+	 * markup is theirs; with any, the place scrolls rather than cutting it
+	 * (collage.js fitContent()). Not inside itself (a slider whose content
+	 * shows a slider whose content…).
 	 *
 	 * @param array $settings Slider settings.
 	 * @return string Markup.
@@ -1528,6 +1541,19 @@ class WP_Swiper_Render {
 		$text  = WP_Swiper_Settings::sanitize_description( $settings['collage_content_text'] );
 		if ( '' === $image && '' === $text ) {
 			return '';
+		}
+		$scroll = false;
+		if ( false !== strpos( $text, '[' ) ) {
+			if ( self::$content_depth > 0 ) {
+				// Inside a content already: its shortcodes left out.
+				$text = strip_shortcodes( $text );
+			} else {
+				++self::$content_depth;
+				$ran = do_shortcode( $text );
+				--self::$content_depth;
+				$scroll = $ran !== $text;
+				$text   = $ran;
+			}
 		}
 
 		$style = array();
@@ -1547,7 +1573,7 @@ class WP_Swiper_Render {
 		}
 		$align = in_array( $settings['collage_content_valign'], array( 'top', 'bottom' ), true ) ? $settings['collage_content_valign'] : 'center';
 
-		return '<div class="wp-swiper-collage__content wp-swiper-collage__content--' . $align . '" style="' . esc_attr( implode( ';', $style ) ) . '">'
+		return '<div class="wp-swiper-collage__content wp-swiper-collage__content--' . $align . ( $scroll ? ' wp-swiper-collage__content--scroll' : '' ) . '" style="' . esc_attr( implode( ';', $style ) ) . '">'
 			. '<div class="wp-swiper-collage__content-inner">'
 			. $image
 			. ( '' === $text ? '' : '<div class="wp-swiper-collage__content-text">' . $text . '</div>' )

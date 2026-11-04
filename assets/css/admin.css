@@ -510,6 +510,72 @@
 	align-self: stretch;
 }
 
+/* Under the menu: what the chosen effect can do (WP_Swiper_Admin::effect_notes()),
+   a grey card as the settings blocks are; it folds (admin.js keeps it so). */
+.wp-swiper-notes {
+	padding: 12px;
+	border: 1px solid #e4e4e4;
+	border-radius: 6px;
+	background: #f2f2f2;
+	color: #3c434a;
+}
+
+.wp-swiper-notes__summary {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 600;
+	color: #1d2327;
+	cursor: pointer;
+	list-style: none;
+}
+
+.wp-swiper-notes__summary::-webkit-details-marker {
+	display: none;
+}
+
+/* A chevron at the end: down when open, right when folded. */
+.wp-swiper-notes__summary::after {
+	content: "\f347";
+	margin-left: auto;
+	font: normal 16px/1 dashicons;
+	color: #a7aaad;
+}
+
+.wp-swiper-notes:not([open]) > .wp-swiper-notes__summary::after {
+	content: "\f345";
+}
+
+.wp-swiper-notes__summary:focus-visible {
+	outline: 2px solid var(--wp-swiper-accent, #2271b1);
+	outline-offset: 2px;
+}
+
+.wp-swiper-notes__title[hidden],
+.wp-swiper-notes__list[hidden] {
+	display: none;
+}
+
+.wp-swiper-notes__list {
+	margin: 10px 0 0 18px;
+	padding: 0;
+	list-style: disc;
+}
+
+.wp-swiper-notes__list li {
+	margin: 0 0 4px;
+	line-height: 1.45;
+}
+
+.wp-swiper-notes__all {
+	margin: 10px 0 0;
+	padding-top: 8px;
+	border-top: 1px solid #e4e4e4;
+	color: #646970;
+	font-size: 12px;
+	line-height: 1.45;
+}
+
 .wp-swiper-demos {
 	margin: auto 0 0;
 	color: #646970;

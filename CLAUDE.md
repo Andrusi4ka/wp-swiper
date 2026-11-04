@@ -374,7 +374,7 @@
   (`collage_content_bg`, `alpha_color`, за замовч. `rgba(0,0,0,0)` — фону
   немає, рішення користувача); Image size %, Font size, Padding —
   для кожного пристрою; Vertical alignment — одне. Блок `collage_content`
-  на Layout після Arrangement. Клітинка — `collage_content_place` (від 1,
+  на Layout після Size and fit (перенесено на прохання користувача). Клітинка — `collage_content_place` (від 1,
   для кожного пристрою) або перетягнути вміст на фото в прев'ю: у порядку
   `places()` вміст — `-1`, тож drag / Undo / × працюють як з фото
   (`collage.js takeOrder()`, повідомлення `collage-content` → admin.js).
@@ -386,8 +386,28 @@
   обрізано на слові з «…» (`fitContent()`, копія art.js `fitText()`: на
   сторінці колажу art.js немає). Не для Justified / Masonry (на пристрої
   з ними — без вмісту; рішення користувача: «почекати») і не у фоні.
-  Розмітка — `WP_Swiper_Render::collage_content()` у `<template
-  class="wp-swiper-collage__content-pool">`.
+  Розмітка — `WP_Swiper_Render::collage_content()` у схованому
+  `<div class="wp-swiper-collage__content-pool" hidden>` (НЕ `<template>`):
+  `collage.js` переносить у клітинку сам цей вузол, не копію (перед
+  `grid.innerHTML = ''` повертає його назад) — тож скрипти шорткоду його
+  бачать, а введене у форму не губиться. **Шорткоди** в Text (2026-11-04,
+  рішення користувача — у тому ж полі, не окреме): `do_shortcode()` після
+  санітизації тексту; з ними — клас `--scroll`, текст не обрізається,
+  клітинка прокручується. Сам у собі не виконується (`$content_depth`,
+  усередині — `strip_shortcodes()`). Перевірено: своя форма у
+  `fixture.php` (`[wp_swiper_fixture_form]`), кнопка WoodMart
+  (`[woodmart_button]`) — тимчасово; HTML-блоків WoodMart на сайті на
+  роботі немає. У прев'ю скрипти шорткодів можуть не підключитися (свій
+  список скриптів прев'ю).
+- **Картка «What … can do»** (2026-11-04, ідея користувача): під лівим
+  меню редактора — 3–6 коротких пунктів, що вміє вибраний ефект (що, а не
+  як — для «як» є підказки полів), і спільний рядок для всіх ефектів.
+  Тексти — `includes/effect-notes.php` (`WP_Swiper_Settings::effect_notes()`),
+  погоджені користувачем; обов'язково згадувати шорткод і поворот (Collage).
+  Новий ефект = його список тут (тест перевіряє, що списки є для всіх
+  ефектів). Вивід — `WP_Swiper_Admin::effect_notes()`, `<details>` (відкрита),
+  згортається; стан — `localStorage` `wpSwiperNotes`; список міняється з
+  Effect (`admin.js showNotes()`).
 - Кнопка × «прибрати місце» — лише Scattered і Freeform; для інших стилів —
   коли попросить.
 - Телефон (і планшет) завжди наслідує більший екран: жодних `device_defaults`
@@ -585,7 +605,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 403 тести, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 408 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.
@@ -615,7 +635,7 @@ WP-CLI для тестів не потрібен: досить `WP_CORE_DIR` і 
 котра медіатека правильна. Видаляючи рядки за номерами (sed), звіряй
 `git diff` — так одного разу пропав селектор `.wp-swiper.wp-swiper--background`.
 `fixture.php` показує слайдер з налаштувань `cases.php` на фото з медіатеки,
-нічого не зберігає, відкривається лише з 127.x. Перевіряє 61 випадок
+нічого не зберігає, відкривається лише з 127.x. Перевіряє 62 випадки
 (усі ефекти, стилі колажу й Art) на desktop і mobile: без помилок у консолі,
 які файли підключено, де стоять фото (знімки в `snapshots/`), стрілки,
 лайтбокс. Запуск: `cd tests/browser && npm install && npx playwright test`;
