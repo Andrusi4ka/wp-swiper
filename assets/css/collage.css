@@ -113,6 +113,87 @@
 	}
 }
 
+/* Rotation (collage.js orient()): the grid turned in its block, laid out in
+   a box that covers it (Fill: its edges cut off here) or fits in it (Fit).
+   Each photo turned back upright and as large as covers its place
+   (--wp-swiper-collage-uw / -uh, sizeImages()); the place cuts it. */
+.wp-swiper-collage.wp-swiper-collage--turned {
+	overflow: hidden;
+}
+
+/* Fit, Scattered, Freeform: all the photos are in the block, but the turned
+   grid's corners (empty) are not; cut those off, the photos' shadows shown
+   past the edges (as sliders, frontend.css). Where a browser cannot show
+   past them (Safari), cut at the edges, shadows too: uncut, the corners
+   would widen the page (a scrollbar). */
+.wp-swiper-collage.wp-swiper-collage--turned.wp-swiper-collage--turned-fit {
+	overflow: hidden;
+}
+
+@supports (overflow-clip-margin: 1px) {
+	.wp-swiper-collage.wp-swiper-collage--turned.wp-swiper-collage--turned-fit {
+		overflow: clip;
+		overflow-clip-margin: var(--wp-swiper-shadow-reach, 0px);
+	}
+}
+
+.wp-swiper .wp-swiper-collage--turned .wp-swiper-collage__cell > .wp-swiper-collage__item {
+	inset: auto;
+	top: 50%;
+	left: 50%;
+	width: var(--wp-swiper-collage-uw, 100%);
+	height: var(--wp-swiper-collage-uh, 100%);
+	border-radius: 0;
+	transform: translate(-50%, -50%) rotate(calc(-1 * var(--wp-swiper-collage-turn, 0deg)));
+}
+
+/* Image border: on the place (turned with it), not on the photo, which is
+   larger than its place now. */
+.wp-swiper--border .wp-swiper-collage--turned .wp-swiper__media::after {
+	content: none;
+}
+
+.wp-swiper--border .wp-swiper-collage--turned .wp-swiper-collage__cell::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	border: var(--wp-swiper-border-width, 0px) solid var(--wp-swiper-border-color, #fff);
+	border-radius: inherit;
+	pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper--border .wp-swiper-collage--turned .wp-swiper-collage__cell::after {
+		border-width: var(--wp-swiper-border-width-tablet, var(--wp-swiper-border-width, 0px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper--border .wp-swiper-collage--turned .wp-swiper-collage__cell::after {
+		border-width: var(--wp-swiper-border-width-mobile, var(--wp-swiper-border-width-tablet, var(--wp-swiper-border-width, 0px)));
+	}
+}
+
+/* A caption: upright in the middle of its place, no wider than fits in it
+   (--wp-swiper-collage-cw), its background darkest there (unless none). */
+.wp-swiper .wp-swiper-collage--turned .wp-swiper__caption {
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 12px;
+	text-align: center;
+}
+
+.wp-swiper:not(.wp-swiper--caption-nobg) .wp-swiper-collage--turned .wp-swiper__caption {
+	background: radial-gradient(circle at 50% 50%, var(--wp-swiper-caption-bg-from, rgba(0, 0, 0, 0.65)), var(--wp-swiper-caption-bg-to, rgba(0, 0, 0, 0)) 60%);
+}
+
+.wp-swiper .wp-swiper-collage--turned .wp-swiper__caption .wp-swiper__caption-text {
+	max-width: var(--wp-swiper-collage-cw, 100%);
+}
+
 /* Background (frontend.css): the block's height, not the Height (collages
    arranged by their photos' proportions are fitted to it by the script,
    collage.js fillLines()). */

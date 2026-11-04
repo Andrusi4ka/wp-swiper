@@ -8,7 +8,8 @@ const FIXTURE = '/wp-content/plugins/' + require( 'path' ).basename( require( 'p
 
 const CASES = [
 	'slide', 'slide-loop', 'slide-captions', 'expand', 'auto-width', 'marquee',
-	'slide-gradient', 'collage-gradient', 'art-ring-gradient',
+	'slide-gradient', 'collage-gradient', 'art-ring-gradient', 'collage-rotate', 'collage-rotate-fit', 'collage-rotate-scatter', 'collage-rotate-free',
+	'collage-rotate-scatter-auto', 'collage-rotate-free-auto',
 	'expand-shadow', 'slide-loop-shadow', 'marquee-shadow',
 	'fade', 'fade-shadow', 'fade-shadow-contain', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'creative-carousel',
 	'thumbs', 'video', 'background',
@@ -174,6 +175,23 @@ for ( const name of CASES ) {
 						return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
 					} ) : null;
 					await photo.click( { position: strip || { x: 12, y: box.height / 2 } } );
+				} else if ( /^collage-rotate/.test( name ) ) {
+					// Turned: the first place whose middle is in the block (Fill
+					// cuts off the places at its edges), clicked there.
+					const spot = await page.evaluate( () => {
+						const block = document.querySelector( '.wp-swiper-collage' ).getBoundingClientRect();
+						for ( const cell of document.querySelectorAll( '.wp-swiper-collage__cell' ) ) {
+							const r = cell.getBoundingClientRect();
+							const x = r.left + r.width / 2;
+							const y = r.top + r.height / 2;
+							if ( x > block.left + 10 && x < block.right - 10 && y > block.top + 10 && y < block.bottom - 10 ) {
+								return { x, y };
+							}
+						}
+						return null;
+					} );
+					expect( spot ).not.toBeNull();
+					await page.mouse.click( spot.x, spot.y );
 				} else {
 					await photo.click();
 				}

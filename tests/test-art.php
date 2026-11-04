@@ -76,6 +76,9 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'wp-swiper-art--caption-middle', $this->render( array( 'effect' => 'art', 'art_caption_middle' => true ), $slides ) );
 		$this->assertStringNotContainsString( 'wp-swiper-art--caption-middle', $this->render( array( 'effect' => 'art' ), $slides ) );
 		$this->assertSame( 'caption', WP_Swiper_Settings::fields()['art_caption_middle']['section'] );
+		// Under the Font size and Color row (their group), before Text direction.
+		$text = WP_Swiper_Settings::blocks()['caption']['caption_text']['fields'];
+		$this->assertSame( array( 'caption_size', 'caption_color', 'art_caption_middle', 'caption_orientation' ), array_slice( $text, 0, 4 ) );
 	}
 
 	public function test_swapping_the_middle_photo() {

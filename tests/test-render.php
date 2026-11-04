@@ -647,6 +647,28 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '--wp-swiper-collage-speed:800ms', $this->root_style( $html ) );
 	}
 
+	public function test_collage_rotation_per_device() {
+		// Not turned by default: 0 and Fill on every device.
+		$config = $this->config( $this->render( array( 'effect' => 'collage' ) ), 'data-wp-swiper-collage' );
+		$this->assertSame( array( 'desktop' => 0, 'tablet' => 0, 'mobile' => 0 ), $config['rotate'] );
+		$this->assertSame( array( 'desktop' => false, 'tablet' => false, 'mobile' => false ), $config['rotateFit'] );
+		// Per device: the tablet its own, the phone the tablet's (inherited); Fit on mobile only.
+		$config = $this->config( $this->render( array( 'effect' => 'collage', 'collage_rotate' => 30, 'collage_rotate_tablet' => -15, 'collage_rotate_fit_mobile' => 'fit' ) ), 'data-wp-swiper-collage' );
+		$this->assertSame( array( 'desktop' => 30, 'tablet' => -15, 'mobile' => -15 ), $config['rotate'] );
+		$this->assertSame( array( 'desktop' => false, 'tablet' => false, 'mobile' => true ), $config['rotateFit'] );
+		// Within -45 to 45, as saved too.
+		$this->assertSame( 45, $this->config( $this->render( array( 'effect' => 'collage', 'collage_rotate' => 90 ) ), 'data-wp-swiper-collage' )['rotate']['desktop'] );
+		$saved = WP_Swiper_Settings::sanitize( array( 'effect' => 'collage', 'collage_rotate' => '-80', 'collage_rotate_fit' => 'stretch' ) );
+		$this->assertSame( -45, $saved['collage_rotate'] );
+		$this->assertSame( 'fill', $saved['collage_rotate_fit'] );
+		// In the collage's block, after the Gap.
+		$fields = WP_Swiper_Settings::blocks()['layout']['arrangement']['fields'];
+		$this->assertSame( array( 'collage_gap', 'collage_rotate', 'collage_rotate_fit' ), array_slice( $fields, -3 ) );
+		$this->assertSame( array( 'collage' ), WP_Swiper_Settings::fields()['collage_rotate']['effects'] );
+		$this->assertTrue( WP_Swiper_Settings::fields()['collage_rotate']['responsive'] );
+		$this->assertTrue( WP_Swiper_Settings::fields()['collage_rotate_fit']['responsive'] );
+	}
+
 	public function test_collage_without_swapping_stands_still() {
 		$config = $this->config( $this->render( array( 'effect' => 'collage', 'collage_swap' => false ) ), 'data-wp-swiper-collage' );
 		$this->assertFalse( $config['swap'] );

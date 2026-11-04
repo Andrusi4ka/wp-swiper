@@ -72,6 +72,15 @@ return array(
 	'slide-gradient'   => array( 'settings' => $slider + array( 'effect' => 'slide', 'slides_per_view' => '3', 'space_between' => '12', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100' ) ),
 	'collage-gradient' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'lightbox' => '1', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100' ) ),
 	'art-ring-gradient' => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'lightbox' => '1', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100' ) ),
+	// Rotation: a grid turned 30° on desktop (filling its block, edges cut), not on mobile; a template turned -20° all of it shown (Fit).
+	'collage-rotate'   => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'collage_columns' => '3', 'collage_count' => '9', 'collage_rotate' => '30', 'collage_rotate_mobile' => '0', 'height' => '420', 'lightbox' => '1' ) ),
+	'collage-rotate-fit' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'feature-left', 'collage_rotate' => '-20', 'collage_rotate_fit' => 'fit', 'height' => '420', 'image_border' => '1', 'image_border_width' => '3', 'lightbox' => '1' ), 'captions' => true ),
+	// Rotation of Scattered and Freeform: turned where they are, all of it in the block.
+	'collage-rotate-scatter' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'collage_count' => '6', 'collage_rotate' => '25', 'lightbox' => '1' ) ),
+	'collage-rotate-free' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'freeform', 'collage_count' => '7', 'collage_rotate' => '-30', 'lightbox' => '1' ) ),
+	// Height "Auto": the block from the photos' top-most point to their bottom-most.
+	'collage-rotate-scatter-auto' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'collage_count' => '9', 'collage_rotate' => '14', 'height_unit' => 'auto', 'lightbox' => '1' ) ),
+	'collage-rotate-free-auto' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'freeform', 'collage_count' => '7', 'collage_rotate' => '20', 'height_unit' => 'auto', 'lightbox' => '1' ) ),
 	'collage-scatter'  => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'collage_count' => '6', 'lightbox' => '1' ) ),
 	'collage-freeform' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'freeform', 'collage_count' => '7', 'lightbox' => '1' ) ),
 	'collage-grid'     => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'lightbox' => '1' ) ),

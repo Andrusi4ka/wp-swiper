@@ -361,6 +361,27 @@
 	background: #b26200;
 }
 
+/* A collage (preview-dev.js drawCollage()): the layer in its grid, turned
+   with it, its labels upright; each place's size in its middle; the grid's
+   own box where it is not the block's (Fill, Fit) dashed red; the block's
+   size at its top (and the angle, the grid's size). */
+.wp-swiper-dev--collage .wp-swiper-dev__label {
+	rotate: calc(-1 * var(--wp-swiper-collage-turn, 0deg));
+}
+
+.wp-swiper-dev > .wp-swiper-dev__dimension.wp-swiper-dev__size {
+	background: #00a32a;
+}
+
+.wp-swiper-dev__grid {
+	outline: 2px dashed #d63638;
+	outline-offset: -2px;
+}
+
+.wp-swiper-dev > .wp-swiper-dev__dimension.wp-swiper-dev__block-size {
+	background: #2271b1;
+}
+
 /* The image's size: in its top left corner. */
 .wp-swiper-dev__media .wp-swiper-dev__label {
 	position: absolute;

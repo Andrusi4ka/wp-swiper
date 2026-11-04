@@ -30,6 +30,34 @@
 		} );
 	}
 
+	/*
+	 * A pointer in the grid's own px (from its top left corner), the grid
+	 * turned or not (collage.js orient(): grid.wpAngle, about its middle).
+	 */
+	function gridPoint( grid, x, y ) {
+		var rect = grid.getBoundingClientRect();
+		var angle = grid.wpAngle || 0;
+		if ( ! angle ) {
+			return { x: x - rect.left, y: y - rect.top };
+		}
+		var back = -angle * Math.PI / 180;
+		var dx = x - ( rect.left + rect.width / 2 );
+		var dy = y - ( rect.top + rect.height / 2 );
+		return {
+			x: dx * Math.cos( back ) - dy * Math.sin( back ) + grid.offsetWidth / 2,
+			y: dx * Math.sin( back ) + dy * Math.cos( back ) + grid.offsetHeight / 2
+		};
+	}
+
+	// A pointer's move along the grid's own sides (the grid turned or not).
+	function gridDelta( grid, dx, dy ) {
+		var back = -( grid.wpAngle || 0 ) * Math.PI / 180;
+		return {
+			x: dx * Math.cos( back ) - dy * Math.sin( back ),
+			y: dx * Math.sin( back ) + dy * Math.cos( back )
+		};
+	}
+
 	function cellAt( x, y, grid ) {
 		var node = document.elementFromPoint( x, y );
 		var cell = node && node.closest( '.wp-swiper-collage__cell' );
@@ -259,9 +287,9 @@
 			makeSlots();
 		}
 		moveGhost( e.clientX, e.clientY );
-		var rect = drag.grid.getBoundingClientRect();
-		var x = e.clientX - rect.left;
-		var y = e.clientY - rect.top;
+		var point = gridPoint( drag.grid, e.clientX, e.clientY );
+		var x = point.x;
+		var y = point.y;
 		// Over the frame shown: it stays (the places moved, the photo is in it now).
 		if ( drag.slot >= 0 && inSlot( drag.slots[ drag.slot ], x, y ) ) {
 			return;
@@ -538,12 +566,12 @@
 			return;
 		}
 		var line = resize.line;
-		var rect = resize.grid.getBoundingClientRect();
+		var point = gridPoint( resize.grid, e.clientX, e.clientY );
 		var size = ( line.vertical ? line.width : line.height ) - line.gap;
 		if ( size <= 0 ) {
 			return;
 		}
-		var pointer = line.vertical ? e.clientX - rect.left - line.left : e.clientY - rect.top - line.top;
+		var pointer = line.vertical ? point.x - line.left : point.y - line.top;
 		var min = Math.min( 0.45, Math.max( MIN_SHARE, MIN_PART / size ) );
 		var share = Math.max( min, Math.min( 1 - min, ( pointer - line.gap / 2 ) / size ) );
 		resize.api.mosaic.setShare( resize.node, share );
@@ -603,9 +631,9 @@
 		if ( ! edge ) {
 			return;
 		}
-		var rect = edge.grid.getBoundingClientRect();
-		var x = e.clientX - rect.left;
-		var y = e.clientY - rect.top;
+		var point = gridPoint( edge.grid, e.clientX, e.clientY );
+		var x = point.x;
+		var y = point.y;
 		var p = edge.place;
 		var width = p.width;
 		var height = p.height;
@@ -918,14 +946,18 @@
 			free.cell.classList.add( 'is-moved' );
 			document.documentElement.classList.add( free.sides ? 'wp-swiper-collage-resizing' : 'wp-swiper-collage-dragging', 'wp-swiper-collage-free-' + ( free.sides ? 'resizing' : 'moving' ), 'wp-swiper-collage-grip-' + ( free.name || 'none' ) );
 		}
+		// The grid turned (Rotation): moved and resized along its own sides.
+		var along = gridDelta( free.grid, dx, dy );
+		dx = along.x;
+		dy = along.y;
 		if ( free.sides ) {
 			free.rect = freeResize( dx, dy );
 			free.api.free.setRect( free.index, free.rect );
 			return;
 		}
 		// Over another photo: the swap shown (freeMark()); else moved.
-		var rect = free.grid.getBoundingClientRect();
-		var over = freeTarget( e.clientX - rect.left, e.clientY - rect.top );
+		var point = gridPoint( free.grid, e.clientX, e.clientY );
+		var over = freeTarget( point.x, point.y );
 		freeMark( over );
 		freeGhostAt( e.clientX, e.clientY );
 		if ( null === over ) {

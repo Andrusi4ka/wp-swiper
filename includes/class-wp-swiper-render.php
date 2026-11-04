@@ -1440,6 +1440,21 @@ class WP_Swiper_Render {
 			'rowHeight' => $per_device( 'collage_row_height' ),
 			'rowExact'  => (bool) $settings['collage_row_exact'],
 			'gap'       => $per_device( 'collage_gap' ),
+			// Rotation per device (°, -45 to 45; collage.js orient() turns the
+			// Styles laid out in the Height), and whether all of it shows (Fit)
+			// or it fills the block (its edges cut off).
+			'rotate'    => array_map(
+				function ( $angle ) {
+					return max( -45, min( 45, $angle ) );
+				},
+				$per_device( 'collage_rotate' )
+			),
+			'rotateFit' => array_map(
+				function ( $fit ) {
+					return 'fit' === $fit;
+				},
+				WP_Swiper_Settings::responsive( $settings, 'collage_rotate_fit' )
+			),
 			'seed'      => (int) $settings['collage_seed'],
 			// The order set per device (slide indexes, false: the shuffle), and
 			// each slide's photo ID, for the preview to tell a new order by.
