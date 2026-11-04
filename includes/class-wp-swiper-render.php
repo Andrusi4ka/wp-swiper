@@ -1479,6 +1479,12 @@ class WP_Swiper_Render {
 				'radius' => WP_Swiper_Settings::lightbox_image_radius( $settings ),
 			) : false,
 		);
+		// Content in a place: its place per device (from 1, as the places are
+		// laid out; collage.js keeps it there) while there is any.
+		$content = self::collage_content( $settings );
+		if ( '' !== $content ) {
+			$config['content'] = array( 'place' => $per_device( 'collage_content_place' ) );
+		}
 
 		ob_start();
 		?>
@@ -1492,10 +1498,60 @@ class WP_Swiper_Render {
 					}
 					?>
 				</template>
+				<?php if ( '' !== $content ) : ?>
+					<template class="wp-swiper-collage__content-pool"><?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?></template>
+				<?php endif; ?>
 			</div>
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Collage, Content in a place: an image over the editor's text (either or
+	 * both) on the place's background, its sizes per device as CSS variables;
+	 * '' when it is off, has neither, the Style is Justified rows or Masonry
+	 * on every device, or the collage is a background.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string Markup.
+	 */
+	public static function collage_content( $settings ) {
+		if ( empty( $settings['collage_content'] ) || WP_Swiper_Settings::is_background( $settings ) ) {
+			return '';
+		}
+		$styles = array_diff( WP_Swiper_Settings::responsive( $settings, 'collage_layout' ), array( 'justified', 'masonry' ) );
+		if ( ! $styles ) {
+			return '';
+		}
+		$image = wp_get_attachment_image( (int) $settings['collage_content_image'], 'large', false, array( 'class' => 'wp-swiper-collage__content-image', 'loading' => 'lazy' ) );
+		$text  = WP_Swiper_Settings::sanitize_description( $settings['collage_content_text'] );
+		if ( '' === $image && '' === $text ) {
+			return '';
+		}
+
+		$style = array();
+		$vars  = array(
+			'collage_content_image_size' => array( '--wp-swiper-collage-content-image', '%', 10, 100 ),
+			'collage_content_font_size'  => array( '--wp-swiper-collage-content-font', 'px', 8, 120 ),
+			'collage_content_padding'    => array( '--wp-swiper-collage-content-padding', 'px', 0, 200 ),
+		);
+		foreach ( $vars as $key => $var ) {
+			foreach ( WP_Swiper_Settings::responsive( $settings, $key ) as $device => $value ) {
+				$style[] = $var[0] . self::SUFFIX[ $device ] . ':' . max( $var[2], min( $var[3], (int) $value ) ) . $var[1];
+			}
+		}
+		$bg = WP_Swiper_Settings::sanitize_slide_color( (string) $settings['collage_content_bg'] );
+		if ( '' !== $bg ) {
+			$style[] = '--wp-swiper-collage-content-bg:' . $bg;
+		}
+		$align = in_array( $settings['collage_content_valign'], array( 'top', 'bottom' ), true ) ? $settings['collage_content_valign'] : 'center';
+
+		return '<div class="wp-swiper-collage__content wp-swiper-collage__content--' . $align . '" style="' . esc_attr( implode( ';', $style ) ) . '">'
+			. '<div class="wp-swiper-collage__content-inner">'
+			. $image
+			. ( '' === $text ? '' : '<div class="wp-swiper-collage__content-text">' . $text . '</div>' )
+			. '</div></div>';
 	}
 
 	/**

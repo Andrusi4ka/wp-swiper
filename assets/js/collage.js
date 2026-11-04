@@ -898,6 +898,10 @@
 		var grid = el.querySelector( '.wp-swiper-collage__grid' );
 		var pool = el.querySelector( 'template.wp-swiper-collage__pool' );
 		var slides = pool ? [].slice.call( pool.content.children ) : [];
+		// Content in a place (render.php collage_content()): an image over text
+		// in one place instead of a photo, kept there while the photos swap.
+		var contentPool = el.querySelector( 'template.wp-swiper-collage__content-pool' );
+		var contentNode = contentPool && config.content ? contentPool.content.firstElementChild : null;
 		var order = [];
 		var cells = [];
 		var queue = [];
@@ -1110,6 +1114,105 @@
 			return node;
 		}
 
+		/**
+		 * Content in a place: which of `count` places has it on this device
+		 * (-1: none). Not Justified rows or Masonry (their places are their
+		 * photos'); not when it would be the only place.
+		 *
+		 * @param {number} count The places.
+		 * @return {number} The place (from 0).
+		 */
+		function contentPlace( count ) {
+			var layout = config.layout[ current ] || 'grid';
+			if ( ! contentNode || count < 2 || layout === 'justified' || layout === 'masonry' ) {
+				return -1;
+			}
+			var place = Math.round( Number( config.content.place && config.content.place[ current ] ) || 1 );
+			return Math.max( 0, Math.min( count, place ) - 1 );
+		}
+
+		/*
+		 * The content's text cut at a word, with "…", where it does not fit in
+		 * its place (as art.js fitText(): the font size is the one set).
+		 */
+		function fitContent( cell ) {
+			var inner = cell.querySelector( '.wp-swiper-collage__content-inner' );
+			var text = inner && inner.querySelector( '.wp-swiper-collage__content-text' );
+			if ( ! text ) {
+				return;
+			}
+			if ( undefined === text.wpSwiperFull ) {
+				text.wpSwiperFull = text.innerHTML;
+			}
+			text.innerHTML = text.wpSwiperFull;
+			text.hidden = false;
+			var fits = function () {
+				return inner.scrollHeight <= inner.clientHeight + 1 && inner.scrollWidth <= inner.clientWidth + 1;
+			};
+			if ( ! inner.clientHeight || fits() ) {
+				return;
+			}
+			var nodes = function () {
+				var walker = document.createTreeWalker( text, NodeFilter.SHOW_TEXT );
+				var list = [];
+				while ( walker.nextNode() ) {
+					list.push( walker.currentNode );
+				}
+				return list;
+			};
+			var total = nodes().reduce( function ( sum, node ) {
+				return sum + node.nodeValue.length;
+			}, 0 );
+			// The first `count` characters (back to a word), "…" after them,
+			// nothing after it; false if nothing is left.
+			var cut = function ( count, atWord ) {
+				text.innerHTML = text.wpSwiperFull;
+				var left = count;
+				var list = nodes();
+				var at = -1;
+				for ( var i = 0; i < list.length; i++ ) {
+					if ( left <= list[ i ].nodeValue.length ) {
+						at = i;
+						break;
+					}
+					left -= list[ i ].nodeValue.length;
+				}
+				if ( at < 0 ) {
+					return true;
+				}
+				var value = list[ at ].nodeValue.slice( 0, left );
+				if ( atWord && /\S$/.test( value ) && /^\S/.test( list[ at ].nodeValue.slice( left ) ) ) {
+					value = value.replace( /\S+$/, '' );
+				}
+				list[ at ].nodeValue = value.replace( /\s+$/, '' ) + '…';
+				// Everything after the cut: the rest of its nodes, then any element left empty.
+				for ( var j = at + 1; j < list.length; j++ ) {
+					list[ j ].nodeValue = '';
+				}
+				[].slice.call( text.querySelectorAll( '*' ) ).reverse().forEach( function ( node ) {
+					if ( ! node.textContent.trim() && ! node.querySelector( 'img' ) && node.tagName !== 'BR' ) {
+						node.parentNode.removeChild( node );
+					}
+				} );
+				return '…' !== text.textContent.trim();
+			};
+			var low = 0;
+			var high = total - 1;
+			while ( low < high ) {
+				var mid = Math.ceil( ( low + high ) / 2 );
+				cut( mid, false );
+				if ( fits() ) {
+					low = mid;
+				} else {
+					high = mid - 1;
+				}
+			}
+			if ( ! cut( low, true ) || ! fits() ) {
+				text.innerHTML = '';
+				text.hidden = true;
+			}
+		}
+
 		/*
 		 * Rotation (collage.css --turned): the Styles laid out in the Height
 		 * (Grid, Random mosaic, the templates; Scattered and Freeform turned
@@ -1235,6 +1338,22 @@
 		// The image file the browser picks: the width it is drawn at (cropped to
 		// the place). Turned: the photo upright, as large as covers its place
 		// (collage.css), its caption no wider than fits in the place.
+		/*
+		 * An order for this device as places() gives it: -1 (Content in a
+		 * place) where it is in it, so moved with the photos it moves.
+		 */
+		function takeOrder( list ) {
+			var at = list.indexOf( -1 );
+			if ( at !== -1 && config.content ) {
+				config.content.place = config.content.place || {};
+				config.content.place[ current ] = at + 1;
+			}
+			config.order = config.order || {};
+			config.order[ current ] = list.filter( function ( real ) {
+				return real !== -1;
+			} );
+		}
+
 		function sizeImages( cell ) {
 			var w = cell.clientWidth;
 			var h = cell.clientHeight;
@@ -1247,11 +1366,28 @@
 				cell.style.setProperty( '--wp-swiper-collage-uw', upright.w + 'px' );
 				cell.style.setProperty( '--wp-swiper-collage-uh', upright.h + 'px' );
 				cell.style.setProperty( '--wp-swiper-collage-cw', Math.min( w, h ) / ( cos + sin ) + 'px' );
+				// Content in a place: upright too, as large as fits inside it, its
+				// proportions (collage.css).
+				var inside = Math.min( w / ( w * cos + h * sin ), h / ( w * sin + h * cos ) );
+				cell.style.setProperty( '--wp-swiper-collage-iw', w * inside + 'px' );
+				cell.style.setProperty( '--wp-swiper-collage-ih', h * inside + 'px' );
 				w = upright.w;
 				h = upright.h;
 			} else {
-				[ 'uw', 'uh', 'cw' ].forEach( function ( name ) {
+				[ 'uw', 'uh', 'cw', 'iw', 'ih' ].forEach( function ( name ) {
 					cell.style.removeProperty( '--wp-swiper-collage-' + name );
+				} );
+			}
+			if ( cell.wpReal === -1 ) {
+				fitContent( cell );
+				// Its image not loaded yet: fitted again once it is.
+				[].forEach.call( cell.querySelectorAll( 'img.wp-swiper-collage__content-image' ), function ( img ) {
+					if ( ! img.complete && ! img.wpSwiperFit ) {
+						img.wpSwiperFit = true;
+						img.addEventListener( 'load', function () {
+							fitContent( cell );
+						} );
+					}
 				} );
 			}
 			[].forEach.call( cell.querySelectorAll( 'img.wp-swiper__image' ), function ( img ) {
@@ -1497,25 +1633,41 @@
 			var gap = Number( config.gap[ current ] ) || 0;
 			// A template has its places (photos repeat when there are fewer); the
 			// others show as many as set, at most the photos there are.
-			var count = template ? mosaicLeaves( template ).length : Math.min( slides.length, Math.max( 1, Number( config.count[ current ] ) || 1 ) );
+			// Content in a place takes one of them (one more than the photos at most).
+			var count = template ? mosaicLeaves( template ).length : Math.min( slides.length + ( contentNode ? 1 : 0 ), Math.max( 1, Number( config.count[ current ] ) || 1 ) );
+			var content = contentPlace( count );
+			// The places for photos, in turn.
+			var shown = 0;
 
 			grid.innerHTML = '';
 			grid.className = 'wp-swiper-collage__grid wp-swiper-collage__grid--' + layout + ( positioned ? ' wp-swiper-collage__grid--free' : '' ) + ( cuts ? ' wp-swiper-collage__grid--cuts' : '' ) + ( fills( config ) ? ' wp-swiper-collage__grid--ratio' : '' ) + ( stretched ? ' wp-swiper-collage__grid--stretch' : '' );
 			grid.style.cssText = '';
 			cells = [];
 			for ( var i = 0; i < count; i++ ) {
-				var real = order[ i % slides.length ];
 				var cell = document.createElement( 'div' );
 				cell.className = 'wp-swiper-collage__cell';
-				// A place's proportions stay those of the photo it got first.
-				cell.wpRatio = ratioOf( slides[ real ] );
-				cell.wpReal = real;
-				cell.appendChild( copy( real ) );
+				if ( i === content ) {
+					// The content (-1 in the order the preview gets: places()):
+					// square, for the styles that shape a place after its photo.
+					cell.classList.add( 'wp-swiper-collage__cell--content' );
+					cell.wpRatio = 1;
+					cell.wpReal = -1;
+					// As a photo is, for the preview, Rotation and the swap (collage.css).
+					var item = contentNode.cloneNode( true );
+					item.classList.add( 'wp-swiper-collage__item' );
+					cell.appendChild( item );
+				} else {
+					var real = order[ shown++ % slides.length ];
+					// A place's proportions stay those of the photo it got first.
+					cell.wpRatio = ratioOf( slides[ real ] );
+					cell.wpReal = real;
+					cell.appendChild( copy( real ) );
+				}
 				grid.appendChild( cell );
 				cells.push( cell );
 			}
 			// The photos not in a place wait their turn, in shuffle order.
-			queue = order.slice( count );
+			queue = order.slice( shown );
 
 			tree = template;
 			scatter = null;
@@ -1548,16 +1700,20 @@
 
 		// One place, at random (not the one before), fades to the next photo waiting.
 		function swap() {
-			if ( ! queue.length || ! cells.length ) {
+			// The places with photos (Content in a place stays as it is).
+			var photos = cells.filter( function ( cell ) {
+				return cell.wpReal !== -1;
+			} );
+			if ( ! queue.length || ! photos.length ) {
 				return;
 			}
 			var index;
 			do {
-				index = Math.floor( Math.random() * cells.length );
-			} while ( cells.length > 1 && index === lastSwapped );
+				index = Math.floor( Math.random() * photos.length );
+			} while ( photos.length > 1 && index === lastSwapped );
 			lastSwapped = index;
 
-			var cell = cells[ index ];
+			var cell = photos[ index ];
 			var real = queue.shift();
 			queue.push( cell.wpReal );
 			cell.wpReal = real;
@@ -1723,11 +1879,20 @@
 					return cell.wpReal;
 				} ).concat( queue ) };
 			},
+			// A new order for this device (as places() gives it: -1, Content in a
+			// place, where it is now in it; moved with the photos, it moves).
 			setOrder: function ( list ) {
-				config.order = config.order || {};
-				config.order[ current ] = list;
+				takeOrder( list );
 				build();
 				schedule();
+			},
+			// Content in a place: where it is on this device (from 1; 0: none).
+			contentPlace: function () {
+				var at = -1;
+				cells.forEach( function ( cell, i ) {
+					at = cell.wpReal === -1 ? i : at;
+				} );
+				return at + 1;
 			},
 			ids: config.ids || [],
 			// Undo / redo in the editor (preview-collage.js): this device's order
@@ -1743,6 +1908,10 @@
 				// Photos on screen (a place of Scattered taken out has one fewer).
 				if ( state.count > 0 ) {
 					config.count[ current ] = state.count;
+				}
+				if ( state.contentPlace > 0 && config.content ) {
+					config.content.place = config.content.place || {};
+					config.content.place[ current ] = state.contentPlace;
 				}
 				build();
 				schedule();
@@ -1875,7 +2044,7 @@
 				// Whether place `index` can be taken out (removePlace()): not the
 				// middle one, nor below the fewest photos on screen.
 				removable: function ( index ) {
-					return index > 0 && index < cells.length && cells.length > COLLAGE_MIN_COUNT;
+					return index > 0 && index < cells.length && cells.length > COLLAGE_MIN_COUNT && cells[ index ].wpReal !== -1;
 				},
 				/*
 				 * Place `index` taken out of the layout for this device (the rest
@@ -1898,8 +2067,7 @@
 					var text = serializeScatter( layout );
 					config.cuts = config.cuts || {};
 					config.cuts[ current ] = 'scatter:' + text;
-					config.order = config.order || {};
-					config.order[ current ] = list;
+					takeOrder( list );
 					config.count[ current ] = cells.length - 1;
 					build();
 					schedule();
@@ -1985,7 +2153,7 @@
 				// Whether place `index` can be taken out (removePlace()): not below
 				// the fewest photos on screen.
 				removable: function ( index ) {
-					return index >= 0 && index < cells.length && cells.length > COLLAGE_MIN_COUNT;
+					return index >= 0 && index < cells.length && cells.length > COLLAGE_MIN_COUNT && cells[ index ].wpReal !== -1;
 				},
 				/*
 				 * Place `index` taken out for this device, the others where they
@@ -2007,8 +2175,7 @@
 					var text = serializeFree( framed );
 					config.cuts = config.cuts || {};
 					config.cuts[ current ] = 'freeform:' + text;
-					config.order = config.order || {};
-					config.order[ current ] = list;
+					takeOrder( list );
 					config.count[ current ] = cells.length - 1;
 					build();
 					schedule();

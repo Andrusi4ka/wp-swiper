@@ -210,6 +210,11 @@ class WP_Swiper_Preview {
 					<span class="dashicons dashicons-move" aria-hidden="true"></span>
 					<?php esc_html_e( 'Drag a photo onto another to swap them.', 'wp-swiper' ); ?>
 				</p>
+				<?php // Collage, Content in a place on (admin.js): it moves as a photo does. ?>
+				<p class="description wp-swiper-preview__hint" data-effect="collage-content" hidden>
+					<span class="dashicons dashicons-move" aria-hidden="true"></span>
+					<?php esc_html_e( 'Drag the content onto a photo to move it there.', 'wp-swiper' ); ?>
+				</p>
 				<?php // Art only (admin.js): its photos swap places by dragging here (preview-art.js). ?>
 				<p class="description wp-swiper-preview__hint" data-effect="art" hidden>
 					<span class="dashicons dashicons-move" aria-hidden="true"></span>

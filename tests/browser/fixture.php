@@ -82,6 +82,12 @@ foreach ( $wp_swiper_ids as $wp_swiper_index => $wp_swiper_id ) {
 	);
 }
 
+// "{image}" in a setting: the last of those images (Content in a place's image, say).
+foreach ( $wp_swiper_case['settings'] as $wp_swiper_key => $wp_swiper_value ) {
+	if ( '{image}' === $wp_swiper_value ) {
+		$wp_swiper_case['settings'][ $wp_swiper_key ] = (string) end( $wp_swiper_ids );
+	}
+}
 $wp_swiper_settings = wp_parse_args( WP_Swiper_Settings::sanitize( $wp_swiper_case['settings'] ), WP_Swiper_Settings::defaults() );
 
 // As on a page: the assets registered on wp_enqueue_scripts, then the

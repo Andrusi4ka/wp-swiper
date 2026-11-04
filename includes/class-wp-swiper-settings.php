@@ -720,6 +720,11 @@ class WP_Swiper_Settings {
 					'title'  => __( 'Arrangement', 'wp-swiper' ),
 					'fields' => array( 'collage_layout', 'collage_order', 'collage_count', 'collage_columns', 'collage_row_height', 'collage_row_exact', 'collage_gap', 'collage_rotate', 'collage_rotate_fit' ),
 				),
+				// Collage: a place with an image and text instead of a photo.
+				'collage_content' => array(
+					'title'  => __( 'Content in a place', 'wp-swiper' ),
+					'fields' => array( 'collage_content', 'collage_content_place', 'collage_content_image', 'collage_content_image_size', 'collage_content_text', 'collage_content_font_size', 'collage_content_padding', 'collage_content_valign', 'collage_content_bg' ),
+				),
 				'slides'      => array(
 					'title'  => __( 'Slides', 'wp-swiper' ),
 					'fields' => array( 'slides_per_view', 'slides_per_group', 'space_between', 'auto_width', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_direction', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),

@@ -379,6 +379,10 @@
 			if ( scattered ) {
 				window.parent.postMessage( { wpSwiper: 'collage-scatter', device: device, layout: scattered }, window.location.origin );
 			}
+			// Content in a place moved with the photos (-1 in the order): its place.
+			if ( list.indexOf( -1 ) !== -1 && api.contentPlace ) {
+				window.parent.postMessage( { wpSwiper: 'collage-content', device: device, place: api.contentPlace() }, window.location.origin );
+			}
 		}
 	}
 
@@ -1053,7 +1057,7 @@
 					}
 				}
 			} );
-			api.restore( { order: order, mosaic: state.mosaic, cuts: state.cuts, count: Number( state.count ) || 0 } );
+			api.restore( { order: order, mosaic: state.mosaic, cuts: state.cuts, count: Number( state.count ) || 0, contentPlace: Number( state.contentPlace ) || 0 } );
 			done = true;
 		} );
 		return done;

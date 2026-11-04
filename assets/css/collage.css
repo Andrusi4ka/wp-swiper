@@ -194,6 +194,128 @@
 	max-width: var(--wp-swiper-collage-cw, 100%);
 }
 
+/* Content in a place (render.php collage_content(), collage.js build()): an
+   image over text on the place's background, in its middle (or at its top
+   or bottom), cut at a word where it does not fit (fitContent()). A place
+   item as a photo is; turned (Rotation), upright and as large as fits inside
+   the place (--wp-swiper-collage-iw / -ih, sizeImages()). */
+.wp-swiper .wp-swiper-collage__cell > .wp-swiper-collage__content {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	background: var(--wp-swiper-collage-content-bg, transparent);
+}
+
+.wp-swiper-collage__content-inner {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	width: 100%;
+	height: 100%;
+	padding: var(--wp-swiper-collage-content-padding, 16px);
+	overflow: hidden;
+	font-size: var(--wp-swiper-collage-content-font, 18px);
+	line-height: 1.4;
+	text-align: center;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper-collage__content-inner {
+		padding: var(--wp-swiper-collage-content-padding-tablet, var(--wp-swiper-collage-content-padding, 16px));
+		font-size: var(--wp-swiper-collage-content-font-tablet, var(--wp-swiper-collage-content-font, 18px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper-collage__content-inner {
+		padding: var(--wp-swiper-collage-content-padding-mobile, var(--wp-swiper-collage-content-padding-tablet, var(--wp-swiper-collage-content-padding, 16px)));
+		font-size: var(--wp-swiper-collage-content-font-mobile, var(--wp-swiper-collage-content-font-tablet, var(--wp-swiper-collage-content-font, 18px)));
+	}
+}
+
+.wp-swiper-collage__content--top .wp-swiper-collage__content-inner {
+	justify-content: flex-start;
+}
+
+.wp-swiper-collage__content--bottom .wp-swiper-collage__content-inner {
+	justify-content: flex-end;
+}
+
+.wp-swiper-collage--turned .wp-swiper-collage__content-inner {
+	flex: none;
+	width: var(--wp-swiper-collage-iw, 100%);
+	height: var(--wp-swiper-collage-ih, 100%);
+}
+
+/* The image: its share of the width inside, its proportions kept; with text
+   under it, at most half the height. */
+.wp-swiper .wp-swiper-collage__content-image {
+	display: block;
+	flex: 0 1 auto;
+	width: var(--wp-swiper-collage-content-image, 50%);
+	max-width: 100%;
+	height: auto;
+	min-height: 0;
+	object-fit: contain;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper .wp-swiper-collage__content-image {
+		width: var(--wp-swiper-collage-content-image-tablet, var(--wp-swiper-collage-content-image, 50%));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper .wp-swiper-collage__content-image {
+		width: var(--wp-swiper-collage-content-image-mobile, var(--wp-swiper-collage-content-image-tablet, var(--wp-swiper-collage-content-image, 50%)));
+	}
+}
+
+.wp-swiper .wp-swiper-collage__content-image:not(:only-child) {
+	max-height: 50%;
+}
+
+.wp-swiper-collage__content-text {
+	flex: 0 0 auto;
+	max-width: 100%;
+	overflow-wrap: break-word;
+}
+
+.wp-swiper .wp-swiper-collage__content-text > :is(p, h1, h2, h3, h4, h5, h6, ul, ol) {
+	margin: 0 0 0.5em;
+}
+
+.wp-swiper .wp-swiper-collage__content-text > :last-child {
+	margin-bottom: 0;
+}
+
+/* Image border: on the content's place too, as on a photo's. */
+.wp-swiper--border .wp-swiper-collage__cell--content::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	border: var(--wp-swiper-border-width, 0px) solid var(--wp-swiper-border-color, #fff);
+	border-radius: inherit;
+	pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper--border .wp-swiper-collage__cell--content::after {
+		border-width: var(--wp-swiper-border-width-tablet, var(--wp-swiper-border-width, 0px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper--border .wp-swiper-collage__cell--content::after {
+		border-width: var(--wp-swiper-border-width-mobile, var(--wp-swiper-border-width-tablet, var(--wp-swiper-border-width, 0px)));
+	}
+}
+
 /* Background (frontend.css): the block's height, not the Height (collages
    arranged by their photos' proportions are fitted to it by the script,
    collage.js fillLines()). */

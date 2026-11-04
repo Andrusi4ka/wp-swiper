@@ -15,6 +15,7 @@ const CASES = [
 	'thumbs', 'video', 'background',
 	'collage-scatter', 'collage-freeform', 'collage-grid', 'collage-masonry',
 	'collage-justified', 'collage-random', 'collage-feature',
+	'collage-content', 'collage-content-scatter', 'collage-content-feature',
 	'art-ring', 'art-ring-text', 'art-grid-circle', 'art-grid-circle-text', 'art-grid-square', 'art-grid-square-text',
 	'art-grid-shapes', 'art-grid-shapes-one', 'art-grid-shapes-background', 'art-ring-background',
 	'art-text-mask', 'art-text-mask-sans', 'art-text-mask-each', 'art-text-mask-right', 'art-text-mask-left', 'art-text-mask-name', 'art-text-mask-auto', 'art-text-mask-stretch', 'art-text-mask-join', 'art-text-mask-rounded', 'art-text-mask-gradient',
@@ -162,7 +163,8 @@ for ( const name of CASES ) {
 				const photo = /^art-/.test( name )
 					? page.locator( '.wp-swiper-art__piece:visible' ).first()
 					: /^collage-/.test( name )
-						? page.locator( '.wp-swiper-collage__grid img:visible' ).first()
+						// A photo's place, not Content in a place's (no lightbox).
+						? page.locator( '.wp-swiper-collage__cell:not(.wp-swiper-collage__cell--content) img:visible' ).first()
 						: page.locator( '.swiper-slide-active img' ).first();
 				if ( /^art-/.test( name ) ) {
 					// Art: the first piece near its left edge, its own there (its

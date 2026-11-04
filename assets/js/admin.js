@@ -2320,6 +2320,17 @@
 			} );
 			field( 'collage_rotate' ).toggle( turnable );
 			field( 'collage_rotate_fit' ).toggle( turnFits && Number( collageAngle ) !== 0 );
+			// Content in a place: not Justified rows or Masonry, not a background
+			// (render.php collage_content()); its settings while it is on.
+			var contentable = collageUses( [ 'grid', 'random', 'scatter', 'freeform' ].concat( TEMPLATES ) ) && ! $( '#wp-swiper-background' ).is( ':checked' );
+			var contentOn = contentable && $( '#wp-swiper-collage_content' ).is( ':checked' );
+			$( '.wp-swiper-block[data-block="collage_content"]' ).toggle( contentable );
+			field( 'collage_content' ).toggle( contentable );
+			[ 'collage_content_place', 'collage_content_image', 'collage_content_image_size', 'collage_content_text', 'collage_content_font_size', 'collage_content_padding', 'collage_content_valign', 'collage_content_bg' ].forEach( function ( name ) {
+				field( name ).toggle( contentOn );
+			} );
+			// The preview says the content is dragged as a photo is.
+			$( '.wp-swiper-preview__hint[data-effect="collage-content"]' ).prop( 'hidden', ! contentOn );
 			var swapping = collage && $( '#wp-swiper-collage_swap' ).is( ':checked' );
 			[ 'collage_swap_delay', 'collage_swap_speed', 'collage_pause' ].forEach( function ( name ) {
 				field( name ).toggle( swapping );
@@ -3437,7 +3448,9 @@
 							order: idsOf( resolved( 'collage_order', device ) ),
 							mosaic: resolved( 'collage_mosaic', device ),
 							cuts: resolved( 'collage_cuts', device ),
-							count: Number( resolved( 'collage_count', device ) ) || 0
+							count: Number( resolved( 'collage_count', device ) ) || 0,
+							// Content in a place: where it is (moved with the photos there).
+							contentPlace: Number( resolved( 'collage_content_place', device ) ) || 0
 						} ) || done;
 					}
 					if ( win && win.wpSwiperRestoreArt ) {
@@ -3589,6 +3602,11 @@
 				if ( data.wpSwiper === 'collage-count' && data.count >= 1 && data.count <= 30 ) {
 					input( 'collage_count', data.device ).val( Math.round( data.count ) );
 					syncResponsive( field( 'collage_count' ) );
+				}
+				// Content in a place dragged onto a photo there: its new place.
+				if ( data.wpSwiper === 'collage-content' && data.place >= 1 && data.place <= 30 ) {
+					input( 'collage_content_place', data.device ).val( Math.round( data.place ) );
+					syncResponsive( field( 'collage_content_place' ) );
 				}
 				if ( data.wpSwiper === 'collage-order' && Array.isArray( data.ids ) ) {
 					setOrder( data.device, data.ids.map( Number ).filter( function ( id ) {

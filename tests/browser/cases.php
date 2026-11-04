@@ -88,6 +88,11 @@ return array(
 	'collage-justified' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'justified', 'lightbox' => '1' ) ),
 	'collage-random'   => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'random', 'lightbox' => '1' ) ),
 	'collage-feature'  => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'feature-left', 'lightbox' => '1' ) ),
+	// Content in a place: an image over text in one place instead of a photo.
+	'collage-content'  => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'collage_count' => '6', 'collage_content' => '1', 'collage_content_place' => '2', 'collage_content_place_mobile' => '1', 'collage_content_image' => '{image}', 'collage_content_text' => '<p><strong>Our work</strong></p><p>Photos from the last season.</p>', 'height' => '480', 'image_border' => '1', 'lightbox' => '1' ) ),
+	// Turned, the text too long for the place: upright, cut at a word.
+	'collage-content-scatter' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'collage_count' => '6', 'collage_rotate' => '14', 'collage_content' => '1', 'collage_content_place' => '1', 'collage_content_text' => '<p>' . str_repeat( 'A long text that does not fit in its place. ', 30 ) . '</p>', 'collage_content_bg' => 'rgba(30,60,90,1)', 'lightbox' => '1' ) ),
+	'collage-content-feature' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'feature-left', 'collage_content' => '1', 'collage_content_place' => '1', 'collage_content_text' => '<p>The big place</p>', 'collage_content_valign' => 'bottom', 'lightbox' => '1' ) ),
 	'art-ring'         => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'lightbox' => '1' ) ),
 	'art-ring-text'    => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring-text', 'art_center' => '1', 'art_center_text' => '<p>Hello</p>', 'lightbox' => '1' ) ),
 	'art-grid-circle'  => array(

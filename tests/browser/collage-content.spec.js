@@ -1,0 +1,112 @@
+// Content in a place (cases.php collage-content*): an image over text in
+// one place of the collage instead of a photo, at the place set per
+// device, the photos in the others; upright when turned, its text cut at a
+// word where it does not fit; no lightbox for it; moved with the photos.
+const { test, expect } = require( '@playwright/test' );
+const path = require( 'path' );
+const fixture = '/wp-content/plugins/' + path.basename( path.resolve( __dirname, '../..' ) ) + '/tests/browser/fixture.php';
+
+async function open( page, name ) {
+	const errors = [];
+	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
+	await page.goto( fixture + '?case=' + name );
+	await page.waitForLoadState( 'networkidle' );
+	await page.waitForTimeout( 600 );
+	return errors;
+}
+
+function state( page ) {
+	return page.evaluate( () => {
+		const cells = [].slice.call( document.querySelectorAll( '.wp-swiper-collage__cell' ) );
+		const content = cells.filter( ( cell ) => cell.classList.contains( 'wp-swiper-collage__cell--content' ) );
+		const cell = content[ 0 ];
+		const inner = cell && cell.querySelector( '.wp-swiper-collage__content-inner' );
+		const text = cell && cell.querySelector( '.wp-swiper-collage__content-text' );
+		const box = inner && inner.getBoundingClientRect();
+		const place = cell && cell.getBoundingClientRect();
+		return {
+			cells: cells.length,
+			contents: content.length,
+			index: cells.indexOf( cell ),
+			image: !! ( cell && cell.querySelector( 'img.wp-swiper-collage__content-image' ) ),
+			text: text ? text.textContent : '',
+			// All of the text inside: nothing over the edges.
+			fits: !! inner && inner.scrollHeight <= inner.clientHeight + 1,
+			// Upright: its box on the page as large as it is.
+			upright: !! inner && Math.abs( box.width - inner.offsetWidth ) <= 1 && Math.abs( box.height - inner.offsetHeight ) <= 1,
+			inside: !! inner && box.left >= place.left - 1 && box.right <= place.right + 1 && box.top >= place.top - 1 && box.bottom <= place.bottom + 1,
+			// Each other place a photo, each photo once.
+			photos: cells.filter( ( c ) => c !== cell ).map( ( c ) => c.wpReal ),
+			background: cell ? getComputedStyle( cell.firstElementChild ).backgroundColor : '',
+		};
+	} );
+}
+
+test( 'collage-content: the image and text in the place set for the device', async ( { page } ) => {
+	const errors = await open( page, 'collage-content' );
+	const found = await state( page );
+	const mobile = page.viewportSize().width < 768;
+	expect( found.cells ).toBe( 6 );
+	expect( found.contents ).toBe( 1 );
+	// Place 2 on desktop, 1 on mobile (its own).
+	expect( found.index ).toBe( mobile ? 0 : 1 );
+	expect( found.image ).toBe( true );
+	expect( found.text ).toContain( 'Our work' );
+	expect( found.fits ).toBe( true );
+	// No background by default.
+	expect( found.background ).toBe( 'rgba(0, 0, 0, 0)' );
+	expect( found.photos.every( ( real ) => real >= 0 ) ).toBe( true );
+	expect( new Set( found.photos ).size ).toBe( 5 );
+	// The image border on it too.
+	expect( await page.evaluate( () => getComputedStyle( document.querySelector( '.wp-swiper-collage__cell--content' ), '::after' ).borderTopWidth ) ).not.toBe( '0px' );
+	// A click on it opens no lightbox.
+	await page.locator( '.wp-swiper-collage__cell--content' ).click();
+	await page.waitForTimeout( 400 );
+	expect( await page.locator( '.wp-swiper-lightbox.is-open, .wp-swiper-lightbox[aria-hidden="false"]' ).count() ).toBe( 0 );
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'collage-content-scatter: turned, upright inside its place, the text cut with "…"', async ( { page } ) => {
+	const errors = await open( page, 'collage-content-scatter' );
+	const found = await state( page );
+	expect( found.index ).toBe( 0 );
+	expect( found.upright ).toBe( true );
+	expect( found.inside ).toBe( true );
+	expect( found.fits ).toBe( true );
+	expect( found.text.trim().endsWith( '…' ) ).toBe( true );
+	expect( found.text.length ).toBeLessThan( 1300 );
+	expect( found.background ).toBe( 'rgb(30, 60, 90)' );
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'collage-content-feature: in a template\'s place, at its bottom', async ( { page } ) => {
+	const errors = await open( page, 'collage-content-feature' );
+	const found = await state( page );
+	expect( found.index ).toBe( 0 );
+	const gap = await page.evaluate( () => {
+		const cell = document.querySelector( '.wp-swiper-collage__cell--content' ).getBoundingClientRect();
+		const text = document.querySelector( '.wp-swiper-collage__content-text' ).getBoundingClientRect();
+		return { bottom: cell.bottom - text.bottom, top: text.top - cell.top };
+	} );
+	// Bottom: nearer the bottom than the top (the padding there).
+	expect( gap.bottom ).toBeLessThan( gap.top );
+	expect( errors ).toEqual( [] );
+} );
+
+// The preview moves it as a photo (preview-collage.js: the order with -1
+// where it is, collage.js setOrder()): its place follows.
+test( 'collage-content: moved with the photos', async ( { page } ) => {
+	const errors = await open( page, 'collage-content' );
+	const moved = await page.evaluate( () => {
+		const api = document.querySelector( '.wp-swiper-collage' ).wpSwiperCollage;
+		const list = api.places().order.slice();
+		const from = list.indexOf( -1 );
+		list.splice( from, 1 );
+		list.splice( 4, 0, -1 );
+		api.setOrder( list );
+		const cells = [].slice.call( document.querySelectorAll( '.wp-swiper-collage__cell' ) );
+		return { place: api.contentPlace(), index: cells.findIndex( ( c ) => c.classList.contains( 'wp-swiper-collage__cell--content' ) ), order: api.places().order.indexOf( -1 ) };
+	} );
+	expect( moved ).toEqual( { place: 5, index: 4, order: 4 } );
+	expect( errors ).toEqual( [] );
+} );
