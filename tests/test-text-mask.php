@@ -186,7 +186,7 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		$this->assertSame( array( 'text_mask_rounded', 'text_mask_radius', 'text_mask_corners' ), array_slice( $look, $at + 1, 3 ) );
 		$this->assertNotContains( 'text_mask_rounded', $strips );
 		$id = $this->slider( null, array( 'effect' => 'text-mask' ) );
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
 		$html = ob_get_clean();
@@ -247,7 +247,7 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 
 	public function test_gradient_editor() {
 		$id = $this->slider( null, array( 'effect' => 'text-mask', 'image_gradient' => 'circle;left top;#ff0000@0;#0000ff@100' ) );
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
 		$html = ob_get_clean();
@@ -314,7 +314,7 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 
 	public function test_the_editor_fields() {
 		$id = $this->slider( null, array( 'effect' => 'text-mask' ) );
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
 		$html = ob_get_clean();
@@ -350,7 +350,7 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		}
 
 		$id = $this->slider( null, array( 'effect' => 'text-mask' ) );
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
 		$html = ob_get_clean();
@@ -363,7 +363,7 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 
 	public function test_strips_go_is_chosen_from_icons_first_in_the_block() {
 		$id = $this->slider( null, array( 'effect' => 'text-mask', 'text_mask_direction' => 'right' ) );
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
 		$html = ob_get_clean();

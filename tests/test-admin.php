@@ -37,7 +37,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_save_needs_the_nonce() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( array(), array( 'height' => 100 ) );
 		$this->post_form( $this->one_slide( $this->image() ), array( 'height' => '700' ), false );
 
@@ -56,7 +56,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_save_stores_sanitized_settings() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( array() );
 		$this->post_form(
 			$this->one_slide( $this->image() ),
@@ -84,7 +84,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_save_keeps_backslashes() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id     = $this->slider( array() );
 		$slides = $this->one_slide( $this->image() );
 		$slides['caption']     = array( 'C:\\images\\demo' );
@@ -251,7 +251,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_slide_info_window_has_a_color_under_each_editor() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$slides                     = $this->slides( 1 );
 		$slides[0]['caption_color'] = 'rgba(255,0,0,0.25)';
 		$id                         = $this->slider( $slides );
@@ -276,7 +276,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_slide_info_window_text_settings_in_a_row_and_a_replace_button() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ) );
 
 		ob_start();
@@ -297,7 +297,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_slide_info_window_has_a_font_size_and_weight_under_each_editor() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$slides                      = $this->slides( 1 );
 		$slides[0]['caption_size']   = '22,,14';
 		$slides[0]['caption_weight'] = '600,,';
@@ -335,7 +335,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_slides_box_keeps_each_slide_in_hidden_fields_and_one_window() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$slides                   = $this->slides( 2 );
 		$slides[0]['caption']     = '<strong>Big</strong> title';
 		$slides[0]['description'] = '<p>A <em>long</em> text</p>';
@@ -372,7 +372,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_slide_window_has_a_tab_for_caption_description_and_link() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		ob_start();
 		WP_Swiper_Admin::render_slides_box( get_post( $this->slider( $this->slides( 1 ) ) ) );
 		$html = ob_get_clean();
@@ -399,7 +399,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_a_video_slide_shows_no_link_mark() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider(
 			array(
 				array(
@@ -422,7 +422,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_settings_screen_has_every_field_once() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider();
 
 		ob_start();
@@ -521,7 +521,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_preview_has_the_developer_mode_button_right_of_its_title() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 
 		ob_start();
 		WP_Swiper_Preview::render_panel( get_post( $this->slider() ) );
@@ -554,7 +554,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_collage_order_field_per_device_with_shuffle_and_reset() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( null, array( 'effect' => 'collage', 'collage_order' => '5,4', 'collage_seed' => 77 ) );
 
 		ob_start();
@@ -678,7 +678,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertSame( 'Turned sideways the screen is 844px wide: the slider takes the Tablet settings, as it does on the site.', $notes['mobile'] );
 		$this->assertSame( 'Turned sideways the screen is 1101px wide: the slider takes the Desktop settings, as it does on the site.', $notes['tablet'] );
 
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		ob_start();
 		WP_Swiper_Preview::render_panel( get_post( $this->slider() ) );
 		$html = ob_get_clean();
@@ -716,7 +716,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_preview_refuses_a_bad_nonce() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id    = $this->slider();
 		$_POST = array(
 			'post_id'  => (string) $id,
@@ -787,7 +787,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$html = WP_Swiper_WPBakery::edit_param( array( 'param_name' => WP_Swiper_WPBakery::EDIT_PARAM ), '' );
 		$this->assertStringNotContainsString( 'wp-swiper-vc-edit__add', $html );
 
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$html = WP_Swiper_WPBakery::edit_param( array( 'param_name' => WP_Swiper_WPBakery::EDIT_PARAM ), '' );
 		// The new slider screen, in a new tab; the note under the buttons shown.
 		$this->assertStringContainsString( '<a class="button wp-swiper-vc-edit__add" href="' . esc_url( admin_url( 'post-new.php?post_type=wp_swiper' ) ) . '" target="_blank" rel="noopener">Add slider</a>', $html );
@@ -823,7 +823,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_image_field_shows_the_chosen_image() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$image = $this->image();
 		$id    = $this->slider( null, array( 'marquee' => true, 'marquee_separator' => 'image', 'marquee_separator_image' => $image ) );
 
@@ -845,7 +845,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_clone_copies_the_slides_and_settings_as_a_draft() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$slides = array(
 			array(
 				'id'          => $this->image(),
@@ -877,7 +877,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_clone_only_sliders_not_in_the_trash() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$page    = self::factory()->post->create( array( 'post_type' => 'page' ) );
 		$trashed = $this->slider( null, array(), array( 'post_status' => 'trash' ) );
 
@@ -886,7 +886,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_clone_link_after_quick_edit() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$post    = get_post( $this->slider() );
 		$actions = WP_Swiper_Admin::row_actions(
 			array(
@@ -930,7 +930,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_slides_box_keeps_the_position_and_shows_it() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$slides                = $this->slides( 2 );
 		$slides[0]['position'] = '20 75';
 		$id                    = $this->slider( $slides );
@@ -956,7 +956,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_caption_and_description_pages_say_why_they_are_greyed() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ) );
 
 		ob_start();
@@ -972,7 +972,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_a_color_setting_is_the_shared_color_field_without_opacity() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ), array( 'caption_color' => '#ff0000' ) );
 
 		ob_start();
@@ -988,7 +988,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_every_color_setting_has_the_shared_color_field() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ) );
 
 		ob_start();
@@ -1010,7 +1010,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_a_compact_color_setting_has_a_small_swatch_named_by_its_label() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ) );
 
 		ob_start();
@@ -1022,7 +1022,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_shadow_color_has_a_picker_with_opacity() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ), array( 'image_shadow_color' => 'rgba(0,0,0,0.5)' ) );
 
 		ob_start();
@@ -1035,7 +1035,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_color_fields_load_pickr_not_iris() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ) );
 		$GLOBALS['post'] = get_post( $id );
 		set_current_screen( 'post' );
@@ -1059,7 +1059,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_art_opening_text_has_an_editor() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'art', 'art_opening_text' => '<p>Hi <a href="https://example.com">there</a></p>' ) );
 
 		ob_start();
@@ -1071,7 +1071,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_collage_style_is_chosen_from_icons() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'collage', 'collage_layout' => 'grid' ) );
 
 		ob_start();
@@ -1093,7 +1093,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_art_style_is_chosen_from_icons() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'art' ) );
 
 		ob_start();
@@ -1112,7 +1112,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 	}
 
 	public function test_each_slide_has_a_clone_button_right_of_the_position_one() {
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$id = $this->slider( $this->slides( 2 ) );
 
 		ob_start();

@@ -473,7 +473,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 	}
 
 	public function test_order_is_kept_in_hidden_values_after_the_style() {
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, array( 'effect' => 'art', 'art_order_tablet' => '5,4' ) ) ) );
 		$html = ob_get_clean();
@@ -667,7 +667,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertStringNotContainsString( 'data-value="grid-circle"', $html );
 
 		// On the settings screen: every Style a tile to pick.
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, array( 'effect' => 'art' ) ) ) );
 		$html = ob_get_clean();
@@ -795,7 +795,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$this->assertSame( array( 'art_border', 'art_border_width', 'art_border_color', 'image_gradient_on', 'image_gradient', 'image_hover_zoom', 'image_shadow' ), array_slice( $look, $at, 7 ) );
 
 		// On the screen: the Look title, Image border, then Image shadow.
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, array( 'effect' => 'art' ) ) ) );
 		$html   = ob_get_clean();
@@ -808,7 +808,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 	}
 
 	public function test_settings_screen_marks_ring_fields() {
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, array( 'effect' => 'art' ) ) ) );
 		$html = ob_get_clean();
@@ -1226,7 +1226,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 			$this->assertNotContains( 'grid-shapes', $fields[ $key ]['styles'], $key );
 		}
 
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_cells' => '2x2:0,0,1,1' ) ) ) );
 		$html = ob_get_clean();
@@ -1296,7 +1296,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 	}
 
 	public function test_art_background_markup() {
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$slides = $this->slides( 4, array( 'caption' => '<p>Over the photo</p>', 'description' => '<p>Under it</p>' ) );
 		$values = array(
 			'effect'                   => 'art',

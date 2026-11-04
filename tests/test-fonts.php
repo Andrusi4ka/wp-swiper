@@ -89,7 +89,7 @@ class Test_WP_Swiper_Fonts extends WP_Swiper_TestCase {
 	public function test_the_field_suggests_them() {
 		update_option( WP_Swiper_Fonts::WOODMART_OPTION, array( 'primary-font' => array( array( 'font-family' => 'Google Sans Flex' ) ) ) );
 		$id = $this->slider( null, array( 'effect' => 'text-mask' ) );
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
 		$html = ob_get_clean();

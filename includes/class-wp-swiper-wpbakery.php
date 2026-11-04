@@ -21,6 +21,11 @@ class WP_Swiper_WPBakery {
 	}
 
 	public static function map() {
+		// Not an element at all for those who are not administrators. Pages
+		// still show the sliders: WPBakery keeps the shortcode's own handler.
+		if ( ! current_user_can( WP_Swiper_Settings::CAPABILITY ) ) {
+			return;
+		}
 		if ( function_exists( 'vc_add_shortcode_param' ) ) {
 			vc_add_shortcode_param( self::EDIT_PARAM, array( __CLASS__, 'edit_param' ), WP_SWIPER_URL . 'assets/js/wpbakery.js?ver=' . rawurlencode( wp_swiper_asset_version( 'assets/js/wpbakery.js' ) ) );
 		}
@@ -171,11 +176,11 @@ class WP_Swiper_WPBakery {
 
 	/**
 	 * The Slider list again, for wpbakery.js: the sliders as sliders() gives
-	 * them, to those who may edit posts (with the nonce edit_param() gave).
+	 * them, to administrators (with the nonce edit_param() gave).
 	 */
 	public static function ajax_sliders() {
 		check_ajax_referer( self::LIST_ACTION );
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		if ( ! current_user_can( WP_Swiper_Settings::CAPABILITY ) ) {
 			wp_send_json_error( null, 403 );
 		}
 		wp_send_json_success( self::sliders() );

@@ -87,7 +87,7 @@ class Test_WP_Swiper_Gradient extends WP_Swiper_TestCase {
 
 	public function test_its_editor_for_every_effect() {
 		$id = $this->slider( null, array( 'effect' => 'slide', 'image_gradient' => 'circle;left top;#ff0000@0;#0000ff@100' ) );
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
 		$html = ob_get_clean();

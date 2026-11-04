@@ -57,7 +57,7 @@ class Test_WP_Swiper_Whats_New extends WP_Swiper_TestCase {
 		$this->assertSame( WP_SWIPER_VERSION, get_option( WP_Swiper_Whats_New::OPTION_VERSION ) );
 		$this->assertSame( WP_SWIPER_VERSION, get_option( WP_Swiper_Whats_New::OPTION_FROM ) );
 
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$this->assertSame( array(), WP_Swiper_Whats_New::entries() );
 	}
 
@@ -66,7 +66,7 @@ class Test_WP_Swiper_Whats_New extends WP_Swiper_TestCase {
 		WP_Swiper_Whats_New::track_version();
 		$this->assertSame( '', get_option( WP_Swiper_Whats_New::OPTION_FROM ) );
 
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$this->assertSame( array( WP_SWIPER_VERSION ), array_keys( WP_Swiper_Whats_New::entries() ) );
 	}
 
@@ -89,14 +89,14 @@ class Test_WP_Swiper_Whats_New extends WP_Swiper_TestCase {
 		$this->as_role( 'subscriber' );
 		$this->assertSame( array(), WP_Swiper_Whats_New::entries() );
 
-		$this->as_role( 'editor' );
+		$this->as_role( 'administrator' );
 		$this->assertArrayHasKey( WP_SWIPER_VERSION, WP_Swiper_Whats_New::entries() );
 		WP_Swiper_Whats_New::mark_seen();
 		$this->assertSame( array(), WP_Swiper_Whats_New::entries() );
 		$this->assertSame( WP_SWIPER_VERSION, get_user_meta( get_current_user_id(), WP_Swiper_Whats_New::META_SEEN, true ) );
 
-		// Another editor has not seen it yet.
-		$this->as_role( 'editor' );
+		// Another administrator has not seen it yet.
+		$this->as_role( 'administrator' );
 		$this->assertArrayHasKey( WP_SWIPER_VERSION, WP_Swiper_Whats_New::entries() );
 	}
 }

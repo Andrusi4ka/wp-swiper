@@ -3,7 +3,7 @@
  * Plugin Name:       WP Swiper
  * Plugin URI:        https://github.com/Andrusi4ka/wp-swiper
  * Description:       Image sliders powered by Swiper. Build a slider from the media library, pick an effect and insert it with a shortcode or the WPBakery element.
- * Version:           3.2.0
+ * Version:           3.2.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Andrii Boiko
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WP_SWIPER_VERSION', '3.2.0' );
+define( 'WP_SWIPER_VERSION', '3.2.1' );
 define( 'WP_SWIPER_REPOSITORY', 'https://github.com/Andrusi4ka/wp-swiper/' );
 define( 'WP_SWIPER_SWIPER_VERSION', '11.2.10' );
 define( 'WP_SWIPER_FILE', __FILE__ );
@@ -83,6 +83,13 @@ function wp_swiper_register_post_type() {
 			'menu_icon'       => 'data:image/svg+xml;base64,' . base64_encode( file_get_contents( WP_SWIPER_DIR . 'assets/images/menu-icon.svg' ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local plugin file.
 			'supports'        => array( 'title' ),
 			'capability_type' => 'post',
+			// Administrators only: every capability of the sliders is theirs
+			// (editing one, deleting it… mapped to these by WordPress).
+			'capabilities'    => array_fill_keys(
+				array( 'edit_posts', 'edit_others_posts', 'edit_private_posts', 'edit_published_posts', 'publish_posts', 'read_private_posts', 'delete_posts', 'delete_others_posts', 'delete_private_posts', 'delete_published_posts', 'create_posts' ),
+				WP_Swiper_Settings::CAPABILITY
+			),
+			'map_meta_cap'    => true,
 			'rewrite'         => false,
 		)
 	);

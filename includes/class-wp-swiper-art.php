@@ -667,7 +667,7 @@ class WP_Swiper_Art {
 			)
 		);
 		if ( ! $slides ) {
-			return current_user_can( 'edit_posts' )
+			return current_user_can( WP_Swiper_Settings::CAPABILITY )
 				? '<p class="wp-swiper-notice">' . esc_html__( 'WP Swiper: the Art effect shows images only; this slider has none.', 'wp-swiper' ) . '</p>'
 				: '';
 		}
@@ -721,7 +721,7 @@ class WP_Swiper_Art {
 		$shapes = 'shape' === $style ? self::shapes( $settings ) : null;
 		$shape  = $shapes ? $shapes['desktop'] : null;
 		if ( 'shape' === $style && ! $shape ) {
-			return current_user_can( 'edit_posts' )
+			return current_user_can( WP_Swiper_Settings::CAPABILITY )
 				? '<p class="wp-swiper-notice">' . esc_html__( 'WP Swiper: upload an SVG file for the SVG shape style (Layout, Art).', 'wp-swiper' ) . '</p>'
 				: '';
 		}
@@ -980,7 +980,7 @@ class WP_Swiper_Art {
 		echo $descriptions; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built.
 		// No block with the class around it: art.js leaves it as it is and
 		// shows this to those who can fix it (as a slider's).
-		if ( $background && current_user_can( 'edit_posts' ) ) {
+		if ( $background && current_user_can( WP_Swiper_Settings::CAPABILITY ) ) {
 			echo '<p class="wp-swiper-notice" data-wp-swiper-bg-missing hidden>' . esc_html(
 				'' === $settings['background_class']
 					? __( 'WP Swiper: this slider is set to be a background, but has no parent block class (Background).', 'wp-swiper' )

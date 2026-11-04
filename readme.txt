@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.2.0
+Stable tag: 3.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Image sliders powered by Swiper: build a slider from the media library, pick an 
 
 == Description ==
 
-WP Swiper adds a "WP Swiper" menu where you build image sliders from the media library and show them anywhere with `[wp_swiper id="123"]` or the "WP Swiper" WPBakery element.
+WP Swiper adds a "WP Swiper" menu (for administrators only) where you build image sliders from the media library and show them anywhere with `[wp_swiper id="123"]` or the "WP Swiper" WPBakery element.
 
 * Ten effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles), Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions), Collage (the photos placed together by a template, a grid, justified rows, masonry, a random mosaic or scattered around a photo in the middle, the others swapped in) and Art (the photos in shapes of their own: a ring around a circle, with an image or text in its opening, a grid with a circle, or the shapes of an SVG file a designer drew).
 * Image shadow, with its offsets, blur, spread and a colour with opacity, where the photos stand apart.
@@ -59,6 +59,9 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.2.1 =
+* WP Swiper is for administrators only: only they see its menu, add, edit, copy and delete sliders, use the preview and the WPBakery element. Editors, authors and the other roles do not see WP Swiper in the admin at all (nor its "What's new"). Visitors see the sliders on the pages as before, and sliders already placed on pages stay there.
 
 = 3.2.0 =
 * A new effect, Text mask: a word whose letters are windows onto your photos, a strip under each letter — one photo through all the letters, or a photo in each (drag them onto other letters in the preview to swap them). The strips go down, right or left (the letters one under another), with lengths that differ, are all the same, or grow towards the middle or the sides.

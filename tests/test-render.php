@@ -277,7 +277,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 	}
 
 	public function test_shortcode_explains_to_editors() {
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 
 		$draft = $this->slider( null, array(), array( 'post_status' => 'draft' ) );
 		$this->assertStringContainsString( 'wp-swiper-notice', do_shortcode( '[wp_swiper id="' . $draft . '"]' ) );
@@ -802,7 +802,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$values = array( 'background' => true, 'background_class' => 'hero' );
 		$this->assertStringNotContainsString( 'data-wp-swiper-bg-missing', $this->render( $values ) );
 
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$html = $this->render( $values );
 		$this->assertStringContainsString( '<p class="wp-swiper-notice" data-wp-swiper-bg-missing hidden>', $html );
 		$this->assertStringContainsString( 'hero', $html );

@@ -313,12 +313,12 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 	public function test_no_file_yet() {
 		$values = array( 'effect' => 'art', 'art_style' => 'shape' );
 		$this->assertSame( '', $this->render( $values ) );
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$this->assertStringContainsString( 'upload an SVG file for the SVG shape style', $this->render( $values ) );
 	}
 
 	public function test_the_field_in_the_editor() {
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$shape = WP_Swiper_Svg_Shape::sanitize( wp_json_encode( array( 'name' => 'ex-3.svg', 'svg' => $this->file( 'ex-3' ) ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => $shape ) ) ) );
@@ -364,7 +364,7 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 		$this->assertStringNotContainsString( '--wp-swiper-art-ratio-mobile', $one );
 
 		// The field: a box per device, tablet and mobile hidden; an empty one says it inherits.
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( null, $values ) ) );
 		$admin = ob_get_clean();
