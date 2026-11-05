@@ -1239,9 +1239,10 @@
 					}
 					r = Math.max( 0, Math.min( r, lenIn / 2, lenOut / 2 ) );
 					if ( outward ) {
-						// Its handle on the curve, a little in from the corner.
+						// Its handle on the curve, a little in from the corner (the
+						// preview drags it inwards, dx / dy, from its radius r).
 						var inset = Math.max( 7, r * ( 1 - Math.SQRT1_2 ) );
-						handles.push( { key: p.ux + '.' + p.uy, x: p.x + dx * inset, y: p.y + dy * inset } );
+						handles.push( { key: p.ux + '.' + p.uy, x: p.x + dx * inset, y: p.y + dy * inset, dx: dx, dy: dy, r: r, half: half } );
 					}
 					return { p: p, din: din, dout: dout, r: r, sweep: outward ? 1 : 0 };
 				} );

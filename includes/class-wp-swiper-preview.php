@@ -228,7 +228,7 @@ class WP_Swiper_Preview {
 				<?php // Art's Grid shapes only (admin.js): its shapes are drawn here (preview-art.js). ?>
 				<p class="description wp-swiper-preview__hint" data-effect="art-cells" hidden>
 					<span class="dashicons dashicons-screenoptions" aria-hidden="true"></span>
-					<?php esc_html_e( 'Shapes: drag across cells to join them, click a shape for its corners (a dot on a corner: that corner alone). Photos: drag a photo onto another to swap them.', 'wp-swiper' ); ?>
+					<?php esc_html_e( 'Shapes: drag across cells to join them, click a shape for its corners: drag a dot to round them all, or click a dot (red) and drag it for that corner alone. Photos: drag a photo onto another to swap them.', 'wp-swiper' ); ?>
 				</p>
 				<?php // Random mosaic only (admin.js): the lines between its photos resize them. ?>
 				<p class="description wp-swiper-preview__hint" data-effect="mosaic" hidden>

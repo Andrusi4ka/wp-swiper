@@ -254,7 +254,19 @@
 	transform: none;
 }
 
+/* Over a corner dot: it can be dragged (preview-art.js). */
+.wp-swiper-art-cells-mode .wp-swiper-art--grid-shapes .wp-swiper-art__stage.is-over-corner,
+.wp-swiper-art-cells-mode .wp-swiper-art--grid-shapes .wp-swiper-art__stage.is-over-corner * {
+	cursor: grab !important;
+}
+
+.wp-swiper-art-cells-mode .wp-swiper-art--grid-shapes .wp-swiper-art__stage.is-turning,
+.wp-swiper-art-cells-mode .wp-swiper-art--grid-shapes .wp-swiper-art__stage.is-turning * {
+	cursor: grabbing !important;
+}
+
 /* The selected shape's outward corners (preview-art.js): a dot on each, a
+   drag rounds the shape's corners (the selected one: that corner alone), a
    click selects it for a radius of its own (its own: filled; selected: larger). */
 .wp-swiper-art-cells .is-corner {
 	fill: #fff;
@@ -271,4 +283,16 @@
 .wp-swiper-art-cells .is-corner.is-active {
 	stroke: #d63638;
 	stroke-width: 3;
+}
+
+/* The value by the dot being dragged. */
+.wp-swiper-art-cells .is-corner-value {
+	font: 600 12px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	fill: #fff;
+	stroke: rgba(0, 0, 0, 0.6);
+	stroke-width: 2.5;
+	stroke-linejoin: round;
+	paint-order: stroke;
+	text-anchor: middle;
+	dominant-baseline: middle;
 }

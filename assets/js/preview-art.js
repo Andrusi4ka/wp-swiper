@@ -701,6 +701,14 @@
 					r: corner.key === ed.corner ? 7 : 5,
 					'class': 'is-corner' + ( mine ? ' is-own' : '' ) + ( corner.key === ed.corner ? ' is-active' : '' )
 				}, ed.overlay );
+				// The dot being dragged: its value by it, inwards.
+				if ( turn && turn.ed === ed && turn.moved && null !== turn.value && corner.key === turn.corner.key ) {
+					svgNode( 'text', {
+						x: corner.x + corner.dx * 24,
+						y: corner.y + corner.dy * 24,
+						'class': 'is-corner-value'
+					}, ed.overlay ).textContent = turn.value + '%';
+				}
 			} );
 		}
 		ed.panel.hidden = ! ( on && shape >= 0 );
@@ -716,7 +724,7 @@
 		}
 	}
 
-	// The selected shape's corner dot under a point ("x.y"), if any.
+	// The selected shape's corner dot under a point (its handle from art.js), if any.
 	function cornerAt( ed, x, y ) {
 		var grid = ed.api.grid();
 		var shape = ed.selected >= 0 && grid ? grid.cells[ ed.selected ] : -1;
@@ -731,10 +739,70 @@
 			var distance = Math.hypot( x - rect.left - corner.x, y - rect.top - corner.y );
 			if ( distance < best ) {
 				best = distance;
-				found = corner.key;
+				found = corner;
 			}
 		} );
 		return found;
+	}
+
+	/*
+	 * A corner dot dragged: inwards along its diagonal the radius grows, back
+	 * it shrinks. The red dot (the corner
+	 * selected): that corner alone; another: the whole shape (no corner
+	 * selected then; a corner with its own radius keeps it). A press without a
+	 * move is a click: that corner selected (again: none). While dragging, the
+	 * value shows by the dot; on release the editor keeps it, as the slider's.
+	 */
+	var turn = null;
+
+	// The value the drag starts from (a share of half a cell): the corner's
+	// own, or the shape's own, or as drawn (Radius), from a dot without its own.
+	function startValue( ed, corner, alone ) {
+		var grid = ed.api.grid();
+		var shape = grid.cells[ ed.selected ];
+		var own = function ( key ) {
+			return grid.corners && typeof grid.corners[ key ] === 'number';
+		};
+		if ( alone && own( corner.key ) ) {
+			return grid.corners[ corner.key ];
+		}
+		if ( ! alone && grid.radii && typeof grid.radii[ shape ] === 'number' ) {
+			return grid.radii[ shape ];
+		}
+		var outline = ed.block.wpSwiperArtOutlines[ shape ];
+		var plain = alone || ! own( corner.key ) ? corner : null;
+		( outline.corners || [] ).forEach( function ( one ) {
+			if ( ! plain && ! own( one.key ) ) {
+				plain = one;
+			}
+		} );
+		return plain && corner.half > 0 ? Math.round( plain.r / corner.half * 100 ) : 0;
+	}
+
+	function turnMove( e ) {
+		var moveX = e.clientX - turn.x;
+		var moveY = e.clientY - turn.y;
+		if ( ! turn.moved ) {
+			if ( Math.hypot( moveX, moveY ) < DISTANCE ) {
+				return;
+			}
+			turn.moved = true;
+			// Not the red dot: the whole shape.
+			if ( turn.corner.key !== turn.ed.corner ) {
+				turn.ed.corner = null;
+			}
+			turn.alone = !! turn.ed.corner;
+			turn.start = startValue( turn.ed, turn.corner, turn.alone );
+		}
+		// Along the inward diagonal, a px a px of radius (the dot itself moves
+		// less, on the curve: following it, 0 to 100% would be some 20px).
+		var radius = ( moveX * turn.corner.dx + moveY * turn.corner.dy ) / 2;
+		var value = turn.start + ( turn.corner.half > 0 ? radius / turn.corner.half * 100 : 0 );
+		value = Math.round( Math.max( 0, Math.min( 100, value ) ) );
+		if ( value !== turn.value ) {
+			turn.value = value;
+			setRadius( turn.ed, value, false );
+		}
 	}
 
 	function editorOf( target ) {
@@ -756,12 +824,12 @@
 		}
 		e.stopImmediatePropagation();
 		e.preventDefault();
-		// A dot on the selected shape's corner: that corner selected (again: none).
+		// A dot on the selected shape's corner: dragged, or (a click) selected.
 		var corner = cornerAt( ed, e.clientX, e.clientY );
 		if ( corner ) {
-			ed.corner = ed.corner === corner ? null : corner;
+			turn = { ed: ed, corner: corner, x: e.clientX, y: e.clientY, moved: false, value: null, before: cellsTools().text( ed.api.grid() ), selected: ed.corner };
+			ed.stage.classList.add( 'is-turning' );
 			stopNextClick();
-			refresh( ed );
 			return;
 		}
 		var cell = cellAt( ed, e.clientX, e.clientY );
@@ -770,6 +838,17 @@
 	}, true );
 
 	document.addEventListener( 'pointermove', function ( e ) {
+		if ( turn ) {
+			turnMove( e );
+			return;
+		}
+		// Over a corner dot: the hand.
+		if ( ! paint && cellsMode === 'shapes' ) {
+			var over = editorOf( e.target );
+			editors.forEach( function ( one ) {
+				one.stage.classList.toggle( 'is-over-corner', one === over && !! cornerAt( one, e.clientX, e.clientY ) );
+			} );
+		}
 		if ( ! paint ) {
 			return;
 		}
@@ -782,6 +861,22 @@
 	} );
 
 	document.addEventListener( 'pointerup', function () {
+		if ( turn ) {
+			var dragged = turn;
+			turn = null;
+			stopNextClick();
+			dragged.ed.stage.classList.remove( 'is-turning' );
+			if ( ! dragged.moved ) {
+				// A click: that corner selected (again: none).
+				dragged.ed.corner = dragged.ed.corner === dragged.corner.key ? null : dragged.corner.key;
+				refresh( dragged.ed );
+			} else if ( null !== dragged.value ) {
+				setRadius( dragged.ed, dragged.value, true );
+			} else {
+				refresh( dragged.ed );
+			}
+			return;
+		}
 		if ( ! paint ) {
 			return;
 		}
@@ -830,6 +925,18 @@
 
 	document.addEventListener( 'keydown', function ( e ) {
 		if ( e.key !== 'Escape' ) {
+			return;
+		}
+		// A corner being dragged: the layout as it was before.
+		if ( turn ) {
+			var given = turn;
+			turn = null;
+			given.ed.stage.classList.remove( 'is-turning' );
+			if ( given.moved ) {
+				given.ed.api.setGrid( cellsTools().number( cellsTools().parse( given.before ) ) );
+				given.ed.corner = given.selected;
+			}
+			refresh( given.ed );
 			return;
 		}
 		if ( paint ) {
