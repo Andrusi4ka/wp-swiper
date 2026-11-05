@@ -12,13 +12,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 return array(
 
-	// Creative effect: Swiper's demo looks (frontend.js, creativePresets()).
+	// Creative effect: Swiper's demo looks (slider.js, creativePresets()).
 	// First in its Layout: the fields below depend on it.
 	'creative_style'        => array(
 		'section' => 'layout',
 		'effects' => array( 'creative' ),
 		'label'   => __( 'Style', 'wp-swiper' ),
 		'type'    => 'select',
+		// Shown as icons, assets/images/creative/{style}.svg (as the Collage's and Art's Style).
+		'tiles'   => 'creative',
 		'default' => 'push',
 		'choices' => array(
 			'push'     => __( 'Push: the next slide covers the current one', 'wp-swiper' ),

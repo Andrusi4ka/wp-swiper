@@ -119,7 +119,13 @@
   `get()` (і в `layouts`): увімкнено, де був радіус > 0 / рамка > 0. У
   `cases.php` випадок `thumbs` має `thumbs_border` (відсутній чекбокс = вимкнено,
   як у формі).
-  Direction — не в Advanced, а першим у блоці Effect сторінки Layout, лише для
+  **Creative Style — плитки** (2026-11-05, рішення користувача): як Style
+  колажу й Art, іконки `assets/images/creative/{style}.svg` (малюнки
+  користувача, переписані на `currentColor` без `<style>` Illustrator;
+  `creative-slide-apart.svg` → `apart.svg`), першим у блоці Effect — над
+  Direction; інший стиль з плиток одразу оновлює прев'ю (як усі `tiles`).
+  Direction — не в Advanced, а в блоці Effect сторінки Layout (першим, крім
+  Creative — після його Style), лише для
   Slide, Cube, Coverflow, Flip, Cards, Creative і Thumbnails (не з переходом
   Fade, `admin.js fixedDirection`). Як поле Layout зберігається окремо для
   кожного ефекту (`layouts`); старі слайдери: поточний ефект зберіг свій.

@@ -1019,8 +1019,8 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$field = WP_Swiper_Settings::fields()['direction'];
 		$this->assertSame( 'layout', $field['section'] );
 		$this->assertSame( array( 'slide', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'thumbs' ), $field['effects'] );
-		// First in the Effect block.
-		$this->assertSame( 'direction', WP_Swiper_Settings::blocks()['layout']['effect']['fields'][0] );
+		// In the Effect block, right after Creative's Style (the icons first, as the Collage's and Art's).
+		$this->assertSame( array( 'creative_style', 'direction' ), array_slice( WP_Swiper_Settings::blocks()['layout']['effect']['fields'], 0, 2 ) );
 		// Kept per effect, as every Layout field.
 		$this->assertContains( 'direction', WP_Swiper_Settings::layout_keys() );
 		$layouts = WP_Swiper_Settings::layouts( $this->settings( array( 'effect' => 'cube', 'direction' => 'vertical' ) ), array( 'slide' => array( 'direction' => 'horizontal' ) ) );

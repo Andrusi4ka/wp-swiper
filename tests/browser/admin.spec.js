@@ -259,3 +259,26 @@ test( 'a slide\'s image position: its window opens and closes', async ( { page }
 	await expect( modal ).toBeHidden();
 	expect( errors ).toEqual( [] );
 } );
+
+test( 'Creative: its Style from icons, first in the Effect block, the preview drawn again', async ( { page } ) => {
+	const errors = await edit( page, 'creative' );
+	await openPage( page, 'layout' );
+	const block = page.locator( '#wp-swiper-page-layout [data-field="creative_style"]' );
+	await expect( block ).toBeVisible();
+	await expect( block.locator( '.wp-swiper-tiles__tile' ) ).toHaveCount( 7 );
+	await expect( block.locator( '.wp-swiper-tiles__tile[data-value="push"]' ) ).toHaveAttribute( 'aria-checked', 'true' );
+	// Above Direction.
+	const style = await block.boundingBox();
+	const direction = await page.locator( '#wp-swiper-page-layout [data-field="direction"]' ).boundingBox();
+	expect( style.y ).toBeLessThan( direction.y );
+	if ( process.env.WP_SWIPER_SHOTS ) {
+		await block.screenshot( { path: process.env.WP_SWIPER_SHOTS + '/creative-tiles.png' } );
+	}
+	await block.locator( '.wp-swiper-tiles__tile[data-value="carousel"]' ).click();
+	await expect( page.locator( '#wp-swiper-creative_style' ) ).toHaveValue( 'carousel' );
+	await expect( block.locator( '.wp-swiper-tiles__tile[data-value="carousel"]' ) ).toHaveAttribute( 'aria-checked', 'true' );
+	// The Carousel's own settings show; the preview drawn with it at once.
+	await expect( page.locator( '[data-field="creative_neighbours"]' ) ).toBeVisible();
+	await expect( frame( page ).locator( '.wp-swiper--carousel' ) ).toBeAttached( { timeout: 15000 } );
+	expect( errors ).toEqual( [] );
+} );

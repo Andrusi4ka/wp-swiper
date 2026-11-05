@@ -1168,9 +1168,33 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 			$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/collage/' . $style . '.svg', $style );
 			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="[^"]+" aria-label="[^"]+">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
 		}
-		// The Collage's ten, Art's Styles with those to come (below), Text mask's Strips go.
-		$this->assertSame( 10 + count( WP_Swiper_Art::styles() ) + count( WP_Swiper_Art::soon() ) + 3, substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
+		// The Collage's ten, Art's Styles with those to come (below), Text mask's Strips go, Creative's seven.
+		$this->assertSame( 10 + count( WP_Swiper_Art::styles() ) + count( WP_Swiper_Art::soon() ) + 3 + 7, substr_count( $html, '<svg class="wp-swiper-tiles__icon"' ) );
 		$this->assertStringContainsString( 'class="wp-swiper-tiles__tile wp-swiper-tiles__tile--inherit" data-value="" role="radio" aria-checked="false" hidden>Inherit</button>', $html );
+	}
+
+	public function test_creative_style_is_chosen_from_icons() {
+		$this->as_role( 'administrator' );
+		$id = $this->slider( $this->slides( 1 ), array( 'effect' => 'creative', 'creative_style' => 'door' ) );
+
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $id ) );
+		$html = ob_get_clean();
+
+		// One value for every screen: its select (hidden) and the icons, no Inherit; first in the Effect block.
+		$this->assertMatchesRegularExpression( '#<div class="wp-swiper-field wp-swiper-field--select wp-swiper-field--tiles" data-field="creative_style"#', $html );
+		$this->assertMatchesRegularExpression( '#<option value="door"\s+selected=\'selected\'>#', $html );
+		$this->assertSame( 'creative_style', WP_Swiper_Settings::blocks()['layout']['effect']['fields'][0] );
+		// A tile per style, the user's drawings in the tile's color (nothing of Illustrator's styles).
+		foreach ( array_keys( WP_Swiper_Settings::fields()['creative_style']['choices'] ) as $style ) {
+			$svg = file_get_contents( WP_SWIPER_DIR . 'assets/images/creative/' . $style . '.svg' );
+			$this->assertStringContainsString( 'fill="currentColor"', $svg, $style );
+			$this->assertDoesNotMatchRegularExpression( '~<script|<foreignObject|<style|class=|\son\w+=|href=|#333~i', $svg, $style );
+			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $style . '" role="radio" aria-checked="false" title="[^"]+" aria-label="[^"]+">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $style );
+		}
+		foreach ( glob( WP_SWIPER_DIR . 'creative-*.svg' ) as $left ) {
+			$this->fail( 'Left in the plugin\'s root: ' . basename( $left ) );
+		}
 	}
 
 	public function test_art_style_is_chosen_from_icons() {
