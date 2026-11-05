@@ -3140,6 +3140,35 @@
 			$( previewFrame ).on( 'load', applyDev );
 			applyDev();
 
+			// Dark screen: the preview page's background almost black (its own
+			// CSS, class-wp-swiper-preview.php, which reads the same key before
+			// it is drawn), at once, without an update; kept for the next visit.
+			var DARK_KEY = 'wpSwiperDark';
+			var $screen = $preview.find( '.wp-swiper-preview__screen' );
+			var darkOn = false;
+			try {
+				darkOn = window.localStorage.getItem( DARK_KEY ) === '1';
+			} catch ( e ) {}
+			var applyDark = function () {
+				$screen.attr( 'aria-pressed', darkOn ? 'true' : 'false' );
+				$preview.toggleClass( 'wp-swiper-preview--dark', darkOn );
+				try {
+					var doc = previewFrame.contentDocument;
+					if ( doc && doc.documentElement ) {
+						doc.documentElement.classList.toggle( 'wp-swiper-preview-dark', darkOn );
+					}
+				} catch ( e ) {}
+			};
+			$screen.on( 'click', function () {
+				darkOn = ! darkOn;
+				try {
+					window.localStorage.setItem( DARK_KEY, darkOn ? '1' : '0' );
+				} catch ( e ) {}
+				applyDark();
+			} );
+			$( previewFrame ).on( 'load', applyDark );
+			applyDark();
+
 			/*
 			 * Collage order (the Order field): the photos' IDs per device, the first
 			 * ones in the first places. For the device the field shows: Shuffle sets

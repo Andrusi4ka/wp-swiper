@@ -236,7 +236,8 @@
 /* Turn the device: an icon button right of the title, as tall as the bar's
    buttons; greyed for Desktop (WordPress's disabled button), pressed while
    the tablet or phone is turned. */
-#wp-swiper-settings .wp-swiper-preview__rotate {
+#wp-swiper-settings .wp-swiper-preview__rotate,
+#wp-swiper-settings .wp-swiper-preview__screen {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -252,10 +253,23 @@
 	height: auto;
 }
 
-#wp-swiper-settings .wp-swiper-preview__rotate[aria-pressed="true"] {
+#wp-swiper-settings .wp-swiper-preview__rotate[aria-pressed="true"],
+#wp-swiper-settings .wp-swiper-preview__screen[aria-pressed="true"] {
 	border-color: var(--wp-swiper-accent, #2271b1);
 	background: var(--wp-swiper-accent, #2271b1);
 	color: #fff;
+}
+
+/* Dark screen (the button after Rotate, as one of its kind): its icon a
+   square; the frame dark too while the preview loads (no white flash). */
+.wp-swiper-preview__screen-icon {
+	display: block;
+	width: 20px;
+	height: 20px;
+}
+
+.wp-swiper-preview--dark .wp-swiper-preview__frame {
+	background: #121212;
 }
 
 .wp-swiper-preview__devices .wp-swiper-segmented__btn {

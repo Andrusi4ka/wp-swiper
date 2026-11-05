@@ -701,6 +701,32 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'currentColor', $svg );
 	}
 
+	public function test_preview_screen_light_or_dark() {
+		$this->as_role( 'administrator' );
+		ob_start();
+		WP_Swiper_Preview::render_panel( get_post( $this->slider() ) );
+		$html = ob_get_clean();
+		// Right after Rotate, before Developer mode; the user's icon inline, in its button's color.
+		$button = strpos( $html, '<button type="button" class="button wp-swiper-preview__screen" aria-pressed="false" title="Dark screen" aria-label="Dark screen">' );
+		$this->assertNotFalse( $button );
+		$this->assertGreaterThan( strpos( $html, 'wp-swiper-preview__rotate"' ), $button );
+		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__dev"' ), $button );
+		$this->assertSame( 1, preg_match( '#<svg class="wp-swiper-preview__screen-icon" aria-hidden="true" focusable="false"[^>]*viewBox="0 0 1000 1000">#', $html ) );
+		$svg = file_get_contents( WP_SWIPER_DIR . 'assets/images/light-dark.svg' );
+		$this->assertDoesNotMatchRegularExpression( '~<script|<foreignObject|<style|class=|\son\w+=|href=|#333~i', $svg );
+		$this->assertStringContainsString( 'currentColor', $svg );
+		$this->assertFileDoesNotExist( WP_SWIPER_DIR . 'light-dark.svg' );
+
+		// The frame's page: dark by its class, set before it is drawn from the
+		// same key admin.js keeps; admin.js turns it at once.
+		$source = file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' );
+		$this->assertStringContainsString( 'html.wp-swiper-preview-dark, html.wp-swiper-preview-dark body { background: #121212; color: #e6e6e6; }', $source );
+		$this->assertStringContainsString( "window.localStorage.getItem( 'wpSwiperDark' ) === '1'", $source );
+		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' );
+		$this->assertStringContainsString( "var DARK_KEY = 'wpSwiperDark';", $js );
+		$this->assertStringContainsString( "doc.documentElement.classList.toggle( 'wp-swiper-preview-dark', darkOn );", $js );
+	}
+
 	public function test_preview_without_slides_shows_the_no_image_picture_in_the_middle() {
 		$html = WP_Swiper_Preview::empty_screen();
 		$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/no-image.svg' );

@@ -177,6 +177,10 @@ class WP_Swiper_Preview {
 					<button type="button" class="button wp-swiper-preview__rotate" aria-pressed="false" title="<?php esc_attr_e( 'Turn the tablet or phone sideways', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Turn the tablet or phone sideways', 'wp-swiper' ); ?>" disabled>
 						<?php echo WP_Swiper_Admin::svg_icon( 'rotate.svg', 'wp-swiper-preview__rotate-icon', 'dashicons-image-rotate' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
 					</button>
+					<?php // The devices' screen light (white) or dark (almost black): the preview page's own background (admin.js). ?>
+					<button type="button" class="button wp-swiper-preview__screen" aria-pressed="false" title="<?php esc_attr_e( 'Dark screen', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Dark screen', 'wp-swiper' ); ?>">
+						<?php echo WP_Swiper_Admin::svg_icon( 'light-dark.svg', 'wp-swiper-preview__screen-icon', 'dashicons-visibility' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
+					</button>
 					<?php // Developer mode: the slides', images' and empty spaces' boxes over the preview (assets/js/preview-dev.js). ?>
 					<button type="button" class="button wp-swiper-preview__dev" aria-pressed="false" title="<?php esc_attr_e( 'Show the boxes of the slides and images and the empty space around them, with their sizes', 'wp-swiper' ); ?>">
 						<span class="dashicons dashicons-editor-code" aria-hidden="true"></span>
@@ -387,7 +391,20 @@ class WP_Swiper_Preview {
 		/* No slides yet: the picture in the middle of the screen, not too big. */
 		.wp-swiper-preview-empty { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
 		.wp-swiper-preview-empty img { display: block; width: min(160px, 32vw); height: auto; }
+		/* Dark screen (the bar's button, admin.js): almost black, text without a
+		   color of its own light (on the site the theme's), the background
+		   block and the scroll bar to go with it. */
+		html.wp-swiper-preview-dark, html.wp-swiper-preview-dark body { background: #121212; color: #e6e6e6; }
+		html.wp-swiper-preview-dark .wp-swiper-preview-block { background: #1e1e1e; }
+		@media (max-width: 1024px) {
+			html.wp-swiper-preview-dark::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.35); }
+			@supports not selector(::-webkit-scrollbar) {
+				html.wp-swiper-preview-dark { scrollbar-color: rgba(255, 255, 255, 0.35) transparent; }
+			}
+		}
 	</style>
+	<?php // The editor's choice (admin.js, the same site's storage), before the page is drawn: no white flash on an update. ?>
+	<script>try { if ( window.localStorage.getItem( 'wpSwiperDark' ) === '1' ) { document.documentElement.classList.add( 'wp-swiper-preview-dark' ); } } catch ( e ) {}</script>
 </head>
 <body>
 	<div class="wp-swiper-preview-page<?php echo WP_Swiper_Settings::is_background( $settings ) ? ' wp-swiper-preview-page--background' : ''; ?>">
