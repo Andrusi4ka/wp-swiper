@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.3.0
+Stable tag: 3.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,15 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.4.0 =
+* Art: Ring, Grid + circle and Grid + square have Content in a window too: an image, text or a shortcode in one window instead of a photo — the middle one or any other, per device or dragged onto a window in the preview. In a round window it sits in the square inside the circle.
+* Art: the "+ text" Styles are replaced by it. A slider with Ring + text, Grid + circle + text or Grid + square + text becomes Ring, Grid + circle or Grid + square with what was in its middle in window 1; its photos stay where they were.
+* Art, Grid shapes: drag a corner dot in the preview to round the shape's corners; click a dot (it turns red) and drag it for that corner alone. The value shows while you drag; Escape puts it back.
+* Effect shadows (Coverflow, Cards, Creative): a Shadow color of their own — its opacity is how dark the slides get, any color. By default as before.
+* Creative: its Style chosen from icons, at the top of the Effect block.
+* Preview: a dark screen for the devices (the button after Rotate), kept for the next visit.
+* Fixed: the code view of the settings' text editors (Content in a place, Content in a window, the Ring's opening) was narrow.
 
 = 3.3.0 =
 * Collage: Rotation (-45 to 45°, per device) for Grid, Random mosaic, the templates, Scattered and Freeform: the whole collage turned, each photo upright and covering its place. Grid, mosaic and templates fill the block (edges cut off) or fit in it; Scattered and Freeform turn where they are, as large as their photos' outermost corners allow, and with Height Auto the block is cut to them. Photos dragged and resized at the angle in the preview.

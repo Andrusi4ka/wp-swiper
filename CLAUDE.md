@@ -37,7 +37,13 @@
 
 ## Стан
 
-- Останній реліз **v3.3.0** (2026-11-04): Collage Rotation (за крайніми
+- Останній реліз **v3.4.0** (2026-11-05): Content in a window для Ring і
+  сіток з колом / квадратом замість стилів «+ text» (старі переносяться),
+  перетягування кутів Grid shapes, Shadow color для Effect shadows,
+  плитки стилів Creative, темний екран прев'ю, ширше поле коду редакторів;
+  `admin.js` розділено на частини, тести адмінки; `.pot` оновлено (WP-CLI
+  2.11.0, phar у тимчасовій теці, SHA-512 звірено).
+- Попередній — **v3.3.0** (2026-11-04): Collage Rotation (за крайніми
   точками фото), Content in a place (колаж) і Content in a window (Art SVG
   shape) зі шорткодами, тінь у фоні для Collage / Art, Developer mode для
   колажу й SVG shape, картка «What … can do»; `.pot` оновлено (WP-CLI
