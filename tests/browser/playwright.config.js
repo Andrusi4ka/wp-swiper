@@ -5,6 +5,8 @@ const { defineConfig } = require( '@playwright/test' );
 module.exports = defineConfig( {
 	testDir: '.',
 	testMatch: '*.spec.js',
+	// The admin tests' session, made once before they run (admin-login.php).
+	globalSetup: require.resolve( './global-setup.js' ),
 	snapshotPathTemplate: '{testDir}/snapshots/{projectName}/{arg}{ext}',
 	timeout: 30000,
 	fullyParallel: true,

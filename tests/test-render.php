@@ -627,7 +627,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertSame( 0, $this->config( $html )['thumbs']['frame'] );
 
 		// The editor shows their settings once on.
-		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' );
+		$js = $this->admin_js();
 		// Their effect only: elsewhere the page (and its menu item) has nothing left in view.
 		$this->assertStringContainsString( "field( 'thumbs_radius' ).toggle( effect === 'thumbs' && $( '#wp-swiper-thumbs_rounded' ).is( ':checked' ) );", $js );
 		$this->assertStringContainsString( "var thumbsFrame = effect === 'thumbs' && $( '#wp-swiper-thumbs_border' ).is( ':checked' );", $js );
@@ -1034,7 +1034,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertSame( 'horizontal', $this->config( $this->render( array( 'effect' => 'thumbs', 'thumbs_transition' => 'fade', 'direction' => 'vertical' ) ) )['direction'] );
 
 		// The editor hides it where the slides only fade (Thumbnails with Fade) and unlocks it for the effect change.
-		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' );
+		$js = $this->admin_js();
 		$this->assertStringContainsString( "var fixedDirection = effect === 'fade' || collage || effect === 'art' || effect === 'text-mask' || ( effect === 'thumbs' && $( '#wp-swiper-thumbs_transition' ).val() === 'fade' );", $js );
 		$this->assertStringContainsString( "field( 'direction' ).hide();", $js );
 		$this->assertMatchesRegularExpression( '#// The own values, not the fixed ones locked Layout fields show\.\s*lockDirection\( false \);#', $js );

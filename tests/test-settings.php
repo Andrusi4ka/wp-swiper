@@ -178,7 +178,7 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( 1, WP_Swiper_Settings::sanitize( array( 'collage_count' => '0' ) )['collage_count'] );
 		// The collage's own limit (the × of Scattered and Freeform) and the editor's check: the same.
 		$this->assertStringContainsString( 'var COLLAGE_MIN_COUNT = 1;', file_get_contents( WP_SWIPER_DIR . 'assets/js/collage.js' ) );
-		$this->assertStringContainsString( "data.wpSwiper === 'collage-count' && data.count >= 1 && data.count <= 30", file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' ) );
+		$this->assertStringContainsString( "data.wpSwiper === 'collage-count' && data.count >= 1 && data.count <= 30", $this->admin_js() );
 	}
 
 	public function test_sanitize_tablet_and_mobile_values_may_inherit() {

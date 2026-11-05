@@ -36,6 +36,18 @@ class WP_Swiper_Admin {
 		'wp-swiper-admin-controls'   => 'admin-controls.css',
 	);
 
+	// admin.js's parts, handle => file, its dependencies (admin.js runs them
+	// in their order, window.wpSwiperEditor.parts): the slides, the Slide info
+	// window, the colors and gradient, the pages and devices, the preview and
+	// Undo / Redo.
+	const SCRIPTS = array(
+		'wp-swiper-admin-slides'     => 'admin-slides.js',
+		'wp-swiper-admin-slide-info' => 'admin-slide-info.js',
+		'wp-swiper-admin-colors'     => 'admin-colors.js',
+		'wp-swiper-admin-pages'      => 'admin-pages.js',
+		'wp-swiper-admin-preview'    => 'admin-preview.js',
+	);
+
 	public static function init() {
 		add_filter( 'post_row_actions', array( __CLASS__, 'row_actions' ), 10, 2 );
 		add_action( 'admin_post_' . self::CLONE_ACTION, array( __CLASS__, 'handle_clone' ) );
@@ -75,7 +87,10 @@ class WP_Swiper_Admin {
 			// Pickr 1.9.1 (MIT): every color field's picker (color_pick(), admin.js).
 			wp_enqueue_style( 'wp-swiper-pickr', WP_SWIPER_URL . 'assets/vendor/pickr/classic.min.css', array(), '1.9.1' );
 			wp_enqueue_script( 'wp-swiper-pickr', WP_SWIPER_URL . 'assets/vendor/pickr/pickr.min.js', array(), '1.9.1', true );
-			wp_enqueue_script( 'wp-swiper-admin', WP_SWIPER_URL . 'assets/js/admin.js', array( 'jquery', 'jquery-ui-sortable', 'wp-swiper-pickr' ), wp_swiper_asset_version( 'assets/js/admin.js' ), true );
+			foreach ( self::SCRIPTS as $handle => $file ) {
+				wp_register_script( $handle, WP_SWIPER_URL . 'assets/js/' . $file, array( 'jquery', 'jquery-ui-sortable', 'wp-swiper-pickr' ), wp_swiper_asset_version( 'assets/js/' . $file ), true );
+			}
+			wp_enqueue_script( 'wp-swiper-admin', WP_SWIPER_URL . 'assets/js/admin.js', array_merge( array( 'jquery', 'jquery-ui-sortable', 'wp-swiper-pickr' ), array_keys( self::SCRIPTS ) ), wp_swiper_asset_version( 'assets/js/admin.js' ), true );
 			// A font name's list (Text mask's Font name), on its own: nothing of admin.js in it.
 			wp_enqueue_script( 'wp-swiper-font-picker', WP_SWIPER_URL . 'assets/js/font-picker.js', array(), wp_swiper_asset_version( 'assets/js/font-picker.js' ), true );
 			wp_localize_script(

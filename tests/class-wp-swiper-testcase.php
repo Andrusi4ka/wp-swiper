@@ -147,6 +147,21 @@ abstract class WP_Swiper_TestCase extends WP_UnitTestCase {
 	}
 
 	/**
+	 * The edit screen's script as one text: admin.js and its parts
+	 * (WP_Swiper_Admin::SCRIPTS), for tests that look for a piece of it.
+	 *
+	 * @return string
+	 */
+	protected function admin_js() {
+		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' );
+		foreach ( WP_Swiper_Admin::SCRIPTS as $file ) {
+			$js .= "
+" . file_get_contents( WP_SWIPER_DIR . 'assets/js/' . $file );
+		}
+		return $js;
+	}
+
+	/**
 	 * The inline style (custom properties) of the slider's outer block.
 	 *
 	 * @param string $html Markup.

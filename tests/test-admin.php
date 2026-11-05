@@ -722,7 +722,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$source = file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' );
 		$this->assertStringContainsString( 'html.wp-swiper-preview-dark, html.wp-swiper-preview-dark body { background: #121212; color: #e6e6e6; }', $source );
 		$this->assertStringContainsString( "window.localStorage.getItem( 'wpSwiperDark' ) === '1'", $source );
-		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/admin.js' );
+		$js = $this->admin_js();
 		$this->assertStringContainsString( "var DARK_KEY = 'wpSwiperDark';", $js );
 		$this->assertStringContainsString( "doc.documentElement.classList.toggle( 'wp-swiper-preview-dark', darkOn );", $js );
 	}
@@ -1108,6 +1108,33 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		foreach ( glob( WP_SWIPER_DIR . 'assets/css/admin*.css' ) as $path ) {
 			$this->assertContains( basename( $path ), WP_Swiper_Admin::STYLES );
 		}
+	}
+
+	public function test_admin_script_and_its_parts() {
+		$this->as_role( 'administrator' );
+		set_current_screen( 'post' );
+		get_current_screen()->post_type = WP_Swiper_Settings::POST_TYPE;
+
+		WP_Swiper_Admin::enqueue( 'post.php' );
+
+		// admin.js after its parts (it runs them, window.wpSwiperEditor.parts),
+		// each part registered, its file there; admin.js keeps the texts.
+		$this->assertTrue( wp_script_is( 'wp-swiper-admin', 'enqueued' ) );
+		$deps = wp_scripts()->registered['wp-swiper-admin']->deps;
+		foreach ( WP_Swiper_Admin::SCRIPTS as $handle => $file ) {
+			$this->assertContains( $handle, $deps, $handle );
+			$this->assertTrue( wp_script_is( $handle, 'registered' ), $handle );
+			$this->assertFileExists( WP_SWIPER_DIR . 'assets/js/' . $file );
+			$source = file_get_contents( WP_SWIPER_DIR . 'assets/js/' . $file );
+			$this->assertStringContainsString( "var parts = ( window.wpSwiperEditor = window.wpSwiperEditor || { parts: {} } ).parts;", $source, $file );
+		}
+		$this->assertStringContainsString( 'var wpSwiperAdmin = ', (string) wp_scripts()->get_data( 'wp-swiper-admin', 'data' ) );
+		// Every admin-*.js is one of them (font-picker.js stays on its own).
+		foreach ( glob( WP_SWIPER_DIR . 'assets/js/admin-*.js' ) as $path ) {
+			$this->assertContains( basename( $path ), WP_Swiper_Admin::SCRIPTS );
+		}
+		// admin.js runs every part, in its order.
+		$this->assertMatchesRegularExpression( "#\[ 'head', 'slides', 'slideFonts', 'colors', 'slideInfo', 'focus', 'fields', 'pages', 'preview', 'tail' \]\.forEach\( function \( name \) \{\s*parts\[ name \]\( shared \);#", $this->admin_js() );
 	}
 
 	public function test_art_opening_text_has_an_editor() {
