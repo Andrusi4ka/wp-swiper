@@ -53,6 +53,10 @@ return array(
 	'cards'            => array( 'settings' => $slider + array( 'effect' => 'cards' ) ),
 	'creative'         => array( 'settings' => $slider + array( 'effect' => 'creative' ) ),
 	'creative-carousel' => array( 'settings' => $slider + array( 'effect' => 'creative', 'creative_style' => 'carousel' ) ),
+	// Effect shadows in a color of their own (effect-shadows.spec.js; Coverflow's without one: its default).
+	'coverflow-effect-shadow' => array( 'settings' => $slider + array( 'effect' => 'coverflow', 'slides_per_view' => '3', 'effect_shadows' => '1', 'effect_shadow_color' => '' ) ),
+	'cards-effect-shadow'     => array( 'settings' => $slider + array( 'effect' => 'cards', 'effect_shadows' => '1', 'effect_shadow_color' => 'rgba(0,0,255,0.4)' ) ),
+	'creative-effect-shadow'  => array( 'settings' => $slider + array( 'effect' => 'creative', 'effect_shadows' => '1', 'effect_shadow_color' => 'rgba(255,0,0,0.6)' ) ),
 	// The frame as the thumbnails always had it (a missing checkbox is off, as in a form).
 	'thumbs'           => array( 'settings' => $slider + array( 'effect' => 'thumbs', 'thumbs_border' => '1' ) ),
 	'video'            => array(

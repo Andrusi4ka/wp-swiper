@@ -1066,6 +1066,37 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringNotContainsString( '--wp-swiper-cube-shadow-opacity', $css );
 	}
 
+	public function test_effect_shadows_in_a_color_of_their_own() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertSame( 'alpha_color', $fields['effect_shadow_color']['type'] );
+		$this->assertSame( $fields['effect_shadows']['effects'], $fields['effect_shadow_color']['effects'] );
+		// Swiper's own: black at 15%, Coverflow's sides at 50%.
+		$this->assertSame( 'rgba(0,0,0,0.15)', $fields['effect_shadow_color']['default'] );
+		$this->assertSame( 'rgba(0,0,0,0.5)', WP_Swiper_Settings::effect_default( 'effect_shadow_color', 'coverflow' ) );
+		$this->assertSame( 'rgba(0,0,0,0.15)', WP_Swiper_Settings::effect_default( 'effect_shadow_color', 'creative' ) );
+		// Right under Effect shadows.
+		$effect = WP_Swiper_Settings::blocks()['layout']['effect']['fields'];
+		$this->assertSame( array_search( 'effect_shadows', $effect, true ) + 1, array_search( 'effect_shadow_color', $effect, true ) );
+
+		foreach ( array( 'coverflow', 'cards', 'creative' ) as $effect ) {
+			$style = $this->root_style( $this->render( array( 'effect' => $effect, 'effect_shadows' => true, 'effect_shadow_color' => 'rgba(16,32,48,0.4)' ) ) );
+			$this->assertStringContainsString( '--wp-swiper-effect-shadow:rgba(16,32,48,0.4)', $style, $effect );
+		}
+		// None kept: the effect's default.
+		$this->assertStringContainsString( '--wp-swiper-effect-shadow:rgba(0,0,0,0.5)', $this->root_style( $this->render( array( 'effect' => 'coverflow', 'effect_shadows' => true, 'effect_shadow_color' => '' ) ) ) );
+		// Off, with Contain, or another effect: none.
+		$this->assertStringNotContainsString( 'effect-shadow', $this->root_style( $this->render( array( 'effect' => 'creative' ) ) ) );
+		$this->assertStringNotContainsString( 'effect-shadow', $this->root_style( $this->render( array( 'effect' => 'creative', 'effect_shadows' => true, 'image_fit' => 'contain' ) ) ) );
+		$this->assertStringNotContainsString( 'effect-shadow', $this->root_style( $this->render( array( 'effect' => 'slide', 'effect_shadows' => true ) ) ) );
+
+		// The CSS paints Swiper's layers with it, Swiper's own without it.
+		$css = file_get_contents( WP_SWIPER_DIR . 'assets/css/slider.css' );
+		$this->assertStringContainsString( 'background: var(--wp-swiper-effect-shadow, rgba(0, 0, 0, 0.15));', $css );
+		foreach ( array( 'left', 'right', 'top', 'bottom' ) as $side ) {
+			$this->assertStringContainsString( ".swiper-slide-shadow-coverflow.swiper-slide-shadow-$side {\n\tbackground-image: linear-gradient(to $side, var(--wp-swiper-effect-shadow, rgba(0, 0, 0, 0.5)), transparent);", $css );
+		}
+	}
+
 	public function test_caption_background_color_with_its_opacity() {
 		$fields = WP_Swiper_Settings::fields();
 		$this->assertArrayNotHasKey( 'caption_bg_opacity', $fields );

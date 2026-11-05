@@ -100,6 +100,7 @@ trait WP_Swiper_Admin_Controls {
 	 *     @type string $name    The input's name; '': no input (Slide info).
 	 *     @type string $value   The color kept.
 	 *     @type string $default What Default goes back to; '': admin.js says.
+	 *     @type array  $effect_default Its own Default for some effects (effect => color; admin.js swaps it in).
 	 *     @type bool   $alpha   With opacity.
 	 *     @type bool   $hidden  Hidden at first (the window's Default).
 	 *     @type bool   $compact The small swatch of a field on one row.
@@ -110,19 +111,20 @@ trait WP_Swiper_Admin_Controls {
 		$args  = wp_parse_args(
 			$args,
 			array(
-				'id'      => '',
-				'name'    => '',
-				'value'   => '',
-				'default' => '',
-				'alpha'   => false,
-				'hidden'  => false,
-				'compact' => false,
-				'label'   => '',
+				'id'             => '',
+				'name'           => '',
+				'value'          => '',
+				'default'        => '',
+				'effect_default' => array(),
+				'alpha'          => false,
+				'hidden'         => false,
+				'compact'        => false,
+				'label'          => '',
 			)
 		);
 		$label = '' !== $args['label'] ? $args['label'] : __( 'Choose a color', 'wp-swiper' );
 		?>
-		<span class="wp-swiper-color-pick<?php echo $args['compact'] ? ' wp-swiper-color-pick--compact' : ''; ?>" data-alpha="<?php echo $args['alpha'] ? '1' : '0'; ?>"<?php echo '' !== $args['default'] ? ' data-default="' . esc_attr( $args['default'] ) . '"' : ''; ?><?php echo $args['hidden'] ? ' hidden' : ''; ?>>
+		<span class="wp-swiper-color-pick<?php echo $args['compact'] ? ' wp-swiper-color-pick--compact' : ''; ?>" data-alpha="<?php echo $args['alpha'] ? '1' : '0'; ?>"<?php echo '' !== $args['default'] ? ' data-default="' . esc_attr( $args['default'] ) . '"' : ''; ?><?php echo $args['effect_default'] ? ' data-base-default="' . esc_attr( $args['default'] ) . '" data-effect-default="' . esc_attr( wp_json_encode( $args['effect_default'] ) ) . '"' : ''; ?><?php echo $args['hidden'] ? ' hidden' : ''; ?>>
 			<?php if ( '' !== $args['name'] ) : ?>
 				<input type="hidden" class="wp-swiper-color-pick__value" name="<?php echo esc_attr( $args['name'] ); ?>" value="<?php echo esc_attr( $args['value'] ); ?>">
 			<?php endif; ?>
@@ -208,13 +210,14 @@ trait WP_Swiper_Admin_Controls {
 	private static function color_field( $field, $id, $name, $value, $compact ) {
 		self::color_pick(
 			array(
-				'id'      => $id,
-				'name'    => $name,
-				'value'   => $value,
-				'default' => $field['default'],
-				'alpha'   => 'alpha_color' === $field['type'],
-				'compact' => $compact,
-				'label'   => $compact ? $field['label'] : '',
+				'id'             => $id,
+				'name'           => $name,
+				'value'          => $value,
+				'default'        => $field['default'],
+				'effect_default' => isset( $field['effect_default'] ) ? $field['effect_default'] : array(),
+				'alpha'          => 'alpha_color' === $field['type'],
+				'compact'        => $compact,
+				'label'          => $compact ? $field['label'] : '',
 			)
 		);
 	}

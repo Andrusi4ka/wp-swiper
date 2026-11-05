@@ -19,7 +19,9 @@ trait WP_Swiper_Settings_Sanitize {
 	 * @return array
 	 */
 	public static function sanitize( $input ) {
-		$clean = array( '_version' => 7 ) + self::sanitize_fields( $input );
+		// The effect first: some fields default to its own value (effect_default).
+		$chosen = isset( $input['effect'] ) && is_string( $input['effect'] ) && isset( self::fields()['effect']['choices'][ $input['effect'] ] ) ? $input['effect'] : self::fields()['effect']['default'];
+		$clean  = array( '_version' => 7 ) + self::sanitize_fields( $input, null, $chosen );
 
 		// Layout values of every effect (see layouts()), sent by the editor as
 		// JSON; the chosen effect's are the ones posted as fields.
@@ -33,7 +35,7 @@ trait WP_Swiper_Settings_Sanitize {
 			if ( $effect === $clean['effect'] ) {
 				$clean['layouts'][ $effect ] = array_intersect_key( $clean, array_flip( self::layout_keys() ) );
 			} elseif ( isset( $layouts[ $effect ] ) && is_array( $layouts[ $effect ] ) ) {
-				$clean['layouts'][ $effect ] = self::sanitize_fields( $layouts[ $effect ], 'layout' );
+				$clean['layouts'][ $effect ] = self::sanitize_fields( $layouts[ $effect ], 'layout', $effect );
 			}
 		}
 
@@ -45,14 +47,19 @@ trait WP_Swiper_Settings_Sanitize {
 	 *
 	 * @param array       $input   Raw values keyed by storage key.
 	 * @param string|null $section Only this section's fields (null: all).
+	 * @param string|null $effect  The effect they are for: its own defaults (effect_default).
 	 * @return array
 	 */
-	private static function sanitize_fields( $input, $section = null ) {
+	private static function sanitize_fields( $input, $section = null, $effect = null ) {
 		$clean = array();
+		$own   = null !== $effect ? self::effect_defaults( $effect ) : array();
 
 		foreach ( self::fields() as $key => $field ) {
 			if ( null !== $section && $field['section'] !== $section ) {
 				continue;
+			}
+			if ( array_key_exists( $key, $own ) ) {
+				$field['default'] = $own[ $key ];
 			}
 			// Tablet/mobile values of responsive fields: empty inherits.
 			foreach ( array_slice( self::device_keys( $key, $field ), 1 ) as $storage_key ) {

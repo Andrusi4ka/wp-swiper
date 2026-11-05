@@ -503,6 +503,31 @@
 	height: calc(var(--wp-swiper-carousel-width, 1) * 100%);
 }
 
+/* Effect shadows (Coverflow, Cards, Creative): Swiper's shading in the set
+   color, its opacity how dark at most (Swiper: black at 0.15, Coverflow's
+   sides at 0.5); Swiper fades the layer itself as a slide moves. Without the
+   variable (shadows off) Swiper's own. */
+.wp-swiper .swiper-slide-shadow-creative,
+.wp-swiper .swiper-slide-shadow-cards {
+	background: var(--wp-swiper-effect-shadow, rgba(0, 0, 0, 0.15));
+}
+
+.wp-swiper .swiper-slide-shadow-coverflow.swiper-slide-shadow-left {
+	background-image: linear-gradient(to left, var(--wp-swiper-effect-shadow, rgba(0, 0, 0, 0.5)), transparent);
+}
+
+.wp-swiper .swiper-slide-shadow-coverflow.swiper-slide-shadow-right {
+	background-image: linear-gradient(to right, var(--wp-swiper-effect-shadow, rgba(0, 0, 0, 0.5)), transparent);
+}
+
+.wp-swiper .swiper-slide-shadow-coverflow.swiper-slide-shadow-top {
+	background-image: linear-gradient(to top, var(--wp-swiper-effect-shadow, rgba(0, 0, 0, 0.5)), transparent);
+}
+
+.wp-swiper .swiper-slide-shadow-coverflow.swiper-slide-shadow-bottom {
+	background-image: linear-gradient(to bottom, var(--wp-swiper-effect-shadow, rgba(0, 0, 0, 0.5)), transparent);
+}
+
 /* Cube: Swiper's shadow under the cube (black at 0.6), in the set color
    with its own opacity. */
 .wp-swiper .swiper-cube .swiper-cube-shadow {

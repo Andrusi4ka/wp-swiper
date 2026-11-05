@@ -1004,9 +1004,12 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertGreaterThan( 10, count( $colors ) );
 		foreach ( $colors as $key => $field ) {
 			$alpha = 'alpha_color' === $field['type'] ? '1' : '0';
-			$this->assertMatchesRegularExpression( '#<span class="wp-swiper-color-pick[^"]*" data-alpha="' . $alpha . '" data-default="' . preg_quote( esc_attr( $field['default'] ), '#' ) . '">\s*<input type="hidden" class="wp-swiper-color-pick__value" name="wp_swiper_settings\[' . $key . '\]"#', $html, $key );
+			// A Default of some effects' own: it and the field's (admin.js swaps them).
+			$own = isset( $field['effect_default'] ) ? ' data-base-default="' . preg_quote( esc_attr( $field['default'] ), '#' ) . '" data-effect-default="' . preg_quote( esc_attr( wp_json_encode( $field['effect_default'] ) ), '#' ) . '"' : '';
+			$this->assertMatchesRegularExpression( '#<span class="wp-swiper-color-pick[^"]*" data-alpha="' . $alpha . '" data-default="' . preg_quote( esc_attr( $field['default'] ), '#' ) . '"' . $own . '>\s*<input type="hidden" class="wp-swiper-color-pick__value" name="wp_swiper_settings\[' . $key . '\]"#', $html, $key );
 		}
 		$this->assertSame( count( $colors ), substr_count( $html, 'class="wp-swiper-color-pick__value"' ) );
+		$this->assertStringContainsString( 'data-effect-default="{&quot;coverflow&quot;:&quot;rgba(0,0,0,0.5)&quot;}"', $html );
 	}
 
 	public function test_a_compact_color_setting_has_a_small_swatch_named_by_its_label() {

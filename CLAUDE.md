@@ -456,6 +456,22 @@
   ефектів). Вивід — `WP_Swiper_Admin::effect_notes()`, `<details>` (відкрита),
   згортається; стан — `localStorage` `wpSwiperNotes`; список міняється з
   Effect (`admin.js showNotes()`).
+- **Effect shadows: колір** (2026-11-05, рішення користувача): під
+  перемикачем Effect shadows — Shadow color (`effect_shadow_color`,
+  `alpha_color`) для Coverflow, Cards і Creative; прозорість кольору = сила
+  (окремого поля % немає, як Cube Color). Swiper сам міняє `opacity` шару з
+  рухом, ми лише фарбуємо шар (`--wp-swiper-effect-shadow`, `slider.css`):
+  Creative / Cards — `background`, Coverflow — бічні градієнти до
+  `transparent`. Без змінної — як у Swiper. За замовч. 15% чорного, для
+  Coverflow 50% (як малював Swiper) — **власне значення ефекту**: ключ
+  схеми `effect_default` (effect => значення), `effect_defaults()` /
+  `effect_default()` у `WP_Swiper_Settings`; діє в `layouts()` (ефект ще не
+  вибирали), `sanitize_fields( …, $effect )` (порожнє / хибне),
+  `merge_effect_defaults()` у `get()` (збережене до поля), а кнопка Default
+  у Pickr бере його з `data-effect-default` (`admin.js`, `syncFields()`).
+  Новому полю з різними значеннями для ефектів — лише `effect_default`.
+  Тести: `test-render`, `test-migrations`, `tests/browser/effect-shadows.spec.js`
+  (випадки `*-effect-shadow` у `cases.php`, без знімків).
 - **Тінь у режимі фону** (2026-11-04, рішення користувача): лише Collage і
   Art (`SHADOW_BACKGROUND_EFFECTS`; `shadow()` і `admin.js canShadow`), бо
   там фото стоять окремо; для слайдерів у фоні — ні. Огляд «спільності»
@@ -691,7 +707,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 418 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 422 тести, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.

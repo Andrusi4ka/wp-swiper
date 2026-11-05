@@ -2125,6 +2125,16 @@
 			// Effect shadows (Layout, data-effects): not with "Contain", where they
 			// would shade the empty band around the image too.
 			lockShadows( ! cover );
+			// Their color, while they are on.
+			field( 'effect_shadow_color' ).toggle( [ 'coverflow', 'cards', 'creative' ].indexOf( effect ) >= 0 && cover && $( '#wp-swiper-effect_shadows' ).is( ':checked' ) );
+			// A color's Default of the effect's own (Coverflow's shadow): data-effect-default.
+			$( '.wp-swiper-color-pick[data-effect-default]' ).each( function () {
+				var own = {};
+				try {
+					own = JSON.parse( $( this ).attr( 'data-effect-default' ) ) || {};
+				} catch ( e ) {}
+				$( this ).attr( 'data-default', own[ effect ] || $( this ).attr( 'data-base-default' ) );
+			} );
 			lockStackRotation( effect === 'cards' && ! $( '#wp-swiper-cards_tilt' ).is( ':checked' ) );
 			// Creative: the neighbour settings belong to the Carousel style.
 			var carousel = effect === 'creative' && $( '#wp-swiper-creative_style' ).val() === 'carousel';

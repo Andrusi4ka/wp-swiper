@@ -731,6 +731,7 @@ class WP_Swiper_Settings {
 						'cards_tilt',
 						'cards_rotate',
 						'effect_shadows',
+						'effect_shadow_color',
 					),
 				),
 				'arrangement' => array(
@@ -968,6 +969,8 @@ class WP_Swiper_Settings {
 		// Art's photos always zoomed under the pointer: Zoom on hover on there.
 		$saved = self::merge_hover_zoom( $saved );
 		$saved = self::merge_text_mask_gradient( $saved );
+		// Fields with a default of their own for an effect (Coverflow's shadow color).
+		$saved = self::merge_effect_defaults( $saved );
 		if ( ! empty( $saved['layouts'] ) && is_array( $saved['layouts'] ) ) {
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_ratio_fields' ), array_filter( $saved['layouts'], 'is_array' ) );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_overlay_opacity' ), $saved['layouts'] );
@@ -1147,6 +1150,35 @@ class WP_Swiper_Settings {
 	}
 
 	/**
+	 * The defaults an effect has of its own (fields' effect_default), as
+	 * key => value: the Coverflow's darker Effect shadows color.
+	 *
+	 * @param string $effect An effect.
+	 * @return array
+	 */
+	public static function effect_defaults( $effect ) {
+		$own = array();
+		foreach ( self::fields() as $key => $field ) {
+			if ( isset( $field['effect_default'][ $effect ] ) ) {
+				$own[ $key ] = $field['effect_default'][ $effect ];
+			}
+		}
+		return $own;
+	}
+
+	/**
+	 * A field's default for an effect: its own there, else the field's.
+	 *
+	 * @param string $key    A field.
+	 * @param string $effect An effect.
+	 * @return mixed
+	 */
+	public static function effect_default( $key, $effect ) {
+		$own = self::effect_defaults( $effect );
+		return array_key_exists( $key, $own ) ? $own[ $key ] : self::fields()[ $key ]['default'];
+	}
+
+	/**
 	 * Storage keys of the Layout fields: the values each effect keeps its own.
 	 *
 	 * @return string[]
@@ -1182,7 +1214,8 @@ class WP_Swiper_Settings {
 				// Fields added since it was saved take their defaults.
 				$layouts[ $effect ] = array_intersect_key( $saved[ $effect ], $keys ) + $defaults;
 			} else {
-				$layouts[ $effect ] = $defaults;
+				// The effect's own defaults (effect_default) over the others.
+				$layouts[ $effect ] = array_intersect_key( self::effect_defaults( $effect ), $keys ) + $defaults;
 				// Art: Zoom on hover on by default (its photos always had it).
 				if ( 'art' === $effect && isset( $defaults['image_hover_zoom'] ) ) {
 					$layouts[ $effect ]['image_hover_zoom'] = true;

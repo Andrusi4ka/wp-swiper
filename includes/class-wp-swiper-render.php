@@ -350,6 +350,12 @@ class WP_Swiper_Render {
 				}
 			}
 		}
+		// Effect shadows (Coverflow, Cards, Creative): their color, with its
+		// opacity (slider.css; as js_config()'s "shadows": not with Contain).
+		if ( $settings['effect_shadows'] && 'contain' !== $settings['image_fit'] && in_array( $settings['effect'], WP_Swiper_Settings::fields()['effect_shadow_color']['effects'], true ) ) {
+			$shadow_color = WP_Swiper_Settings::sanitize_slide_color( $settings['effect_shadow_color'] );
+			$style[]      = '--wp-swiper-effect-shadow:' . ( '' === $shadow_color ? WP_Swiper_Settings::effect_default( 'effect_shadow_color', $settings['effect'] ) : $shadow_color );
+		}
 		// Cube: its shadow's color (with its opacity), and room under the slider
 		// for it (it falls `offset` below the cube and is blurred some 20px further).
 		if ( 'cube' === $settings['effect'] && $settings['cube_shadow'] ) {

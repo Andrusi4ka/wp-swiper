@@ -146,6 +146,18 @@ return array(
 		'default' => false,
 		'help'    => __( 'Shades the slides as they turn. Not with Image fit “Contain”.', 'wp-swiper' ),
 	),
+	// Its color, with its opacity: how dark the slides get at most (Swiper's
+	// own until 3.3: black at 15%, Coverflow's side shading at 50% — its own
+	// default, effect_default(); merge_effect_shadow_color(), get()).
+	'effect_shadow_color'   => array(
+		'section'        => 'layout',
+		'effects'        => array( 'coverflow', 'cards', 'creative' ),
+		'label'          => __( 'Shadow color', 'wp-swiper' ),
+		'type'           => 'alpha_color',
+		'default'        => 'rgba(0,0,0,0.15)',
+		'effect_default' => array( 'coverflow' => 'rgba(0,0,0,0.5)' ),
+		'help'           => __( 'Its opacity is how dark the slides get at most.', 'wp-swiper' ),
+	),
 
 	// Coverflow effect (the defaults are Swiper's look the plugin always had).
 	'coverflow_rotate'      => array(

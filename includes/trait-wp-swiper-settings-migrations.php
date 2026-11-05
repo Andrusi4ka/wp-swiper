@@ -431,6 +431,33 @@ trait WP_Swiper_Settings_Migrations {
 	}
 
 	/**
+	 * Fields added with a default of their own for some effect (a field's
+	 * effect_default): a slider saved before takes that effect's, for its
+	 * effect and in its saved Layout values of that effect (layouts[ effect ]).
+	 * So Effect shadows' color keeps Coverflow's darker shading (50%, the
+	 * others' 15%), as Swiper drew it before it was a setting (3.3).
+	 *
+	 * @param array $saved A slider's saved settings.
+	 * @return array
+	 */
+	public static function merge_effect_defaults( $saved ) {
+		if ( ! is_array( $saved ) || ! $saved ) {
+			return $saved;
+		}
+		if ( isset( $saved['effect'] ) && is_string( $saved['effect'] ) ) {
+			$saved += self::effect_defaults( $saved['effect'] );
+		}
+		if ( isset( $saved['layouts'] ) && is_array( $saved['layouts'] ) ) {
+			foreach ( $saved['layouts'] as $effect => $layout ) {
+				if ( is_array( $layout ) ) {
+					$saved['layouts'][ $effect ] = $layout + self::effect_defaults( (string) $effect );
+				}
+			}
+		}
+		return $saved;
+	}
+
+	/**
 	 * Text mask's Gradient (its own fields for a while, text_mask_gradient_on
 	 * and text_mask_gradient) is every effect's now (image_gradient_on,
 	 * image_gradient): the slider's, and Text mask's layout.

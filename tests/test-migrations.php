@@ -202,6 +202,42 @@ class Test_WP_Swiper_Migrations extends WP_Swiper_TestCase {
 		$this->assertArrayNotHasKey( 'cube_shadow_opacity', $layouts['cube'] );
 	}
 
+	public function test_effect_shadow_color_as_swiper_drew_it() {
+		// Saved before it was a setting: Coverflow's sides at 50%, the others 15%.
+		$this->assertSame( 'rgba(0,0,0,0.5)', $this->saved( array( 'effect' => 'coverflow', 'effect_shadows' => true ) )['effect_shadow_color'] );
+		$this->assertSame( 'rgba(0,0,0,0.15)', $this->saved( array( 'effect' => 'creative', 'effect_shadows' => true ) )['effect_shadow_color'] );
+		// Kept: as it is.
+		$this->assertSame( 'rgba(1,2,3,0.3)', $this->saved( array( 'effect' => 'coverflow', 'effect_shadow_color' => 'rgba(1,2,3,0.3)' ) )['effect_shadow_color'] );
+		// Coverflow's saved layout values too; its own kept.
+		$layouts = $this->saved(
+			array(
+				'effect'  => 'slide',
+				'layouts' => array(
+					'coverflow' => array( 'coverflow_rotate' => 30 ),
+					'cards'     => array( 'cards_offset' => 4 ),
+				),
+			)
+		)['layouts'];
+		$this->assertSame( 'rgba(0,0,0,0.5)', $layouts['coverflow']['effect_shadow_color'] );
+		$this->assertSame( 'rgba(0,0,0,0.15)', WP_Swiper_Settings::layouts( WP_Swiper_Settings::defaults(), array( 'cards' => $layouts['cards'] ) )['cards']['effect_shadow_color'] );
+	}
+
+	public function test_a_color_sent_empty_takes_the_effects_default() {
+		$this->assertSame( 'rgba(0,0,0,0.5)', WP_Swiper_Settings::sanitize( array( 'effect' => 'coverflow', 'effect_shadow_color' => '' ) )['effect_shadow_color'] );
+		$this->assertSame( 'rgba(0,0,0,0.15)', WP_Swiper_Settings::sanitize( array( 'effect' => 'cards', 'effect_shadow_color' => 'nonsense' ) )['effect_shadow_color'] );
+		// Another effect's layout values sent: its own.
+		$clean = WP_Swiper_Settings::sanitize( array( 'effect' => 'slide', 'layouts' => array( 'coverflow' => array( 'effect_shadow_color' => '' ) ) ) );
+		$this->assertSame( 'rgba(0,0,0,0.5)', $clean['layouts']['coverflow']['effect_shadow_color'] );
+		$this->assertSame( 'rgba(0,0,0,0.15)', $clean['effect_shadow_color'] );
+	}
+
+	public function test_an_effect_never_used_takes_its_own_defaults() {
+		$layouts = WP_Swiper_Settings::layouts( WP_Swiper_Settings::defaults(), array() );
+		$this->assertSame( 'rgba(0,0,0,0.5)', $layouts['coverflow']['effect_shadow_color'] );
+		$this->assertSame( 'rgba(0,0,0,0.15)', $layouts['creative']['effect_shadow_color'] );
+		$this->assertSame( 'rgba(0,0,0,0.15)', $layouts['cards']['effect_shadow_color'] );
+	}
+
 	public function test_thumbnail_switches_on_where_they_had_them() {
 		// A radius on any screen: Rounded corners on, the radius kept.
 		$settings = $this->saved( array( 'effect' => 'thumbs', 'thumbs_radius' => 0, 'thumbs_radius_tablet' => 8 ) );
