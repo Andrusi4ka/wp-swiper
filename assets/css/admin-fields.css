@@ -81,6 +81,14 @@
 	width: 100%;
 }
 
+/* A setting edited in WordPress's editor (type "editor"): its code view as
+   wide as the field, as the visual one (WordPress widens only a textarea
+   with its own class, which wp.editor.initialize() does not add). */
+.wp-swiper-settings-editor {
+	box-sizing: border-box;
+	width: 100%;
+}
+
 .wp-swiper-field__row .wp-swiper-devices__input[hidden] {
 	display: none;
 }

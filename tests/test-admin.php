@@ -1094,6 +1094,8 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 
 		// A textarea admin.js starts WordPress's editor on.
 		$this->assertStringContainsString( '<textarea class="wp-swiper-settings-editor" id="wp-swiper-art_opening_text" name="wp_swiper_settings[art_opening_text]" rows="6">&lt;p&gt;Hi &lt;a href=&quot;https://example.com&quot;&gt;there&lt;/a&gt;&lt;/p&gt;</textarea>', $html );
+		// Its code view as wide as the field (WordPress widens only its own textarea class).
+		$this->assertStringContainsString( ".wp-swiper-settings-editor {\n\tbox-sizing: border-box;\n\twidth: 100%;\n}", file_get_contents( WP_SWIPER_DIR . 'assets/css/admin-fields.css' ) );
 	}
 
 	public function test_collage_style_is_chosen_from_icons() {
