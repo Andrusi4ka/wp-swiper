@@ -76,7 +76,7 @@ return array(
 		),
 		'art'       => array(
 			__( 'Photos in shapes: a ring, grids with a circle or a square, Grid shapes joined from cells, your own SVG shape', 'wp-swiper' ),
-			__( 'An image or text in the middle of the ring or in its opening', 'wp-swiper' ),
+			__( 'Content in a window, the middle one too: an image, text or a shortcode instead of a photo', 'wp-swiper' ),
 			__( 'Photos change in their windows, or one photo shows through all of them', 'wp-swiper' ),
 			__( 'Drag photos in the preview to swap them; Grid shapes are drawn there', 'wp-swiper' ),
 			__( 'Image shadow, zoom on hover, gradient; can be a background', 'wp-swiper' ),

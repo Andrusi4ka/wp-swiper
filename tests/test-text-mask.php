@@ -332,7 +332,7 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		// On screen: the word's block, Size (as every effect's), its letters,
 		// its strips (Art's own blocks between them are Art's only).
 		$this->assertSame( array( 'art', 'size', 'text_letters', 'text_strips' ), array_slice( array_keys( $this->layout_for( 'text-mask' ) ), 0, 4 ) );
-		foreach ( array_merge( $blocks['art_middle']['fields'], $blocks['art_opening']['fields'], $blocks['art_content']['fields'] ) as $key ) {
+		foreach ( array_merge( $blocks['art_opening']['fields'], $blocks['art_content']['fields'] ) as $key ) {
 			$this->assertSame( array( 'art' ), WP_Swiper_Settings::fields()[ $key ]['effects'], $key );
 		}
 		$this->assertSame( array( 'text_mask_font', 'text_mask_weight', 'text_mask_font_name', 'text_mask_size', 'text_mask_stretch' ), $blocks['text_letters']['fields'] );

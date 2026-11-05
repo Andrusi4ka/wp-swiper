@@ -220,10 +220,10 @@
 		return ring.square ? Math.max( Math.abs( dx ), Math.abs( dy ) ) : Math.hypot( dx, dy );
 	}
 
-	// The Ring (Ring + text, the grids) under the pointer and how far from its middle, if at its edge.
+	// The Ring (the grids too) under the pointer and how far from its middle, if at its edge.
 	function edgeAt( e ) {
 		var node = document.elementFromPoint( e.clientX, e.clientY );
-		var block = node && node.closest( '.wp-swiper-art--ring, .wp-swiper-art--ring-text, .wp-swiper-art--grid-circle, .wp-swiper-art--grid-circle-text, .wp-swiper-art--grid-square, .wp-swiper-art--grid-square-text' );
+		var block = node && node.closest( '.wp-swiper-art--ring, .wp-swiper-art--grid-circle, .wp-swiper-art--grid-square' );
 		var api = block && block.wpSwiperArt;
 		var ring = block && block.wpSwiperArtRing;
 		if ( ! api || ! api.setCenter || ! ring ) {

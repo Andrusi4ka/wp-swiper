@@ -138,3 +138,26 @@ test( 'art-shape-content: Developer mode draws the windows and the content area'
 	expect( await page.locator( '.wp-swiper-art .wp-swiper-dev' ).count() ).toBe( 0 );
 	expect( errors ).toEqual( [] );
 } );
+
+// Ring (cases.php art-ring-content-swap): Content in a window in the middle
+// circle, Photo swapping set to "the middle photo": the content stays there,
+// the other photos swap in the ring instead (art.js swap()).
+test( 'art-ring-content-swap: the content stays in the middle, the ring swaps', async ( { page } ) => {
+	const errors = await open( page, 'art-ring-content-swap' );
+	const look = () => page.evaluate( () => {
+		const pieces = [].slice.call( document.querySelectorAll( '.wp-swiper-art__piece' ) ).filter( ( p ) => ! p.hidden );
+		return {
+			content: pieces.findIndex( ( p ) => p.classList.contains( 'wp-swiper-art__piece--content' ) ),
+			circle: pieces[ 0 ].classList.contains( 'wp-swiper-art__piece--circle' ),
+			photos: pieces.slice( 1 ).map( ( p ) => p.wpReal ).join( ',' ),
+		};
+	} );
+	const before = await look();
+	expect( before.content ).toBe( 0 );
+	expect( before.circle ).toBe( true );
+	await page.waitForTimeout( 3500 );
+	const after = await look();
+	expect( after.content ).toBe( 0 );
+	expect( after.photos ).not.toBe( before.photos );
+	expect( errors ).toEqual( [] );
+} );

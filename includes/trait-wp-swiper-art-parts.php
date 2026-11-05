@@ -208,58 +208,6 @@ trait WP_Swiper_Art_Parts {
 	}
 
 	/**
-	 * Ring + text: what is in the middle circle, an image over the editor's
-	 * text (either or both), hidden until art.js places it over the circle
-	 * (beside the stage, as the opening's: the photos' shadow is not for it);
-	 * '' when neither is there.
-	 *
-	 * @param array $settings Slider settings.
-	 * @return string Markup.
-	 */
-	public static function center( $settings ) {
-		$image = wp_get_attachment_image( (int) $settings['art_center_image'], 'large', false, array( 'class' => 'wp-swiper-art__center-image', 'loading' => 'lazy' ) );
-		$text  = WP_Swiper_Settings::sanitize_description( $settings['art_center_text'] );
-		if ( '' === $image && '' === $text ) {
-			return '';
-		}
-		return '<div class="wp-swiper-art__center" hidden><div class="wp-swiper-art__center-inner">'
-			. $image
-			. ( '' === $text ? '' : '<div class="wp-swiper-art__center-text">' . $text . '</div>' )
-			. '</div></div>';
-	}
-
-	/**
-	 * The middle's CSS variables per device: the image's size (% of the width
-	 * inside the circle), the font size and the padding; its background.
-	 * None without content.
-	 *
-	 * @param string $center   The markup (center()).
-	 * @param array  $settings Slider settings.
-	 * @return string[]
-	 */
-	private static function center_style( $center, $settings ) {
-		if ( '' === $center ) {
-			return array();
-		}
-		$style = array();
-		$vars  = array(
-			'art_center_image_size' => array( '--wp-swiper-art-center-image', '%', 10, 100 ),
-			'art_center_font_size'  => array( '--wp-swiper-art-center-font', 'px', 8, 120 ),
-			'art_center_padding'    => array( '--wp-swiper-art-center-padding', 'px', 0, 200 ),
-		);
-		foreach ( $vars as $key => $var ) {
-			foreach ( self::per_device( $settings, $key, $var[2], $var[3] ) as $device => $value ) {
-				$style[] = $var[0] . WP_Swiper_Render::SUFFIX[ $device ] . ':' . $value . $var[1];
-			}
-		}
-		$bg = WP_Swiper_Settings::sanitize_slide_color( (string) $settings['art_center_bg'] );
-		if ( '' !== $bg ) {
-			$style[] = '--wp-swiper-art-center-bg:' . $bg;
-		}
-		return $style;
-	}
-
-	/**
 	 * The captions' look (the Caption page): a set weight, the text shadow and
 	 * the background: none, the whole photo darkened (Solid) or darkened from
 	 * its caption outwards (Gradient). Vertical text does not apply to Art.

@@ -2401,13 +2401,7 @@
 					field( 'art_border_width' ).hide();
 					field( 'art_border_color' ).hide();
 				}
-				// Ring + text: the middle's own settings only while Content in the middle is on.
-				if ( ! $( '#wp-swiper-art_center' ).is( ':checked' ) ) {
-					[ 'art_center_image', 'art_center_image_size', 'art_center_text', 'art_center_font_size', 'art_center_padding', 'art_center_bg' ].forEach( function ( name ) {
-						field( name ).hide();
-					} );
-				}
-				// SVG shape, Content in a window: not as a background (render
+				// Content in a window: not as a background (render
 				// leaves it out there); its own settings only while it is on.
 				if ( background ) {
 					field( 'art_content' ).hide();

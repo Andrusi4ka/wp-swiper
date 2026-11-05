@@ -143,7 +143,7 @@ return array(
 	'art_align'          => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring', 'ring-text', 'shape' ),
+		'styles'     => array( 'ring', 'shape' ),
 		'label'      => __( 'Alignment', 'wp-swiper' ),
 		'type'       => 'select',
 		'responsive' => true,
@@ -158,7 +158,7 @@ return array(
 	'art_ring_count'     => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring', 'ring-text' ),
+		'styles'     => array( 'ring' ),
 		'label'      => __( 'Photos around', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -174,7 +174,7 @@ return array(
 	'art_grid_count'     => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
+		'styles'     => array( 'grid-circle', 'grid-square' ),
 		'label'      => __( 'Photos in the grid', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -187,7 +187,7 @@ return array(
 	'art_grid_columns'   => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
+		'styles'     => array( 'grid-circle', 'grid-square' ),
 		'label'      => __( 'Columns', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -203,7 +203,7 @@ return array(
 	'art_ring_center'    => array(
 		'section'       => 'layout',
 		'effects'       => $wp_swiper_art,
-		'styles'        => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text' ),
+		'styles'        => array( 'ring', 'grid-circle', 'grid-square' ),
 		'label'         => __( 'Middle circle (%)', 'wp-swiper' ),
 		'type'          => 'float',
 		'responsive'    => true,
@@ -244,7 +244,7 @@ return array(
 	'art_gap'            => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
+		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes' ),
 		'label'      => __( 'Gap (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -259,7 +259,7 @@ return array(
 	'art_rounded'        => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes' ),
 		'label'   => __( 'Rounded corners', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => true,
@@ -267,7 +267,7 @@ return array(
 	'art_radius'         => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring', 'ring-text', 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes' ),
+		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes' ),
 		'label'      => __( 'Radius (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -305,101 +305,27 @@ return array(
 		'type'    => 'color',
 		'default' => '#ffffff',
 	),
-	// Ring + text: what is in the middle circle (center()), an image over
-	// text from the editor, either or both; a background with its
-	// opacity (none at 0, as by default). Only while Content in the
-	// middle is on (off: the circle stays empty).
-	'art_center'         => array(
-		'section' => 'layout',
-		'effects' => $wp_swiper_art,
-		'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
-		'label'   => __( 'Content in the middle', 'wp-swiper' ),
-		'type'    => 'checkbox',
-		'default' => true,
-		'help'    => __( 'An image and/or text in the middle circle, with its own settings.', 'wp-swiper' ),
-	),
-	'art_center_image'   => array(
-		'section' => 'layout',
-		'effects' => $wp_swiper_art,
-		'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
-		'label'   => __( 'Image in the middle', 'wp-swiper' ),
-		'type'    => 'image',
-		'default' => 0,
-	),
-	'art_center_image_size' => array(
-		'section'    => 'layout',
-		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
-		'label'      => __( 'Image size (%)', 'wp-swiper' ),
-		'type'       => 'number',
-		'responsive' => true,
-		'default'    => 60,
-		'min'        => 10,
-		'max'        => 100,
-		'step'       => 5,
-		'help'       => __( 'Of the width inside the circle; the image keeps its proportions.', 'wp-swiper' ),
-	),
-	'art_center_text'    => array(
-		'section' => 'layout',
-		'effects' => $wp_swiper_art,
-		'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
-		'label'   => __( 'Text in the middle', 'wp-swiper' ),
-		'type'    => 'editor',
-		'default' => '',
-	),
-	'art_center_font_size' => array(
-		'section'    => 'layout',
-		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
-		'label'      => __( 'Font size (px)', 'wp-swiper' ),
-		'type'       => 'number',
-		'responsive' => true,
-		'default'    => 18,
-		'min'        => 8,
-		'max'        => 120,
-		'step'       => 1,
-		'help'       => __( 'Too much text for the circle: it gets smaller there to fit.', 'wp-swiper' ),
-	),
-	'art_center_padding' => array(
-		'section'    => 'layout',
-		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
-		'label'      => __( 'Padding (px)', 'wp-swiper' ),
-		'type'       => 'number',
-		'responsive' => true,
-		'default'    => 12,
-		'min'        => 0,
-		'max'        => 200,
-		'step'       => 1,
-		'help'       => __( 'Between the circle\'s edge and the image and text.', 'wp-swiper' ),
-	),
-	'art_center_bg'      => array(
-		'section' => 'layout',
-		'effects' => $wp_swiper_art,
-		'styles'  => array( 'ring-text', 'grid-circle-text', 'grid-square-text' ),
-		'label'   => __( 'Middle background', 'wp-swiper' ),
-		'type'    => 'alpha_color',
-		'default' => 'rgba(255,255,255,0)',
-		'help'    => __( 'The circle\'s color under the image and text; at Opacity 0 there is none.', 'wp-swiper' ),
-	),
-	// SVG shape: a window with an image over text instead of a photo (art.js
-	// fill()), which stays there while the photos change, as the Collage's
-	// Content in a place (WP_Swiper_Render::content_box()). Its window per
-	// device (in the drawing's order: the main one first), or dragged onto
-	// another window in the preview. Not as a background.
+	// Ring, the grids with a circle or square, SVG shape: a window with an
+	// image over text instead of a photo (art.js fill()), which stays there
+	// while the photos change, as the Collage's Content in a place
+	// (WP_Swiper_Render::content_box()). Its window per device (in their
+	// order: the middle one, or the drawing's main one, first), or dragged
+	// onto another window in the preview. Not as a background. Until 3.4 the
+	// "+ text" Styles had theirs in the middle (art_center_*,
+	// merge_art_center()).
 	'art_content'        => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
 		'label'   => __( 'Content in a window', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => false,
-		'help'    => __( 'An image and/or text in one window of the shape instead of a photo; it stays there while the photos change.', 'wp-swiper' ),
+		'help'    => __( 'An image and/or text in one window instead of a photo; it stays there while the photos change.', 'wp-swiper' ),
 	),
 	'art_content_window' => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'shape' ),
+		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
 		'label'      => __( 'Window', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -407,12 +333,12 @@ return array(
 		'min'        => 1,
 		'max'        => 100,
 		'step'       => 1,
-		'help'       => __( 'Which window has it, in the drawing\'s order (1: the main one). Or drag it onto a window in the preview.', 'wp-swiper' ),
+		'help'       => __( 'Which window has it: 1 is the one in the middle (SVG shape: the drawing\'s main one), then the others in order. Or drag it onto a window in the preview.', 'wp-swiper' ),
 	),
 	'art_content_image'  => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
 		'label'   => __( 'Image', 'wp-swiper' ),
 		'type'    => 'image',
 		'default' => 0,
@@ -420,7 +346,7 @@ return array(
 	'art_content_image_size' => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'shape' ),
+		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
 		'label'      => __( 'Image size (%)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -433,7 +359,7 @@ return array(
 	'art_content_text'   => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
 		'label'   => __( 'Text', 'wp-swiper' ),
 		'type'    => 'editor',
 		'default' => '',
@@ -442,7 +368,7 @@ return array(
 	'art_content_font_size' => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'shape' ),
+		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
 		'label'      => __( 'Font size (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -450,12 +376,12 @@ return array(
 		'min'        => 8,
 		'max'        => 120,
 		'step'       => 1,
-		'help'       => __( 'Text that does not fit in the window\'s box is cut at a word, with "…". A shape not a rectangle cuts it off at its edge: keep a Padding.', 'wp-swiper' ),
+		'help'       => __( 'Text that does not fit in the window\'s box is cut at a word, with "…". A round window keeps it in the square inside it; another shape cuts it off at its edge: keep a Padding.', 'wp-swiper' ),
 	),
 	'art_content_padding' => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'shape' ),
+		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
 		'label'      => __( 'Padding (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -468,7 +394,7 @@ return array(
 	'art_content_valign' => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
 		'label'   => __( 'Vertical alignment', 'wp-swiper' ),
 		'type'    => 'select',
 		'default' => 'center',
@@ -481,7 +407,7 @@ return array(
 	'art_content_bg'     => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
 		'label'   => __( 'Background', 'wp-swiper' ),
 		'type'    => 'alpha_color',
 		'default' => 'rgba(0,0,0,0)',
@@ -489,7 +415,7 @@ return array(
 	),
 	// Ring: what sits in the opening at the bottom (art.js places it in
 	// the free space there, a gap from the photos): an image over text from
-	// the editor (with links), either or both, as Ring + text's middle. Until
+	// the editor (with links), either or both, as Content in a window. Until
 	// then one or the other (art_opening_content, merge_opening_content()).
 	'art_opening_image'  => array(
 		'section' => 'layout',
@@ -553,7 +479,7 @@ return array(
 		'section'    => 'advanced',
 		'panel'      => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring', 'ring-text', 'shape' ),
+		'styles'     => array( 'ring', 'shape' ),
 		'label'      => __( 'Background size', 'wp-swiper' ),
 		'type'       => 'select',
 		'responsive' => true,
@@ -568,7 +494,7 @@ return array(
 		'section'    => 'advanced',
 		'panel'      => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring', 'ring-text', 'shape' ),
+		'styles'     => array( 'ring', 'shape' ),
 		'label'      => __( 'Background position', 'wp-swiper' ),
 		'type'       => 'select',
 		'responsive' => true,

@@ -431,6 +431,62 @@ trait WP_Swiper_Settings_Migrations {
 	}
 
 	/**
+	 * Art's "+ text" Styles (Ring + text, Grid + circle + text, Grid + square
+	 * + text; until 3.4): the Style without it and Content in a window in the
+	 * middle one (window 1), with what the middle had (art_center_*: on, the
+	 * image, its size, the text, its font size, the padding, the background;
+	 * their defaults then where none was saved). Ring + text went all around:
+	 * no Opening. Also in a saved Layout (layouts[ effect ]).
+	 *
+	 * @param array $saved A slider's saved settings (or saved Layout values).
+	 * @return array
+	 */
+	public static function merge_art_center( $saved ) {
+		if ( ! is_array( $saved ) || ! $saved ) {
+			return $saved;
+		}
+		$texts = array(
+			'ring-text'        => 'ring',
+			'grid-circle-text' => 'grid-circle',
+			'grid-square-text' => 'grid-square',
+		);
+		if ( isset( $saved['art_style'] ) && is_string( $saved['art_style'] ) && isset( $texts[ $saved['art_style'] ] ) ) {
+			if ( 'ring-text' === $saved['art_style'] ) {
+				$saved['art_opening'] = false;
+			}
+			$saved['art_style'] = $texts[ $saved['art_style'] ];
+			// The middle's values, else its defaults then (on, 60%, 18px, 12px, none).
+			$was = array(
+				''            => true,
+				'_image'      => 0,
+				'_image_size' => 60,
+				'_text'       => '',
+				'_font_size'  => 18,
+				'_padding'    => 12,
+				'_bg'         => 'rgba(255,255,255,0)',
+			);
+			foreach ( $was as $suffix => $default ) {
+				$saved[ 'art_content' . $suffix ] = array_key_exists( 'art_center' . $suffix, $saved ) ? $saved[ 'art_center' . $suffix ] : $default;
+			}
+			foreach ( array( '_image_size', '_font_size', '_padding' ) as $suffix ) {
+				foreach ( array( '_tablet', '_mobile' ) as $device ) {
+					$saved[ 'art_content' . $suffix . $device ] = isset( $saved[ 'art_center' . $suffix . $device ] ) ? $saved[ 'art_center' . $suffix . $device ] : '';
+				}
+			}
+			$saved['art_content_window']        = 1;
+			$saved['art_content_window_tablet'] = '';
+			$saved['art_content_window_mobile'] = '';
+			$saved['art_content_valign']        = 'center';
+		}
+		foreach ( array_keys( $saved ) as $key ) {
+			if ( 0 === strpos( $key, 'art_center' ) ) {
+				unset( $saved[ $key ] );
+			}
+		}
+		return $saved;
+	}
+
+	/**
 	 * Fields added with a default of their own for some effect (a field's
 	 * effect_default): a slider saved before takes that effect's, for its
 	 * effect and in its saved Layout values of that effect (layouts[ effect ]).

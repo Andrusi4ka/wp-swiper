@@ -9,13 +9,12 @@
  * bottom. Each ring piece is a box around its shape, cut to it with
  * clip-path, so its photo covers just that box.
  *
- * Ring + text: the same ring, all around (no opening), and no photo in the
- * middle: an image and text there instead (centerContent()). Its first
- * piece is the ring's first.
- *
  * Grid + circle: a grid as the Collage's (its Photos in rows of Columns,
  * per device) and the circle over its middle; each cell its box less the
  * circle (gridCircle(), gridCell()).
+ *
+ * Content in a window (Ring, the grids with a circle or square, SVG shape):
+ * an image and text in one piece instead of a photo (fill(), contentAt()).
  *
  * A photo's caption sits in the middle of its shape; the slides'
  * descriptions under the block show the one of the photo under the pointer
@@ -176,9 +175,8 @@
 		var middle = outer * ( Number( forDevice( config.center ) ) || 46 ) / 100;
 		var gap = Number( forDevice( config.gap ) ) || 0;
 		var inner = Math.min( outer - 12, middle + gap );
-		// Ring: the first piece is the middle circle's photo; Ring + text has
-		// none there (its image and text instead, centerContent()).
-		var first = hasMiddlePhoto( config ) ? 1 : 0;
+		// The first piece is the middle circle (its photo, or Content in a window).
+		var first = 1;
 		var count = Math.max( 1, Math.min( pieces.length - first, Number( forDevice( config.count ) ) || pieces.length - first ) );
 		var round = Number( forDevice( config.radius ) ) || 0;
 		var opening = ( Number( forDevice( config.opening ) ) || 0 ) * Math.PI / 180;
@@ -191,18 +189,15 @@
 		// For the preview (preview-art.js): where the middle circle's edge is.
 		block.wpSwiperArtRing = { cx: cx, cy: cy, outer: outer, middle: middle, gap: gap };
 
-		// The image or text in the opening (Ring), in the middle (Ring + text).
+		// The image or text in the opening.
 		openingContent( block, stage, config, { cx: cx, cy: cy, outer: outer, middle: middle, gap: gap, opening: opening } );
-		centerContent( block, stage, { cx: cx, cy: cy, middle: middle } );
 
 		// The middle circle.
-		if ( first ) {
-			place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
-			pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
-			pieces[ 0 ].style.clipPath = '';
-			captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 * 0.85 } );
-			outline( block, pieces[ 0 ], 'M 0 ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 ' + ( middle * 2 ) + ' ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 0 ' + middle + ' Z' );
-		}
+		place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
+		pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
+		pieces[ 0 ].style.clipPath = '';
+		captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 * 0.85 } );
+		outline( block, pieces[ 0 ], 'M 0 ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 ' + ( middle * 2 ) + ' ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 0 ' + middle + ' Z' );
 
 		// The ring, clockwise from the opening's left edge (the opening is at the
 		// bottom, a quarter turn from the right).
@@ -270,39 +265,12 @@
 	}
 
 	/**
-	 * Ring + text: the image and text in the middle circle
-	 * (class-wp-swiper-art.php center()), over it: a circle as large as the
-	 * middle one (its Middle background), its content within the square that
-	 * fits in it, less the Padding (art.css). Text too long for it is cut
-	 * with "…" here (fitText()).
-	 *
-	 * @param {Element} block The Art block (the content is placed in it, beside the stage).
-	 * @param {Element} stage The stage.
-	 * @param {Object}  ring  { cx, cy, middle } in stage px.
-	 */
-	function centerContent( block, stage, ring ) {
-		var box = block.querySelector( ':scope > .wp-swiper-art__center' );
-		if ( ! box ) {
-			return;
-		}
-		box.hidden = false;
-		box.style.left = ( stage.offsetLeft + ring.cx - ring.middle ) + 'px';
-		box.style.top = ( stage.offsetTop + ring.cy - ring.middle ) + 'px';
-		box.style.width = box.style.height = ( ring.middle * 2 ) + 'px';
-		// Grid + square + text: a square (art.css), its corners as the photos'.
-		box.classList.toggle( 'wp-swiper-art__center--square', !! ring.square );
-		box.style.borderRadius = ring.square ? Math.min( ring.round || 0, ring.middle ) + 'px' : '';
-
-		fitText( box.firstElementChild, '.wp-swiper-art__center-text' );
-	}
-
-	/**
 	 * The text as it is set (its Font size, the theme's headings and colors):
 	 * where the image and text do not fit their box, as much of the text as
 	 * fits from the top, cut at a word with "…" (the image keeps its share;
 	 * no text at all where not even a word fits). Done again from the whole
 	 * text each time Art is laid out (a resize too), so a wider screen shows
-	 * more of it. The middle's and the opening's.
+	 * more of it. The Ring's opening's.
 	 *
 	 * @param {Element} inner    The box the image and text are in.
 	 * @param {string}  selector The text's.
@@ -411,13 +379,7 @@
 		}
 	}
 
-	// Ring, Grid + circle, Grid + square: a photo in the middle; the "+ text"
-	// ones: its image and text there.
-	function hasMiddlePhoto( config ) {
-		return ! /-text$/.test( config.style );
-	}
-
-	// Grid + square (+ text): a square in the middle, not a circle.
+	// Grid + square: a square in the middle, not a circle.
 	function isSquare( config ) {
 		return /^grid-square/.test( config.style );
 	}
@@ -715,10 +677,8 @@
 		// As the Collage's Grid: its photos in rows of Columns, as many rows as
 		// they make; the last one's in the middle of it.
 		var columns = Math.max( 2, Math.min( 6, Math.round( Number( forDevice( config.columns ) ) || 3 ) ) );
-		// The circle's photo first (Grid + circle); Grid + circle + text has
-		// none there (its image and text instead, centerContent()).
-		var first = hasMiddlePhoto( config ) ? 1 : 0;
-		var count = Math.max( 2, Math.min( pieces.length - first, Math.round( Number( forDevice( config.cells ) ) || pieces.length - first ) ) );
+		// The circle's (or square's) piece first: its photo, or Content in a window.
+		var count = Math.max( 2, Math.min( pieces.length - 1, Math.round( Number( forDevice( config.cells ) ) || pieces.length - 1 ) ) );
 		var rows = Math.ceil( count / columns );
 		var cellW = ( width - ( columns - 1 ) * gap ) / columns;
 		// Its Height (art.css; % and Auto: fit()), the photos stretched to it.
@@ -760,27 +720,24 @@
 		// For the preview (preview-art.js): where the middle circle's (or square's) edge is.
 		block.wpSwiperArtRing = { cx: cx, cy: cy, outer: outer, middle: middle, gap: gap, square: square };
 
-		// The circle or square: its photo, or its image and text.
-		if ( first ) {
-			pieces[ 0 ].hidden = false;
-			place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
-			if ( square ) {
-				var box = roundedSquare( middle * 2, round );
-				pieces[ 0 ].classList.remove( 'wp-swiper-art__piece--circle' );
-				pieces[ 0 ].style.clipPath = 'path("' + box + '")';
-				captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 } );
-				outline( block, pieces[ 0 ], box );
-			} else {
-				pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
+		// The circle or square: its photo, or Content in a window.
+		pieces[ 0 ].hidden = false;
+		place( pieces[ 0 ], { left: cx - middle, top: cy - middle, width: middle * 2, height: middle * 2 } );
+		if ( square ) {
+			var box = roundedSquare( middle * 2, round );
+			pieces[ 0 ].classList.remove( 'wp-swiper-art__piece--circle' );
+			pieces[ 0 ].style.clipPath = 'path("' + box + '")';
+			captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 } );
+			outline( block, pieces[ 0 ], box );
+		} else {
+			pieces[ 0 ].classList.add( 'wp-swiper-art__piece--circle' );
 			pieces[ 0 ].style.clipPath = '';
-				captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 * 0.85 } );
-				outline( block, pieces[ 0 ], 'M 0 ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 ' + ( middle * 2 ) + ' ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 0 ' + middle + ' Z' );
-			}
+			captionAt( pieces[ 0 ], { x: middle, y: middle, width: middle * 2 * 0.85 } );
+			outline( block, pieces[ 0 ], 'M 0 ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 ' + ( middle * 2 ) + ' ' + middle + ' A ' + middle + ' ' + middle + ' 0 1 1 0 ' + middle + ' Z' );
 		}
-		centerContent( block, stage, { cx: cx, cy: cy, middle: middle, square: square, round: round } );
 
 		// The cells in turn, those left in the pieces after it.
-		var used = first;
+		var used = 1;
 		cells.forEach( function ( cell ) {
 			var shape = gridCell( cx, cy, cut, cell.x, cell.y, cellW, cellH, round, square );
 			if ( ! shape || used >= pieces.length ) {
@@ -1787,7 +1744,7 @@
 		} );
 	}
 
-	var STYLES = { ring: ring, 'ring-text': ring, 'grid-circle': gridCircle, 'grid-circle-text': gridCircle, 'grid-square': gridCircle, 'grid-square-text': gridCircle, 'grid-shapes': gridShapes, shape: shape, text: textMask };
+	var STYLES = { ring: ring, 'grid-circle': gridCircle, 'grid-square': gridCircle, 'grid-shapes': gridShapes, shape: shape, text: textMask };
 
 	/**
 	 * The slides' descriptions (render.php descriptions()): the block right
@@ -2002,10 +1959,10 @@
 		var photos = pool ? [].slice.call( pool.content.children ) : [];
 		var pieces = stage ? [].slice.call( stage.querySelectorAll( '.wp-swiper-art__piece' ) ) : [];
 		var drawStyle = STYLES[ config.style ];
-		// SVG shape, Content in a window (WP_Swiper_Render::content_box()): this
-		// very node moved into its window, not a copy (a shortcode's scripts find
-		// it, a form keeps what was typed); back in its hidden holder without one.
-		var contentNode = config.content && config.shapes ? block.querySelector( ':scope > .wp-swiper-art__content-pool > .wp-swiper-content' ) : null;
+		// Content in a window (WP_Swiper_Render::content_box()): this very node
+		// moved into its window, not a copy (a shortcode's scripts find it, a
+		// form keeps what was typed); back in its hidden holder without one.
+		var contentNode = config.content ? block.querySelector( ':scope > .wp-swiper-art__content-pool > .wp-swiper-content' ) : null;
 		var contentPool = contentNode ? contentNode.parentNode : null;
 		// Its text fitted to the window (content.js), once it is in one.
 		var fitContent = function () {
@@ -2035,10 +1992,8 @@
 		var sequence = [];
 		var middleAt = 0;
 
-		// How many pieces this device shows (Ring: the ring's and the middle
-		// one; Ring + text: the ring's).
+		// How many pieces this device shows (Ring: the ring's and the middle one).
 		// Grid + circle: as many as it laid out (block.wpSwiperArtShown).
-		var middlePhoto = hasMiddlePhoto( config ) ? 1 : 0;
 		function shownCount() {
 			if ( typeof block.wpSwiperArtShown === 'number' ) {
 				return Math.max( 1, Math.min( pieces.length, block.wpSwiperArtShown ) );
@@ -2047,7 +2002,7 @@
 			if ( config.shapes ) {
 				return Math.max( 1, Math.min( pieces.length, config.shapes.length ) );
 			}
-			return Math.max( 1, Math.min( pieces.length, middlePhoto + ( Number( forDevice( config.count ) ) || pieces.length - middlePhoto ) ) );
+			return Math.max( 1, Math.min( pieces.length, 1 + ( Number( forDevice( config.count ) ) || pieces.length - 1 ) ) );
 		}
 
 		// Content in a window: which window has it on this device (from 0; -1:
@@ -2209,7 +2164,8 @@
 				advance( 1 );
 				return;
 			}
-			if ( config.swap.target === 'middle' ) {
+			// The middle photo, unless Content in a window is there: any then.
+			if ( config.swap.target === 'middle' && contentAt() !== 0 ) {
 				// The middle photo: the next of all the photos in turn (the ring as
 				// it is: a photo may be in both for a while).
 				if ( sequence.length < 2 ) {

@@ -16,7 +16,7 @@ const CASES = [
 	'collage-scatter', 'collage-freeform', 'collage-grid', 'collage-masonry',
 	'collage-justified', 'collage-random', 'collage-feature',
 	'collage-content', 'collage-content-scatter', 'collage-content-feature', 'collage-content-shortcode',
-	'art-ring', 'art-ring-text', 'art-grid-circle', 'art-grid-circle-text', 'art-grid-square', 'art-grid-square-text',
+	'art-ring', 'art-ring-content', 'art-grid-circle', 'art-grid-circle-content', 'art-grid-square', 'art-grid-square-content',
 	'art-grid-shapes', 'art-grid-shapes-one', 'art-shape-content', 'art-grid-shapes-background', 'art-ring-background', 'collage-background-shadow', 'art-grid-background-shadow',
 	'art-text-mask', 'art-text-mask-sans', 'art-text-mask-each', 'art-text-mask-right', 'art-text-mask-left', 'art-text-mask-name', 'art-text-mask-auto', 'art-text-mask-stretch', 'art-text-mask-join', 'art-text-mask-rounded', 'art-text-mask-gradient',
 ];

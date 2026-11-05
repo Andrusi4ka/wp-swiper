@@ -332,7 +332,7 @@ class Test_WP_Swiper_Svg_Shape extends WP_Swiper_TestCase {
 		$this->assertSame( 2, substr_count( $html, 'class="wp-swiper-shape__window"' ) );
 		$this->assertStringContainsString( 'accept=".svg,image/svg+xml"', $html );
 		// Gap and Rounded corners are not for it; Height is (every Style's).
-		$this->assertSame( 1, preg_match( '/data-field="art_gap"[^>]*data-styles="ring ring-text grid-circle grid-circle-text grid-square grid-square-text grid-shapes"/', $html ) );
+		$this->assertSame( 1, preg_match( '/data-field="art_gap"[^>]*data-styles="ring grid-circle grid-square grid-shapes"/', $html ) );
 		$this->assertSame( 1, preg_match( '/data-field="art_height" data-effects="art text-mask">/', $html ) );
 	}
 

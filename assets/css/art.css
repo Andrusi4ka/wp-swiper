@@ -173,10 +173,11 @@
 	height: var(--wp-swiper-art-sh, 100%);
 }
 
-/* SVG shape, Content in a window (art.js fill()): until it is moved into its
-   window, hidden (should a theme show [hidden] elements); there, it fills
-   the window's box and its shape cuts it, its background too (frontend.css
-   draws it). No photo to open, no Gradient over it. */
+/* Content in a window (art.js fill(); Ring, the grids with a circle or
+   square, SVG shape): until it is moved into its window, hidden (should a
+   theme show [hidden] elements); there, it fills the window's box and its
+   shape cuts it, its background too (frontend.css draws it). No photo to
+   open, no Gradient over it. */
 .wp-swiper-art__content-pool {
 	display: none;
 }
@@ -184,6 +185,14 @@
 .wp-swiper-art__piece > .wp-swiper-content {
 	position: absolute;
 	inset: 0;
+}
+
+/* A round window (the middle circle): the image and text in the square that
+   fits in it (70.71% of it), its Padding inside that; the background still
+   fills the circle. */
+.wp-swiper-art__piece--circle > .wp-swiper-content > .wp-swiper-content__inner {
+	width: 70.71%;
+	height: 70.71%;
 }
 
 .wp-swiper-art--lightbox .wp-swiper-art__piece.wp-swiper-art__piece--content {
@@ -477,121 +486,6 @@
 }
 
 .wp-swiper-art .wp-swiper-art__opening-text > :last-child {
-	margin-bottom: 0;
-}
-
-/* Ring + text: the image and text in the middle circle (class-wp-swiper-art.php
-   center()). art.js puts the circle over the middle one; its Middle background
-   (none by default); its content in the middle of the square that fits in the
-   circle (70.71% of it), less the Padding: the image over the text, at its
-   Image size (% of that width), the text at its Font size (art.js cuts it
-   with "…" where it does not fit). Beside the stage, over the block. */
-.wp-swiper-art__center {
-	position: absolute;
-	z-index: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	box-sizing: border-box;
-	border-radius: 50%;
-	background: var(--wp-swiper-art-center-bg, transparent);
-}
-
-.wp-swiper-art__center[hidden] {
-	display: none;
-}
-
-/* Grid + square + text: a square (its corners rounded by art.js, as the
-   photos'), its content in all of it less the Padding. */
-.wp-swiper-art__center--square .wp-swiper-art__center-inner {
-	width: calc(100% - 2 * var(--wp-swiper-art-center-room));
-	height: calc(100% - 2 * var(--wp-swiper-art-center-room));
-}
-
-.wp-swiper-art__center-inner {
-	--wp-swiper-art-center-room: var(--wp-swiper-art-center-padding, 12px);
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 0.6em;
-	box-sizing: border-box;
-	width: calc(70.71% - 2 * var(--wp-swiper-art-center-room));
-	height: calc(70.71% - 2 * var(--wp-swiper-art-center-room));
-	min-width: 0;
-	min-height: 0;
-	overflow: hidden;
-}
-
-@media (max-width: 1024px) {
-	.wp-swiper-art__center-inner {
-		--wp-swiper-art-center-room: var(--wp-swiper-art-center-padding-tablet, var(--wp-swiper-art-center-padding, 12px));
-	}
-}
-
-@media (max-width: 767px) {
-	.wp-swiper-art__center-inner {
-		--wp-swiper-art-center-room: var(--wp-swiper-art-center-padding-mobile, var(--wp-swiper-art-center-padding-tablet, var(--wp-swiper-art-center-padding, 12px)));
-	}
-}
-
-/* The image: its Image size of the width, its proportions kept (the text,
-   not the image, is cut to fit); with text under it, at most half
-   the height. */
-.wp-swiper-art .wp-swiper-art__center-image {
-	display: block;
-	flex: 0 0 auto;
-	width: var(--wp-swiper-art-center-image, 60%);
-	height: auto;
-	max-width: 100%;
-	max-height: 100%;
-	object-fit: contain;
-}
-
-.wp-swiper-art .wp-swiper-art__center-image:not(:only-child) {
-	max-height: 50%;
-}
-
-@media (max-width: 1024px) {
-	.wp-swiper-art .wp-swiper-art__center-image {
-		width: var(--wp-swiper-art-center-image-tablet, var(--wp-swiper-art-center-image, 60%));
-	}
-}
-
-@media (max-width: 767px) {
-	.wp-swiper-art .wp-swiper-art__center-image {
-		width: var(--wp-swiper-art-center-image-mobile, var(--wp-swiper-art-center-image-tablet, var(--wp-swiper-art-center-image, 60%)));
-	}
-}
-
-/* The text: the editor's (paragraphs, headings, links, colored words), in the
-   theme's color, centred unless aligned there. */
-.wp-swiper-art__center-text {
-	flex: 0 0 auto;
-	max-width: 100%;
-	font-size: var(--wp-swiper-art-center-font, 18px);
-	line-height: 1.3;
-	text-align: center;
-	overflow-wrap: break-word;
-}
-
-@media (max-width: 1024px) {
-	.wp-swiper-art__center-text {
-		font-size: var(--wp-swiper-art-center-font-tablet, var(--wp-swiper-art-center-font, 18px));
-	}
-}
-
-@media (max-width: 767px) {
-	.wp-swiper-art__center-text {
-		font-size: var(--wp-swiper-art-center-font-mobile, var(--wp-swiper-art-center-font-tablet, var(--wp-swiper-art-center-font, 18px)));
-	}
-}
-
-.wp-swiper-art .wp-swiper-art__center-text > :is(p, h1, h2, h3, h4, h5, h6, ul, ol) {
-	margin: 0 0 0.4em;
-}
-
-.wp-swiper-art .wp-swiper-art__center-text > :last-child {
 	margin-bottom: 0;
 }
 

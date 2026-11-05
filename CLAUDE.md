@@ -195,10 +195,11 @@
   лайтбокс, як в інших стилях.
 - **Art Grid + circle:** фото неповного останнього ряду — по центру ряду.
   Варіант «квадрат / Fill width» з полем Shape відхилено.
-- **Art стилі**, порядок: Ring, Ring + text, Grid + circle, Grid + circle +
-  text, Grid + square, Grid + square + text, SVG shape завжди останнім.
-  Варіанти «+ text» — без фото в середині, з блоком Content in the middle
-  (`has_middle_photo()`, `art.js hasMiddlePhoto()`). Квадрат — та сама сітка
+- **Art стилі**, порядок: Ring, Grid + circle, Grid + square, Grid shapes,
+  SVG shape завжди останнім. Стилі «+ text» (Ring + text, Grid + circle +
+  text, Grid + square + text) прибрано 2026-11-05 на прохання користувача:
+  замість них Content in a window для Ring і сіток з колом / квадратом (див.
+  нижче). Квадрат — та сама сітка
   (`gridCircle()`), комірки ріже `squareNodes()`; розмір квадрата — те саме
   поле, що й кола (`art_ring_center`), тягнеться в прев'ю.
 - **Art Height** — одне поле для всіх стилів, як у слайдерів: px / vh / % /
@@ -427,12 +428,23 @@
   (`[woodmart_button]`) — тимчасово; HTML-блоків WoodMart на сайті на
   роботі немає. У прев'ю скрипти шорткодів можуть не підключитися (свій
   список скриптів прев'ю).
-- **Art SVG shape: Content in a window** (2026-11-04, ідея користувача; поки
-  лише SVG shape — рішення користувача, для Grid shapes / сіток — «на
-  потім»): одне вікно малюнка — вміст замість фото, як Content in a place
-  колажу (ті самі поля з префіксом `art_content_*`, `styles` `shape`;
-  `art_content_window` — номер вікна в порядку малюнка, для кожного
-  пристрою, або перетягнути в прев'ю). Блок `art_content` після Opening.
+- **Art: Content in a window** (2026-11-04 для SVG shape, ідея користувача;
+  2026-11-05 — і для Ring, Grid + circle, Grid + square замість стилів
+  «+ text», рішення користувача; Grid shapes — «на потім»,
+  `WP_Swiper_Art::has_content()`): одне вікно — вміст замість фото, як
+  Content in a place колажу (ті самі поля з префіксом `art_content_*`;
+  `art_content_window` — номер вікна: 1 — середнє коло / квадрат (SVG
+  shape — головне вікно малюнка), далі решта по порядку; для кожного
+  пристрою, або перетягнути в прев'ю). Кругле вікно (`piece--circle`):
+  зображення й текст у вписаному квадраті (70.71%, `art.css`), фон — на
+  все коло (варіант користувача). Photo swapping «the middle photo», коли
+  вміст у середині, міняє будь-яке інше (`art.js swap()`). Старі «+ text»
+  → `merge_art_center()` у `get()` (і в `layouts`): базовий стиль,
+  `art_content` = старе `art_center` (за замовч. увімкнено), вікно 1,
+  значення `art_center_*` (або їхні тодішні за замовч.: 60%, 12px), Ring +
+  text — без Opening; поля `art_center_*` і `center()` / `centerContent()`
+  видалено. Перевірено: розкладка фото така сама, як у «+ text» (знімки
+  `art-*-content` = старі `art-*-text`). Блок `art_content` після Opening.
   `art.js`: `contentAt()`, у `fill()` вікно отримує сам вузол вмісту
   (`-1` у `pieces()`), `advance()` / `swap()` його оминають, без
   `role`/`tabindex` (`markContent()`), описи беруть перше вікно з фото
@@ -533,7 +545,7 @@
 
 - Freeform: зміна Gap після ручної розстановки не пересуває збережені місця;
   Shuffle або Reset дають нову розкладку з новим Gap.
-- Art: текст у середині кола (Ring + text) і в розриві (Ring), що не влазить,
+- Art: текст у розриві (Ring), що не влазить,
   обрізається на слові з «…» (`art.js fitText()`), шрифт не зменшується
   (рішення користувача: розмір і стилі теми лишаються). Прев'ю без стилів
   теми, тож там тексту влазить інакше, ніж на сайті. Слово, ширше за коло
@@ -707,7 +719,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 422 тести, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 420 тестів, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.

@@ -969,6 +969,8 @@ class WP_Swiper_Settings {
 		// Art's photos always zoomed under the pointer: Zoom on hover on there.
 		$saved = self::merge_hover_zoom( $saved );
 		$saved = self::merge_text_mask_gradient( $saved );
+		// Art's "+ text" Styles: the Style without it, Content in a window in the middle.
+		$saved = self::merge_art_center( $saved );
 		// Fields with a default of their own for an effect (Coverflow's shadow color).
 		$saved = self::merge_effect_defaults( $saved );
 		if ( ! empty( $saved['layouts'] ) && is_array( $saved['layouts'] ) ) {
@@ -980,6 +982,7 @@ class WP_Swiper_Settings {
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_art_opening' ), $saved['layouts'] );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_opening_content' ), $saved['layouts'] );
 			$saved['layouts'] = array_map( array( __CLASS__, 'merge_art_height' ), $saved['layouts'] );
+			$saved['layouts'] = array_map( array( __CLASS__, 'merge_art_center' ), $saved['layouts'] );
 		}
 
 		// Version 6: the lightbox radii are numbers of their own, empty = the

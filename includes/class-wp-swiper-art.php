@@ -93,22 +93,16 @@ class WP_Swiper_Art {
 	public static function styles() {
 		return array(
 			// A circle in the middle, the others around it in a ring (with an
-			// opening at the bottom, if set).
+			// opening at the bottom, if set). Content in a window: an image and/or
+			// text in one of them (the middle one too) instead of a photo, as in
+			// the grids and SVG shape (the "+ text" Styles until 3.4).
 			'ring'      => __( 'Ring', 'wp-swiper' ),
-			// The same ring without a photo in the middle: an image and/or text
-			// there instead (center()).
-			'ring-text'   => __( 'Ring + text', 'wp-swiper' ),
 			// A square grid (its Columns per device) with a circle over its
 			// middle: the cells around it cut by it (those it covers left out).
 			'grid-circle' => __( 'Grid + circle', 'wp-swiper' ),
-			// The same grid without a photo in the circle: an image and/or text
-			// there instead, as Ring + text's (center()).
-			'grid-circle-text' => __( 'Grid + circle + text', 'wp-swiper' ),
 			// The grid with a square over its middle instead: the cells around it
 			// cut by it (an L at a corner, a notch at a side), its photo in it.
 			'grid-square'      => __( 'Grid + square', 'wp-swiper' ),
-			// The same with an image and/or text in the square (center()).
-			'grid-square-text' => __( 'Grid + square + text', 'wp-swiper' ),
 			// A grid whose cells are joined into shapes in the preview (cells()):
 			// each shape a window for a photo, its corners rounded outwards and,
 			// where it turns in, inwards; drawn anew at any size (art.js), so it
@@ -169,8 +163,9 @@ class WP_Swiper_Art {
 	}
 
 	/**
-	 * Whether a Style has a photo in the middle (Ring, Grid + circle, Grid +
-	 * square), else (the "+ text" ones) the image and text of center().
+	 * Whether a Style's first window is its middle one (Ring, Grid + circle,
+	 * Grid + square), its main one (SVG shape) or first shape (Grid shapes):
+	 * not Text mask's letters.
 	 *
 	 * @param string $style Style.
 	 * @return bool
@@ -188,7 +183,7 @@ class WP_Swiper_Art {
 	 * @return bool
 	 */
 	public static function is_wide( $settings ) {
-		return in_array( self::style_of( $settings ), array( 'grid-circle', 'grid-circle-text', 'grid-square', 'grid-square-text', 'grid-shapes', 'text' ), true );
+		return in_array( self::style_of( $settings ), array( 'grid-circle', 'grid-square', 'grid-shapes', 'text' ), true );
 	}
 
 	/**
@@ -201,6 +196,17 @@ class WP_Swiper_Art {
 	 */
 	public static function has_windows( $style ) {
 		return in_array( $style, array( 'grid-shapes', 'shape', 'text' ), true );
+	}
+
+	/**
+	 * Whether a Style can have Content in a window: Ring, Grid + circle,
+	 * Grid + square, SVG shape (not Grid shapes yet, nor Text mask).
+	 *
+	 * @param string $style Style.
+	 * @return bool
+	 */
+	public static function has_content( $style ) {
+		return in_array( $style, array( 'ring', 'grid-circle', 'grid-square', 'shape' ), true );
 	}
 
 	// Grid shapes: the most columns and rows.
@@ -234,8 +240,8 @@ class WP_Swiper_Art {
 
 	/**
 	 * Art's blocks, per page (before the other effects' blocks there): its
-	 * shape on the Layout page, Ring + text's Content in the middle a block
-	 * after it (its Rounded corners and Image border are in the Look block,
+	 * shape on the Layout page, the Ring's Opening and Content in a window
+	 * blocks after it (its Rounded corners and Image border are in the Look block,
 	 * where a slider's are, over the Image shadow: WP_Swiper_Settings::blocks()),
 	 * Photo swapping on the Controls page.
 	 *
@@ -252,18 +258,13 @@ class WP_Swiper_Art {
 					'titles' => array( self::TEXT_EFFECT => __( 'Text mask', 'wp-swiper' ) ),
 					'fields' => array( 'art_style', 'text_mask_direction', 'text_mask_title', 'text_mask_photos', 'art_shape', 'art_shape_margins', 'art_cells_columns', 'art_cells_rows', 'art_ring_count', 'art_grid_count', 'art_grid_columns' ),
 				),
-				// Ring + text: what is in the middle, a block of its own (shown
-				// for that Style only, as its fields are).
-				'art_middle' => array(
-					'title'  => __( 'Content in the middle', 'wp-swiper' ),
-					'fields' => array( 'art_center', 'art_center_image', 'art_center_image_size', 'art_center_text', 'art_center_font_size', 'art_center_padding', 'art_center_bg' ),
-				),
 				// Ring: its opening at the bottom and what is in it, a block of its own too.
 				'art_opening' => array(
 					'title'  => __( 'Opening', 'wp-swiper' ),
 					'fields' => array( 'art_opening', 'art_ring_opening', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
 				),
-				// SVG shape: a window with content instead of a photo, a block of its own.
+				// A window with content instead of a photo (Ring, the grids with a
+				// circle or square, SVG shape), a block of its own.
 				'art_content' => array(
 					'title'  => __( 'Content in a window', 'wp-swiper' ),
 					'fields' => array( 'art_content', 'art_content_window', 'art_content_image', 'art_content_image_size', 'art_content_text', 'art_content_font_size', 'art_content_padding', 'art_content_valign', 'art_content_bg' ),
@@ -398,8 +399,7 @@ class WP_Swiper_Art {
 				},
 				WP_Swiper_Settings::responsive( $settings, 'art_ring_center' )
 			),
-			// Ring only (Ring + text goes all around; no ring in a grid).
-			// Ring: its opening per device, none (0) with Opening off.
+			// Ring only (no ring in a grid): its opening per device, none (0) with Opening off.
 			'opening' => 'ring' === $style ? ( empty( $settings['art_opening'] ) ? array_fill_keys( array( 'desktop', 'tablet', 'mobile' ), 0 ) : self::per_device( $settings, 'art_ring_opening', 0, 180 ) ) : 0,
 			// The photos' order per device (slide indexes; false: the slides'
 			// order), and each slide's photo ID for the preview to tell one by.
@@ -411,8 +411,8 @@ class WP_Swiper_Art {
 			// Photo swapping (art.js): how often, and whether the pointer over it pauses it.
 			'swap'    => $settings['art_swap'] ? array(
 				'delay'  => max( 1000, min( 30000, (int) $settings['art_swap_delay'] ) ),
-				// Any piece at random, or the middle one through all the photos.
-				// (Ring + text has no middle photo.) SVG shape: its own What changes
+				// Any piece at random, or the middle one through all the photos
+				// (art.js: any, where Content in a window is there). SVG shape: its own What changes
 				// (a window at random, in turn, or all at once: "advance").
 				'target' => $windows
 					? ( in_array( $settings['art_shape_target'], array( 'any', 'turn', 'advance', 'one' ), true ) ? $settings['art_shape_target'] : 'any' )
@@ -492,11 +492,9 @@ class WP_Swiper_Art {
 		if ( '' !== $opening ) {
 			$config['openingGap'] = self::per_device( $settings, 'art_opening_gap', 0, 200 );
 		}
-		// Ring + text: the image and text in the middle (art.js places them).
-		$center = in_array( $style, array( 'ring-text', 'grid-circle-text', 'grid-square-text' ), true ) && $settings['art_center'] ? self::center( $settings ) : '';
-		// SVG shape: a window with an image and text instead of a photo (art.js
+		// Content in a window: an image and text instead of a photo (art.js
 		// fill() moves it there), its window per device; not as a background.
-		$content = 'shape' === $style && ! empty( $settings['art_content'] ) && ! $background && $shape ? WP_Swiper_Render::content_box( $settings, 'art_content' ) : '';
+		$content = self::has_content( $style ) && ! empty( $settings['art_content'] ) && ! $background && ( 'shape' !== $style || $shape ) ? WP_Swiper_Render::content_box( $settings, 'art_content' ) : '';
 		if ( '' !== $content ) {
 			$config['content'] = array( 'window' => self::per_device( $settings, 'art_content_window', 1, 100 ) );
 			// Its look is frontend.css's (as a Collage's place's).
@@ -562,7 +560,6 @@ class WP_Swiper_Art {
 				'--wp-swiper-art-ratio-mobile:' . $config['shapeDevices']['mobile']['ratio'],
 			) : array(),
 			self::opening_style( $opening, $settings ),
-			self::center_style( $center, $settings ),
 			self::caption_style( $settings ),
 			self::border_style( $settings ),
 			$shadow ? array(
@@ -620,7 +617,7 @@ class WP_Swiper_Art {
 				<?php // Text mask: its word as text (the letters drawn are pictures of it), for screen readers and search. ?>
 				<span class="wp-swiper-art__word"><?php echo esc_html( trim( (string) $settings['text_mask_title'] ) ); ?></span>
 			<?php endif; ?>
-			<?php echo $opening . $center; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where they are built. ?>
+			<?php echo $opening; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?>
 			<?php if ( '' !== $content ) : ?>
 				<?php // On the page itself, hidden: art.js moves this very node into its window (a shortcode's scripts find it). ?>
 				<div class="wp-swiper-art__content-pool" hidden><?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped where it is built. ?></div>

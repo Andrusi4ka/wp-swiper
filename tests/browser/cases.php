@@ -105,14 +105,17 @@ return array(
 	),
 	'collage-content-feature' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'feature-left', 'collage_content' => '1', 'collage_content_place' => '1', 'collage_content_text' => '<p>The big place</p>', 'collage_content_valign' => 'bottom', 'lightbox' => '1' ) ),
 	'art-ring'         => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'lightbox' => '1' ) ),
-	'art-ring-text'    => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring-text', 'art_center' => '1', 'art_center_text' => '<p>Hello</p>', 'lightbox' => '1' ) ),
+	// Content in a window in the middle circle (the "+ text" Styles until 3.4).
+	'art-ring-content' => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'art_content' => '1', 'art_content_text' => '<p>Hello</p>', 'lightbox' => '1' ) ),
+	// The same, swapping "the middle photo": with the content there, any photo swaps.
+	'art-ring-content-swap' => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'art_ring_count' => '4', 'art_content' => '1', 'art_content_text' => '<p>Hello</p>', 'art_swap' => '1', 'art_swap_target' => 'middle', 'art_swap_delay' => '1000', 'art_swap_speed' => '100' ) ),
 	'art-grid-circle'  => array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-circle', 'lightbox' => '1' ),
 		'photos'   => 10,
 	),
-	// No photo in the circle: an image and text there, cut with an ellipsis where it does not fit.
-	'art-grid-circle-text' => array(
-		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-circle-text', 'art_center' => '1', 'art_center_text' => '<h3>Hello</h3><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>', 'lightbox' => '1' ),
+	// Content in a window in the circle: its text cut with an ellipsis where it does not fit.
+	'art-grid-circle-content' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-circle', 'art_content' => '1', 'art_content_text' => '<h3>Hello</h3><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>', 'lightbox' => '1' ),
 		'photos'   => 10,
 	),
 	// A square over the grid's middle: the cells cut by it (an L at a corner, a notch at a side).
@@ -120,8 +123,9 @@ return array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-square', 'lightbox' => '1' ),
 		'photos'   => 10,
 	),
-	'art-grid-square-text' => array(
-		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-square-text', 'art_center' => '1', 'art_center_text' => '<h3>Hello</h3><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', 'lightbox' => '1' ),
+	// In the square, in the third window on mobile (a cell of the grid).
+	'art-grid-square-content' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-square', 'art_content' => '1', 'art_content_window_mobile' => '3', 'art_content_text' => '<h3>Hello</h3><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', 'lightbox' => '1' ),
 		'photos'   => 10,
 	),
 	// SVG shape (tests/data/ex-3.svg), Content in a window: an image over text in
