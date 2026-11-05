@@ -75,6 +75,10 @@ return array(
 	// Gradient: over each photo of a slider and a collage, one across Art's ring.
 	'slide-gradient'   => array( 'settings' => $slider + array( 'effect' => 'slide', 'slides_per_view' => '3', 'space_between' => '12', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100' ) ),
 	'collage-gradient' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'lightbox' => '1', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100' ) ),
+	// Captions on a Custom gradient (Caption, Background style).
+	'slide-caption-gradient' => array( 'settings' => $slider + array( 'effect' => 'slide', 'caption_bg' => '1', 'caption_bg_style' => 'custom', 'caption_bg_gradient' => 'linear;bottom;rgba(255,0,128,0.7)@0;rgba(0,96,255,0)@100' ), 'captions' => true ),
+	'collage-caption-gradient' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'collage_rotate' => '20', 'caption_bg' => '1', 'caption_bg_style' => 'custom', 'caption_bg_gradient' => 'linear;bottom;rgba(255,0,128,0.7)@0;rgba(0,96,255,0)@100' ), 'captions' => true ),
+	'art-caption-gradient' => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'caption_bg' => '1', 'caption_bg_style' => 'custom', 'caption_bg_gradient' => 'linear;bottom;rgba(255,0,128,0.7)@0;rgba(0,96,255,0)@100' ), 'captions' => true ),
 	'art-ring-gradient' => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'ring', 'lightbox' => '1', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100' ) ),
 	// Rotation: a grid turned 30° on desktop (filling its block, edges cut), not on mobile; a template turned -20° all of it shown (Fit).
 	'collage-rotate'   => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'collage_columns' => '3', 'collage_count' => '9', 'collage_rotate' => '30', 'collage_rotate_mobile' => '0', 'height' => '420', 'lightbox' => '1' ) ),
@@ -138,6 +142,8 @@ return array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_rounded' => '1', 'lightbox' => '1' ),
 		'photos'   => 10,
 	),
+	// Grid shapes, Content in a window: the second shape (the first on mobile).
+	'art-grid-shapes-content' => array( 'settings' => array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_rounded' => '1', 'art_content' => '1', 'art_content_window' => '2', 'art_content_window_mobile' => '1', 'art_content_text' => '<p>Hello shapes</p>', 'art_content_bg' => 'rgba(30,60,90,1)', 'lightbox' => '1' ) ),
 	// Grid shapes as its block's background: it fills the block behind its content.
 	'art-grid-shapes-background' => array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'grid-shapes', 'art_rounded' => '1', 'background' => '1', 'background_class' => 'fixture-bg', 'background_overlay_color' => 'rgba(0,0,0,0.3)' ),

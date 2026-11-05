@@ -67,7 +67,10 @@ if ( ! isset( $wp_swiper_cases[ $wp_swiper_name ] ) ) {
 	http_response_code( 404 );
 	exit( 'No such case.' );
 }
-$wp_swiper_case = $wp_swiper_cases[ $wp_swiper_name ] + array( 'photos' => 8 );
+$wp_swiper_case = $wp_swiper_cases[ $wp_swiper_name ] + array(
+	'photos'   => 8,
+	'captions' => false,
+);
 
 // One session for every test, made once and kept (its token in the user's
 // meta): a new one each time would be written to the user's sessions by
@@ -102,10 +105,11 @@ $wp_swiper_ids    = get_posts(
 		'fields'         => 'ids',
 	)
 );
-foreach ( $wp_swiper_ids as $wp_swiper_id ) {
+foreach ( $wp_swiper_ids as $wp_swiper_index => $wp_swiper_id ) {
 	$wp_swiper_slides[] = array(
 		'id'                 => $wp_swiper_id,
-		'caption'            => '',
+		// A caption on each where the case asks for one (as fixture.php).
+		'caption'            => $wp_swiper_case['captions'] ? 'Caption ' . ( $wp_swiper_index + 1 ) : '',
 		'description'        => '',
 		'caption_size'       => '',
 		'description_size'   => '',

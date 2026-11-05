@@ -252,4 +252,19 @@ trait WP_Swiper_Settings_Text {
 			sprintf( 'rgba(%d,%d,%d,0)', $r, $g, $b ),
 		);
 	}
+
+	/**
+	 * The captions' own gradient (Background style "Custom gradient"): its
+	 * CSS, '' without a background, with another style, or a value that is
+	 * not one.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return string
+	 */
+	public static function caption_gradient( $settings ) {
+		if ( empty( $settings['caption_bg'] ) || ! isset( $settings['caption_bg_style'], $settings['caption_bg_gradient'] ) || 'custom' !== $settings['caption_bg_style'] ) {
+			return '';
+		}
+		return WP_Swiper_Art::gradient_css( $settings['caption_bg_gradient'] );
+	}
 }

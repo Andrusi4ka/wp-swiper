@@ -1105,7 +1105,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		// Style and color on one row.
 		$this->assertSame( 'caption_bg', $fields['caption_bg_style']['group'] );
 		$this->assertSame( 'caption_bg', $fields['caption_bg_color']['group'] );
-		$this->assertSame( array( 'caption_bg', 'caption_bg_style', 'caption_bg_color' ), WP_Swiper_Settings::blocks()['caption']['caption_background']['fields'] );
+		$this->assertSame( array( 'caption_bg', 'caption_bg_style', 'caption_bg_color', 'caption_bg_gradient' ), WP_Swiper_Settings::blocks()['caption']['caption_background']['fields'] );
 
 		// Its color with its opacity; the far end of the gradient the same color, clear.
 		$style = $this->root_style( $this->render( array( 'caption_bg' => true, 'caption_bg_color' => 'rgba(16,32,48,0.4)' ) ) );
@@ -1116,6 +1116,38 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '--wp-swiper-caption-bg-from:rgba(255,255,255,1)', $style );
 		// The default, as before (black at 65%).
 		$this->assertStringContainsString( '--wp-swiper-caption-bg-from:rgba(0,0,0,0.65)', $this->root_style( $this->render( array( 'caption_bg' => true ) ) ) );
+	}
+
+	public function test_caption_background_a_custom_gradient() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertArrayHasKey( 'custom', $fields['caption_bg_style']['choices'] );
+		$this->assertSame( 'gradient', $fields['caption_bg_gradient']['type'] );
+		// By default as the fading one: the color at the bottom, none at the top.
+		$this->assertSame( 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%)', WP_Swiper_Art::gradient_css( $fields['caption_bg_gradient']['default'] ) );
+
+		$custom = array( 'caption_bg' => true, 'caption_bg_style' => 'custom', 'caption_bg_gradient' => 'linear;left;#ff0080@0;rgba(0,96,255,0.5)@100' );
+		$html   = $this->render( $custom );
+		$this->assertContains( 'wp-swiper--caption-custom', $this->root_classes( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-caption-gradient:linear-gradient(to right, #ff0080 0%, rgba(0,96,255,0.5) 100%)', $this->root_style( $html ) );
+		// Another style, or no background: none of it.
+		foreach ( array( array( 'caption_bg_style' => 'gradient' ), array( 'caption_bg_style' => 'solid' ), array( 'caption_bg' => false ) ) as $other ) {
+			$html = $this->render( $other + $custom );
+			$this->assertNotContains( 'wp-swiper--caption-custom', $this->root_classes( $html ) );
+			$this->assertStringNotContainsString( 'caption-gradient', $this->root_style( $html ) );
+		}
+		// Not a gradient (a forged value): nothing, as without it.
+		$this->assertSame( '', WP_Swiper_Settings::caption_gradient( $this->settings( array( 'caption_bg_gradient' => 'red; background: url(x)' ) + $custom ) ) );
+		// Art: over the whole piece.
+		$art = $this->render( array( 'effect' => 'art' ) + $custom );
+		$this->assertStringContainsString( 'wp-swiper-art--caption-custom', $art );
+		$this->assertStringContainsString( '--wp-swiper-caption-gradient:linear-gradient(to right', $art );
+		// The CSS paints the caption with it (a slider's, Art's, a turned collage's).
+		$this->assertStringContainsString( ".wp-swiper.wp-swiper--caption-custom .wp-swiper__caption {
+	background: var(--wp-swiper-caption-gradient, none);", file_get_contents( WP_SWIPER_DIR . 'assets/css/frontend.css' ) );
+		$this->assertStringContainsString( ".wp-swiper-art--caption-custom .wp-swiper-art__caption {
+	background: var(--wp-swiper-caption-gradient, none);", file_get_contents( WP_SWIPER_DIR . 'assets/css/art.css' ) );
+		$this->assertStringContainsString( ".wp-swiper.wp-swiper--caption-custom .wp-swiper-collage--turned .wp-swiper__caption {
+	background: var(--wp-swiper-caption-gradient, none);", file_get_contents( WP_SWIPER_DIR . 'assets/css/collage.css' ) );
 	}
 
 	public function test_description_motion_class() {

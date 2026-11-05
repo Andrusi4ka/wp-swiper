@@ -1,6 +1,7 @@
 <?php
 /**
- * Art, Content in a window (Ring, Grid + circle, Grid + square, SVG shape):
+ * Art, Content in a window (Ring, Grid + circle, Grid + square, Grid shapes,
+ * SVG shape):
  * an image over text in one window instead of a photo
  * (WP_Swiper_Render::content_box(), as the Collage's Content in a place),
  * its window per device in the config for art.js; not for the other Styles,
@@ -46,18 +47,15 @@ class Test_WP_Swiper_Art_Content extends WP_Swiper_TestCase {
 		$this->assertTrue( wp_script_is( 'wp-swiper-content', 'registered' ) );
 	}
 
-	public function test_ring_and_the_grids_with_a_circle_or_square_too() {
-		foreach ( array( 'ring', 'grid-circle', 'grid-square' ) as $style ) {
+	public function test_ring_and_the_grids_too() {
+		foreach ( array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes' ) as $style ) {
 			$html = $this->render( $this->values( array( 'art_style' => $style ) ), $this->slides( 4 ) );
 			$this->assertStringContainsString( '<div class="wp-swiper-art__content-pool" hidden><div class="wp-swiper-content', $html, $style );
 			$this->assertSame( array( 'desktop' => 1, 'tablet' => 1, 'mobile' => 1 ), $this->art_config( $html )['content']['window'], $style );
 			$this->assertTrue( WP_Swiper_Art::has_content( $style ), $style );
 		}
-		// Not Grid shapes (yet), nor Text mask.
-		foreach ( array( 'grid-shapes', 'text' ) as $style ) {
-			$this->assertFalse( WP_Swiper_Art::has_content( $style ), $style );
-		}
-		$this->assertStringNotContainsString( 'wp-swiper-art__content-pool', $this->render( $this->values( array( 'art_style' => 'grid-shapes' ) ) ) );
+		// Not Text mask (its letters).
+		$this->assertFalse( WP_Swiper_Art::has_content( 'text' ) );
 		$this->assertStringNotContainsString( 'wp-swiper-art__content-pool', $this->render( $this->values( array( 'effect' => 'text-mask' ) ) ) );
 		// SVG shape without a file yet: no shape, no content.
 		$this->assertStringNotContainsString( 'wp-swiper-art__content-pool', $this->render( $this->values( array( 'art_shape' => '' ) ) ) );
@@ -165,7 +163,7 @@ class Test_WP_Swiper_Art_Content extends WP_Swiper_TestCase {
 		$this->assertSame( array( 'art_content', 'art_content_window', 'art_content_image', 'art_content_image_size', 'art_content_text', 'art_content_font_size', 'art_content_padding', 'art_content_valign', 'art_content_bg' ), $blocks['art_content']['fields'] );
 		$fields = WP_Swiper_Settings::fields();
 		foreach ( $blocks['art_content']['fields'] as $key ) {
-			$this->assertSame( array( 'ring', 'grid-circle', 'grid-square', 'shape' ), $fields[ $key ]['styles'], $key );
+			$this->assertSame( array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ), $fields[ $key ]['styles'], $key );
 			$this->assertSame( array( 'art' ), $fields[ $key ]['effects'], $key );
 		}
 	}

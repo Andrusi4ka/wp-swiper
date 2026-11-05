@@ -161,3 +161,20 @@ test( 'art-ring-content-swap: the content stays in the middle, the ring swaps', 
 	expect( after.photos ).not.toBe( before.photos );
 	expect( errors ).toEqual( [] );
 } );
+
+// Grid shapes (cases.php art-grid-shapes-content): the content in its second
+// shape (the first on mobile), the photos in the others; its background along
+// the shape (clip-path), no button or Gradient on it.
+test( 'art-grid-shapes-content: the content in the shape set for the device', async ( { page } ) => {
+	const errors = await open( page, 'art-grid-shapes-content' );
+	const found = await state( page );
+	const mobile = page.viewportSize().width < 768;
+	expect( found.contents ).toBe( 1 );
+	expect( found.index ).toBe( mobile ? 0 : 1 );
+	expect( found.hasPhoto ).toBe( false );
+	expect( found.role ).toBeNull();
+	expect( found.background ).toBe( 'rgb(30, 60, 90)' );
+	expect( found.photos.every( ( real ) => real >= 0 ) ).toBe( true );
+	expect( await page.locator( '.wp-swiper-art__piece--content .wp-swiper-content__text' ).innerText() ).toContain( 'Hello shapes' );
+	expect( errors ).toEqual( [] );
+} );

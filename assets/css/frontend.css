@@ -542,6 +542,12 @@
 	padding: 20px;
 }
 
+/* Custom gradient: the caption's own colors and direction over its band
+   (its room as the fading one's). */
+.wp-swiper.wp-swiper--caption-custom .wp-swiper__caption {
+	background: var(--wp-swiper-caption-gradient, none);
+}
+
 .wp-swiper.wp-swiper--caption-nobg .wp-swiper__caption {
 	background: none;
 }

@@ -80,3 +80,17 @@ test( 'art-ring-gradient: one across the stage, each window its part', async ( {
 	}
 	expect( errors ).toEqual( [] );
 } );
+
+// Captions on a Custom gradient (cases.php *-caption-gradient): each
+// caption's background its colors and direction — a slider's band, a turned
+// collage's place, Art's whole piece.
+const CAPTION = /^linear-gradient\(to top, rgba\(255, 0, 128, 0\.7\) 0%, rgba\(0, 96, 255, 0\) 100%\)$/;
+for ( const [ name, selector ] of [ [ 'slide-caption-gradient', '.wp-swiper__caption' ], [ 'collage-caption-gradient', '.wp-swiper__caption' ], [ 'art-caption-gradient', '.wp-swiper-art__caption' ] ] ) {
+	test( name + ': the captions on their own gradient', async ( { page } ) => {
+		const errors = await open( page, name );
+		const images = await page.evaluate( ( sel ) => [].map.call( document.querySelectorAll( sel ), ( caption ) => getComputedStyle( caption ).backgroundImage ), selector );
+		expect( images.length ).toBeGreaterThan( 0 );
+		images.forEach( ( image ) => expect( image ).toMatch( CAPTION ) );
+		expect( errors ).toEqual( [] );
+	} );
+}

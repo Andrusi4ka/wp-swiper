@@ -282,3 +282,22 @@ test( 'Creative: its Style from icons, first in the Effect block, the preview dr
 	await expect( frame( page ).locator( '.wp-swiper--carousel' ) ).toBeAttached( { timeout: 15000 } );
 	expect( errors ).toEqual( [] );
 } );
+
+test( 'Caption: a Custom gradient shows its editor instead of the color', async ( { page } ) => {
+	const errors = await edit( page, 'slide-caption-gradient' );
+	await openPage( page, 'caption' );
+	await page.selectOption( '#wp-swiper-caption_bg_style', 'gradient' );
+	await expect( page.locator( '[data-field="caption_bg_color"]' ) ).toBeVisible();
+	await expect( page.locator( '[data-field="caption_bg_gradient"]' ) ).toBeHidden();
+	await page.selectOption( '#wp-swiper-caption_bg_style', 'custom' );
+	await expect( page.locator( '[data-field="caption_bg_color"]' ) ).toBeHidden();
+	const editor = page.locator( '[data-field="caption_bg_gradient"] .wp-swiper-gradient' );
+	await expect( editor ).toBeVisible();
+	// Its editor works as the photos' Gradient's: a click adds a color.
+	const value = editor.locator( '.wp-swiper-gradient__value' );
+	const before = ( await value.inputValue() ).split( ';' ).length;
+	const bar = await editor.locator( '.wp-swiper-gradient__bar' ).boundingBox();
+	await page.mouse.click( bar.x + bar.width * 0.5, bar.y + bar.height / 2 );
+	await expect.poll( async () => ( await value.inputValue() ).split( ';' ).length ).toBe( before + 1 );
+	expect( errors ).toEqual( [] );
+} );

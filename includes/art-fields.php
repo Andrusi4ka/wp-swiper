@@ -305,7 +305,7 @@ return array(
 		'type'    => 'color',
 		'default' => '#ffffff',
 	),
-	// Ring, the grids with a circle or square, SVG shape: a window with an
+	// Ring, the grids (Grid shapes too), SVG shape: a window with an
 	// image over text instead of a photo (art.js fill()), which stays there
 	// while the photos change, as the Collage's Content in a place
 	// (WP_Swiper_Render::content_box()). Its window per device (in their
@@ -316,7 +316,7 @@ return array(
 	'art_content'        => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'   => __( 'Content in a window', 'wp-swiper' ),
 		'type'    => 'checkbox',
 		'default' => false,
@@ -325,7 +325,7 @@ return array(
 	'art_content_window' => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
+		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'      => __( 'Window', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -333,12 +333,12 @@ return array(
 		'min'        => 1,
 		'max'        => 100,
 		'step'       => 1,
-		'help'       => __( 'Which window has it: 1 is the one in the middle (SVG shape: the drawing\'s main one), then the others in order. Or drag it onto a window in the preview.', 'wp-swiper' ),
+		'help'       => __( 'Which window has it: 1 is the one in the middle (Grid shapes: the first shape; SVG shape: the drawing\'s main one), then the others in order. Or drag it onto a window in the preview.', 'wp-swiper' ),
 	),
 	'art_content_image'  => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'   => __( 'Image', 'wp-swiper' ),
 		'type'    => 'image',
 		'default' => 0,
@@ -346,7 +346,7 @@ return array(
 	'art_content_image_size' => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
+		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'      => __( 'Image size (%)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -359,7 +359,7 @@ return array(
 	'art_content_text'   => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'   => __( 'Text', 'wp-swiper' ),
 		'type'    => 'editor',
 		'default' => '',
@@ -368,7 +368,7 @@ return array(
 	'art_content_font_size' => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
+		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'      => __( 'Font size (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -381,7 +381,7 @@ return array(
 	'art_content_padding' => array(
 		'section'    => 'layout',
 		'effects'    => $wp_swiper_art,
-		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
+		'styles'     => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'      => __( 'Padding (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -394,7 +394,7 @@ return array(
 	'art_content_valign' => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'   => __( 'Vertical alignment', 'wp-swiper' ),
 		'type'    => 'select',
 		'default' => 'center',
@@ -407,7 +407,7 @@ return array(
 	'art_content_bg'     => array(
 		'section' => 'layout',
 		'effects' => $wp_swiper_art,
-		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'shape' ),
+		'styles'  => array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ),
 		'label'   => __( 'Background', 'wp-swiper' ),
 		'type'    => 'alpha_color',
 		'default' => 'rgba(0,0,0,0)',

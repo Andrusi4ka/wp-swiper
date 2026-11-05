@@ -200,13 +200,13 @@ class WP_Swiper_Art {
 
 	/**
 	 * Whether a Style can have Content in a window: Ring, Grid + circle,
-	 * Grid + square, SVG shape (not Grid shapes yet, nor Text mask).
+	 * Grid + square, Grid shapes, SVG shape (not Text mask: its letters).
 	 *
 	 * @param string $style Style.
 	 * @return bool
 	 */
 	public static function has_content( $style ) {
-		return in_array( $style, array( 'ring', 'grid-circle', 'grid-square', 'shape' ), true );
+		return in_array( $style, array( 'ring', 'grid-circle', 'grid-square', 'grid-shapes', 'shape' ), true );
 	}
 
 	// Grid shapes: the most columns and rows.
@@ -263,8 +263,8 @@ class WP_Swiper_Art {
 					'title'  => __( 'Opening', 'wp-swiper' ),
 					'fields' => array( 'art_opening', 'art_ring_opening', 'art_opening_image', 'art_opening_image_size', 'art_opening_text', 'art_opening_font_size', 'art_opening_gap' ),
 				),
-				// A window with content instead of a photo (Ring, the grids with a
-				// circle or square, SVG shape), a block of its own.
+				// A window with content instead of a photo (Ring, the grids, SVG
+				// shape: has_content()), a block of its own.
 				'art_content' => array(
 					'title'  => __( 'Content in a window', 'wp-swiper' ),
 					'fields' => array( 'art_content', 'art_content_window', 'art_content_image', 'art_content_image_size', 'art_content_text', 'art_content_font_size', 'art_content_padding', 'art_content_valign', 'art_content_bg' ),

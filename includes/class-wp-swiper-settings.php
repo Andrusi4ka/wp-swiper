@@ -810,7 +810,7 @@ class WP_Swiper_Settings {
 				),
 				'caption_background' => array(
 					'title'  => __( 'Background', 'wp-swiper' ),
-					'fields' => array( 'caption_bg', 'caption_bg_style', 'caption_bg_color' ),
+					'fields' => array( 'caption_bg', 'caption_bg_style', 'caption_bg_color', 'caption_bg_gradient' ),
 				),
 			),
 			'description' => array(

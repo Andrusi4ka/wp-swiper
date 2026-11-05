@@ -283,7 +283,7 @@ class WP_Swiper_Render {
 			'' !== WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ) ? 'wp-swiper--caption-weight' : '',
 			'horizontal' !== $settings['caption_orientation'] ? 'wp-swiper--caption-' . $settings['caption_orientation'] : '',
 			// Caption background: none, or solid instead of the default gradient; text shadow.
-			! $settings['caption_bg'] ? 'wp-swiper--caption-nobg' : ( 'solid' === $settings['caption_bg_style'] ? 'wp-swiper--caption-solid' : '' ),
+			! $settings['caption_bg'] ? 'wp-swiper--caption-nobg' : ( 'solid' === $settings['caption_bg_style'] ? 'wp-swiper--caption-solid' : ( '' !== WP_Swiper_Settings::caption_gradient( $settings ) ? 'wp-swiper--caption-custom' : '' ) ),
 			$settings['caption_shadow'] ? 'wp-swiper--caption-shadow' : '',
 			// The block's background (frontend.js background()), with a color over it.
 			$background ? 'wp-swiper--background' : '',
@@ -488,6 +488,10 @@ class WP_Swiper_Render {
 			list( $from, $to ) = WP_Swiper_Settings::caption_bg_colors( $settings );
 			$style[]           = '--wp-swiper-caption-bg-from:' . $from;
 			$style[]           = '--wp-swiper-caption-bg-to:' . $to;
+			// Custom gradient: its own colors (CSS of the caption's background).
+			if ( '' !== WP_Swiper_Settings::caption_gradient( $settings ) ) {
+				$style[] = '--wp-swiper-caption-gradient:' . WP_Swiper_Settings::caption_gradient( $settings );
+			}
 		}
 		$style = array_merge( $style, WP_Swiper_Settings::font_weight_vars( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ), 'wp-swiper-caption-weight' ) );
 		// Desktop 0 needs no variable (the CSS falls back to 0); tablet/mobile

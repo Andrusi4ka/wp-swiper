@@ -219,7 +219,7 @@ trait WP_Swiper_Art_Parts {
 		return array(
 			// A weight saved for the whole slider (until 2.8); each caption's on itself (photo()).
 			'' !== WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ) ? 'wp-swiper-art--caption-weight' : '',
-			! $settings['caption_bg'] ? 'wp-swiper-art--caption-nobg' : ( 'solid' === $settings['caption_bg_style'] ? 'wp-swiper-art--caption-solid' : '' ),
+			! $settings['caption_bg'] ? 'wp-swiper-art--caption-nobg' : ( 'solid' === $settings['caption_bg_style'] ? 'wp-swiper-art--caption-solid' : ( '' !== WP_Swiper_Settings::caption_gradient( $settings ) ? 'wp-swiper-art--caption-custom' : '' ) ),
 			$settings['caption_shadow'] ? 'wp-swiper-art--caption-shadow' : '',
 		);
 	}
@@ -241,6 +241,10 @@ trait WP_Swiper_Art_Parts {
 			list( $from, $to ) = WP_Swiper_Settings::caption_bg_colors( $settings );
 			$style[]           = '--wp-swiper-caption-bg-from:' . $from;
 			$style[]           = '--wp-swiper-caption-bg-to:' . $to;
+			// Custom gradient: its own colors (CSS of the caption's background).
+			if ( '' !== WP_Swiper_Settings::caption_gradient( $settings ) ) {
+				$style[] = '--wp-swiper-caption-gradient:' . WP_Swiper_Settings::caption_gradient( $settings );
+			}
 		}
 		$style = array_merge( $style, WP_Swiper_Settings::font_weight_vars( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ), 'wp-swiper-caption-weight' ) );
 		return $style;
@@ -266,6 +270,40 @@ trait WP_Swiper_Art_Parts {
 	}
 
 	/**
+	 * An image's copies WordPress made, as [ width, height, URL ] from the
+	 * narrowest to the full size: those of its proportions only (a cropped
+	 * thumbnail would show less of it). art.js puts the smallest one as wide
+	 * as the photo is drawn into each window.
+	 *
+	 * @param int $id Attachment ID.
+	 * @return array[]
+	 */
+	public static function copies( $id ) {
+		$full = wp_get_attachment_image_src( $id, 'full' );
+		if ( ! $full || ! $full[1] || ! $full[2] ) {
+			return array();
+		}
+		$ratio  = $full[1] / $full[2];
+		$copies = array( (int) $full[1] => array( (int) $full[1], (int) $full[2], $full[0] ) );
+		$meta   = wp_get_attachment_metadata( $id );
+		foreach ( isset( $meta['sizes'] ) && is_array( $meta['sizes'] ) ? $meta['sizes'] : array() as $name => $size ) {
+			if ( empty( $size['width'] ) || empty( $size['height'] ) || $size['width'] >= $full[1] || isset( $copies[ (int) $size['width'] ] ) ) {
+				continue;
+			}
+			// Its proportions within 2% (rounding of a scaled copy).
+			if ( abs( $size['width'] / $size['height'] / $ratio - 1 ) > 0.02 ) {
+				continue;
+			}
+			$copy = wp_get_attachment_image_src( $id, $name );
+			if ( $copy ) {
+				$copies[ (int) $size['width'] ] = array( (int) $size['width'], (int) $size['height'], $copy[0] );
+			}
+		}
+		ksort( $copies );
+		return array_values( $copies );
+	}
+
+	/**
 	 * One photo in the pool (art.js copies it into its piece), linked when
 	 * its slide has a link, with its caption (art.js sets where in the
 	 * piece's shape the text sits).
@@ -275,18 +313,23 @@ trait WP_Swiper_Art_Parts {
 	 * @param array $settings Slider settings.
 	 */
 	private static function photo( $slide, $index, $settings ) {
-		// The full size only, no smaller copies to pick from (srcset): a photo
-		// is cropped to its shape, often drawn wider than its piece, and the
-		// browser's guess from the piece made it blurry first, sharp later.
+		// No srcset (the browser's guess from the piece made a photo cropped to
+		// its shape blurry first, sharp later): its copies instead, art.js
+		// picking the smallest as wide as the photo is drawn (copies()). The
+		// full size as src until then (in the pool's template nothing loads).
 		add_filter( 'wp_calculate_image_srcset', '__return_false', 99 );
-		$image = wp_get_attachment_image(
+		$copies = self::copies( $slide['id'] );
+		$image  = wp_get_attachment_image(
 			$slide['id'],
 			'full',
 			false,
-			array(
-				'class'    => 'wp-swiper-art__image',
-				'loading'  => 0 === $index ? 'eager' : 'lazy',
-				'decoding' => 'async',
+			array_filter(
+				array(
+					'class'                 => 'wp-swiper-art__image',
+					'loading'               => 0 === $index ? 'eager' : 'lazy',
+					'decoding'              => 'async',
+					'data-wp-swiper-copies' => count( $copies ) > 1 ? wp_json_encode( $copies ) : '',
+				)
 			)
 		);
 		remove_filter( 'wp_calculate_image_srcset', '__return_false', 99 );

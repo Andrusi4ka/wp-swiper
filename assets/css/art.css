@@ -279,6 +279,11 @@
 	background: var(--wp-swiper-caption-bg-from, rgba(0, 0, 0, 0.65));
 }
 
+/* Custom gradient: its own colors over the whole piece (its shape cuts it). */
+.wp-swiper-art--caption-custom .wp-swiper-art__caption {
+	background: var(--wp-swiper-caption-gradient, none);
+}
+
 .wp-swiper-art--caption-nobg .wp-swiper-art__caption {
 	background: none;
 }

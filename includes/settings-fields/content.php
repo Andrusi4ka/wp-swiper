@@ -69,8 +69,9 @@ return array(
 		'choices' => array(
 			'gradient' => __( 'Gradient (fades out)', 'wp-swiper' ),
 			'solid'    => __( 'Solid', 'wp-swiper' ),
+			'custom'   => __( 'Custom gradient', 'wp-swiper' ),
 		),
-		'help'    => __( 'The gradient runs from the image edge where the text is.', 'wp-swiper' ),
+		'help'    => __( 'Gradient: from the image edge where the text is, fading out. Custom gradient: your own colors and direction (below).', 'wp-swiper' ),
 	),
 	'caption_bg_color'      => array(
 		'section' => 'caption',
@@ -78,6 +79,17 @@ return array(
 		'label'   => __( 'Background color', 'wp-swiper' ),
 		'type'    => 'alpha_color',
 		'default' => 'rgba(0,0,0,0.65)',
+	),
+	// Background style "Custom gradient": its own colors, edited as the
+	// photos' Gradient (the same field type and editor; WP_Swiper_Art::
+	// gradient_css()), over the caption's band (Art: its photo's piece).
+	// By default as the fading one: the color at the bottom, none at the top.
+	'caption_bg_gradient'   => array(
+		'section' => 'caption',
+		'label'   => __( 'Gradient colors', 'wp-swiper' ),
+		'type'    => 'gradient',
+		'default' => 'linear;bottom;rgba(0,0,0,0.65)@0;rgba(0,0,0,0)@100',
+		'help'    => __( 'Click the bar to add a color, drag a color along it, pick one to change or delete it.', 'wp-swiper' ),
 	),
 	'caption_shadow'        => array(
 		'section' => 'caption',

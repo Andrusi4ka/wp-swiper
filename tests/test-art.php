@@ -692,7 +692,7 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 		$html = ob_get_clean();
 		$this->assertStringContainsString( 'data-field="art_ring_count" data-effects="art" data-styles="ring"', $html );
 		$this->assertStringContainsString( 'data-field="art_ring_opening" data-effects="art" data-styles="ring"', $html );
-		$this->assertStringContainsString( 'data-field="art_content_text" data-effects="art" data-styles="ring grid-circle grid-square shape"', $html );
+		$this->assertStringContainsString( 'data-field="art_content_text" data-effects="art" data-styles="ring grid-circle grid-square grid-shapes shape"', $html );
 		$this->assertStringContainsString( 'data-field="art_style" data-effects="art">', $html );
 	}
 
@@ -1026,11 +1026,11 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 			$this->assertSame( 'art_cells', $fields[ $key ]['group'], $key );
 			$this->assertArrayNotHasKey( 'responsive', $fields[ $key ], $key );
 		}
-		// Gap and corners as the grids'; captions, What changes and Appearance as SVG shape's.
-		foreach ( array( 'art_gap', 'art_rounded', 'art_radius', 'art_caption_middle', 'art_shape_target', 'art_shape_appear' ) as $key ) {
+		// Gap and corners as the grids'; captions, What changes, Appearance and Content in a window as SVG shape's.
+		foreach ( array( 'art_gap', 'art_rounded', 'art_radius', 'art_caption_middle', 'art_shape_target', 'art_shape_appear', 'art_content' ) as $key ) {
 			$this->assertContains( 'grid-shapes', $fields[ $key ]['styles'], $key );
 		}
-		foreach ( array( 'art_grid_count', 'art_grid_columns', 'art_ring_center', 'art_swap_target', 'art_content', 'art_shape', 'art_align' ) as $key ) {
+		foreach ( array( 'art_grid_count', 'art_grid_columns', 'art_ring_center', 'art_swap_target', 'art_shape', 'art_align' ) as $key ) {
 			$this->assertNotContains( 'grid-shapes', $fields[ $key ]['styles'], $key );
 		}
 

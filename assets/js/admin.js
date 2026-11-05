@@ -733,9 +733,11 @@
 			$list.toggleClass( 'wp-swiper-slides--positions', cover && ! autoWidth );
 			// Caption background options, only with a background.
 			var captionBg = $( '#wp-swiper-caption_bg' ).is( ':checked' );
-			[ 'caption_bg_style', 'caption_bg_color' ].forEach( function ( name ) {
-				field( name ).toggle( captionBg );
-			} );
+			field( 'caption_bg_style' ).toggle( captionBg );
+			// One color (fading or solid), or a Custom gradient's own colors.
+			var captionCustom = $( '#wp-swiper-caption_bg_style' ).val() === 'custom';
+			field( 'caption_bg_color' ).toggle( captionBg && ! captionCustom );
+			field( 'caption_bg_gradient' ).toggle( captionBg && captionCustom );
 			var lightbox = $( '#wp-swiper-lightbox' ).is( ':checked' );
 			// Rounded corners of the image: the radius once on (as the slider's).
 			field( 'lightbox_border_rounded' ).toggle( lightbox );

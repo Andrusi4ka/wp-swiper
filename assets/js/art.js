@@ -1975,12 +1975,70 @@
 				img.addEventListener( 'load', fitContent );
 			} );
 		}
+		/*
+		 * Each window's photo: the smallest of its copies (the image's
+		 * data-wp-swiper-copies, [ width, height, URL ] narrowest first,
+		 * class-wp-swiper-art.php copies()) at least as wide as it is drawn:
+		 * covering its image box, at the screen's density, Zoom on hover's 6%
+		 * more. Once a larger one is shown, never a smaller one (no second
+		 * download when the window shrinks). A clone gets no src before it is
+		 * sized (hold()), so the full size is not fetched first; a window not
+		 * shown (no box) gets one once it is (sizePhotos() after a layout).
+		 */
+		var DENSITY = Math.min( 3, window.devicePixelRatio || 1 );
+		var ZOOM = block.classList.contains( 'wp-swiper-art--hover-zoom' ) ? 1.06 : 1;
+		function copiesOf( img ) {
+			if ( undefined === img.wpCopies ) {
+				try {
+					img.wpCopies = JSON.parse( img.getAttribute( 'data-wp-swiper-copies' ) || 'null' );
+				} catch ( e ) {
+					img.wpCopies = null;
+				}
+			}
+			return img.wpCopies && img.wpCopies.length ? img.wpCopies : null;
+		}
+		function copyFor( list, width, height ) {
+			var full = list[ list.length - 1 ];
+			var drawn = Math.max( width, height * full[ 0 ] / full[ 1 ] ) * DENSITY * ZOOM;
+			for ( var i = 0; i < list.length; i++ ) {
+				if ( list[ i ][ 0 ] >= drawn ) {
+					return list[ i ];
+				}
+			}
+			return full;
+		}
+		function hold( photo ) {
+			var img = photo.querySelector( 'img' );
+			if ( img && copiesOf( img ) ) {
+				img.removeAttribute( 'src' );
+			}
+			return img;
+		}
+		function sizeImage( img ) {
+			var list = img && copiesOf( img );
+			if ( ! list || ! img.offsetWidth || ! img.offsetHeight ) {
+				return;
+			}
+			var copy = copyFor( list, img.offsetWidth, img.offsetHeight );
+			if ( img.wpWidth >= copy[ 0 ] ) {
+				return;
+			}
+			img.wpWidth = copy[ 0 ];
+			img.src = copy[ 2 ];
+		}
+		function sizePhotos() {
+			pieces.forEach( function ( piece ) {
+				[].forEach.call( piece.querySelectorAll( ':scope > .wp-swiper-art__photo img' ), sizeImage );
+			} );
+		}
+
 		// The Gradient (art.css): one across the whole stage, each window
 		// showing its part (where it is in the stage, the stage's size).
 		var draw = function ( block, stage, config ) {
 			drawStyle( block, stage, config );
 			gradientPlaces( block, stage );
 			fitContent();
+			sizePhotos();
 		};
 		if ( ! stage || ! drawStyle || ! photos.length ) {
 			return null;
@@ -2081,7 +2139,10 @@
 				[].slice.call( piece.querySelectorAll( ':scope > .wp-swiper-art__photo' ) ).forEach( function ( photo ) {
 					piece.removeChild( photo );
 				} );
-				piece.appendChild( photos[ real ].cloneNode( true ) );
+				var clone = photos[ real ].cloneNode( true );
+				var image = hold( clone );
+				piece.appendChild( clone );
+				sizeImage( image );
 			} );
 			if ( contentNode && content < 0 && contentNode.parentNode !== contentPool ) {
 				contentPool.appendChild( contentNode );
@@ -2206,11 +2267,16 @@
 			}
 		}
 
-		// Slide `real`'s image fetched and decoded ahead (once).
+		// Slide `real`'s image fetched and decoded ahead (once): the copy the
+		// main window's photo would take.
 		var preloaded = {};
 		function preload( real ) {
 			var source = photos[ real ] && photos[ real ].querySelector( 'img' );
-			var src = source && ( source.currentSrc || source.getAttribute( 'src' ) );
+			var list = source && copiesOf( source );
+			var shown = list && pieces[ 0 ] ? pieces[ 0 ].querySelector( ':scope > .wp-swiper-art__photo img' ) : null;
+			var src = source && ( list
+				? ( shown && shown.offsetWidth && shown.offsetHeight ? copyFor( list, shown.offsetWidth, shown.offsetHeight )[ 2 ] : '' )
+				: source.getAttribute( 'src' ) );
 			if ( ! src || preloaded[ src ] ) {
 				return;
 			}
@@ -2229,12 +2295,13 @@
 
 			var fresh = photos[ real ].cloneNode( true );
 			fresh.classList.add( 'is-entering' );
-			var img = fresh.querySelector( 'img' );
+			var img = hold( fresh );
 			// Loaded now, not when "lazy" gets to it (it is about to show).
 			if ( img ) {
 				img.removeAttribute( 'loading' );
 			}
 			piece.appendChild( fresh );
+			sizeImage( img );
 
 			var decoded = img && img.decode ? img.decode().catch( function () {} ) : Promise.resolve();
 			var late = new Promise( function ( resolve ) {
