@@ -543,6 +543,26 @@
   gradient`: смуга підпису слайдера / колажу (і повернутого колажу), уся
   площа шматка Art. Тести: `test-render`, `gradient.spec.js`
   (`*-caption-gradient`), `admin.spec.js`.
+- **Повзунки радіусів** (2026-11-06, рішення користувача): усі 7 полів
+  радіусів (слайди, Art, смуги Text mask, мініатюри, лайтбокс, мініатюри
+  лайтбокса, пагінація) — повзунок ліворуч, число праворуч, як Speed /
+  Delay (ключ схеми `range` => [ min, max ] повзунка; число може більше —
+  `max`). Тепер і для полів «на кожен пристрій»: один повзунок перед
+  трьома числами, показує видиме (`admin.js syncRange()` /
+  `rangeNumber()`; порожнє планшета / телефона — успадковане з
+  placeholder), рух дає пристрою своє значення й оновлює успадкування
+  (`syncResponsive`); `showFieldDevice()` і `syncResponsive()`
+  (`admin-pages.js`) кличуть `shared.syncRange`. Так само 4 поля Gap (px)
+  блоку Size (`space_between` 0–100, `collage_gap`, `art_gap`,
+  `text_mask_gap` — уся їхня межа) і Active slide size (%) «Make the
+  active slide wider» (`active_width`, 5–95, крок 0,5), Gap to the slider
+  (`description_offset`, 0–100), Thumbnails: Gap to the slider
+  (`thumbs_spacing`, 0–100) і Inactive thumbnail opacity (`thumbs_opacity`,
+  10–100, крок 5), Collage Rotation (`collage_rotate`, −45…45), Art
+  Image size (%) у Content in a window і Opening (`art_content_image_size`,
+  `art_opening_image_size`, 10–100, крок 5), 2026-11-06. Далі
+  за потреби — Height,
+  Image size, Padding: лише ключ `range`.
 - **Тінь у режимі фону** (2026-11-04, рішення користувача): лише Collage і
   Art (`SHADOW_BACKGROUND_EFFECTS`; `shadow()` і `admin.js canShadow`), бо
   там фото стоять окремо; для слайдерів у фоні — ні. Огляд «спільності»
@@ -754,7 +774,23 @@
     після `<head>` запам'ятовуються (`remember_late_styles()`, опція
     `wp_swiper_late_styles`, понад `LATE_PAGES` сторінок → `'*'`);
   - `fetchpriority="high"` першому фото першого слайдера сторінки.
-- Art: `class-wp-swiper-art.php`, `art.js`, `art.css`.
+- Art: `class-wp-swiper-art.php`, `art.js`, `art.css`. **`art.js` розділено**
+  (2026-11-06, рішення користувача): `art.js` — ядро (Ring, Grid + circle /
+  square, SVG shape, вікна, заміна фото, лайтбокс, описи, розмір копій,
+  `setup()` / `init()`); `art-cells.js` — Grid shapes (`gridShapes()`,
+  клітинки, `window.wpSwiperArtCells`); `art-text.js` — Text mask
+  (`textLayout()`, `textMask()`, `stripShape()`, шрифти). Частини
+  залежать від ядра й беруть його помічники з `window.wpSwiperArtKit`
+  (`forDevice`, `place`, `captionAt`, `outline`, `tidyOutline`, `SVG`,
+  `gradientPlaces`), реєструють стиль у `kit.styles` і кличуть
+  `kit.init()`; `init()` ядра пропускає блок, чий стиль ще не додано.
+  Підключення — `WP_Swiper_Art::SCRIPTS` (стиль → файл), лише для свого
+  стилю (сторінка з Ring не качає ні Grid shapes, ні Text mask); прев'ю
+  друкує всі. Новий помічник, потрібний частині, — у `wpSwiperArtKit`.
+  Розділено механічно (acorn: що кожна частина бере), розкладка всіх
+  випадків у знімках та сама; змінились лише `*-files.json`. Згадки
+  «`art.js textLayout()`» тощо вище — тепер у `art-text.js` /
+  `art-cells.js`.
   `class-wp-swiper-svg-shape.php` розбирає SVG у геометрію (JSON лише з
   M/L/C/Z і числами 0–1); сам файл ніде не виводиться.
 - JS на сайті:

@@ -252,6 +252,7 @@ return array(
 		'min'        => 0,
 		'max'        => 40,
 		'step'       => 1,
+		'range'      => array( 0, 40 ),
 	),
 	// Rounded corners, as a slider's: the radius once it is on (on by
 	// default, as Art always had them). Saved before the switch: on
@@ -275,6 +276,7 @@ return array(
 		'min'        => 0,
 		'max'        => 60,
 		'step'       => 1,
+		'range'      => array( 0, 60 ),
 	),
 	// A border along each photo's shape (art.js draws it), as a slider's
 	// Image border: a width per device, one color.
@@ -354,6 +356,7 @@ return array(
 		'min'        => 10,
 		'max'        => 100,
 		'step'       => 5,
+		'range'      => array( 10, 100 ),
 		'help'       => __( 'Of the width inside the window\'s box; the image keeps its proportions. With text under it: at most half the height.', 'wp-swiper' ),
 	),
 	'art_content_text'   => array(
@@ -436,6 +439,7 @@ return array(
 		'min'        => 10,
 		'max'        => 100,
 		'step'       => 5,
+		'range'      => array( 10, 100 ),
 		'help'       => __( 'Of the free space in the opening; the image keeps its proportions. With text under it: at most half the height.', 'wp-swiper' ),
 	),
 	'art_opening_text'   => array(
@@ -802,6 +806,7 @@ return array(
 		'min'        => 0,
 		'max'        => 60,
 		'step'       => 1,
+		'range'      => array( 0, 60 ),
 	),
 	// Strips on or off (on by default, as they always were). Off: the letters
 	// alone, Letter size Auto as large as the block (not TEXT_AUTO), Gap
@@ -903,6 +908,7 @@ return array(
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
+		'range'      => array( 0, 100 ),
 		'help'       => __( 'At most half the strip\'s width: a larger one rounds its end in a half circle.', 'wp-swiper' ),
 	),
 	'text_mask_corners'  => array(

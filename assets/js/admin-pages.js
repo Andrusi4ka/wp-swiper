@@ -232,6 +232,8 @@
 					$( this ).toggleClass( 'has-value', !! owns[ device ] );
 				}
 			} );
+			// Its slider at the value now inherited (admin.js).
+			shared.syncRange( $field );
 		}
 
 		$( '.wp-swiper-field--responsive' ).each( function () {
@@ -260,6 +262,8 @@
 			if ( $field.hasClass( 'wp-swiper-field--tiles' ) && typeof syncTiles === 'function' ) {
 				syncTiles( $field );
 			}
+			// A slider beside the number: at that device's value (admin.js).
+			shared.syncRange( $field );
 		}
 
 		$( '#wp-swiper-settings' )

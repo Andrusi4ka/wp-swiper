@@ -315,7 +315,7 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		$this->assertSame( 'end', WP_Swiper_Art::text_config( $this->text() )['align']['desktop'] );
 		$this->assertSame( 'auto', WP_Swiper_Art::text_config( $this->text( array( 'text_mask_direction' => 'left' ) ) )['align']['desktop'] );
 		// art.js: each letter in its column (as wide as the widest, at the word's edge), its strip from where it ends.
-		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/art.js' );
+		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/art-text.js' );
 		$this->assertStringContainsString( "var lx = columnX + ( 'start' === align ? 0 : ( 'center' === align ? ( band - depth ) / 2 : band - depth ) );", $js );
 		$this->assertStringContainsString( "var top = lift + ( 'start' === align ? 0 : ( 'center' === align ? ( rise - depth ) / 2 : scale * ( up - size.ascent ) ) );", $js );
 		// In the Size block, after Art's Alignment.
@@ -408,7 +408,7 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		// Off in the form (a checkbox left out): off.
 		$this->assertFalse( WP_Swiper_Settings::sanitize( array( 'effect' => 'text-mask' ) )['text_mask_strips_on'] );
 		// art.js: the letters alone, Auto as large as the block, Right at the right, Left at the left.
-		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/art.js' );
+		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/art-text.js' );
 		$this->assertStringContainsString( 'var bare = !! text.bare;', $js );
 		$this->assertStringContainsString( '( bare ? 1 : TEXT_AUTO )', $js );
 		$this->assertStringContainsString( 'item = { left: lx, top: start, width: depth, height: span, strip: null };', $js );

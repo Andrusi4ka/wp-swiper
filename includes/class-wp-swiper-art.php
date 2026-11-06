@@ -33,6 +33,13 @@ class WP_Swiper_Art {
 	// The effects this class draws.
 	const EFFECTS = array( self::EFFECT, self::TEXT_EFFECT );
 
+	// art.js's parts, Style => file (assets/js/art-{file}.js): loaded after it
+	// only where a slider has that Style (Text mask: Art's "text").
+	const SCRIPTS = array(
+		'grid-shapes' => 'cells',
+		'text'        => 'text',
+	);
+
 	// Text mask: the most characters of its word.
 	const TEXT_MAX = 24;
 
@@ -83,6 +90,11 @@ class WP_Swiper_Art {
 		wp_register_style( 'wp-swiper-art', WP_SWIPER_URL . 'assets/css/art.css', array(), wp_swiper_asset_version( 'assets/css/art.css' ) );
 		WP_Swiper_Render::register_content();
 		wp_register_script( 'wp-swiper-art', WP_SWIPER_URL . 'assets/js/art.js', array( 'wp-swiper-content' ), wp_swiper_asset_version( 'assets/js/art.js' ), true );
+		// Its parts in files of their own, after it, only where a slider needs
+		// them (render()): Grid shapes, Text mask (window.wpSwiperArtKit).
+		foreach ( self::SCRIPTS as $style => $file ) {
+			wp_register_script( 'wp-swiper-art-' . $file, WP_SWIPER_URL . 'assets/js/art-' . $file . '.js', array( 'wp-swiper-art' ), wp_swiper_asset_version( 'assets/js/art-' . $file . '.js' ), true );
+		}
 	}
 
 	/**
@@ -320,6 +332,10 @@ class WP_Swiper_Art {
 
 		WP_Swiper_Render::style( 'wp-swiper-art' );
 		wp_enqueue_script( 'wp-swiper-art' );
+		// Grid shapes and Text mask draw from a file of their own (art.js's part).
+		if ( isset( self::SCRIPTS[ self::style_of( $settings ) ] ) ) {
+			wp_enqueue_script( 'wp-swiper-art-' . self::SCRIPTS[ self::style_of( $settings ) ] );
+		}
 
 		// "Use as background" (a Style that stretches: the grids): it fills the
 		// block with the class given (art.js puts it there), behind its content,

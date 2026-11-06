@@ -130,6 +130,7 @@ return array(
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
+		'range'      => array( 0, 100 ),
 		'help'       => __( 'Under the slider and its pagination, if that is outside.', 'wp-swiper' ),
 	),
 	'description_own_color' => array(

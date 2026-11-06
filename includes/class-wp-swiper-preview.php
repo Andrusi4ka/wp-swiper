@@ -410,7 +410,7 @@ class WP_Swiper_Preview {
 	<div class="wp-swiper-preview-page<?php echo WP_Swiper_Settings::is_background( $settings ) ? ' wp-swiper-preview-page--background' : ''; ?>">
 		<?php echo $slider; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the slider's markup, escaped where it is built. ?>
 	</div>
-	<?php wp_print_scripts( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-collage', 'wp-swiper-art', 'wp-swiper-preview-dev', 'wp-swiper-preview-collage', 'wp-swiper-preview-art' ) ); ?>
+	<?php wp_print_scripts( array( 'swiper', 'wp-swiper', 'wp-swiper-slider', 'wp-swiper-collage', 'wp-swiper-art', 'wp-swiper-art-cells', 'wp-swiper-art-text', 'wp-swiper-preview-dev', 'wp-swiper-preview-collage', 'wp-swiper-preview-art' ) ); ?>
 </body>
 </html>
 		<?php

@@ -184,6 +184,7 @@ return array(
 		'min'             => 0,
 		'max'             => 60,
 		'step'            => 1,
+		'range'           => array( 0, 60 ),
 	),
 	// The whole collage turned (collage.js orient()), its photos upright, per
 	// device: Grid, Random mosaic and the templates (laid out in the Height:
@@ -201,6 +202,7 @@ return array(
 		'min'        => -45,
 		'max'        => 45,
 		'step'       => 1,
+		'range'      => array( -45, 45 ),
 		'help'       => __( 'Grid, Random mosaic, the templates, Scattered and Freeform: the whole collage turned, its photos upright (Scattered and Freeform as large as fits the block turned). 0: not turned. Tablet and mobile can have their own.', 'wp-swiper' ),
 	),
 	'collage_rotate_fit'    => array(

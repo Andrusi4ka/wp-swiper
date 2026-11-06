@@ -138,6 +138,7 @@ return array(
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
+		'range'      => array( 0, 100 ),
 	),
 	// Thumbnails effect: its strip in the lightbox too, always under the
 	// image, as many in view as in the slider.
@@ -163,6 +164,7 @@ return array(
 		'min'         => 0,
 		'max'         => 200,
 		'step'        => 1,
+		'range'       => array( 0, 50 ),
 		'placeholder' => __( 'As the slider’s', 'wp-swiper' ),
 		'help'        => __( 'Empty: the thumbnail border radius (Layout).', 'wp-swiper' ),
 	),
@@ -349,6 +351,7 @@ return array(
 		'min'         => 0,
 		'max'         => 30,
 		'step'        => 1,
+		'range'       => array( 0, 30 ),
 		'placeholder' => __( 'Round', 'wp-swiper' ),
 		'help'        => __( 'Empty: fully rounded, a circle or, when wider than tall, a pill. 0 = square corners.', 'wp-swiper' ),
 	),

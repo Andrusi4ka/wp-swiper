@@ -417,9 +417,33 @@ class Test_WP_Swiper_Art extends WP_Swiper_TestCase {
 	public function test_other_effects_do_not_load_art() {
 		wp_dequeue_style( 'wp-swiper-art' );
 		wp_dequeue_script( 'wp-swiper-art' );
+		// Its parts too (they need it: one of them queued, it is too).
+		foreach ( WP_Swiper_Art::SCRIPTS as $file ) {
+			wp_dequeue_script( 'wp-swiper-art-' . $file );
+		}
 		$html = $this->render( array( 'effect' => 'slide', 'art_ring_count' => 9 ) );
 		$this->assertStringNotContainsString( 'wp-swiper-art', $html );
 		$this->assertFalse( wp_script_is( 'wp-swiper-art', 'enqueued' ) );
+	}
+
+	public function test_grid_shapes_and_text_mask_load_their_own_part() {
+		WP_Swiper_Art::register_assets();
+		foreach ( WP_Swiper_Art::SCRIPTS as $file ) {
+			// After art.js, which they need (window.wpSwiperArtKit).
+			$this->assertSame( array( 'wp-swiper-art' ), wp_scripts()->registered[ 'wp-swiper-art-' . $file ]->deps, $file );
+			$this->assertFileExists( WP_SWIPER_DIR . 'assets/js/art-' . $file . '.js' );
+			wp_dequeue_script( 'wp-swiper-art-' . $file );
+		}
+		// Ring: neither; Grid shapes: its cells; Text mask: its letters.
+		$this->render( array( 'effect' => 'art', 'art_style' => 'ring' ) );
+		$this->assertFalse( wp_script_is( 'wp-swiper-art-cells', 'enqueued' ) );
+		$this->assertFalse( wp_script_is( 'wp-swiper-art-text', 'enqueued' ) );
+		$this->render( array( 'effect' => 'art', 'art_style' => 'grid-shapes' ) );
+		$this->assertTrue( wp_script_is( 'wp-swiper-art-cells', 'enqueued' ) );
+		$this->render( array( 'effect' => 'text-mask' ) );
+		$this->assertTrue( wp_script_is( 'wp-swiper-art-text', 'enqueued' ) );
+		// The preview prints them all.
+		$this->assertStringContainsString( "'wp-swiper-art', 'wp-swiper-art-cells', 'wp-swiper-art-text'", file_get_contents( WP_SWIPER_DIR . 'includes/class-wp-swiper-preview.php' ) );
 	}
 
 	public function test_art_shows_images_only() {

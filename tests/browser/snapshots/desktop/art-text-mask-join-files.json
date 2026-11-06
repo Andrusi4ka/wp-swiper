@@ -2,6 +2,7 @@
 	"scripts": [
 		"wp-swiper-content",
 		"wp-swiper-art",
+		"wp-swiper-art-text",
 		"wp-swiper"
 	],
 	"styles": [

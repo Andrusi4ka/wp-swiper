@@ -338,3 +338,103 @@ test( 'Text mask: Letter alignment, for a row or a column, with strips or withou
 	await expect( vertical ).toBeHidden();
 	expect( errors ).toEqual( [] );
 } );
+
+test( 'Radius: a slider left of the number, per device, inheriting', async ( { page } ) => {
+	const errors = await edit( page, 'slide' );
+	await openPage( page, 'layout' );
+	const field = page.locator( '[data-field="border_radius"]' );
+	const range = field.locator( '.wp-swiper-range' );
+	const desktop = page.locator( '#wp-swiper-border_radius' );
+	const tablet = page.locator( '#wp-swiper-border_radius_tablet' );
+	// The radius under Rounded corners, once it is on.
+	await page.locator( '#wp-swiper-border_rounded' ).check( { force: true } );
+	await expect( field ).toBeVisible();
+	// The slider left of the number.
+	const rangeBox = await range.boundingBox();
+	const numberBox = await desktop.boundingBox();
+	expect( rangeBox.x + rangeBox.width ).toBeLessThanOrEqual( numberBox.x );
+	// The slider moves the number; a number typed moves the slider.
+	await range.fill( '30' );
+	await expect( desktop ).toHaveValue( '30' );
+	await desktop.fill( '42' );
+	await expect( range ).toHaveValue( '42' );
+	// Tablet without its own: the slider at the value it inherits; moved, a value of its own.
+	await field.locator( '.wp-swiper-devices__btn[data-device="tablet"]' ).click();
+	await expect( tablet ).toBeVisible();
+	await expect( tablet ).toHaveValue( '' );
+	await expect( range ).toHaveValue( '42' );
+	await range.fill( '10' );
+	await expect( tablet ).toHaveValue( '10' );
+	await expect( desktop ).toHaveValue( '42' );
+	// Back on desktop: its own value.
+	await field.locator( '.wp-swiper-devices__btn[data-device="desktop"]' ).click();
+	await expect( range ).toHaveValue( '42' );
+	if ( process.env.WP_SWIPER_SHOTS ) {
+		await field.screenshot( { path: process.env.WP_SWIPER_SHOTS + '/radius-slider.png' } );
+	}
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'Make the active slide wider: its size from a slider, by halves', async ( { page } ) => {
+	const errors = await edit( page, 'slide' );
+	await openPage( page, 'layout' );
+	await page.locator( '#wp-swiper-expand_active' ).check( { force: true } );
+	const field = page.locator( '[data-field="active_width"]' );
+	await expect( field ).toBeVisible();
+	const range = field.locator( '.wp-swiper-range' );
+	await range.fill( '55.5' );
+	await expect( page.locator( '#wp-swiper-active_width' ) ).toHaveValue( '55.5' );
+	if ( process.env.WP_SWIPER_SHOTS ) {
+		await field.screenshot( { path: process.env.WP_SWIPER_SHOTS + '/active-width.png' } );
+	}
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'Thumbnails: Gap to the slider and Inactive thumbnail opacity from sliders', async ( { page } ) => {
+	const errors = await edit( page, 'thumbs' );
+	await openPage( page, 'thumbs' );
+	const gap = page.locator( '[data-field="thumbs_spacing"]' );
+	const opacity = page.locator( '[data-field="thumbs_opacity"]' );
+	await expect( gap.locator( '.wp-swiper-range' ) ).toBeVisible();
+	await gap.locator( '.wp-swiper-range' ).fill( '24' );
+	await expect( page.locator( '#wp-swiper-thumbs_spacing' ) ).toHaveValue( '24' );
+	await opacity.locator( '.wp-swiper-range' ).fill( '55' );
+	await expect( page.locator( '#wp-swiper-thumbs_opacity' ) ).toHaveValue( '55' );
+	if ( process.env.WP_SWIPER_SHOTS ) {
+		await page.locator( '#wp-swiper-page-thumbs' ).screenshot( { path: process.env.WP_SWIPER_SHOTS + '/thumbs-sliders.png' } );
+	}
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'Collage Rotation: a slider from -45 to 45', async ( { page } ) => {
+	const errors = await edit( page, 'collage-rotate' );
+	await openPage( page, 'layout' );
+	const field = page.locator( '[data-field="collage_rotate"]' );
+	const range = field.locator( '.wp-swiper-range' );
+	await expect( range ).toBeVisible();
+	await expect( range ).toHaveValue( '30' );
+	await range.fill( '-20' );
+	await expect( page.locator( '#wp-swiper-collage_rotate' ) ).toHaveValue( '-20' );
+	if ( process.env.WP_SWIPER_SHOTS ) {
+		await field.screenshot( { path: process.env.WP_SWIPER_SHOTS + '/rotation.png' } );
+	}
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'Art: Image size from a slider in Content in a window and in the Opening', async ( { page } ) => {
+	const errors = await edit( page, 'art-ring-content' );
+	await openPage( page, 'layout' );
+	const content = page.locator( '[data-field="art_content_image_size"]' );
+	await expect( content.locator( '.wp-swiper-range' ) ).toBeVisible();
+	await content.locator( '.wp-swiper-range' ).fill( '70' );
+	await expect( page.locator( '#wp-swiper-art_content_image_size' ) ).toHaveValue( '70' );
+	await page.locator( '#wp-swiper-art_opening' ).check( { force: true } );
+	const opening = page.locator( '[data-field="art_opening_image_size"]' );
+	await expect( opening.locator( '.wp-swiper-range' ) ).toBeVisible();
+	await opening.locator( '.wp-swiper-range' ).fill( '40' );
+	await expect( page.locator( '#wp-swiper-art_opening_image_size' ) ).toHaveValue( '40' );
+	if ( process.env.WP_SWIPER_SHOTS ) {
+		await opening.screenshot( { path: process.env.WP_SWIPER_SHOTS + '/opening-size.png' } );
+	}
+	expect( errors ).toEqual( [] );
+} );

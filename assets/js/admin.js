@@ -1031,9 +1031,32 @@
 		}
 
 		/*
+		 * A slider beside a number (a field's "range": speed, delay, radii):
+		 * at the number shown — a field per device: the device shown's, or
+		 * (empty) the value it inherits (its placeholder) — greyed with it.
+		 */
+		function syncRange( $field ) {
+			$field.find( '.wp-swiper-range' ).each( function () {
+				var $number = rangeNumber( this );
+				var value = $number.val();
+				$( this )
+					.val( '' !== value ? value : ( $number.attr( 'placeholder' ) || 0 ) )
+					.prop( 'disabled', $number.prop( 'readOnly' ) || $number.prop( 'disabled' ) );
+			} );
+		}
+		shared.syncRange = syncRange;
+
+		// A slider's number: the one shown (a field per device has one each).
+		function rangeNumber( range ) {
+			return $( range ).siblings( 'input[type="number"]' ).filter( function () {
+				return ! this.hidden;
+			} ).first();
+		}
+
+		/*
 		 * Buttons over a select (Direction) and sliders beside a number (speed,
-		 * delay). The select and the number stay the fields: the locks set them
-		 * (without events), so these follow them after every sync.
+		 * delay, radii). The select and the number stay the fields: the locks set
+		 * them (without events), so these follow them after every sync.
 		 */
 		function syncWidgets() {
 			$( '.wp-swiper-field--segmented .wp-swiper-segmented' ).each( function () {
@@ -1044,12 +1067,7 @@
 						.prop( 'disabled', $select.prop( 'disabled' ) );
 				} );
 			} );
-			$( '.wp-swiper-range' ).each( function () {
-				var $number = $( this ).siblings( 'input[type="number"]' );
-				$( this )
-					.val( $number.val() )
-					.prop( 'disabled', $number.prop( 'readOnly' ) || $number.prop( 'disabled' ) );
-			} );
+			syncRange( $( '#wp-swiper-settings' ) );
 		}
 
 		$( '#wp-swiper-settings' )
@@ -1061,7 +1079,16 @@
 				}
 			} )
 			.on( 'input', '.wp-swiper-range', function () {
-				$( this ).siblings( 'input[type="number"]' ).val( this.value );
+				rangeNumber( this ).val( this.value );
+				// Per device: the devices inheriting it show the new value.
+				var $field = $( this ).closest( '.wp-swiper-field--responsive' );
+				if ( $field.length && shared.syncResponsive ) {
+					shared.syncResponsive( $field );
+				}
+			} )
+			// A number typed: its slider follows.
+			.on( 'input', '.wp-swiper-field__row--range input[type="number"]', function () {
+				syncRange( $( this ).closest( '.wp-swiper-field' ) );
 			} );
 	};
 

@@ -70,6 +70,7 @@ return array(
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
+		'range'      => array( 0, 100 ),
 	),
 	// Rounded corners, as Image border: the radius once it is on. A slider
 	// saved before with a radius keeps it on (merge_rounded(), get()).
@@ -88,6 +89,7 @@ return array(
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
+		'range'      => array( 0, 100 ),
 	),
 	// A frame drawn over the image (follows its corners; with "Contain"
 	// the image, not the empty band). Width and color once it is on.
@@ -321,6 +323,7 @@ return array(
 		'min'             => 5,
 		'max'             => 95,
 		'step'            => 0.5,
+		'range'           => array( 5, 95 ),
 		'help'            => __( '% of the slider width (vertical sliders: of its height).', 'wp-swiper' ),
 	),
 	// "Cover": the part of a cropped image kept in view, per device (a

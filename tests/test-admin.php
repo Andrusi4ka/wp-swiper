@@ -1110,6 +1110,45 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		}
 	}
 
+	public function test_radii_have_a_slider_left_of_their_number() {
+		// The radii and the Gaps (the Size block's: a slider's, the Collage's, Art's, Text mask's).
+		$keys = array( 'border_radius', 'art_radius', 'text_mask_radius', 'thumbs_radius', 'lightbox_radius', 'lightbox_thumbs_radius', 'pagination_bullet_radius', 'space_between', 'collage_gap', 'art_gap', 'text_mask_gap', 'description_offset', 'thumbs_spacing' );
+		$fields = WP_Swiper_Settings::fields();
+		foreach ( $keys as $key ) {
+			// Within what the number allows.
+			$this->assertSame( 0, $fields[ $key ]['range'][0], $key );
+			$this->assertLessThanOrEqual( $fields[ $key ]['max'], $fields[ $key ]['range'][1], $key );
+		}
+		$this->as_role( 'administrator' );
+		ob_start();
+		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( $this->slides( 1 ), array( 'border_radius' => 14, 'border_radius_tablet' => 8 ) ) ) );
+		$html = ob_get_clean();
+		// Per device: one slider (no name: the numbers are the values sent) before the three numbers.
+		$this->assertSame( 1, preg_match( '#data-field="border_radius".*?<div class="wp-swiper-field__row wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"\s+value="14"\s+min="0"\s+max="100"[^>]*>\s*<input type="number"\s+id="wp-swiper-border_radius"#s', $html ) );
+		$this->assertSame( 1, preg_match( '#data-field="border_radius".*?wp-swiper-field__row--range">(.*?)</div>#s', $html, $row ) );
+		$this->assertSame( 1, substr_count( $row[1], 'type="range"' ) );
+		$this->assertSame( 3, substr_count( $row[1], 'type="number"' ) );
+		$this->assertStringNotContainsString( 'name="', substr( $row[1], 0, strpos( $row[1], 'type="number"' ) ) );
+		$this->assertSame( 1, preg_match( '#data-field="space_between".*?wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"#s', $html ) );
+		$this->assertSame( 1, preg_match( '#data-field="description_offset".*?wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"#s', $html ) );
+		// Thumbnails: Gap to the slider (per device), Inactive thumbnail opacity (one for every screen, by fives).
+		$this->assertSame( 1, preg_match( '#data-field="thumbs_spacing".*?wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"#s', $html ) );
+		$this->assertSame( array( 10, 100 ), $fields['thumbs_opacity']['range'] );
+		$this->assertSame( 1, preg_match( '#data-field="thumbs_opacity".*?wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"\s+value="[^"]*"\s+min="10"\s+max="100"\s+step="5"#s', $html ) );
+		// Collage Rotation: -45 to 45, 0 in the middle.
+		$this->assertSame( array( -45, 45 ), $fields['collage_rotate']['range'] );
+		$this->assertSame( 1, preg_match( '#data-field="collage_rotate".*?wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"\s+value="[^"]*"\s+min="-45"\s+max="45"#s', $html ) );
+		// Art: Image size (%) in Content in a window and in the Opening, by fives.
+		foreach ( array( 'art_content_image_size', 'art_opening_image_size' ) as $key ) {
+			$this->assertSame( array( 10, 100 ), $fields[ $key ]['range'], $key );
+		}
+		// Make the active slide wider: its size, by halves (5–95%).
+		$this->assertSame( array( 5, 95 ), $fields['active_width']['range'] );
+		$this->assertSame( 1, preg_match( '#data-field="active_width".*?wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"\s+value="[^"]*"\s+min="5"\s+max="95"\s+step="0.5"#s', $html ) );
+		// One for every screen too (Bullet border radius).
+		$this->assertSame( 1, preg_match( '#data-field="pagination_bullet_radius".*?wp-swiper-field__row--range">\s*<input type="range"#s', $html ) );
+	}
+
 	public function test_admin_script_and_its_parts() {
 		$this->as_role( 'administrator' );
 		set_current_screen( 'post' );

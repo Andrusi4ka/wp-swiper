@@ -479,7 +479,16 @@ trait WP_Swiper_Admin_Fields {
 				</span>
 			</div>
 
-			<div class="wp-swiper-field__row">
+			<div class="wp-swiper-field__row<?php echo empty( $field['range'] ) ? '' : ' wp-swiper-field__row--range'; ?>">
+			<?php if ( ! empty( $field['range'] ) ) : ?>
+				<?php // One slider for the device shown, left of its number (admin.js syncRange(): its value, or the one it inherits). ?>
+				<input type="range" class="wp-swiper-range"
+					value="<?php echo esc_attr( $values[ $keys['desktop'] ] ); ?>"
+					min="<?php echo esc_attr( $field['range'][0] ); ?>"
+					max="<?php echo esc_attr( $field['range'][1] ); ?>"
+					step="<?php echo esc_attr( $field['step'] ); ?>"
+					aria-label="<?php echo esc_attr( $field['label'] ); ?>">
+			<?php endif; ?>
 			<?php foreach ( $keys as $device => $storage_key ) : ?>
 				<?php if ( 'select' === $field['type'] ) : ?>
 					<?php // Tablet and mobile start with an empty choice: inherit. ?>

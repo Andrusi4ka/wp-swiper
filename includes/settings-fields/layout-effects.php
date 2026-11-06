@@ -345,6 +345,7 @@ return array(
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
+		'range'      => array( 0, 100 ),
 	),
 	'thumbs_per_view'       => array(
 		'section'         => 'layout',
@@ -443,6 +444,7 @@ return array(
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
+		'range'      => array( 0, 50 ),
 	),
 	// The frame, as Image border: its width and two colors once it is on;
 	// off, none (apply_rounded()). On by default, as the thumbnails always
@@ -496,5 +498,6 @@ return array(
 		'min'     => 10,
 		'max'     => 100,
 		'step'    => 5,
+		'range'   => array( 10, 100 ),
 	),
 );
