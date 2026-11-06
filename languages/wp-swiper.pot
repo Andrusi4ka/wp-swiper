@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Swiper 3.4.0\n"
+"Project-Id-Version: WP Swiper 3.5.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-swiper-main\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-05T16:17:58+01:00\n"
+"POT-Creation-Date: 2026-11-06T11:01:27+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: wp-swiper\n"
@@ -106,13 +106,13 @@ msgid "Height unit"
 msgstr ""
 
 #: includes/art-fields.php:139
-#: includes/art-fields.php:741
-#: includes/settings-fields/general.php:248
-#: includes/settings-fields/general.php:367
-#: includes/settings-fields/general.php:395
+#: includes/art-fields.php:785
+#: includes/settings-fields/general.php:251
+#: includes/settings-fields/general.php:371
+#: includes/settings-fields/general.php:399
 #: includes/settings-fields/layout-effects.php:89
-#: includes/settings-fields/layout-effects.php:376
-#: includes/settings-fields/layout-look.php:436
+#: includes/settings-fields/layout-effects.php:377
+#: includes/settings-fields/layout-look.php:439
 msgid "Auto"
 msgstr ""
 
@@ -121,32 +121,36 @@ msgid "Alignment"
 msgstr ""
 
 #: includes/art-fields.php:152
-#: includes/art-fields.php:672
-#: includes/settings-fields/layout-look.php:340
-#: includes/settings-fields/layout-look.php:367
-#: includes/settings-fields/layout-look.php:417
+#: includes/art-fields.php:681
+#: includes/art-fields.php:714
+#: includes/settings-fields/layout-look.php:343
+#: includes/settings-fields/layout-look.php:370
+#: includes/settings-fields/layout-look.php:420
 #: includes/trait-wp-swiper-admin-controls.php:152
 msgid "Left"
 msgstr ""
 
 #: includes/art-fields.php:153
-#: includes/art-fields.php:403
-#: includes/settings-fields/layout-collage.php:303
+#: includes/art-fields.php:406
+#: includes/art-fields.php:700
+#: includes/art-fields.php:715
+#: includes/settings-fields/layout-collage.php:305
 #: includes/settings-fields/layout-effects.php:332
-#: includes/settings-fields/layout-look.php:336
-#: includes/settings-fields/layout-look.php:357
-#: includes/settings-fields/layout-look.php:368
-#: includes/settings-fields/layout-look.php:413
+#: includes/settings-fields/layout-look.php:339
+#: includes/settings-fields/layout-look.php:360
+#: includes/settings-fields/layout-look.php:371
+#: includes/settings-fields/layout-look.php:416
 #: includes/trait-wp-swiper-admin-controls.php:172
 #: includes/trait-wp-swiper-admin-controls.php:177
 msgid "Center"
 msgstr ""
 
 #: includes/art-fields.php:154
-#: includes/art-fields.php:671
-#: includes/settings-fields/layout-look.php:341
-#: includes/settings-fields/layout-look.php:369
-#: includes/settings-fields/layout-look.php:418
+#: includes/art-fields.php:682
+#: includes/art-fields.php:716
+#: includes/settings-fields/layout-look.php:344
+#: includes/settings-fields/layout-look.php:372
+#: includes/settings-fields/layout-look.php:421
 #: includes/trait-wp-swiper-admin-controls.php:153
 msgid "Right"
 msgstr ""
@@ -180,7 +184,7 @@ msgid "Middle circle (%)"
 msgstr ""
 
 #: includes/art-fields.php:225
-#: includes/class-wp-swiper-art.php:263
+#: includes/class-wp-swiper-art.php:275
 msgid "Opening"
 msgstr ""
 
@@ -197,520 +201,548 @@ msgid "How wide the gap at the bottom is; 0 on a device: none there."
 msgstr ""
 
 #: includes/art-fields.php:248
-#: includes/art-fields.php:758
+#: includes/art-fields.php:802
 #: includes/settings-fields/layout-collage.php:180
 #: includes/settings-fields/layout-look.php:66
 msgid "Gap (px)"
 msgstr ""
 
-#: includes/art-fields.php:263
-#: includes/art-fields.php:839
+#: includes/art-fields.php:264
+#: includes/art-fields.php:897
 #: includes/settings-fields/general.php:127
-#: includes/settings-fields/layout-effects.php:430
-#: includes/settings-fields/layout-look.php:78
+#: includes/settings-fields/layout-effects.php:431
+#: includes/settings-fields/layout-look.php:79
 msgid "Rounded corners"
 msgstr ""
 
-#: includes/art-fields.php:271
-#: includes/art-fields.php:846
+#: includes/art-fields.php:272
+#: includes/art-fields.php:904
 #: includes/settings-fields/general.php:134
-#: includes/settings-fields/layout-effects.php:439
-#: includes/settings-fields/layout-look.php:84
+#: includes/settings-fields/layout-effects.php:440
+#: includes/settings-fields/layout-look.php:85
 msgid "Radius (px)"
 msgstr ""
 
-#: includes/art-fields.php:284
-#: includes/settings-fields/layout-look.php:96
+#: includes/art-fields.php:286
+#: includes/settings-fields/layout-look.php:98
 msgid "Image border"
 msgstr ""
 
-#: includes/art-fields.php:292
-#: includes/settings-fields/layout-effects.php:464
-#: includes/settings-fields/layout-look.php:103
+#: includes/art-fields.php:294
+#: includes/settings-fields/layout-effects.php:466
+#: includes/settings-fields/layout-look.php:105
 msgid "Width (px)"
 msgstr ""
 
-#: includes/art-fields.php:304
+#: includes/art-fields.php:306
 #: includes/class-wp-swiper-admin.php:144
 #: includes/settings-fields/content.php:39
-#: includes/settings-fields/content.php:132
+#: includes/settings-fields/content.php:145
 #: includes/settings-fields/layout-effects.php:255
-#: includes/settings-fields/layout-effects.php:476
-#: includes/settings-fields/layout-look.php:114
-#: includes/settings-fields/layout-look.php:208
+#: includes/settings-fields/layout-effects.php:478
+#: includes/settings-fields/layout-look.php:116
+#: includes/settings-fields/layout-look.php:210
 #: includes/trait-wp-swiper-admin-controls.php:191
 #: includes/trait-wp-swiper-admin-controls.php:240
 msgid "Color"
 msgstr ""
 
-#: includes/art-fields.php:320
-#: includes/class-wp-swiper-art.php:269
+#: includes/art-fields.php:322
+#: includes/class-wp-swiper-art.php:281
 msgid "Content in a window"
 msgstr ""
 
-#: includes/art-fields.php:323
+#: includes/art-fields.php:325
 msgid "An image and/or text in one window instead of a photo; it stays there while the photos change."
 msgstr ""
 
-#: includes/art-fields.php:329
+#: includes/art-fields.php:331
 msgid "Window"
 msgstr ""
 
-#: includes/art-fields.php:336
-msgid "Which window has it: 1 is the one in the middle (SVG shape: the drawing's main one), then the others in order. Or drag it onto a window in the preview."
+#: includes/art-fields.php:338
+msgid "Which window has it: 1 is the one in the middle (Grid shapes: the first shape; SVG shape: the drawing's main one), then the others in order. Or drag it onto a window in the preview."
 msgstr ""
 
-#: includes/art-fields.php:342
-#: includes/settings-fields/layout-collage.php:247
+#: includes/art-fields.php:344
+#: includes/settings-fields/layout-collage.php:249
 msgid "Image"
 msgstr ""
 
-#: includes/art-fields.php:350
-#: includes/art-fields.php:432
-#: includes/settings-fields/layout-collage.php:254
+#: includes/art-fields.php:352
+#: includes/art-fields.php:435
+#: includes/settings-fields/layout-collage.php:256
 msgid "Image size (%)"
 msgstr ""
 
-#: includes/art-fields.php:357
+#: includes/art-fields.php:360
 msgid "Of the width inside the window's box; the image keeps its proportions. With text under it: at most half the height."
 msgstr ""
 
-#: includes/art-fields.php:363
+#: includes/art-fields.php:366
 #: includes/class-wp-swiper-settings.php:808
 #: includes/class-wp-swiper-settings.php:818
-#: includes/settings-fields/layout-collage.php:266
+#: includes/settings-fields/layout-collage.php:268
 msgid "Text"
 msgstr ""
 
-#: includes/art-fields.php:366
+#: includes/art-fields.php:369
 msgid "Shortcodes work here too: a form, a theme's HTML block with buttons… With one, nothing is cut: the window scrolls where it is too tall."
 msgstr ""
 
-#: includes/art-fields.php:372
-#: includes/art-fields.php:453
+#: includes/art-fields.php:375
+#: includes/art-fields.php:457
 #: includes/settings-fields/content.php:23
-#: includes/settings-fields/layout-collage.php:274
+#: includes/settings-fields/layout-collage.php:276
 msgid "Font size (px)"
 msgstr ""
 
-#: includes/art-fields.php:379
+#: includes/art-fields.php:382
 msgid "Text that does not fit in the window's box is cut at a word, with \"…\". A round window keeps it in the square inside it; another shape cuts it off at its edge: keep a Padding."
 msgstr ""
 
-#: includes/art-fields.php:385
-#: includes/settings-fields/layout-collage.php:286
+#: includes/art-fields.php:388
+#: includes/settings-fields/layout-collage.php:288
 msgid "Padding (px)"
 msgstr ""
 
-#: includes/art-fields.php:392
+#: includes/art-fields.php:395
 msgid "Between the window's box and the image and text."
 msgstr ""
 
-#: includes/art-fields.php:398
-#: includes/settings-fields/layout-collage.php:298
+#: includes/art-fields.php:401
+#: includes/settings-fields/layout-collage.php:300
 msgid "Vertical alignment"
 msgstr ""
 
-#: includes/art-fields.php:402
-#: includes/settings-fields/layout-collage.php:302
-#: includes/settings-fields/layout-look.php:338
-#: includes/settings-fields/layout-look.php:356
-#: includes/settings-fields/layout-look.php:415
+#: includes/art-fields.php:405
+#: includes/art-fields.php:679
+#: includes/art-fields.php:699
+#: includes/settings-fields/layout-collage.php:304
+#: includes/settings-fields/layout-look.php:341
+#: includes/settings-fields/layout-look.php:359
+#: includes/settings-fields/layout-look.php:418
 #: includes/trait-wp-swiper-admin-controls.php:154
 msgid "Top"
 msgstr ""
 
-#: includes/art-fields.php:404
-#: includes/settings-fields/layout-collage.php:304
-#: includes/settings-fields/layout-look.php:343
-#: includes/settings-fields/layout-look.php:358
-#: includes/settings-fields/layout-look.php:420
+#: includes/art-fields.php:407
+#: includes/art-fields.php:680
+#: includes/settings-fields/layout-collage.php:306
+#: includes/settings-fields/layout-look.php:346
+#: includes/settings-fields/layout-look.php:361
+#: includes/settings-fields/layout-look.php:423
 #: includes/trait-wp-swiper-admin-controls.php:155
 msgid "Bottom"
 msgstr ""
 
-#: includes/art-fields.php:411
+#: includes/art-fields.php:414
 #: includes/class-wp-swiper-settings.php:772
 #: includes/class-wp-swiper-settings.php:812
 #: includes/settings-fields/content.php:57
-#: includes/settings-fields/layout-collage.php:310
+#: includes/settings-fields/layout-collage.php:312
 msgid "Background"
 msgstr ""
 
-#: includes/art-fields.php:414
+#: includes/art-fields.php:417
 msgid "The window's color under the image and text, along its shape; at Opacity 0 (as by default) there is none."
 msgstr ""
 
-#: includes/art-fields.php:424
+#: includes/art-fields.php:427
 msgid "Image in the opening"
 msgstr ""
 
-#: includes/art-fields.php:439
+#: includes/art-fields.php:443
 msgid "Of the free space in the opening; the image keeps its proportions. With text under it: at most half the height."
 msgstr ""
 
-#: includes/art-fields.php:445
+#: includes/art-fields.php:449
 msgid "Text in the opening"
 msgstr ""
 
-#: includes/art-fields.php:465
+#: includes/art-fields.php:469
 msgid "Gap from the photos (px)"
 msgstr ""
 
-#: includes/art-fields.php:483
+#: includes/art-fields.php:487
 msgid "Background size"
 msgstr ""
 
-#: includes/art-fields.php:488
-#: includes/settings-fields/layout-look.php:301
+#: includes/art-fields.php:492
+#: includes/settings-fields/layout-look.php:303
 msgid "Contain"
 msgstr ""
 
-#: includes/art-fields.php:489
-#: includes/settings-fields/layout-look.php:300
+#: includes/art-fields.php:493
+#: includes/settings-fields/layout-look.php:302
 msgid "Cover"
 msgstr ""
 
-#: includes/art-fields.php:491
+#: includes/art-fields.php:495
 msgid "Contain: the whole shape, as large as fits in the block. Cover: it fills the block, what does not fit cut off at its edges."
 msgstr ""
 
-#: includes/art-fields.php:498
+#: includes/art-fields.php:502
 msgid "Background position"
 msgstr ""
 
-#: includes/art-fields.php:503
-#: includes/settings-fields/general.php:286
+#: includes/art-fields.php:507
+#: includes/settings-fields/general.php:289
 msgid "Left top"
 msgstr ""
 
-#: includes/art-fields.php:504
-#: includes/settings-fields/general.php:287
+#: includes/art-fields.php:508
+#: includes/settings-fields/general.php:290
 msgid "Left center"
 msgstr ""
 
-#: includes/art-fields.php:505
-#: includes/settings-fields/general.php:288
+#: includes/art-fields.php:509
+#: includes/settings-fields/general.php:291
 msgid "Left bottom"
 msgstr ""
 
-#: includes/art-fields.php:506
-#: includes/settings-fields/general.php:289
+#: includes/art-fields.php:510
+#: includes/settings-fields/general.php:292
 msgid "Right top"
 msgstr ""
 
-#: includes/art-fields.php:507
-#: includes/settings-fields/general.php:290
+#: includes/art-fields.php:511
+#: includes/settings-fields/general.php:293
 msgid "Right center"
 msgstr ""
 
-#: includes/art-fields.php:508
-#: includes/settings-fields/general.php:291
+#: includes/art-fields.php:512
+#: includes/settings-fields/general.php:294
 msgid "Right bottom"
 msgstr ""
 
-#: includes/art-fields.php:509
+#: includes/art-fields.php:513
 msgid "Center top"
 msgstr ""
 
-#: includes/art-fields.php:510
+#: includes/art-fields.php:514
 msgid "Center center"
 msgstr ""
 
-#: includes/art-fields.php:511
+#: includes/art-fields.php:515
 msgid "Center bottom"
 msgstr ""
 
-#: includes/art-fields.php:513
+#: includes/art-fields.php:517
 msgid "Contain: where the shape sits in the block. Cover: which part of it stays in view."
 msgstr ""
 
-#: includes/art-fields.php:521
+#: includes/art-fields.php:525
 msgid "Only on the middle photo"
 msgstr ""
 
-#: includes/art-fields.php:524
+#: includes/art-fields.php:528
 msgid "Art: the photos around it show none."
 msgstr ""
 
-#: includes/art-fields.php:533
-#: includes/settings-fields/layout-collage.php:320
+#: includes/art-fields.php:537
+#: includes/settings-fields/layout-collage.php:322
 msgid "Swap in the other photos"
 msgstr ""
 
-#: includes/art-fields.php:536
+#: includes/art-fields.php:540
 msgid "Every so often a photo fades to another one (What changes). The shape does not change."
 msgstr ""
 
-#: includes/art-fields.php:546
-#: includes/art-fields.php:563
+#: includes/art-fields.php:550
+#: includes/art-fields.php:567
 msgid "What changes"
 msgstr ""
 
-#: includes/art-fields.php:550
+#: includes/art-fields.php:554
 msgid "Any piece at random"
 msgstr ""
 
-#: includes/art-fields.php:551
+#: includes/art-fields.php:555
 msgid "The middle photo"
 msgstr ""
 
-#: includes/art-fields.php:553
+#: includes/art-fields.php:557
 msgid "Any piece at random: only with more photos than pieces, those not shown come in. The middle photo: it goes through all the photos in turn, the ring stays as it is."
 msgstr ""
 
-#: includes/art-fields.php:567
+#: includes/art-fields.php:571
 msgid "One window at random"
 msgstr ""
 
-#: includes/art-fields.php:568
+#: includes/art-fields.php:572
 msgid "The windows in turn"
 msgstr ""
 
-#: includes/art-fields.php:569
+#: includes/art-fields.php:573
 msgid "All windows at once"
 msgstr ""
 
-#: includes/art-fields.php:570
+#: includes/art-fields.php:574
 msgid "One photo through all windows"
 msgstr ""
 
-#: includes/art-fields.php:572
+#: includes/art-fields.php:576
 msgid "One window at random, or in turn (the main one, then the next): only with more photos than windows, those not shown come in. All windows at once: as a slider, each takes the photo of the next one, the main one the next photo. One photo through all windows: the shape is a stencil over one photo, its caption in the middle of the shape; the next photo comes into all windows at once (with Photo swapping on)."
 msgstr ""
 
-#: includes/art-fields.php:583
+#: includes/art-fields.php:587
 msgid "Appearance"
 msgstr ""
 
-#: includes/art-fields.php:587
+#: includes/art-fields.php:591
 msgid "All together"
 msgstr ""
 
-#: includes/art-fields.php:588
+#: includes/art-fields.php:592
 msgid "At random"
 msgstr ""
 
-#: includes/art-fields.php:589
+#: includes/art-fields.php:593
 #: includes/class-wp-swiper-admin.php:177
-#: includes/settings-fields/layout-look.php:250
+#: includes/settings-fields/layout-look.php:252
 msgid "Left to right"
 msgstr ""
 
-#: includes/art-fields.php:590
+#: includes/art-fields.php:594
 #: includes/class-wp-swiper-admin.php:181
 msgid "Top to bottom"
 msgstr ""
 
-#: includes/art-fields.php:591
+#: includes/art-fields.php:595
 msgid "Diagonally"
 msgstr ""
 
-#: includes/art-fields.php:592
+#: includes/art-fields.php:596
 msgid "From the middle out"
 msgstr ""
 
-#: includes/art-fields.php:594
+#: includes/art-fields.php:598
 msgid "The order the windows show a new photo in, one after another over the Fade speed; also when the shape first shows. With One photo through all windows or All windows at once."
 msgstr ""
 
-#: includes/art-fields.php:600
-#: includes/settings-fields/layout-collage.php:329
+#: includes/art-fields.php:604
+#: includes/settings-fields/layout-collage.php:331
 msgid "A new photo every (ms)"
 msgstr ""
 
-#: includes/art-fields.php:612
-#: includes/settings-fields/layout-collage.php:341
+#: includes/art-fields.php:616
+#: includes/settings-fields/layout-collage.php:343
 msgid "Fade (ms)"
 msgstr ""
 
-#: includes/art-fields.php:624
+#: includes/art-fields.php:628
 #: includes/settings-fields/general.php:100
-#: includes/settings-fields/layout-collage.php:353
+#: includes/settings-fields/layout-collage.php:355
 msgid "Pause on hover"
 msgstr ""
 
-#: includes/art-fields.php:637
+#: includes/art-fields.php:641
 msgid "Word"
 msgstr ""
 
-#: includes/art-fields.php:641
+#: includes/art-fields.php:645
 msgid "Each letter is a window onto the photo, with a strip under it. Spaces leave a wider gap."
 msgstr ""
 
-#: includes/art-fields.php:649
+#: includes/art-fields.php:653
 #: includes/class-wp-swiper-preview.php:105
 msgid "Photos"
 msgstr ""
 
-#: includes/art-fields.php:653
+#: includes/art-fields.php:657
 msgid "One photo through all letters"
 msgstr ""
 
-#: includes/art-fields.php:654
+#: includes/art-fields.php:658
 msgid "A photo in each letter"
 msgstr ""
 
-#: includes/art-fields.php:656
+#: includes/art-fields.php:660
 msgid "A photo in each letter: in the slides' order, repeated when there are fewer; drag a photo onto another letter in the preview to swap them."
 msgstr ""
 
-#: includes/art-fields.php:665
-msgid "Strips go"
-msgstr ""
-
-#: includes/art-fields.php:670
-msgid "Down"
-msgstr ""
-
 #: includes/art-fields.php:674
-msgid "Down: the word across, the strips under its letters. Right or Left: the letters one under another (read from the top), the strips going out to that side."
+msgid "Text position"
 msgstr ""
 
-#: includes/art-fields.php:680
-msgid "Font"
-msgstr ""
-
-#: includes/art-fields.php:685
-msgid "The theme's headings"
-msgstr ""
-
-#: includes/art-fields.php:686
-msgid "Serif"
-msgstr ""
-
-#: includes/art-fields.php:687
-msgid "Sans-serif"
-msgstr ""
-
-#: includes/art-fields.php:688
-msgid "By name"
+#: includes/art-fields.php:684
+msgid "Where the word is. Top or Bottom: across, the strips going down or up from it. Left or Right: the letters one under another (read from the top), the strips going out to the other side."
 msgstr ""
 
 #: includes/art-fields.php:694
-msgid "Weight"
-msgstr ""
-
-#: includes/art-fields.php:699
-msgid "Normal"
-msgstr ""
-
-#: includes/art-fields.php:700
-msgid "Bold"
+#: includes/art-fields.php:708
+msgid "Letter alignment"
 msgstr ""
 
 #: includes/art-fields.php:701
+msgid "Bottom (baseline)"
+msgstr ""
+
+#: includes/art-fields.php:703
+msgid "The letters against one another: their tops, middles or bottoms on one line."
+msgstr ""
+
+#: includes/art-fields.php:713
+msgid "As Text position"
+msgstr ""
+
+#: includes/art-fields.php:718
+msgid "The letters one under another: their left edges, middles or right edges on one line. As Text position: the edge the word stands at."
+msgstr ""
+
+#: includes/art-fields.php:724
+msgid "Font"
+msgstr ""
+
+#: includes/art-fields.php:729
+msgid "The theme's headings"
+msgstr ""
+
+#: includes/art-fields.php:730
+msgid "Serif"
+msgstr ""
+
+#: includes/art-fields.php:731
+msgid "Sans-serif"
+msgstr ""
+
+#: includes/art-fields.php:732
+msgid "By name"
+msgstr ""
+
+#: includes/art-fields.php:738
+msgid "Weight"
+msgstr ""
+
+#: includes/art-fields.php:743
+msgid "Normal"
+msgstr ""
+
+#: includes/art-fields.php:744
+msgid "Bold"
+msgstr ""
+
+#: includes/art-fields.php:745
 #: includes/class-wp-swiper-palette.php:94
 msgid "Black"
 msgstr ""
 
-#: includes/art-fields.php:703
+#: includes/art-fields.php:747
 msgid "Bold letters make wider windows: thin ones show little of the photo."
 msgstr ""
 
-#: includes/art-fields.php:711
+#: includes/art-fields.php:755
 msgid "Font name"
 msgstr ""
 
-#: includes/art-fields.php:715
+#: includes/art-fields.php:759
 msgid "A font the site already loads (the theme's are in the list), or any on every computer. One the page does not load shows in a plain font instead: nothing is fetched for it. Another font: have the theme load it first (WoodMart: Theme settings > Typography > Advanced typography, a rule with that font; Local Google fonts keeps it on your server). It is then in the list."
 msgstr ""
 
-#: includes/art-fields.php:721
+#: includes/art-fields.php:765
 msgid "Letter size"
 msgstr ""
 
-#: includes/art-fields.php:729
+#: includes/art-fields.php:773
 msgid "Auto: the word as wide as it can be (the letters at most 70% of the Height). %: of the Height, the letters no taller than this. With strips right or left there is no Letter size: the word fills the Height."
 msgstr ""
 
-#: includes/art-fields.php:735
+#: includes/art-fields.php:779
 msgid "Letter size unit"
 msgstr ""
 
-#: includes/art-fields.php:750
+#: includes/art-fields.php:794
 msgid "Stretch letters"
 msgstr ""
 
-#: includes/art-fields.php:753
+#: includes/art-fields.php:797
 msgid "Each letter wider (up to twice), to fill its strip, or with strips as the letter the word the width; their height stays. Good with narrow fonts; it changes the font's look."
 msgstr ""
 
-#: includes/art-fields.php:771
-msgid "Strip width"
-msgstr ""
-
-#: includes/art-fields.php:775
-msgid "Same for all"
-msgstr ""
-
-#: includes/art-fields.php:776
-msgid "As the letter"
-msgstr ""
-
-#: includes/art-fields.php:778
-msgid "Same for all: the strips as wide as each other, Gap apart, each letter in the middle of its strip (the widest letter sets the size). As the letter: each strip as wide as its letter, the letters and their strips Gap apart."
-msgstr ""
-
-#: includes/art-fields.php:785
-#: includes/class-wp-swiper-art.php:280
+#: includes/art-fields.php:819
+#: includes/class-wp-swiper-art.php:292
 msgid "Strips"
 msgstr ""
 
-#: includes/art-fields.php:789
+#: includes/art-fields.php:822
+msgid "Off: the letters alone, as large as the block allows, at their Text position."
+msgstr ""
+
+#: includes/art-fields.php:829
+msgid "Strip width"
+msgstr ""
+
+#: includes/art-fields.php:833
+msgid "Same for all"
+msgstr ""
+
+#: includes/art-fields.php:834
+msgid "As the letter"
+msgstr ""
+
+#: includes/art-fields.php:836
+msgid "Same for all: the strips as wide as each other, Gap apart, each letter in the middle of its strip (the widest letter sets the size). As the letter: each strip as wide as its letter, the letters and their strips Gap apart."
+msgstr ""
+
+#: includes/art-fields.php:843
+msgid "Lengths"
+msgstr ""
+
+#: includes/art-fields.php:847
 msgid "Different lengths"
 msgstr ""
 
-#: includes/art-fields.php:790
+#: includes/art-fields.php:848
 msgid "All the same"
 msgstr ""
 
-#: includes/art-fields.php:791
+#: includes/art-fields.php:849
 msgid "Longer in the middle"
 msgstr ""
 
-#: includes/art-fields.php:792
+#: includes/art-fields.php:850
 msgid "Longer at the sides"
 msgstr ""
 
-#: includes/art-fields.php:801
+#: includes/art-fields.php:859
 msgid "Strips into letters (%)"
 msgstr ""
 
-#: includes/art-fields.php:808
+#: includes/art-fields.php:866
 msgid "How far each strip goes into its letter, of the letter's size: the letter's end merges into the strip. 0: the letters whole."
 msgstr ""
 
-#: includes/art-fields.php:813
+#: includes/art-fields.php:871
 msgid "Shortest (%)"
 msgstr ""
 
-#: includes/art-fields.php:824
+#: includes/art-fields.php:882
 msgid "Longest (%)"
 msgstr ""
 
-#: includes/art-fields.php:831
+#: includes/art-fields.php:889
 msgid "Of the height under the letters. All the same: Longest."
 msgstr ""
 
-#: includes/art-fields.php:853
+#: includes/art-fields.php:912
 msgid "At most half the strip's width: a larger one rounds its end in a half circle."
 msgstr ""
 
-#: includes/art-fields.php:858
+#: includes/art-fields.php:917
 #: includes/class-wp-swiper-preview.php:106
 msgid "Corners"
 msgstr ""
 
-#: includes/art-fields.php:862
+#: includes/art-fields.php:921
 msgid "At the strip's end"
 msgstr ""
 
-#: includes/art-fields.php:863
+#: includes/art-fields.php:922
 msgid "At both ends"
 msgstr ""
 
-#: includes/art-fields.php:865
+#: includes/art-fields.php:924
 msgid "At both ends: by the letter too (where the strip is wider than the letter's foot)."
 msgstr ""
 
@@ -909,7 +941,7 @@ msgid "Collage height"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:176
-#: includes/settings-fields/layout-look.php:249
+#: includes/settings-fields/layout-look.php:251
 msgid "Right to left"
 msgstr ""
 
@@ -978,60 +1010,60 @@ msgstr ""
 msgid "Paste it into any page, or use the “WP Swiper” element in WPBakery."
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:99
+#: includes/class-wp-swiper-art.php:111
 msgid "Ring"
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:102
+#: includes/class-wp-swiper-art.php:114
 msgid "Grid + circle"
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:105
+#: includes/class-wp-swiper-art.php:117
 msgid "Grid + square"
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:110
+#: includes/class-wp-swiper-art.php:122
 msgid "Grid shapes"
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:114
+#: includes/class-wp-swiper-art.php:126
 msgid "SVG shape"
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:257
+#: includes/class-wp-swiper-art.php:269
 #: includes/settings-fields/general.php:33
 msgid "Art"
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:258
+#: includes/class-wp-swiper-art.php:270
 #: includes/settings-fields/general.php:36
 msgid "Text mask"
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:276
+#: includes/class-wp-swiper-art.php:288
 msgid "Letters"
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:287
+#: includes/class-wp-swiper-art.php:299
 #: includes/class-wp-swiper-settings.php:677
 msgid "Photo swapping"
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:317
+#: includes/class-wp-swiper-art.php:329
 msgid "WP Swiper: the Art effect shows images only; this slider has none."
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:371
+#: includes/class-wp-swiper-art.php:387
 msgid "WP Swiper: upload an SVG file for the SVG shape style (Layout, Art)."
 msgstr ""
 
-#: includes/class-wp-swiper-art.php:640
+#: includes/class-wp-swiper-art.php:656
 #: includes/class-wp-swiper-render.php:230
 msgid "WP Swiper: this slider is set to be a background, but has no parent block class (Background)."
 msgstr ""
 
 #. translators: %s: CSS class name(s).
-#: includes/class-wp-swiper-art.php:642
+#: includes/class-wp-swiper-art.php:658
 #: includes/class-wp-swiper-render.php:232
 msgid "WP Swiper: no block with the class “%s” around this slider, so it is not a background. Give that class to its row or column."
 msgstr ""
@@ -1215,18 +1247,18 @@ msgstr ""
 msgid "WP Swiper: this slider has no slides yet."
 msgstr ""
 
-#: includes/class-wp-swiper-render.php:601
-#: includes/class-wp-swiper-render.php:654
+#: includes/class-wp-swiper-render.php:607
+#: includes/class-wp-swiper-render.php:660
 msgid "Previous slide"
 msgstr ""
 
-#: includes/class-wp-swiper-render.php:602
-#: includes/class-wp-swiper-render.php:655
+#: includes/class-wp-swiper-render.php:608
+#: includes/class-wp-swiper-render.php:661
 msgid "Next slide"
 msgstr ""
 
 #. translators: %d: slide number.
-#: includes/class-wp-swiper-render.php:623
+#: includes/class-wp-swiper-render.php:629
 msgid "Go to slide %d"
 msgstr ""
 
@@ -1265,7 +1297,7 @@ msgstr ""
 
 #: includes/class-wp-swiper-settings.php:661
 #: includes/settings-fields/layout-effects.php:47
-#: includes/settings-fields/layout-effects.php:406
+#: includes/settings-fields/layout-effects.php:407
 #: includes/trait-wp-swiper-admin-controls.php:245
 msgid "Custom"
 msgstr ""
@@ -1279,7 +1311,7 @@ msgid "Arrows and keyboard"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:689
-#: includes/settings-fields/general.php:254
+#: includes/settings-fields/general.php:257
 msgid "Pagination"
 msgstr ""
 
@@ -1303,7 +1335,7 @@ msgid "Size"
 msgstr ""
 
 #: includes/class-wp-swiper-settings.php:754
-#: includes/settings-fields/layout-collage.php:227
+#: includes/settings-fields/layout-collage.php:229
 msgid "Content in a place"
 msgstr ""
 
@@ -1640,174 +1672,189 @@ msgstr ""
 msgid "Solid"
 msgstr ""
 
-#: includes/settings-fields/content.php:73
-msgid "The gradient runs from the image edge where the text is."
+#: includes/settings-fields/content.php:72
+msgid "Custom gradient"
 msgstr ""
 
-#: includes/settings-fields/content.php:78
+#: includes/settings-fields/content.php:74
+msgid "Gradient: from the image edge where the text is, fading out. Custom gradient: your own colors and direction (below)."
+msgstr ""
+
+#: includes/settings-fields/content.php:79
 msgid "Background color"
 msgstr ""
 
-#: includes/settings-fields/content.php:84
+#: includes/settings-fields/content.php:89
+#: includes/settings-fields/layout-look.php:138
+#: includes/trait-wp-swiper-admin-controls.php:184
+msgid "Gradient colors"
+msgstr ""
+
+#: includes/settings-fields/content.php:92
+#: includes/settings-fields/layout-look.php:141
+msgid "Click the bar to add a color, drag a color along it, pick one to change or delete it."
+msgstr ""
+
+#: includes/settings-fields/content.php:96
 msgid "Text shadow"
 msgstr ""
 
-#: includes/settings-fields/content.php:87
+#: includes/settings-fields/content.php:99
 msgid "Keeps the text readable on light images, e.g. without a background."
 msgstr ""
 
-#: includes/settings-fields/content.php:100
+#: includes/settings-fields/content.php:112
 msgid "Text transition"
 msgstr ""
 
-#: includes/settings-fields/content.php:104
+#: includes/settings-fields/content.php:116
 msgid "As the slider"
 msgstr ""
 
-#: includes/settings-fields/content.php:105
+#: includes/settings-fields/content.php:117
 #: includes/settings-fields/general.php:21
 #: includes/settings-fields/layout-look.php:28
 msgid "Fade"
 msgstr ""
 
-#: includes/settings-fields/content.php:106
+#: includes/settings-fields/content.php:118
 #: includes/settings-fields/general.php:20
 #: includes/settings-fields/layout-look.php:27
 msgid "Slide"
 msgstr ""
 
-#: includes/settings-fields/content.php:107
-#: includes/settings-fields/general.php:258
-#: includes/settings-fields/layout-look.php:261
+#: includes/settings-fields/content.php:119
+#: includes/settings-fields/general.php:261
+#: includes/settings-fields/layout-look.php:263
 msgid "None"
 msgstr ""
 
-#: includes/settings-fields/content.php:109
+#: includes/settings-fields/content.php:121
 msgid "As the slider: the text moves the way the slides do (slides, turns with a cube, flips...), at the same speed, once a slide is let go."
 msgstr ""
 
-#: includes/settings-fields/content.php:114
+#: includes/settings-fields/content.php:126
 #: includes/settings-fields/layout-effects.php:341
 msgid "Gap to the slider (px)"
 msgstr ""
 
-#: includes/settings-fields/content.php:121
+#: includes/settings-fields/content.php:134
 msgid "Under the slider and its pagination, if that is outside."
 msgstr ""
 
-#: includes/settings-fields/content.php:125
+#: includes/settings-fields/content.php:138
 msgid "Own text color"
 msgstr ""
 
-#: includes/settings-fields/content.php:128
+#: includes/settings-fields/content.php:141
 msgid "Off: the colour of the page’s text."
 msgstr ""
 
-#: includes/settings-fields/content.php:143
+#: includes/settings-fields/content.php:156
 msgid "Play automatically"
 msgstr ""
 
-#: includes/settings-fields/content.php:146
+#: includes/settings-fields/content.php:159
 msgid "When its slide is shown. Browsers only start a video by themselves without sound, so a video with sound starts muted."
 msgstr ""
 
-#: includes/settings-fields/content.php:151
+#: includes/settings-fields/content.php:164
 msgid "Muted"
 msgstr ""
 
-#: includes/settings-fields/content.php:154
+#: includes/settings-fields/content.php:167
 msgid "Without sound at first; with Show controls the visitor can turn it on."
 msgstr ""
 
-#: includes/settings-fields/content.php:159
+#: includes/settings-fields/content.php:172
 msgid "Loop"
 msgstr ""
 
-#: includes/settings-fields/content.php:162
+#: includes/settings-fields/content.php:175
 msgid "Starts over at the end while its slide is shown."
 msgstr ""
 
-#: includes/settings-fields/content.php:167
+#: includes/settings-fields/content.php:180
 msgid "Show controls"
 msgstr ""
 
-#: includes/settings-fields/content.php:170
+#: includes/settings-fields/content.php:183
 msgid "Play, sound and progress. Always on without Play automatically: the visitor starts the video."
 msgstr ""
 
-#: includes/settings-fields/content.php:175
+#: includes/settings-fields/content.php:188
 msgid "Pause when the slide is left"
 msgstr ""
 
-#: includes/settings-fields/content.php:178
+#: includes/settings-fields/content.php:191
 msgid "Off: it plays on unseen (sound too) and carries on from there when its slide is back."
 msgstr ""
 
-#: includes/settings-fields/content.php:183
+#: includes/settings-fields/content.php:196
 msgid "Next slide when the video ends"
 msgstr ""
 
-#: includes/settings-fields/content.php:186
+#: includes/settings-fields/content.php:199
 msgid "With Autoplay (Controls) and Play automatically: on a video slide the slider waits for the end of the video instead of the delay. The video then plays once."
 msgstr ""
 
-#: includes/settings-fields/content.php:191
+#: includes/settings-fields/content.php:204
 msgid "Preload the next video"
 msgstr ""
 
-#: includes/settings-fields/content.php:195
+#: includes/settings-fields/content.php:208
 msgid "No: only when it plays"
 msgstr ""
 
-#: includes/settings-fields/content.php:196
+#: includes/settings-fields/content.php:209
 msgid "Its first frame (light)"
 msgstr ""
 
-#: includes/settings-fields/content.php:197
+#: includes/settings-fields/content.php:210
 msgid "The video itself (heavy)"
 msgstr ""
 
-#: includes/settings-fields/content.php:199
+#: includes/settings-fields/content.php:212
 msgid "For the video of the next slide only; the others load when their slide comes up."
 msgstr ""
 
-#: includes/settings-fields/content.php:206
+#: includes/settings-fields/content.php:219
 msgid "CSS class"
 msgstr ""
 
-#: includes/settings-fields/content.php:210
+#: includes/settings-fields/content.php:223
 msgid "One or more, separated by spaces. Added to the slider’s outer block, with those given where it is placed."
 msgstr ""
 
-#: includes/settings-fields/content.php:215
+#: includes/settings-fields/content.php:228
 msgid "ID"
 msgstr ""
 
-#: includes/settings-fields/content.php:219
+#: includes/settings-fields/content.php:232
 msgid "The id of the slider’s outer block: letters, digits, - and _. An id must be unique on a page, so do not place this slider twice on one page."
 msgstr ""
 
-#: includes/settings-fields/content.php:228
+#: includes/settings-fields/content.php:241
 msgid "Use as background"
 msgstr ""
 
-#: includes/settings-fields/content.php:231
+#: includes/settings-fields/content.php:244
 msgid "The slider fills the block with the class below, behind its content, and plays on its own: Autoplay and Infinite loop are on; arrows, pagination, keyboard, slide links, captions, descriptions, the lightbox and Height are not used, the images are cropped to fill."
 msgstr ""
 
-#: includes/settings-fields/content.php:237
+#: includes/settings-fields/content.php:250
 msgid "Parent block class"
 msgstr ""
 
-#: includes/settings-fields/content.php:241
+#: includes/settings-fields/content.php:254
 msgid "Give this class to the row or column the slider is in (WPBakery: “Extra class name”) and enter it here. The nearest block around the slider with it is used; without one, the slider shows as usual."
 msgstr ""
 
-#: includes/settings-fields/content.php:249
+#: includes/settings-fields/content.php:262
 msgid "Overlay color"
 msgstr ""
 
-#: includes/settings-fields/content.php:252
+#: includes/settings-fields/content.php:265
 msgid "A color over the slides, so that the content on them reads well. Its opacity says how much; at Opacity 0 there is none."
 msgstr ""
 
@@ -1875,204 +1922,204 @@ msgstr ""
 msgid "A click on a video slide opens it in the lightbox, with sound and controls. Off: the lightbox shows the images only."
 msgstr ""
 
-#: includes/settings-fields/general.php:148
+#: includes/settings-fields/general.php:149
 msgid "Thumbnails in the lightbox"
 msgstr ""
 
-#: includes/settings-fields/general.php:151
+#: includes/settings-fields/general.php:152
 msgid "Under the image, as many in view as in the slider."
 msgstr ""
 
-#: includes/settings-fields/general.php:158
+#: includes/settings-fields/general.php:159
 msgid "Thumbnail border radius (px)"
 msgstr ""
 
-#: includes/settings-fields/general.php:166
+#: includes/settings-fields/general.php:168
 msgid "As the slider’s"
 msgstr ""
 
-#: includes/settings-fields/general.php:167
+#: includes/settings-fields/general.php:169
 msgid "Empty: the thumbnail border radius (Layout)."
 msgstr ""
 
-#: includes/settings-fields/general.php:173
+#: includes/settings-fields/general.php:175
 msgid "Descriptions in the lightbox"
 msgstr ""
 
-#: includes/settings-fields/general.php:176
+#: includes/settings-fields/general.php:178
 msgid "The slide’s description under its image, with the caption."
 msgstr ""
 
-#: includes/settings-fields/general.php:183
+#: includes/settings-fields/general.php:185
 msgid "Description place"
 msgstr ""
 
-#: includes/settings-fields/general.php:188
+#: includes/settings-fields/general.php:190
 msgid "Over the image"
 msgstr ""
 
-#: includes/settings-fields/general.php:189
+#: includes/settings-fields/general.php:191
 msgid "Under the image"
 msgstr ""
 
-#: includes/settings-fields/general.php:191
+#: includes/settings-fields/general.php:193
 msgid "Under the image: the image gets smaller to leave room for the text (at most 40% of the window; longer text scrolls)."
 msgstr ""
 
-#: includes/settings-fields/general.php:197
+#: includes/settings-fields/general.php:199
 msgid "Text width (% of the window)"
 msgstr ""
 
-#: includes/settings-fields/general.php:204
+#: includes/settings-fields/general.php:207
 msgid "As wide as the image above it, within this width and the maximum; not narrower than 500px where the window allows."
 msgstr ""
 
-#: includes/settings-fields/general.php:209
+#: includes/settings-fields/general.php:212
 msgid "At most (px)"
 msgstr ""
 
-#: includes/settings-fields/general.php:221
+#: includes/settings-fields/general.php:224
 msgid "Arrows"
 msgstr ""
 
-#: includes/settings-fields/general.php:231
+#: includes/settings-fields/general.php:234
 msgid "Arrow color"
 msgstr ""
 
-#: includes/settings-fields/general.php:240
+#: includes/settings-fields/general.php:243
 msgid "Arrow height (px)"
 msgstr ""
 
-#: includes/settings-fields/general.php:249
+#: includes/settings-fields/general.php:252
 msgid "Auto (empty): 32px on the slider, 20px on the strip of thumbnails (Thumbnails effect). Their width follows."
 msgstr ""
 
-#: includes/settings-fields/general.php:259
+#: includes/settings-fields/general.php:262
 msgid "Bullets"
 msgstr ""
 
-#: includes/settings-fields/general.php:260
+#: includes/settings-fields/general.php:263
 msgid "Fraction (1 / 5)"
 msgstr ""
 
-#: includes/settings-fields/general.php:266
-#: includes/settings-fields/general.php:282
+#: includes/settings-fields/general.php:269
+#: includes/settings-fields/general.php:285
 msgid "Pagination position"
 msgstr ""
 
-#: includes/settings-fields/general.php:270
-#: includes/settings-fields/layout-look.php:342
-#: includes/settings-fields/layout-look.php:419
+#: includes/settings-fields/general.php:273
+#: includes/settings-fields/layout-look.php:345
+#: includes/settings-fields/layout-look.php:422
 msgid "Bottom left"
 msgstr ""
 
-#: includes/settings-fields/general.php:271
+#: includes/settings-fields/general.php:274
 msgid "Bottom center"
 msgstr ""
 
-#: includes/settings-fields/general.php:272
-#: includes/settings-fields/layout-look.php:344
-#: includes/settings-fields/layout-look.php:421
+#: includes/settings-fields/general.php:275
+#: includes/settings-fields/layout-look.php:347
+#: includes/settings-fields/layout-look.php:424
 msgid "Bottom right"
 msgstr ""
 
-#: includes/settings-fields/general.php:273
-#: includes/settings-fields/layout-look.php:337
-#: includes/settings-fields/layout-look.php:414
+#: includes/settings-fields/general.php:276
+#: includes/settings-fields/layout-look.php:340
+#: includes/settings-fields/layout-look.php:417
 msgid "Top left"
 msgstr ""
 
-#: includes/settings-fields/general.php:274
+#: includes/settings-fields/general.php:277
 msgid "Top center"
 msgstr ""
 
-#: includes/settings-fields/general.php:275
-#: includes/settings-fields/layout-look.php:339
-#: includes/settings-fields/layout-look.php:416
+#: includes/settings-fields/general.php:278
+#: includes/settings-fields/layout-look.php:342
+#: includes/settings-fields/layout-look.php:419
 msgid "Top right"
 msgstr ""
 
-#: includes/settings-fields/general.php:297
+#: includes/settings-fields/general.php:300
 msgid "Pagination placement"
 msgstr ""
 
-#: includes/settings-fields/general.php:301
+#: includes/settings-fields/general.php:304
 msgid "Over the slider"
 msgstr ""
 
-#: includes/settings-fields/general.php:302
+#: includes/settings-fields/general.php:305
 msgid "Outside the slider"
 msgstr ""
 
-#: includes/settings-fields/general.php:308
+#: includes/settings-fields/general.php:311
 msgid "Pagination offset (px)"
 msgstr ""
 
-#: includes/settings-fields/general.php:314
+#: includes/settings-fields/general.php:317
 msgid "Distance from the slider edge (over the slider) or gap to the slider (outside)."
 msgstr ""
 
-#: includes/settings-fields/general.php:322
+#: includes/settings-fields/general.php:325
 msgid "Bullet width (px)"
 msgstr ""
 
-#: includes/settings-fields/general.php:333
+#: includes/settings-fields/general.php:336
 msgid "Bullet height (px)"
 msgstr ""
 
-#: includes/settings-fields/general.php:345
+#: includes/settings-fields/general.php:348
 msgid "Bullet border radius (px)"
 msgstr ""
 
-#: includes/settings-fields/general.php:352
+#: includes/settings-fields/general.php:356
 msgid "Round"
 msgstr ""
 
-#: includes/settings-fields/general.php:353
+#: includes/settings-fields/general.php:357
 msgid "Empty: fully rounded, a circle or, when wider than tall, a pill. 0 = square corners."
 msgstr ""
 
-#: includes/settings-fields/general.php:359
+#: includes/settings-fields/general.php:363
 msgid "Space between bullets (px)"
 msgstr ""
 
-#: includes/settings-fields/general.php:373
+#: includes/settings-fields/general.php:377
 msgid "Current bullet length (px)"
 msgstr ""
 
-#: includes/settings-fields/general.php:381
+#: includes/settings-fields/general.php:385
 msgid "As the others"
 msgstr ""
 
-#: includes/settings-fields/general.php:382
+#: includes/settings-fields/general.php:386
 msgid "Makes the current bullet longer than the others, e.g. 24 for a pill: wider in a row, taller in a column (vertical sliders). It grows and shrinks smoothly. Empty: as the others."
 msgstr ""
 
-#: includes/settings-fields/general.php:387
+#: includes/settings-fields/general.php:391
 msgid "Fraction font size (px)"
 msgstr ""
 
-#: includes/settings-fields/general.php:401
+#: includes/settings-fields/general.php:405
 msgid "Own pagination colors"
 msgstr ""
 
-#: includes/settings-fields/general.php:404
+#: includes/settings-fields/general.php:408
 msgid "Off: white over the slider; outside it, the colour of the page’s text."
 msgstr ""
 
-#: includes/settings-fields/general.php:411
+#: includes/settings-fields/general.php:415
 msgid "Current"
 msgstr ""
 
-#: includes/settings-fields/general.php:419
+#: includes/settings-fields/general.php:423
 msgid "Others"
 msgstr ""
 
-#: includes/settings-fields/general.php:427
+#: includes/settings-fields/general.php:431
 msgid "Others’ opacity (%)"
 msgstr ""
 
-#: includes/settings-fields/general.php:437
+#: includes/settings-fields/general.php:441
 msgid "Keyboard control"
 msgstr ""
 
@@ -2150,7 +2197,7 @@ msgstr ""
 
 #: includes/settings-fields/layout-collage.php:69
 #: includes/trait-wp-swiper-admin-fields.php:326
-#: includes/trait-wp-swiper-admin-fields.php:563
+#: includes/trait-wp-swiper-admin-fields.php:572
 msgid "Shuffle"
 msgstr ""
 
@@ -2198,59 +2245,59 @@ msgstr ""
 msgid "Every row exactly the Row height, each photo at its own proportions, nothing cropped; a row ends where the next photo would not fit, so the right ends are uneven. Off: each row is fitted to the width exactly, its height a little more or less."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:197
+#: includes/settings-fields/layout-collage.php:198
 msgid "Rotation (°)"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:204
+#: includes/settings-fields/layout-collage.php:206
 msgid "Grid, Random mosaic, the templates, Scattered and Freeform: the whole collage turned, its photos upright (Scattered and Freeform as large as fits the block turned). 0: not turned. Tablet and mobile can have their own."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:209
+#: includes/settings-fields/layout-collage.php:211
 msgid "Turned collage"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:214
+#: includes/settings-fields/layout-collage.php:216
 msgid "Fill the block (its edges cut off)"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:215
+#: includes/settings-fields/layout-collage.php:217
 msgid "All of it (the corners empty)"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:230
+#: includes/settings-fields/layout-collage.php:232
 msgid "An image and/or text in one place of the collage instead of a photo; it stays there while the photos swap. Not for Justified rows and Masonry."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:235
+#: includes/settings-fields/layout-collage.php:237
 msgid "Place"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:242
+#: includes/settings-fields/layout-collage.php:244
 msgid "Which place has it, counted as the places are laid out (1: the first). Or drag it onto a photo in the preview."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:261
+#: includes/settings-fields/layout-collage.php:263
 msgid "Of the width inside the place; the image keeps its proportions. With text under it: at most half the height."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:269
+#: includes/settings-fields/layout-collage.php:271
 msgid "Shortcodes work here too: a form, a theme\\x27s HTML block with buttons… With one, nothing is cut: the place scrolls where it is too tall."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:281
+#: includes/settings-fields/layout-collage.php:283
 msgid "Text that does not fit in the place is cut at a word, with \"…\"."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:293
+#: includes/settings-fields/layout-collage.php:295
 msgid "Between the place's edge and the image and text."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:313
+#: includes/settings-fields/layout-collage.php:315
 msgid "The place's color under the image and text; at Opacity 0 (as by default) there is none."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:323
+#: includes/settings-fields/layout-collage.php:325
 msgid "With more photos than places: every so often a place, at random, fades to a photo not shown yet. The arrangement does not change."
 msgstr ""
 
@@ -2275,12 +2322,12 @@ msgid "Every image is as tall as the Height and as wide as these proportions mak
 msgstr ""
 
 #: includes/settings-fields/layout-effects.php:55
-#: includes/settings-fields/layout-effects.php:416
+#: includes/settings-fields/layout-effects.php:417
 msgid "Custom proportions"
 msgstr ""
 
 #: includes/settings-fields/layout-effects.php:60
-#: includes/settings-fields/layout-effects.php:421
+#: includes/settings-fields/layout-effects.php:422
 msgid "Width x height, for example 4x3 or 2.35x1."
 msgstr ""
 
@@ -2468,47 +2515,47 @@ msgstr ""
 msgid "Where the thumbnails sit while there are too few to fill the strip."
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:353
+#: includes/settings-fields/layout-effects.php:354
 msgid "Thumbnails per view"
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:360
+#: includes/settings-fields/layout-effects.php:361
 msgid "Sets the thumbnail size: this many fill the strip. With more slides the strip scrolls."
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:368
+#: includes/settings-fields/layout-effects.php:369
 msgid "Thumbnail height (px)"
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:377
+#: includes/settings-fields/layout-effects.php:378
 msgid "Auto (empty or 0): the size comes from Thumbnails per view and the proportions. Set: thumbnails this tall, frame included; their width follows from the proportions and as many show as fit, the rest scroll."
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:383
+#: includes/settings-fields/layout-effects.php:384
 msgid "Space between thumbnails (px)"
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:396
+#: includes/settings-fields/layout-effects.php:397
 msgid "Thumbnail proportions"
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:401
+#: includes/settings-fields/layout-effects.php:402
 msgid "Square (1:1)"
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:408
+#: includes/settings-fields/layout-effects.php:409
 msgid "The images are cropped or shown whole per “Image fit”."
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:454
+#: includes/settings-fields/layout-effects.php:456
 msgid "Frame"
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:485
+#: includes/settings-fields/layout-effects.php:487
 msgid "Active color"
 msgstr ""
 
-#: includes/settings-fields/layout-effects.php:493
+#: includes/settings-fields/layout-effects.php:495
 msgid "Inactive thumbnail opacity (%)"
 msgstr ""
 
@@ -2536,191 +2583,182 @@ msgstr ""
 msgid "How many slides one step moves (arrows, swipe, autoplay); the pagination counts the steps."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:128
+#: includes/settings-fields/layout-look.php:130
 msgid "Gradient"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:131
+#: includes/settings-fields/layout-look.php:133
 msgid "A gradient over the photos: over each photo of a slider or collage (not over videos); one across the whole shape of Art and Text mask, the gaps staying empty. See-through colors let the photo show."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:136
-#: includes/trait-wp-swiper-admin-controls.php:184
-msgid "Gradient colors"
-msgstr ""
-
-#: includes/settings-fields/layout-look.php:139
-msgid "Click the bar to add a color, drag a color along it, pick one to change or delete it."
-msgstr ""
-
-#: includes/settings-fields/layout-look.php:147
+#: includes/settings-fields/layout-look.php:149
 msgid "Zoom on hover"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:150
+#: includes/settings-fields/layout-look.php:152
 msgid "The photo under the pointer zooms in a little. Not on touch screens, not for a background, nor with Zoom the main image."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:155
+#: includes/settings-fields/layout-look.php:157
 msgid "Image shadow"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:158
+#: includes/settings-fields/layout-look.php:160
 msgid "A shadow under each photo where they stand apart: several slides in view, Coverflow, Cards, the Creative carousel, Collage and Art (where it follows each shape, with no spread); with Fade, around the photo in view. Not for a background. Room is kept around the photos for it, so they get a little smaller."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:164
+#: includes/settings-fields/layout-look.php:166
 msgid "Horizontal (px)"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:175
+#: includes/settings-fields/layout-look.php:177
 msgid "Vertical (px)"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:186
+#: includes/settings-fields/layout-look.php:188
 msgid "Blur radius (px)"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:197
+#: includes/settings-fields/layout-look.php:199
 msgid "Spread radius (px)"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:216
+#: includes/settings-fields/layout-look.php:218
 msgid "Center active slide"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:224
+#: includes/settings-fields/layout-look.php:226
 msgid "Continuous scroll"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:227
+#: includes/settings-fields/layout-look.php:229
 msgid "The slides move on their own without stopping, in a loop. Pause on hover applies; arrows, pagination, keyboard, dragging, autoplay and transition speed do not."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:232
+#: includes/settings-fields/layout-look.php:234
 msgid "Scroll speed (px/s)"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:245
+#: includes/settings-fields/layout-look.php:247
 msgid "Scroll direction"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:257
+#: includes/settings-fields/layout-look.php:259
 msgid "Separator"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:262
+#: includes/settings-fields/layout-look.php:264
 msgid "Dot"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:263
+#: includes/settings-fields/layout-look.php:265
 msgid "Own image"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:265
+#: includes/settings-fields/layout-look.php:267
 msgid "Stands in the middle of the space between the slides and moves with them."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:270
+#: includes/settings-fields/layout-look.php:272
 msgid "Separator image"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:273
+#: includes/settings-fields/layout-look.php:275
 msgid "From the media library; PNG or SVG with a transparent background suits best."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:278
+#: includes/settings-fields/layout-look.php:280
 msgid "Separator size (px)"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:285
+#: includes/settings-fields/layout-look.php:287
 msgid "The dot's diameter; an image fits in a square of this size. The space between the slides is at least as wide."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:290
+#: includes/settings-fields/layout-look.php:292
 msgid "Dot color"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:296
+#: includes/settings-fields/layout-look.php:298
 msgid "Image fit"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:303
+#: includes/settings-fields/layout-look.php:305
 msgid "Cover: the image fills the slide, cropped where its proportions differ. Contain: the whole image is shown, with empty space beside it where its proportions differ."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:309
+#: includes/settings-fields/layout-look.php:311
 msgid "Make the active slide wider"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:312
+#: includes/settings-fields/layout-look.php:314
 msgid "The number of slides comes from “Slides per view”, always rounded to a whole number."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:317
+#: includes/settings-fields/layout-look.php:319
 msgid "Active slide size (%)"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:324
+#: includes/settings-fields/layout-look.php:327
 msgid "% of the slider width (vertical sliders: of its height)."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:331
+#: includes/settings-fields/layout-look.php:334
 #: includes/trait-wp-swiper-admin-slides.php:139
 #: includes/trait-wp-swiper-admin-slides.php:245
 msgid "Image position"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:346
+#: includes/settings-fields/layout-look.php:349
 msgid "The part of the image kept in view where it is cropped to fill its slide. Not for YouTube / Vimeo videos."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:352
-#: includes/settings-fields/layout-look.php:363
+#: includes/settings-fields/layout-look.php:355
+#: includes/settings-fields/layout-look.php:366
 msgid "Image alignment"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:377
+#: includes/settings-fields/layout-look.php:380
 msgid "Zoom the main image"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:380
+#: includes/settings-fields/layout-look.php:383
 msgid "The image of the slide in view slowly zooms in or out while it is shown. Slide effect: with one slide in view (Slides per view 1 on every device) or the wider active slide. Not for video slides."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:385
+#: includes/settings-fields/layout-look.php:388
 msgid "Zoom direction"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:390
+#: includes/settings-fields/layout-look.php:393
 msgid "Zoom in"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:391
+#: includes/settings-fields/layout-look.php:394
 msgid "Zoom out"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:397
+#: includes/settings-fields/layout-look.php:400
 msgid "Zoom (%)"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:404
+#: includes/settings-fields/layout-look.php:407
 msgid "How much larger the image gets: 15 = 115% of its size."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:409
+#: includes/settings-fields/layout-look.php:412
 msgid "Zoom towards"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:423
+#: includes/settings-fields/layout-look.php:426
 msgid "The point of the image that stays in place: the rest grows away from it (zoom in) or towards it (zoom out)."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:429
+#: includes/settings-fields/layout-look.php:432
 msgid "Zoom duration (ms)"
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:437
+#: includes/settings-fields/layout-look.php:440
 msgid "Auto (empty): as long as a slide is shown with Autoplay (its delay plus the transition speed); without Autoplay, 6000."
 msgstr ""
 
@@ -2813,8 +2851,8 @@ msgid "Mobile (below 768px)"
 msgstr ""
 
 #: includes/trait-wp-swiper-admin-fields.php:160
-#: includes/trait-wp-swiper-admin-fields.php:494
-#: includes/trait-wp-swiper-admin-fields.php:599
+#: includes/trait-wp-swiper-admin-fields.php:503
+#: includes/trait-wp-swiper-admin-fields.php:608
 msgid "Inherit"
 msgstr ""
 
@@ -2832,7 +2870,7 @@ msgstr ""
 msgid "Tablet and mobile sizes"
 msgstr ""
 
-#: includes/trait-wp-swiper-admin-fields.php:565
+#: includes/trait-wp-swiper-admin-fields.php:574
 msgid "Reset"
 msgstr ""
 

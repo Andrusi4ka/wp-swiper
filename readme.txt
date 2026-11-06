@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.4.0
+Stable tag: 3.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,16 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.5.0 =
+* Art loads faster: each window takes the smallest copy of its photo that is as large as it is drawn (on a phone several times less to load), and a page loads only the code of its own Style.
+* Text mask: the strips can be turned off — the letters alone, as large as the block allows. "Strips go" is now Text position: Top, Bottom (new: the word at the bottom, the strips going up), Left, Right.
+* Text mask: Letter alignment, per device — a row's letters on their tops, middles or the baseline; a column's on their left edges, middle line or right edges. With strips too: each strip starts where its letter ends.
+* Art, Grid shapes: Content in a window too.
+* Caption: a Custom gradient background — your own colors and direction.
+* Image shadow for Flip (on the turning card) and Thumbnails (the main photos).
+* Editor: a slider beside the number for the radii, Gaps, the active slide's size, the Gaps to the slider, the thumbnails' opacity, the collage's Rotation, Art's image sizes and the lightbox's text width — per device too. New icons for Creative's Styles.
+* Fixed: in the preview, content dragged onto a window (Art) or a place (Collage) did not go past as many as there were photos.
 
 = 3.4.0 =
 * Art: Ring, Grid + circle and Grid + square have Content in a window too: an image, text or a shortcode in one window instead of a photo — the middle one or any other, per device or dragged onto a window in the preview. In a round window it sits in the square inside the circle.

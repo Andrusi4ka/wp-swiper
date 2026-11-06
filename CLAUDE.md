@@ -37,13 +37,20 @@
 
 ## Стан
 
-- Останній реліз **v3.4.0** (2026-11-05): Content in a window для Ring і
+- Останній реліз **v3.5.0** (2026-11-06): менші копії фото Art і код Art
+  лише свого стилю (`art-cells.js`, `art-text.js`), Text mask — смуги
+  вимикаються, Text position (+ Bottom), Letter alignment; Content in a
+  window для Grid shapes; Custom gradient фону підпису; тінь для Flip і
+  Thumbnails; повзунки біля чисел; нові іконки Creative; виправлено
+  перетягування вмісту в прев'ю; `.pot` оновлено (WP-CLI 2.11.0, SHA-512
+  звірено).
+- Попередній — **v3.4.0** (2026-11-05): Content in a window для Ring і
   сіток з колом / квадратом замість стилів «+ text» (старі переносяться),
   перетягування кутів Grid shapes, Shadow color для Effect shadows,
   плитки стилів Creative, темний екран прев'ю, ширше поле коду редакторів;
   `admin.js` розділено на частини, тести адмінки; `.pot` оновлено (WP-CLI
   2.11.0, phar у тимчасовій теці, SHA-512 звірено).
-- Попередній — **v3.3.0** (2026-11-04): Collage Rotation (за крайніми
+- Ще раніше — **v3.3.0** (2026-11-04): Collage Rotation (за крайніми
   точками фото), Content in a place (колаж) і Content in a window (Art SVG
   shape) зі шорткодами, тінь у фоні для Collage / Art, Developer mode для
   колажу й SVG shape, картка «What … can do»; `.pot` оновлено (WP-CLI
