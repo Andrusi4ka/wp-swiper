@@ -203,6 +203,7 @@ return array(
 		'min'             => 30,
 		'max'             => 100,
 		'step'            => 5,
+		'range'           => array( 30, 100 ),
 		'help'            => __( 'As wide as the image above it, within this width and the maximum; not narrower than 500px where the window allows.', 'wp-swiper' ),
 	),
 	'description_lightbox_max' => array(

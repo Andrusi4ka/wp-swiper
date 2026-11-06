@@ -1273,8 +1273,10 @@
 		 * An order for this device as places() gives it: -1 (Content in a
 		 * place) where it is in it, so moved with the photos it moves.
 		 */
-		function takeOrder( list ) {
-			var at = list.indexOf( -1 );
+		// `at`: Content in a place's place in it (from 0) when the list has it no
+		// longer (the preview drops repeated photos first, which would move it).
+		function takeOrder( list, at ) {
+			at = undefined === at ? list.indexOf( -1 ) : at;
 			if ( at !== -1 && config.content ) {
 				config.content.place = config.content.place || {};
 				config.content.place[ current ] = at + 1;
@@ -1816,8 +1818,8 @@
 			},
 			// A new order for this device (as places() gives it: -1, Content in a
 			// place, where it is now in it; moved with the photos, it moves).
-			setOrder: function ( list ) {
-				takeOrder( list );
+			setOrder: function ( list, content ) {
+				takeOrder( list, content );
 				build();
 				schedule();
 			},

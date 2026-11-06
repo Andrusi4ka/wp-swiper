@@ -149,3 +149,30 @@ test( 'collage-content-masonry: no photo twice where there is no content', async
 	expect( found.photos.length ).toBe( 4 );
 	expect( errors ).toEqual( [] );
 } );
+
+// The preview (preview-collage.js, added as its frame has it): Content in a
+// place dragged onto the last place of a template with more places than
+// photos (cases.php collage-content-few: 5 places, 2 photos, repeated). It
+// lands there, not on the 3rd (the repeated photos once moved it up).
+test( 'collage-content-few: dragged onto the 5th place, it is in the 5th', async ( { page, isMobile } ) => {
+	test.skip( isMobile, 'dragged with a mouse' );
+	const errors = await open( page, 'collage-content-few' );
+	const base = fixture.replace( 'tests/browser/fixture.php', '' );
+	await page.addScriptTag( { url: base + 'assets/js/preview-collage.js' } );
+	const cells = page.locator( '.wp-swiper-collage__cell' );
+	await expect( cells ).toHaveCount( 5 );
+	const before = await page.evaluate( () => [].findIndex.call( document.querySelectorAll( '.wp-swiper-collage__cell' ), ( c ) => c.classList.contains( 'wp-swiper-collage__cell--content' ) ) );
+	expect( before ).toBe( 0 );
+	const from = await cells.nth( 0 ).boundingBox();
+	const to = await cells.nth( 4 ).boundingBox();
+	await page.mouse.move( from.x + from.width / 2, from.y + from.height / 2 );
+	await page.mouse.down();
+	for ( let i = 1; i <= 8; i++ ) {
+		await page.mouse.move( from.x + from.width / 2 + ( to.x + to.width / 2 - from.x - from.width / 2 ) * i / 8, from.y + from.height / 2 + ( to.y + to.height / 2 - from.y - from.height / 2 ) * i / 8 );
+	}
+	await page.mouse.up();
+	await page.waitForTimeout( 400 );
+	const after = await page.evaluate( () => [].findIndex.call( document.querySelectorAll( '.wp-swiper-collage__cell' ), ( c ) => c.classList.contains( 'wp-swiper-collage__cell--content' ) ) );
+	expect( after ).toBe( 4 );
+	expect( errors ).toEqual( [] );
+} );

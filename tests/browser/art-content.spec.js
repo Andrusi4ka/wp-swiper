@@ -178,3 +178,38 @@ test( 'art-grid-shapes-content: the content in the shape set for the device', as
 	expect( await page.locator( '.wp-swiper-art__piece--content .wp-swiper-content__text' ).innerText() ).toContain( 'Hello shapes' );
 	expect( errors ).toEqual( [] );
 } );
+
+// The preview (preview-art.js, added to the page as its frame has it): Content
+// in a window dragged onto a window past the photos (cases.php
+// art-shape-content-many: 16 windows, 4 photos, repeated). It lands there,
+// not on the 5th (the repeated photos once moved it up), the photos in the
+// others. (The message to the editor goes from the preview's frame only.)
+test( 'art-shape-content-many: dragged onto the 12th window, it is in the 12th', async ( { page, isMobile } ) => {
+	test.skip( isMobile, 'dragged with a mouse' );
+	const errors = await open( page, 'art-shape-content-many' );
+	await page.addStyleTag( { url: fixture.replace( 'tests/browser/fixture.php', '' ) + 'assets/css/preview-art.css' } );
+	await page.addScriptTag( { url: fixture.replace( 'tests/browser/fixture.php', '' ) + 'assets/js/preview-art.js' } );
+	const pieces = page.locator( '.wp-swiper-art__piece:not([hidden])' );
+	await expect( pieces ).toHaveCount( 16 );
+	const from = await pieces.nth( 0 ).boundingBox();
+	const to = await pieces.nth( 11 ).boundingBox();
+	await page.mouse.move( from.x + from.width / 2, from.y + from.height / 2 );
+	await page.mouse.down();
+	for ( let i = 1; i <= 8; i++ ) {
+		await page.mouse.move( from.x + from.width / 2 + ( to.x - from.x ) * i / 8, from.y + from.height / 2 + ( to.y - from.y ) * i / 8 );
+	}
+	await page.mouse.up();
+	await page.waitForTimeout( 300 );
+	const found = await page.evaluate( () => {
+		const all = [].slice.call( document.querySelectorAll( '.wp-swiper-art__piece' ) ).filter( ( p ) => ! p.hidden );
+		return {
+			at: all.findIndex( ( p ) => p.classList.contains( 'wp-swiper-art__piece--content' ) ),
+			photos: all.filter( ( p ) => p.wpReal >= 0 ).length,
+			window: document.querySelector( '.wp-swiper-art' ).wpSwiperArt.contentWindow(),
+		};
+	} );
+	expect( found.at ).toBe( 11 );
+	expect( found.window ).toBe( 12 );
+	expect( found.photos ).toBe( 15 );
+	expect( errors ).toEqual( [] );
+} );

@@ -560,7 +560,8 @@
   (`thumbs_spacing`, 0–100) і Inactive thumbnail opacity (`thumbs_opacity`,
   10–100, крок 5), Collage Rotation (`collage_rotate`, −45…45), Art
   Image size (%) у Content in a window і Opening (`art_content_image_size`,
-  `art_opening_image_size`, 10–100, крок 5), 2026-11-06. Далі
+  `art_opening_image_size`, 10–100, крок 5), Lightbox Text width
+  (`description_lightbox_width`, 30–100, крок 5), 2026-11-06. Далі
   за потреби — Height,
   Image size, Padding: лише ключ `range`.
 - **Тінь у режимі фону** (2026-11-04, рішення користувача): лише Collage і
@@ -630,6 +631,17 @@
   refs/tags/<tag>` (і `^{}` для анотованих тегів). `tests.yml` — лише
   читання. Оновлення сайтів ідуть з релізів GitHub: 2FA на обліковому
   записі обов'язкова.
+
+## Виправлені пастки
+
+- Перетягування вмісту в прев'ю (Art Content in a window, Collage Content
+  in a place): місце вмісту береться з повного списку вікон / місць ДО
+  того, як із нього прибираються повтори фото (`seen` у
+  `preview-art.js` / `preview-collage.js`), і передається окремо
+  (`setContentWindow()`, `setOrder( list, content )` колажу). Раніше з N
+  фото вміст не міг стати далі N+1 (2026-11-06, знайшов користувач: SVG,
+  10 фото, «далі 11 не ставиться»). Тести: `art-shape-content-many`
+  (`tests/data/grid-16.svg`), `collage-content-few`.
 
 ## Відомі обмеження
 

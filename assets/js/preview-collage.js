@@ -343,10 +343,13 @@
 			var swap = list[ from ];
 			list[ from ] = list[ to ];
 			list[ to ] = swap;
+			// Content in a place (-1): its place now, among all of them — before
+			// the repeated photos go (below), which would move it up.
+			var content = list.indexOf( -1 );
 			// Each photo once (a template with more places than photos repeats them).
 			var seen = {};
 			list = list.filter( function ( real ) {
-				return seen[ real ] ? false : ( seen[ real ] = true );
+				return real !== -1 && ( seen[ real ] ? false : ( seen[ real ] = true ) );
 			} );
 			end();
 			// Scattered: each place keeps the shape of its photo, so the two
@@ -357,15 +360,18 @@
 				scattered = api.scatter.serialize();
 				api.scatter.set( scattered );
 			}
-			store( api, places.device, list, scattered );
+			store( api, places.device, list, scattered, content );
 			return;
 		}
 		end();
 	} );
 
-	// The new order (and Scattered's layout) taken by the collage and stored by the editor.
-	function store( api, device, list, scattered ) {
-		api.setOrder( list );
+	// The new order (and Scattered's layout) taken by the collage and stored by
+	// the editor; `content`: Content in a place's place (from 0, -1: none) when
+	// the list has it no longer, else where it is in the list.
+	function store( api, device, list, scattered, content ) {
+		content = undefined === content ? list.indexOf( -1 ) : content;
+		api.setOrder( list, content === -1 ? undefined : content );
 		if ( window.parent && window.parent !== window ) {
 			window.parent.postMessage( {
 				wpSwiper: 'collage-order',
@@ -379,8 +385,8 @@
 			if ( scattered ) {
 				window.parent.postMessage( { wpSwiper: 'collage-scatter', device: device, layout: scattered }, window.location.origin );
 			}
-			// Content in a place moved with the photos (-1 in the order): its place.
-			if ( list.indexOf( -1 ) !== -1 && api.contentPlace ) {
+			// Content in a place moved with the photos: its place.
+			if ( content !== -1 && api.contentPlace ) {
 				window.parent.postMessage( { wpSwiper: 'collage-content', device: device, place: api.contentPlace() }, window.location.origin );
 			}
 		}

@@ -173,12 +173,19 @@
 			var swap = list[ from ];
 			list[ from ] = list[ to ];
 			list[ to ] = swap;
+			// Content in a window (-1): the window it is in now, counted among
+			// all the windows — before the repeated photos go (below), which
+			// would move it up (with 10 photos never past the 11th window).
+			var content = list.indexOf( -1 );
 			// Each photo once (with fewer photos than pieces they repeat).
 			var seen = {};
 			list = list.filter( function ( real ) {
-				return seen[ real ] ? false : ( seen[ real ] = true );
+				return real !== -1 && ( seen[ real ] ? false : ( seen[ real ] = true ) );
 			} );
 			end();
+			if ( content !== -1 && api.setContentWindow ) {
+				api.setContentWindow( content + 1 );
+			}
 			api.setOrder( list );
 			if ( window.parent && window.parent !== window ) {
 				window.parent.postMessage( {
@@ -190,8 +197,8 @@
 						return id > 0;
 					} )
 				}, window.location.origin );
-				// Content in a window moved with the photos (-1 in the order): its window.
-				if ( list.indexOf( -1 ) !== -1 && api.contentWindow ) {
+				// Content in a window moved with the photos: its window.
+				if ( content !== -1 && api.contentWindow ) {
 					window.parent.postMessage( { wpSwiper: 'art-content', device: api.device(), window: api.contentWindow() }, window.location.origin );
 				}
 			}

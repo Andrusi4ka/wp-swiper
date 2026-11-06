@@ -1142,6 +1142,9 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		foreach ( array( 'art_content_image_size', 'art_opening_image_size' ) as $key ) {
 			$this->assertSame( array( 10, 100 ), $fields[ $key ]['range'], $key );
 		}
+		// Lightbox: Text width (% of the window), by fives.
+		$this->assertSame( array( 30, 100 ), $fields['description_lightbox_width']['range'] );
+		$this->assertSame( 1, preg_match( '#data-field="description_lightbox_width".*?wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"\s+value="[^"]*"\s+min="30"\s+max="100"\s+step="5"#s', $html ) );
 		// Make the active slide wider: its size, by halves (5–95%).
 		$this->assertSame( array( 5, 95 ), $fields['active_width']['range'] );
 		$this->assertSame( 1, preg_match( '#data-field="active_width".*?wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"\s+value="[^"]*"\s+min="5"\s+max="95"\s+step="0.5"#s', $html ) );
