@@ -684,10 +684,10 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( 20, WP_Swiper_Settings::shadow( $this->settings( $on + $background + array( 'effect' => 'art' ) ) )['blur'] );
 		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + $background + array( 'effect' => 'fade' ) ) ) );
 		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + $background + array( 'effect' => 'slide', 'slides_per_view' => 3 ) ) ) );
-		foreach ( array( 'cube', 'flip', 'thumbs' ) as $effect ) {
-			$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => $effect ) ) ), $effect );
-		}
-		foreach ( array( 'fade', 'coverflow', 'cards', 'art' ) as $effect ) {
+		// Cube: its own shadows (no Image shadow).
+		$this->assertFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => 'cube' ) ) ) );
+		// Flip (on its card) and Thumbnails (its main photos) since 3.5.
+		foreach ( array( 'fade', 'coverflow', 'cards', 'art', 'flip', 'thumbs' ) as $effect ) {
 			$this->assertNotFalse( WP_Swiper_Settings::shadow( $this->settings( $on + array( 'effect' => $effect ) ) ), $effect );
 		}
 		// Creative: the carousel only.

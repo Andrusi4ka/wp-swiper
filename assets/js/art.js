@@ -1452,6 +1452,9 @@
 	 */
 	function textLayout( sizes, spaces, count, text, gap, width, height ) {
 		var across = text.direction === 'right' || text.direction === 'left';
+		// Strips off: the letters alone, as large as the block allows (Auto),
+		// Gap between them as a word's; Right at the right, Left at the left.
+		var bare = !! text.bare;
 		// Along the word, and from the letters to the strips' ends.
 		var along = across ? height : width;
 		var away = across ? width : height;
@@ -1485,7 +1488,7 @@
 		// large as the word can be, at most TEXT_AUTO of it (room left for the strips).
 		// Right or left: no Letter size, the word fills the Height (Gap takes
 		// from the letters); at most TEXT_AUTO of the width.
-		var share = across || forDevice( text.auto ) ? TEXT_AUTO : ( Number( forDevice( text.size ) ) || 30 ) / 100;
+		var share = across || forDevice( text.auto ) ? ( bare ? 1 : TEXT_AUTO ) : ( Number( forDevice( text.size ) ) || 30 ) / 100;
 		var bySize = away * share / ( deepest || 1 );
 		// A space: half a column, or (as the letter) a space's width (down) or half the tallest letter.
 		var space = across ? widest / 2 : sizes.space;
@@ -1494,7 +1497,7 @@
 		var used;
 		// Stretch letters: along the word, at most TEXT_STRETCH times (as the letter: all alike).
 		var stretch = 1;
-		if ( text.width !== 'letter' ) {
+		if ( text.width !== 'letter' && ! bare ) {
 			var units = count + spaces.length / 2;
 			var full = ( along - gaps ) / units;
 			// Down: the widest letter may stand out of its column by a quarter
@@ -1529,6 +1532,21 @@
 		var joinInto = function ( depth ) {
 			return Math.max( Math.min( STRIP_JOIN, depth / 4 ), depth * joinShare );
 		};
+		// Alignment (per device): the letters against one another across the
+		// word — Top / Bottom: their tops, middles or the baseline (start,
+		// center, end); Left / Right: their left edges, middle line or right
+		// edges, in a column as wide as the widest. Auto: the baseline; the
+		// edge the word stands at. With strips or without: each strip starts
+		// where its own letter ends. Bottom: the row at the bottom of the
+		// block (the strips going up); Right: the column at the right edge.
+		var align = forDevice( text.align ) || 'auto';
+		if ( 'auto' === align ) {
+			align = across ? ( text.direction === 'left' ? 'end' : 'start' ) : 'end';
+		}
+		var rise = scale * ( up + down );
+		var roomUp = Math.max( 0, height - rise );
+		var lift = ! across && text.direction === 'up' ? roomUp : 0;
+		var columnX = across && text.direction === 'left' ? width - band : 0;
 		var items = [];
 		for ( var i = 0; i < count; i++ ) {
 			var size = sizes[ i ];
@@ -1548,18 +1566,32 @@
 			var end = band + room * lengths[ i ];
 			var item;
 			if ( ! across ) {
-				// Down: all on one baseline at the top.
-				var top = scale * ( up - size.ascent );
-				var from = top + depth - joinInto( depth );
-				var bottom = scale * up + room * lengths[ i ];
-				item = { left: start, top: top, width: span, height: depth, strip: bottom - from > 1 ? { x: stripStart, y: from, w: stripSpan, h: bottom - from } : null };
-			} else {
-				var into = depth - joinInto( depth );
-				var reach = end - into;
-				if ( text.direction === 'right' ) {
-					item = { left: 0, top: start, width: depth, height: span, strip: reach > 1 ? { x: into, y: stripStart, w: reach, h: stripSpan } : null };
+				// Top at the top (the strips going down), Bottom at the bottom (going
+				// up); each letter's top, middle or baseline on one line.
+				var top = lift + ( 'start' === align ? 0 : ( 'center' === align ? ( rise - depth ) / 2 : scale * ( up - size.ascent ) ) );
+				if ( text.direction === 'up' && ! bare ) {
+					var to = top + joinInto( depth );
+					var high = roomUp * ( 1 - lengths[ i ] );
+					item = { left: start, top: top, width: span, height: depth, strip: to - high > 1 ? { x: stripStart, y: high, w: stripSpan, h: to - high } : null };
 				} else {
-					item = { left: width - depth, top: start, width: depth, height: span, strip: reach > 1 ? { x: width - end, y: stripStart, w: reach, h: stripSpan } : null };
+					var from = top + depth - joinInto( depth );
+					var bottom = scale * up + room * lengths[ i ];
+					item = { left: start, top: top, width: span, height: depth, strip: ! bare && bottom - from > 1 ? { x: stripStart, y: from, w: stripSpan, h: bottom - from } : null };
+				}
+			} else {
+				// In its column (as wide as the widest letter, at the word's edge):
+				// at its left, middle or right.
+				var lx = columnX + ( 'start' === align ? 0 : ( 'center' === align ? ( band - depth ) / 2 : band - depth ) );
+				if ( bare ) {
+					item = { left: lx, top: start, width: depth, height: span, strip: null };
+				} else if ( text.direction === 'right' ) {
+					// From where its letter ends (into it) out to the right.
+					var into = lx + depth - joinInto( depth );
+					item = { left: lx, top: start, width: depth, height: span, strip: end - into > 1 ? { x: into, y: stripStart, w: end - into, h: stripSpan } : null };
+				} else {
+					// From the left edge of its letter (into it) out to the left.
+					var edge = lx + joinInto( depth );
+					item = { left: lx, top: start, width: depth, height: span, strip: edge - ( width - end ) > 1 ? { x: width - end, y: stripStart, w: edge - ( width - end ), h: stripSpan } : null };
 				}
 			}
 			// How much wider (down) or taller (right, left) its letter is drawn.
@@ -1593,7 +1625,7 @@
 			return shape;
 		}
 		// Top left, top right, bottom right, bottom left: the far end's.
-		var far = text.direction === 'right' ? [ 0, 1, 1, 0 ] : ( text.direction === 'left' ? [ 1, 0, 0, 1 ] : [ 0, 0, 1, 1 ] );
+		var far = text.direction === 'right' ? [ 0, 1, 1, 0 ] : ( text.direction === 'left' ? [ 1, 0, 0, 1 ] : ( text.direction === 'up' ? [ 1, 1, 0, 0 ] : [ 0, 0, 1, 1 ] ) );
 		var c = far.map( function ( at ) {
 			return at || both ? r : 0;
 		} );

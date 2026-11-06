@@ -301,3 +301,40 @@ test( 'Caption: a Custom gradient shows its editor instead of the color', async 
 	await expect.poll( async () => ( await value.inputValue() ).split( ';' ).length ).toBe( before + 1 );
 	expect( errors ).toEqual( [] );
 } );
+
+test( 'Text mask: Strips off hides their settings, on shows them again', async ( { page } ) => {
+	const errors = await edit( page, 'art-text-mask' );
+	await openPage( page, 'layout' );
+	const strips = [ 'text_mask_strip_width', 'text_mask_join', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max', 'text_mask_rounded' ];
+	await expect( page.locator( '[data-field="text_mask_strips_on"]' ) ).toBeVisible();
+	for ( const name of strips ) {
+		await expect( page.locator( '[data-field="' + name + '"]' ) ).toBeVisible();
+	}
+	await page.locator( '#wp-swiper-text_mask_strips_on' ).uncheck( { force: true } );
+	for ( const name of strips ) {
+		await expect( page.locator( '[data-field="' + name + '"]' ) ).toBeHidden();
+	}
+	await page.locator( '#wp-swiper-text_mask_strips_on' ).check( { force: true } );
+	await expect( page.locator( '[data-field="text_mask_strip_width"]' ) ).toBeVisible();
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'Text mask: Letter alignment, for a row or a column, with strips or without', async ( { page } ) => {
+	const errors = await edit( page, 'art-text-mask' );
+	await openPage( page, 'layout' );
+	const vertical = page.locator( '[data-field="text_mask_align_v"]' );
+	const horizontal = page.locator( '[data-field="text_mask_align_h"]' );
+	// With strips too. Top: top / center / bottom.
+	await expect( vertical ).toBeVisible();
+	await expect( horizontal ).toBeHidden();
+	await page.locator( '#wp-swiper-text_mask_strips_on' ).uncheck( { force: true } );
+	await expect( vertical ).toBeVisible();
+	await expect( horizontal ).toBeHidden();
+	// Left (its value "right"): left / center / right; the tile's name as its place.
+	const tile = page.locator( '[data-field="text_mask_direction"] .wp-swiper-tiles__tile[data-value="right"]' );
+	await expect( tile ).toHaveAttribute( 'title', 'Left' );
+	await tile.click();
+	await expect( horizontal ).toBeVisible();
+	await expect( vertical ).toBeHidden();
+	expect( errors ).toEqual( [] );
+} );

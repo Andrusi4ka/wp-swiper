@@ -254,6 +254,8 @@ class WP_Swiper_Render {
 			'wp-swiper',
 			'wp-swiper--' . $post_id,
 			'wp-swiper--effect-' . $settings['effect'],
+			// Thumbnails fading (its Transition): the Image shadow as Fade's (slider.css).
+			WP_Swiper_Settings::is_thumbs( $settings ) && WP_Swiper_Settings::is_fade( $settings ) ? 'wp-swiper--thumbs-fade' : '',
 			'wp-swiper--' . $settings['direction'],
 			'wp-swiper--fit-' . $settings['image_fit'],
 			in_array( true, $percent, true ) ? 'wp-swiper--height-percent' : '',

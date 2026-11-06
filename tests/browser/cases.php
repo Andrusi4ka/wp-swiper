@@ -59,6 +59,10 @@ return array(
 	'creative-effect-shadow'  => array( 'settings' => $slider + array( 'effect' => 'creative', 'effect_shadows' => '1', 'effect_shadow_color' => 'rgba(255,0,0,0.6)' ) ),
 	// The frame as the thumbnails always had it (a missing checkbox is off, as in a form).
 	'thumbs'           => array( 'settings' => $slider + array( 'effect' => 'thumbs', 'thumbs_border' => '1' ) ),
+	// Image shadow on Flip and Thumbnails (shadow-more.spec.js): Thumbnails sliding, and fading.
+	'flip-shadow'      => array( 'settings' => $slider + $shadow + array( 'effect' => 'flip' ) ),
+	'thumbs-shadow'    => array( 'settings' => $slider + $shadow + array( 'effect' => 'thumbs', 'thumbs_border' => '1', 'space_between' => '24' ) ),
+	'thumbs-fade-shadow' => array( 'settings' => $slider + $shadow + array( 'effect' => 'thumbs', 'thumbs_border' => '1', 'thumbs_transition' => 'fade' ) ),
 	'video'            => array(
 		'settings' => $slider + array( 'effect' => 'slide' ),
 		'video'    => true,
@@ -153,56 +157,69 @@ return array(
 	// Text mask (drawn by Art): one photo through the letters, a strip under each.
 	// Plain fonts (Georgia, Arial Black): the same on any theme.
 	'art-text-mask'      => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ) + $shadow,
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ) + $shadow,
 		'photos'   => 3,
 	),
+	// Strips off (text-mask.spec.js): the letters alone, as large as the block
+	// allows (Letter size Auto), at their Text position (right: Left, left:
+	// Right); -center, -middle: Letter alignment Center.
+	'art-text-mask-bare' => array( 'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'text_mask_gap' => '12', 'art_height' => '300', 'lightbox' => '1' ), 'photos' => 1 ),
+	'art-text-mask-bare-right' => array( 'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_direction' => 'right', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '640', 'lightbox' => '1' ), 'photos' => 1 ),
+	'art-text-mask-bare-left' => array( 'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_direction' => 'left', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '640', 'lightbox' => '1' ), 'photos' => 1 ),
+	'art-text-mask-bare-center' => array( 'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'text_mask_align_v' => 'center', 'art_height' => '500', 'lightbox' => '1' ), 'photos' => 1 ),
+	'art-text-mask-bare-up' => array( 'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_direction' => 'up', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '500', 'lightbox' => '1' ), 'photos' => 1 ),
+	// Letter alignment Center with strips (Text position Left): the letters on one middle line, each strip from where its letter ends.
+	'art-text-mask-right-center' => array( 'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_title' => 'Text', 'text_mask_direction' => 'right', 'text_mask_align_h' => 'center', 'text_mask_font' => 'sans', 'text_mask_weight' => '700', 'art_height' => '640', 'lightbox' => '1' ), 'photos' => 1 ),
+	'art-text-mask-bare-middle' => array( 'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_direction' => 'right', 'text_mask_align_h' => 'center', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '640', 'lightbox' => '1' ), 'photos' => 1 ),
+	// Text position Bottom: the word across at the bottom, the strips going up.
+	'art-text-mask-up' => array( 'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_direction' => 'up', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'text_mask_rounded' => '1', 'art_height' => '520', 'lightbox' => '1' ), 'photos' => 1 ),
 	'art-text-mask-sans' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'WP SWIPER', 'text_mask_font' => 'sans', 'text_mask_strip_width' => 'letter', 'text_mask_strips' => 'middle', 'text_mask_gap' => '6', 'text_mask_size' => '45', 'art_height' => '360', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_title' => 'WP SWIPER', 'text_mask_font' => 'sans', 'text_mask_strip_width' => 'letter', 'text_mask_strips' => 'middle', 'text_mask_gap' => '6', 'text_mask_size' => '45', 'art_height' => '360', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// A photo in each letter (as many photos as letters).
 	'art-text-mask-each' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_photos' => 'each', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_photos' => 'each', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ),
 		'photos'   => 6,
 	),
 	// The letters one under another, the strips going out to the right (all as
 	// wide), or to the left (each as its letter).
 	'art-text-mask-right' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_direction' => 'right', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '640', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_direction' => 'right', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '640', 'lightbox' => '1' ),
 		'photos'   => 3,
 	),
 	'art-text-mask-left' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'WP SWIPER', 'text_mask_direction' => 'left', 'text_mask_font' => 'sans', 'text_mask_strip_width' => 'letter', 'text_mask_strips' => 'sides', 'art_height' => '640', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_title' => 'WP SWIPER', 'text_mask_direction' => 'left', 'text_mask_font' => 'sans', 'text_mask_strip_width' => 'letter', 'text_mask_strips' => 'sides', 'art_height' => '640', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// A font by name (Impact: on every Windows computer).
 	'art-text-mask-name' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'name', 'text_mask_font_name' => 'Impact', 'text_mask_weight' => '400', 'art_height' => '520', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'name', 'text_mask_font_name' => 'Impact', 'text_mask_weight' => '400', 'art_height' => '520', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// Letter size Auto (the default): the word as wide as the stage.
 	'art-text-mask-auto' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'art_height' => '520', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// Stretch letters: held low by Letter size, widened to fill their columns.
 	'art-text-mask-stretch' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_size' => '25', 'text_mask_stretch' => '1', 'text_mask_title' => 'WIDE', 'text_mask_font' => 'sans', 'art_height' => '420', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_size' => '25', 'text_mask_stretch' => '1', 'text_mask_title' => 'WIDE', 'text_mask_font' => 'sans', 'art_height' => '420', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// Strips into letters: as art-text-mask, the strips 20% into their letters.
 	'art-text-mask-join' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'text_mask_join' => '20', 'art_height' => '520', 'lightbox' => '1' ) + $shadow,
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'text_mask_join' => '20', 'art_height' => '520', 'lightbox' => '1' ) + $shadow,
 		'photos'   => 1,
 	),
 	// Rounded corners: the strips' far ends, 30px (on mobile: half the strip at most).
 	'art-text-mask-rounded' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'text_mask_strips' => 'equal', 'text_mask_rounded' => '1', 'text_mask_radius' => '30', 'art_height' => '520', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'text_mask_strips' => 'equal', 'text_mask_rounded' => '1', 'text_mask_radius' => '30', 'art_height' => '520', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// Gradient: over the photo in the letters and strips, one across the word.
 	'art-text-mask-gradient' => array(
-		'settings' => array( 'effect' => 'text-mask', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100', 'art_height' => '520', 'lightbox' => '1' ),
+		'settings' => array( 'effect' => 'text-mask', 'text_mask_strips_on' => '1', 'text_mask_size_unit' => '%', 'text_mask_title' => 'LAHORE', 'text_mask_font' => 'serif', 'text_mask_weight' => '900', 'image_gradient_on' => '1', 'image_gradient' => 'linear;left;rgba(255,0,128,0.6)@0;rgba(0,96,255,0.6)@100', 'art_height' => '520', 'lightbox' => '1' ),
 		'photos'   => 1,
 	),
 	// A ring as its block's background, its proportions kept: filling the

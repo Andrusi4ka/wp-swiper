@@ -655,23 +655,63 @@ return array(
 		),
 		'help'    => __( 'A photo in each letter: in the slides\' order, repeated when there are fewer; drag a photo onto another letter in the preview to swap them.', 'wp-swiper' ),
 	),
-	// Down: the word across, the strips under its letters. Right / Left: the
-	// letters one under another, upright, the strips going out sideways.
-	// Shown as icons, assets/images/text-mask/{direction}.svg (as Art's Style),
+	// Where the word is, as its icon shows (until 3.5 named after where the
+	// strips go; the values stay): Top (down) — the word across on top, the
+	// strips under its letters; Bottom (up) — at the bottom, the strips going
+	// up; Left (right) / Right (left) — the letters one under another,
+	// upright, at that side, the strips going out to the other. Without
+	// strips the word is at that side too; Letter alignment (below) places
+	// its letters against one another.
+	// Shown as icons, assets/images/text-mask/{value}.svg (as Art's Style),
 	// first in the block.
 	'text_mask_direction' => array(
 		'section' => 'layout',
 		'effects' => array( self::TEXT_EFFECT ),
-		'label'   => __( 'Strips go', 'wp-swiper' ),
+		'label'   => __( 'Text position', 'wp-swiper' ),
 		'tiles'   => 'text-mask',
 		'type'    => 'select',
 		'default' => 'down',
 		'choices' => array(
-			'down'  => __( 'Down', 'wp-swiper' ),
-			'right' => __( 'Right', 'wp-swiper' ),
-			'left'  => __( 'Left', 'wp-swiper' ),
+			'down'  => __( 'Top', 'wp-swiper' ),
+			'up'    => __( 'Bottom', 'wp-swiper' ),
+			'right' => __( 'Left', 'wp-swiper' ),
+			'left'  => __( 'Right', 'wp-swiper' ),
 		),
-		'help'    => __( 'Down: the word across, the strips under its letters. Right or Left: the letters one under another (read from the top), the strips going out to that side.', 'wp-swiper' ),
+		'help'    => __( 'Where the word is. Top or Bottom: across, the strips going down or up from it. Left or Right: the letters one under another (read from the top), the strips going out to the other side.', 'wp-swiper' ),
+	),
+	// The letters against one another across the word (art.js textLayout()),
+	// per device, with strips or without (each strip starts where its letter
+	// ends): Top / Bottom — their tops, middles or the baseline (as always);
+	// Left / Right — their left edges, middle line or right edges, in a
+	// column as wide as the widest letter (Auto: the edge the word stands at).
+	'text_mask_align_v'   => array(
+		'section'    => 'layout',
+		'effects'    => array( self::TEXT_EFFECT ),
+		'label'      => __( 'Letter alignment', 'wp-swiper' ),
+		'type'       => 'select',
+		'responsive' => true,
+		'default'    => 'bottom',
+		'choices'    => array(
+			'top'    => __( 'Top', 'wp-swiper' ),
+			'center' => __( 'Center', 'wp-swiper' ),
+			'bottom' => __( 'Bottom (baseline)', 'wp-swiper' ),
+		),
+		'help'       => __( 'The letters against one another: their tops, middles or bottoms on one line.', 'wp-swiper' ),
+	),
+	'text_mask_align_h'   => array(
+		'section'    => 'layout',
+		'effects'    => array( self::TEXT_EFFECT ),
+		'label'      => __( 'Letter alignment', 'wp-swiper' ),
+		'type'       => 'select',
+		'responsive' => true,
+		'default'    => 'auto',
+		'choices'    => array(
+			'auto'   => __( 'As Text position', 'wp-swiper' ),
+			'left'   => __( 'Left', 'wp-swiper' ),
+			'center' => __( 'Center', 'wp-swiper' ),
+			'right'  => __( 'Right', 'wp-swiper' ),
+		),
+		'help'       => __( 'The letters one under another: their left edges, middles or right edges on one line. As Text position: the edge the word stands at.', 'wp-swiper' ),
 	),
 	// The theme's heading font (a heading's, as the page has it), or a plain one.
 	'text_mask_font'     => array(
@@ -763,6 +803,19 @@ return array(
 		'max'        => 60,
 		'step'       => 1,
 	),
+	// Strips on or off (on by default, as they always were). Off: the letters
+	// alone, Letter size Auto as large as the block (not TEXT_AUTO), Gap
+	// between them as a word's, at their Text position, in the middle along
+	// the word;
+	// the strips' own settings hidden (admin.js), kept for when they are on.
+	'text_mask_strips_on' => array(
+		'section' => 'layout',
+		'effects' => array( self::TEXT_EFFECT ),
+		'label'   => __( 'Strips', 'wp-swiper' ),
+		'type'    => 'checkbox',
+		'default' => true,
+		'help'    => __( 'Off: the letters alone, as large as the block allows, at their Text position.', 'wp-swiper' ),
+	),
 	// The strips all as wide (a column per letter, Gap between them, each
 	// letter in the middle of its own), or each as its letter.
 	'text_mask_strip_width' => array(
@@ -782,7 +835,7 @@ return array(
 	'text_mask_strips'   => array(
 		'section' => 'layout',
 		'effects' => array( self::TEXT_EFFECT ),
-		'label'   => __( 'Strips', 'wp-swiper' ),
+		'label'   => __( 'Lengths', 'wp-swiper' ),
 		'type'    => 'select',
 		'default' => 'random',
 		'choices' => array(

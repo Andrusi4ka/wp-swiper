@@ -13,6 +13,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 trait WP_Swiper_Art_Parts {
 
 	/**
+	 * Text mask's Letter alignment per device: the letters against one
+	 * another across the word — Top / Bottom (text_mask_align_v: top, center,
+	 * bottom = the baseline) or Left / Right (text_mask_align_h: left, center,
+	 * right), as start / center / end; auto: the baseline, the word's edge.
+	 *
+	 * @param array $settings Slider settings.
+	 * @return array device => 'auto'|'start'|'center'|'end'
+	 */
+	public static function text_align( $settings ) {
+		$across = in_array( isset( $settings['text_mask_direction'] ) ? $settings['text_mask_direction'] : '', array( 'right', 'left' ), true );
+		$map    = $across
+			? array( 'left' => 'start', 'center' => 'center', 'right' => 'end' )
+			: array( 'top' => 'start', 'center' => 'center', 'bottom' => 'end' );
+		return array_map(
+			function ( $value ) use ( $map ) {
+				return isset( $map[ $value ] ) ? $map[ $value ] : 'auto';
+			},
+			WP_Swiper_Settings::responsive( $settings, $across ? 'text_mask_align_h' : 'text_mask_align_v' )
+		);
+	}
+
+	/**
 	 * Text mask, for art.js text(): the letters (its windows, in order), where
 	 * the spaces were (a wider gap before that letter), the font, the
 	 * letters' height at most per device (% of the stage's), and the strips:
@@ -55,7 +77,11 @@ trait WP_Swiper_Art_Parts {
 				WP_Swiper_Settings::responsive( $settings, 'text_mask_size_unit' )
 			),
 			'stretch' => ! empty( $settings['text_mask_stretch'] ),
-			'direction' => in_array( $settings['text_mask_direction'], array( 'down', 'right', 'left' ), true ) ? $settings['text_mask_direction'] : 'down',
+			'direction' => in_array( $settings['text_mask_direction'], array( 'down', 'up', 'right', 'left' ), true ) ? $settings['text_mask_direction'] : 'down',
+			// Strips off (art.js textLayout()): the letters alone. Letter
+			// alignment per device (start / center / end; auto: as always).
+			'bare'    => empty( $settings['text_mask_strips_on'] ),
+			'align'   => self::text_align( $settings ),
 			'width'   => 'letter' === $settings['text_mask_strip_width'] ? 'letter' : 'same',
 			// Strips into letters: a share of each letter's depth (0-0.3).
 			'join'    => max( 0, min( 30, (int) $settings['text_mask_join'] ) ) / 100,

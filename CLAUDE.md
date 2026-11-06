@@ -361,8 +361,36 @@
   letter — слово ширину), не більше ніж ×2 (`TEXT_STRETCH`). Окремого
   letter-spacing немає навмисно — це Gap (рішення користувача). Старі
   слайдери гілки без одиниці стали Auto (гілка не випущена — свідомо).
-  Up і повернуте на 90° слово (варіант Б) не робили —
-  лише якщо попросить. Розкладка — `art.js textLayout()` (усі напрямки),
+  **Смуги вимикаються** (2026-11-06, рішення користувача): перемикач
+  `text_mask_strips_on` («Strips», за замовч. увімкнено — старі слайдери
+  як були) першим у блоці Strips; поле довжин тепер «Lengths». Вимкнено
+  (`text_config()` → `bare`, `art.js textLayout()`): лише літери, Letter
+  size Auto — 100% блоку (не `TEXT_AUTO` 70%; % — як задано), відстань
+  як у слові (як «As the letter», Gap між літерами); де стоїть — Text
+  position і Alignment (нижче); поля смуг і їхні Rounded corners сховані
+  (`admin.js`), значення лишаються.
+  **Text position** (2026-11-06, рішення користувача; було «Strips go»):
+  плитки названо за місцем слова, як на іконці — значення ті самі: `down`
+  = Top, `up` = **Bottom** (нове: рядок унизу, смуги вгору, заокруглений
+  верхній кінець; `art.js textLayout()` `lift` / `roomUp`, `stripShape()`
+  far `[1,1,0,0]`; іконка `assets/images/text-mask/up.svg` — малюнок
+  користувача), `right` = Left (літери ліворуч, смуги вправо), `left` =
+  Right. Без смуг слово там, де плитка (Left — ліворуч; учорашнє «навпаки»
+  скасовано — користувач уточнив). **Letter alignment** (2026-11-06,
+  рішення користувача; спершу помилково зробив вирівнювання слова в
+  блоці — прибрано): літери одна відносно одної, зі смугами й без, для
+  кожного пристрою. `text_mask_align_v` для рядка (Top / Center / Bottom
+  = базова лінія, за замовч. — як завжди), `text_mask_align_h` для
+  стовпчика (Auto = край, біля якого слово; Left / Center / Right — у
+  колонці завширшки найширшої літери, Center — на центральній лінії),
+  у блоці Size. Кожна смуга починається там, де її літера закінчується.
+  `text_align()` → `text.align` start / center / end; `art.js
+  textLayout()`: `top` / `lx`, `columnX`. Тести: `test-text-mask`,
+  `text-mask.spec.js` (`art-text-mask-up`, `-bare*`, `-right-center`),
+  `admin.spec.js`. У `cases.php` усім старим Text mask додано
+  `text_mask_strips_on` (відсутній чекбокс = вимкнено); без смуг —
+  `art-text-mask-bare*`.
+  Повернуте на 90° слово (варіант Б) не робили — лише якщо попросить. Розкладка — `art.js textLayout()` (усі напрямки),
   малювання — `textMask()`. Підписів
   немає (літери їх ріжуть), описи є. Фон (Use as background) — ще ні. Технічно: `clip-path: url(#…)` на вбудований SVG `<clipPath>` з
   `<text>` + `<rect>` (`art.js textMask()`), бо `path()` тексту не вміє;
@@ -518,10 +546,21 @@
 - **Тінь у режимі фону** (2026-11-04, рішення користувача): лише Collage і
   Art (`SHADOW_BACKGROUND_EFFECTS`; `shadow()` і `admin.js canShadow`), бо
   там фото стоять окремо; для слайдерів у фоні — ні. Огляд «спільності»
-  налаштувань того ж дня: тінь для Thumbnails, Slide з одним слайдом
-  (з проміжком), Flip, інших стилів Creative; рамка й фон для Text mask;
-  Ken Burns для Coverflow — запропоновано, поки не робили («поки
-  достатньо»). Zoom on hover для 3D і фон для 3D / Thumbnails — не раджу.
+  налаштувань того ж дня: тінь для Slide з одним слайдом (з проміжком),
+  інших стилів Creative; рамка й фон для Text mask; Ken Burns для
+  Coverflow — запропоновано, поки не робили («поки достатньо»). Zoom on
+  hover для 3D і фон для 3D / Thumbnails — не раджу.
+- **Image shadow для Flip і Thumbnails** (2026-11-06, рішення
+  користувача): обидва в `SHADOW_EFFECTS`. Flip — тінь на картці
+  (`.swiper-slide`), повертається з нею; `.swiper-flip` не обрізається
+  (виключено з `overflow: clip` / padding тіні у `frontend.css`, як Cards).
+  Thumbnails — на головних фото: з переходом Slide — на кожному слайді,
+  сусідні за краєм ховає `slider.js hideOutside()` (як у Slide); з Fade —
+  клас `wp-swiper--thumbs-fade`, тінь на `.swiper-wrapper` (як у Fade);
+  смуга мініатюр (`.wp-swiper__thumbs`) — без тіні й зі своїм боксом
+  Swiper. Усі правила Thumbnails — у `thumbs.css` (тест не пускає
+  `.wp-swiper__thumbs` у `frontend.css` / `slider.css`). Тест —
+  `tests/browser/shadow-more.spec.js`.
 - Кнопка × «прибрати місце» — лише Scattered і Freeform; для інших стилів —
   коли попросить.
 - Телефон (і планшет) завжди наслідує більший екран: жодних `device_defaults`

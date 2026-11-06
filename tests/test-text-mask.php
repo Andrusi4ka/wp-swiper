@@ -280,16 +280,46 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		$this->assertTrue( WP_Swiper_Art::text_config( $this->text( array( 'text_mask_stretch' => true ) ) )['stretch'] );
 	}
 
-	public function test_strips_go_down_or_sideways() {
-		// Down by default (the word across); right or left: the letters one under another.
+	public function test_text_position_top_bottom_or_sideways() {
+		// Top by default (the word across); Bottom (up) across at the bottom;
+		// Left (right) or Right (left): the letters one under another. Named
+		// after where the word is (until 3.5 after where the strips go).
 		$this->assertSame( 'down', WP_Swiper_Settings::defaults()['text_mask_direction'] );
-		$this->assertSame( array( 'down', 'right', 'left' ), array_keys( WP_Swiper_Settings::fields()['text_mask_direction']['choices'] ) );
-		foreach ( array( 'down', 'right', 'left' ) as $direction ) {
+		$field = WP_Swiper_Settings::fields()['text_mask_direction'];
+		$this->assertSame( 'Text position', $field['label'] );
+		$this->assertSame( array( 'down' => 'Top', 'up' => 'Bottom', 'right' => 'Left', 'left' => 'Right' ), $field['choices'] );
+		foreach ( array( 'down', 'up', 'right', 'left' ) as $direction ) {
 			$config = $this->config( $this->render( array( 'effect' => 'text-mask', 'text_mask_direction' => $direction ) ), 'data-wp-swiper-art' );
 			$this->assertSame( $direction, $config['text']['direction'] );
 		}
-		$this->assertSame( 'down', WP_Swiper_Art::text_config( $this->text( array( 'text_mask_direction' => 'up' ) ) )['direction'] );
-		$this->assertSame( 'down', WP_Swiper_Settings::sanitize( array( 'effect' => 'text-mask', 'text_mask_direction' => 'up' ) )['text_mask_direction'] );
+		$this->assertSame( 'down', WP_Swiper_Art::text_config( $this->text( array( 'text_mask_direction' => 'sideways' ) ) )['direction'] );
+		$this->assertSame( 'down', WP_Swiper_Settings::sanitize( array( 'effect' => 'text-mask', 'text_mask_direction' => 'sideways' ) )['text_mask_direction'] );
+	}
+
+	public function test_letter_alignment() {
+		$fields = WP_Swiper_Settings::fields();
+		// The letters against one another: in a row (Top, Bottom) their tops,
+		// middles or the baseline (by default, as always); in a column (Left,
+		// Right) their edges or middle line, Auto: the word's edge. Per device.
+		$this->assertSame( 'Letter alignment', $fields['text_mask_align_v']['label'] );
+		$this->assertSame( array( 'top', 'center', 'bottom' ), array_keys( $fields['text_mask_align_v']['choices'] ) );
+		$this->assertSame( 'bottom', WP_Swiper_Settings::defaults()['text_mask_align_v'] );
+		$this->assertSame( array( 'auto', 'left', 'center', 'right' ), array_keys( $fields['text_mask_align_h']['choices'] ) );
+		$this->assertTrue( $fields['text_mask_align_v']['responsive'] );
+		$this->assertSame( 'auto', WP_Swiper_Settings::defaults()['text_mask_align_h'] );
+		// Its config: start / center / end per device, from the field of the word's way.
+		$across = WP_Swiper_Art::text_config( $this->text( array( 'text_mask_direction' => 'right', 'text_mask_align_h' => 'center', 'text_mask_align_h_mobile' => 'right', 'text_mask_align_v' => 'bottom' ) ) );
+		$this->assertSame( array( 'desktop' => 'center', 'tablet' => 'center', 'mobile' => 'end' ), $across['align'] );
+		$row = WP_Swiper_Art::text_config( $this->text( array( 'text_mask_direction' => 'up', 'text_mask_align_v' => 'top' ) ) );
+		$this->assertSame( 'start', $row['align']['desktop'] );
+		$this->assertSame( 'end', WP_Swiper_Art::text_config( $this->text() )['align']['desktop'] );
+		$this->assertSame( 'auto', WP_Swiper_Art::text_config( $this->text( array( 'text_mask_direction' => 'left' ) ) )['align']['desktop'] );
+		// art.js: each letter in its column (as wide as the widest, at the word's edge), its strip from where it ends.
+		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/art.js' );
+		$this->assertStringContainsString( "var lx = columnX + ( 'start' === align ? 0 : ( 'center' === align ? ( band - depth ) / 2 : band - depth ) );", $js );
+		$this->assertStringContainsString( "var top = lift + ( 'start' === align ? 0 : ( 'center' === align ? ( rise - depth ) / 2 : scale * ( up - size.ascent ) ) );", $js );
+		// In the Size block, after Art's Alignment.
+		$this->assertSame( array( 'art_height', 'text_mask_gap', 'text_mask_align_v', 'text_mask_align_h' ), $this->layout_for( 'text-mask' )['size'] );
 	}
 
 	public function test_a_slider_saved_by_the_first_try() {
@@ -336,12 +366,12 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 			$this->assertSame( array( 'art' ), WP_Swiper_Settings::fields()[ $key ]['effects'], $key );
 		}
 		$this->assertSame( array( 'text_mask_font', 'text_mask_weight', 'text_mask_font_name', 'text_mask_size', 'text_mask_stretch' ), $blocks['text_letters']['fields'] );
-		$this->assertSame( array( 'text_mask_strip_width', 'text_mask_join', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max' ), $blocks['text_strips']['fields'] );
+		$this->assertSame( array( 'text_mask_strips_on', 'text_mask_strip_width', 'text_mask_join', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max' ), $blocks['text_strips']['fields'] );
 		// The word's block: Text mask's fields only those of the word.
 		$word = array_values( preg_grep( '/^text_mask_/', $blocks['art']['fields'] ) );
 		$this->assertSame( array( 'text_mask_direction', 'text_mask_title', 'text_mask_photos' ), $word );
 		// Its Height and Gap in Size, as every effect's.
-		$this->assertSame( array( 'art_height', 'text_mask_gap' ), $this->layout_for( 'text-mask' )['size'] );
+		$this->assertSame( array( 'art_height', 'text_mask_gap', 'text_mask_align_v', 'text_mask_align_h' ), $this->layout_for( 'text-mask' )['size'] );
 		// Text mask's fields only: hidden for Art (admin.js, no field shown).
 		$fields = WP_Swiper_Settings::fields();
 		foreach ( array_merge( $blocks['text_letters']['fields'], $blocks['text_strips']['fields'] ) as $key ) {
@@ -360,6 +390,30 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		$this->assertGreaterThan( strpos( $html, 'data-block="text_strips"' ), strpos( $html, 'data-field="text_mask_join"' ) );
 	}
 
+	public function test_strips_switch_on_by_default() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertSame( 'checkbox', $fields['text_mask_strips_on']['type'] );
+		$this->assertSame( 'Strips', $fields['text_mask_strips_on']['label'] );
+		// The lengths' field has a name of its own beside it.
+		$this->assertSame( 'Lengths', $fields['text_mask_strips']['label'] );
+		$this->assertTrue( WP_Swiper_Settings::defaults()['text_mask_strips_on'] );
+		// Saved before the switch: strips, as they always had (the default).
+		$saved = WP_Swiper_Settings::get( $this->slider( array(), array( 'effect' => 'text-mask', 'text_mask_title' => 'LAHORE' ) ) );
+		$this->assertTrue( $saved['text_mask_strips_on'] );
+		// The config: "bare" only without them.
+		$on  = WP_Swiper_Art::text_config( $this->settings( array( 'effect' => 'text-mask' ) ) );
+		$off = WP_Swiper_Art::text_config( $this->settings( array( 'effect' => 'text-mask', 'text_mask_strips_on' => false ) ) );
+		$this->assertFalse( $on['bare'] );
+		$this->assertTrue( $off['bare'] );
+		// Off in the form (a checkbox left out): off.
+		$this->assertFalse( WP_Swiper_Settings::sanitize( array( 'effect' => 'text-mask' ) )['text_mask_strips_on'] );
+		// art.js: the letters alone, Auto as large as the block, Right at the right, Left at the left.
+		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/art.js' );
+		$this->assertStringContainsString( 'var bare = !! text.bare;', $js );
+		$this->assertStringContainsString( '( bare ? 1 : TEXT_AUTO )', $js );
+		$this->assertStringContainsString( 'item = { left: lx, top: start, width: depth, height: span, strip: null };', $js );
+	}
+
 	public function test_strips_go_is_chosen_from_icons_first_in_the_block() {
 		$id = $this->slider( null, array( 'effect' => 'text-mask', 'text_mask_direction' => 'right' ) );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
@@ -370,7 +424,7 @@ class Test_WP_Swiper_Text_Mask extends WP_Swiper_TestCase {
 		// One value for every screen: its select (hidden) and the icons, no Inherit.
 		$this->assertSame( 1, preg_match( '#<div class="wp-swiper-field wp-swiper-field--select wp-swiper-field--tiles" data-field="text_mask_direction"#', $html ) );
 		$this->assertMatchesRegularExpression( '#<select id="wp-swiper-text_mask_direction" name="wp_swiper_settings\[text_mask_direction\]" class="wp-swiper-tiles__select" hidden>#', $html );
-		$this->assertMatchesRegularExpression( '#<option value="right"\s+selected=\'selected\'>Right</option>#', $html );
+		$this->assertMatchesRegularExpression( '#<option value="right"\s+selected=\'selected\'>Left</option>#', $html );
 		foreach ( WP_Swiper_Settings::fields()['text_mask_direction']['choices'] as $direction => $label ) {
 			$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/text-mask/' . $direction . '.svg', $direction );
 			$this->assertMatchesRegularExpression( '#<button type="button" class="wp-swiper-tiles__tile" data-value="' . $direction . '" role="radio" aria-checked="false" title="' . preg_quote( $label, '#' ) . '" aria-label="' . preg_quote( $label, '#' ) . '">\s*<svg class="wp-swiper-tiles__icon" aria-hidden="true" focusable="false"[^>]*fill="currentColor"#', $html, $direction );

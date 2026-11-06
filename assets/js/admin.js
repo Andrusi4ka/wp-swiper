@@ -904,6 +904,19 @@
 					field( 'text_mask_radius' ).hide();
 					field( 'text_mask_corners' ).hide();
 				}
+				// Text mask without strips (Strips off): none of their settings
+				// (kept for when they are on).
+				var stripsOff = textMask && ! $( '#wp-swiper-text_mask_strips_on' ).is( ':checked' );
+				if ( stripsOff ) {
+					[ 'text_mask_strip_width', 'text_mask_join', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max', 'text_mask_rounded', 'text_mask_radius', 'text_mask_corners' ].forEach( function ( name ) {
+						field( name ).hide();
+					} );
+				}
+				// Letter alignment (with strips or without): across a row (Top,
+				// Bottom) or a column (Left, Right).
+				var sideways = [ 'right', 'left' ].indexOf( $( '#wp-swiper-text_mask_direction' ).val() ) !== -1;
+				field( 'text_mask_align_v' ).toggle( textMask && ! sideways );
+				field( 'text_mask_align_h' ).toggle( textMask && sideways );
 				// Image border: its width and color only while it is on (as a slider's).
 				if ( ! $( '#wp-swiper-art_border' ).is( ':checked' ) ) {
 					field( 'art_border_width' ).hide();

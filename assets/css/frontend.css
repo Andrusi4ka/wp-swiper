@@ -418,14 +418,15 @@
    out (below). A browser without overflow-clip-margin (Safari): room kept
    inside the slider for the shadow (--wp-swiper-shadow-room: top right
    bottom left), the photos that much smaller. Cards: its stack is not cut
-   off anyway. */
-.wp-swiper--shadow > .swiper:not(.swiper-cards) {
+   off anyway; Flip neither (its card turns past the edges in depth). The
+   Thumbnails' strip: none of it (thumbs.css). */
+.wp-swiper--shadow > .swiper:not(.swiper-cards):not(.swiper-flip) {
 	box-sizing: border-box;
 	padding: var(--wp-swiper-shadow-room, 0px);
 }
 
 @supports (overflow-clip-margin: 1px) {
-	.wp-swiper--shadow > .swiper:not(.swiper-cards) {
+	.wp-swiper--shadow > .swiper:not(.swiper-cards):not(.swiper-flip) {
 		padding: 0;
 		overflow: clip;
 		overflow-clip-margin: var(--wp-swiper-shadow-reach, 0px);

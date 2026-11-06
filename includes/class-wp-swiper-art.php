@@ -278,7 +278,7 @@ class WP_Swiper_Art {
 				),
 				'text_strips'  => array(
 					'title'  => __( 'Strips', 'wp-swiper' ),
-					'fields' => array( 'text_mask_strip_width', 'text_mask_join', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max' ),
+					'fields' => array( 'text_mask_strips_on', 'text_mask_strip_width', 'text_mask_join', 'text_mask_strips', 'text_mask_strip_min', 'text_mask_strip_max' ),
 				),
 			),
 			// As the Collage's own (the same block and fields).

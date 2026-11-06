@@ -1879,8 +1879,10 @@
 		options.on = {
 			init: function ( swiper ) {
 				setupControls( swiper, el, config );
-				// Image shadow on a strip of slides: its room shows no neighbour.
-				if ( 'slide' === config.effect && wrapper.classList.contains( 'wp-swiper--shadow' ) ) {
+				// Image shadow on a strip of slides (Slide, Thumbnails sliding):
+				// its room shows no neighbour.
+				var sliding = 'slide' === config.effect || ( 'thumbs' === config.effect && ! ( config.thumbs && config.thumbs.fade ) );
+				if ( sliding && wrapper.classList.contains( 'wp-swiper--shadow' ) ) {
 					hideOutside( swiper );
 				}
 				if ( config.zoom ) {

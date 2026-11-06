@@ -72,10 +72,10 @@ class WP_Swiper_Settings {
 
 	/**
 	 * Effects whose photos can have a shadow (Image shadow): those where they
-	 * stand apart, and Fade, one photo framed by it (see shadow() for the rest
-	 * of the conditions).
+	 * stand apart, Fade and Thumbnails, one photo framed by it, and Flip, its
+	 * card turning with it (see shadow() for the rest of the conditions).
 	 */
-	const SHADOW_EFFECTS = array( 'slide', 'fade', 'coverflow', 'cards', 'creative', 'collage', 'art', 'text-mask' );
+	const SHADOW_EFFECTS = array( 'slide', 'fade', 'coverflow', 'flip', 'cards', 'creative', 'thumbs', 'collage', 'art', 'text-mask' );
 
 	/**
 	 * Of those, the ones that keep it as a background (Use as background): their
@@ -743,7 +743,7 @@ class WP_Swiper_Settings {
 				// Collage's, Art's, Text mask's), then the slider's image fit.
 				'size'        => array(
 					'title'  => __( 'Size', 'wp-swiper' ),
-					'fields' => array( 'height', 'art_height', 'space_between', 'collage_gap', 'art_gap', 'text_mask_gap', 'art_align', 'slide_ratio', 'slide_ratio_custom', 'slide_distribution', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
+					'fields' => array( 'height', 'art_height', 'space_between', 'collage_gap', 'art_gap', 'text_mask_gap', 'art_align', 'text_mask_align_v', 'text_mask_align_h', 'slide_ratio', 'slide_ratio_custom', 'slide_distribution', 'image_fit', 'image_position', 'image_align', 'image_align_vertical' ),
 				),
 				'slides'      => array(
 					'title'  => __( 'Slides', 'wp-swiper' ),

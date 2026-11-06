@@ -332,3 +332,48 @@
 		aspect-ratio: auto;
 	}
 }
+
+/* Image shadow on the main photos (frontend.css; WP_Swiper_Settings::
+   shadow()). Sliding: on each slide, as Slide's, those wholly past the
+   edges hidden (slider.js hideOutside()). Fading (.wp-swiper--thumbs-fade):
+   as Fade's, on the frame with Cover, so it does not pale mid-change. None
+   on the strip, which keeps Swiper's own box (not the room or margin kept
+   for the shadow past the slider's edges). */
+.wp-swiper--shadow.wp-swiper--effect-thumbs > .swiper:not(.wp-swiper__thumbs) .swiper-slide.wp-swiper-slide--outside {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.wp-swiper--shadow.wp-swiper--effect-thumbs.wp-swiper--ready > .swiper:not(.wp-swiper__thumbs) .swiper-slide {
+	transition: opacity 0.2s ease;
+}
+
+.wp-swiper--shadow.wp-swiper--thumbs-fade:not(.wp-swiper--fit-contain) > .swiper:not(.wp-swiper__thumbs) .swiper-slide {
+	box-shadow: none;
+}
+
+.wp-swiper--shadow.wp-swiper--thumbs-fade:not(.wp-swiper--fit-contain) > .swiper:not(.wp-swiper__thumbs) > .swiper-wrapper {
+	box-shadow: var(--wp-swiper-shadow, none);
+	border-radius: var(--wp-swiper-radius, 0px);
+}
+
+@media (max-width: 1024px) {
+	.wp-swiper--shadow.wp-swiper--thumbs-fade:not(.wp-swiper--fit-contain) > .swiper:not(.wp-swiper__thumbs) > .swiper-wrapper {
+		border-radius: var(--wp-swiper-radius-tablet, var(--wp-swiper-radius, 0px));
+	}
+}
+
+@media (max-width: 767px) {
+	.wp-swiper--shadow.wp-swiper--thumbs-fade:not(.wp-swiper--fit-contain) > .swiper:not(.wp-swiper__thumbs) > .swiper-wrapper {
+		border-radius: var(--wp-swiper-radius-mobile, var(--wp-swiper-radius-tablet, var(--wp-swiper-radius, 0px)));
+	}
+}
+
+.wp-swiper.wp-swiper--shadow > .swiper.wp-swiper__thumbs {
+	padding: 0;
+	overflow: hidden;
+}
+
+.wp-swiper--shadow .wp-swiper__thumbs .swiper-slide {
+	box-shadow: none;
+}

@@ -208,3 +208,141 @@ for ( const [ name, word, photos, gap, axis ] of CASES ) {
 		expect( 'stage ' + found.stage.join( 'x' ) + '\n' + found.pieces.map( ( piece ) => piece.letter + ' ' + piece.box.join( ' ' ) ).join( '\n' ) + '\n' ).toMatchSnapshot( name + '.windows.txt' );
 	} );
 }
+
+// Strips off (cases.php art-text-mask-bare*): each window its letter alone
+// (no strip in its clip path), the letters as large as the block allows
+// (Letter size Auto: filling its height or its width), a word's Gap between
+// them; at their Text position (Top, Bottom; Left — "right" —, Right —
+// "left"). Letter alignment Center: in a row their middles on one line (the
+// row on top), in a column their middle lines (the column at its edge).
+for ( const [ name, side ] of [ [ 'art-text-mask-bare', 'top' ], [ 'art-text-mask-bare-up', 'bottom' ], [ 'art-text-mask-bare-center', 'middle' ], [ 'art-text-mask-bare-right', 'left' ], [ 'art-text-mask-bare-left', 'right' ], [ 'art-text-mask-bare-middle', 'center' ] ] ) {
+	test( name + ': the letters alone, at the ' + side, async ( { page } ) => {
+		const errors = [];
+		page.on( 'pageerror', ( error ) => errors.push( error.message ) );
+		await page.goto( fixture + '?case=' + name );
+		await page.waitForLoadState( 'networkidle' );
+		await page.evaluate( () => document.fonts.ready );
+		await page.waitForTimeout( 400 );
+		const found = await page.evaluate( () => {
+			const stage = document.querySelector( '.wp-swiper-art__stage' ).getBoundingClientRect();
+			const pieces = [].slice.call( document.querySelectorAll( '.wp-swiper-art__piece' ) ).filter( ( piece ) => ! piece.hidden );
+			return {
+				stage: { w: stage.width, h: stage.height },
+				strips: pieces.filter( ( piece ) => {
+					const clip = document.querySelector( piece.style.clipPath.replace( /^url\("?|"?\)$/g, '' ) );
+					return clip && clip.querySelector( 'rect, path' );
+				} ).length,
+				boxes: pieces.map( ( piece ) => {
+					const box = piece.getBoundingClientRect();
+					return { left: box.left - stage.left, top: box.top - stage.top, right: box.right - stage.left, bottom: box.bottom - stage.top };
+				} ),
+			};
+		} );
+		expect( found.boxes.length ).toBe( 6 );
+		expect( found.strips ).toBe( 0 );
+		const left = Math.min( ...found.boxes.map( ( b ) => b.left ) );
+		const right = Math.max( ...found.boxes.map( ( b ) => b.right ) );
+		const top = Math.min( ...found.boxes.map( ( b ) => b.top ) );
+		const bottom = Math.max( ...found.boxes.map( ( b ) => b.bottom ) );
+		if ( [ 'top', 'bottom', 'middle' ].indexOf( side ) !== -1 ) {
+			// In a row on top, at the bottom or in the middle, filling the height or the width.
+			if ( 'top' === side ) {
+				expect( top ).toBeLessThan( 2 );
+			} else if ( 'bottom' === side ) {
+				expect( Math.abs( found.stage.h - bottom ) ).toBeLessThan( found.stage.h * 0.05 );
+			} else {
+				// On top, every letter's middle on one line.
+				expect( top ).toBeLessThan( 2 );
+				const middles = found.boxes.map( ( b ) => ( b.top + b.bottom ) / 2 );
+				expect( Math.max( ...middles ) - Math.min( ...middles ) ).toBeLessThan( 2 );
+			}
+			expect( Math.max( ( bottom - top ) / found.stage.h, ( right - left ) / found.stage.w ) ).toBeGreaterThan( 0.9 );
+			// A word's Gap between the letters (their windows, a little wider than the ink).
+			const sorted = found.boxes.slice().sort( ( a, b ) => a.left - b.left );
+			for ( let i = 1; i < sorted.length; i++ ) {
+				expect( sorted[ i ].left - sorted[ i - 1 ].right ).toBeGreaterThan( 0 );
+			}
+		} else {
+			// One under another, at their side, filling the height or the width.
+			expect( Math.max( ( bottom - top ) / found.stage.h, ( right - left ) / found.stage.w ) ).toBeGreaterThan( 0.9 );
+			if ( 'right' === side ) {
+				expect( found.stage.w - right ).toBeLessThan( 2 );
+			} else if ( 'left' === side ) {
+				expect( left ).toBeLessThan( 2 );
+			} else {
+				// At the left edge, every letter's middle on one line.
+				expect( left ).toBeLessThan( 2 );
+				const middles = found.boxes.map( ( b ) => ( b.left + b.right ) / 2 );
+				expect( Math.max( ...middles ) - Math.min( ...middles ) ).toBeLessThan( 2 );
+			}
+		}
+		expect( errors ).toEqual( [] );
+	} );
+}
+
+// Text position Bottom (cases.php art-text-mask-up): the letters on one line
+// at the bottom of the block, each one's strip going up from it (its far end,
+// the top, rounded), none past the block's top.
+test( 'art-text-mask-up: at the bottom, the strips going up', async ( { page } ) => {
+	const errors = [];
+	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
+	await page.goto( fixture + '?case=art-text-mask-up' );
+	await page.waitForLoadState( 'networkidle' );
+	await page.evaluate( () => document.fonts.ready );
+	await page.waitForTimeout( 400 );
+	const found = await page.evaluate( () => {
+		const stage = document.querySelector( '.wp-swiper-art__stage' ).getBoundingClientRect();
+		return [].slice.call( document.querySelectorAll( '.wp-swiper-art__piece' ) ).filter( ( piece ) => ! piece.hidden ).map( ( piece ) => {
+			const box = piece.getBoundingClientRect();
+			const clip = document.querySelector( piece.style.clipPath.replace( /^url\("?|"?\)$/g, '' ) );
+			const strip = clip.querySelector( 'rect, path' ).getBBox();
+			const glyph = clip.querySelector( 'text' ).getBBox();
+			return { h: stage.height, bottom: box.bottom - stage.top, top: box.top - stage.top, stripTop: strip.y + box.top - stage.top, stripBottom: strip.y + strip.height + box.top - stage.top, glyphTop: glyph.y + box.top - stage.top };
+		} );
+	} );
+	expect( found.length ).toBe( 6 );
+	found.forEach( ( one ) => {
+		// The window reaches the block's bottom (the letters at the bottom).
+		expect( one.h - one.bottom ).toBeLessThan( one.h * 0.12 );
+		// Its strip above its letter, down into it, not past the top.
+		expect( one.stripTop ).toBeGreaterThanOrEqual( -1 );
+		expect( one.stripTop ).toBeLessThan( one.glyphTop );
+	} );
+	expect( errors ).toEqual( [] );
+} );
+
+// Letter alignment Center with strips (cases.php art-text-mask-right-center,
+// as the user drew it): the letters of "Text" on one middle line at the
+// left, each strip starting where its own letter ends (a narrow letter's a
+// little farther out), all reaching out to the right.
+test( 'art-text-mask-right-center: the letters on one middle line, each strip from its letter', async ( { page } ) => {
+	const errors = [];
+	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
+	await page.goto( fixture + '?case=art-text-mask-right-center' );
+	await page.waitForLoadState( 'networkidle' );
+	await page.evaluate( () => document.fonts.ready );
+	await page.waitForTimeout( 400 );
+	const found = await page.evaluate( () => {
+		const stage = document.querySelector( '.wp-swiper-art__stage' ).getBoundingClientRect();
+		return [].slice.call( document.querySelectorAll( '.wp-swiper-art__piece' ) ).filter( ( piece ) => ! piece.hidden ).map( ( piece ) => {
+			const box = piece.getBoundingClientRect();
+			const clip = document.querySelector( piece.style.clipPath.replace( /^url\("?|"?\)$/g, '' ) );
+			const glyph = clip.querySelector( 'text' ).getBBox();
+			const strip = clip.querySelector( 'rect, path' ).getBBox();
+			const x = box.left - stage.left;
+			return { middle: x + glyph.x + glyph.width / 2, glyphRight: x + glyph.x + glyph.width, stripLeft: x + strip.x, glyphLeft: x + glyph.x };
+		} );
+	} );
+	expect( found.length ).toBe( 4 );
+	const middles = found.map( ( one ) => one.middle );
+	expect( Math.max( ...middles ) - Math.min( ...middles ) ).toBeLessThan( 3 );
+	found.forEach( ( one ) => {
+		// Its strip starts inside its letter, near its right edge: past its left edge.
+		expect( one.stripLeft ).toBeGreaterThan( one.glyphLeft );
+		expect( one.stripLeft ).toBeLessThanOrEqual( one.glyphRight + 1 );
+	} );
+	// Not all at the same place: a narrow letter's strip farther out than the widest's.
+	const lefts = found.map( ( one ) => one.stripLeft );
+	expect( Math.max( ...lefts ) - Math.min( ...lefts ) ).toBeGreaterThan( 5 );
+	expect( errors ).toEqual( [] );
+} );
