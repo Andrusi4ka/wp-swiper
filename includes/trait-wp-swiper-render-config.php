@@ -103,6 +103,9 @@ trait WP_Swiper_Render_Config {
 			'navigation'    => $settings['navigation'] && ! $marquee && ! WP_Swiper_Settings::is_thumbs( $settings ),
 			'pagination'    => 'none' === $settings['pagination'] || $marquee ? false : $settings['pagination'],
 			'keyboard'      => $settings['keyboard'] && ! $marquee,
+			// The mouse drags the slides (Swiper's simulateTouch; a finger always
+			// swipes). The marquee has no dragging at all (slider.js).
+			'mouseDrag'     => $settings['mouse_drag'] && ! $marquee,
 			'marquee'       => $marquee ? array(
 				'speed'   => $settings['marquee_speed'],
 				'pause'   => $settings['pause_on_hover'],

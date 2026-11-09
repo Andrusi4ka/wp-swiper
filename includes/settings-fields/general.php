@@ -74,6 +74,16 @@ return array(
 		'type'    => 'checkbox',
 		'default' => true,
 	),
+	// Swiper's simulateTouch (slider.js): the mouse drags the slides as a
+	// finger does. Off: a finger still swipes them on a touch screen.
+	'mouse_drag'            => array(
+		'section' => 'advanced',
+		'panel'   => 'controls',
+		'label'   => __( 'Drag with the mouse', 'wp-swiper' ),
+		'type'    => 'checkbox',
+		'default' => true,
+		'help'    => __( 'Off: on a computer the slides move only with the arrows, the pagination, the keyboard or autoplay. On phones and tablets a finger still swipes them.', 'wp-swiper' ),
+	),
 
 	'autoplay'              => array(
 		'section' => 'advanced',

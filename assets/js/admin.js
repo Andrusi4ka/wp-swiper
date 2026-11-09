@@ -378,6 +378,7 @@
 		var lockNavigation = lockable( 'navigation' );
 		var lockPagination = lockableValue( 'pagination', 'none' );
 		var lockKeyboard = lockable( 'keyboard' );
+		var lockMouseDrag = lockable( 'mouse_drag' );
 
 		// Any slide with a link (a video slide's is not used).
 		function hasLinks() {
@@ -543,6 +544,7 @@
 			lockNavigation( still );
 			lockPagination( still );
 			lockKeyboard( still );
+			lockMouseDrag( still );
 			lockPause( background );
 			lockCollagePause( background );
 			lockHeight( background );

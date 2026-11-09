@@ -15,6 +15,7 @@ $slider = array(
 	'pagination' => 'bullets',
 	'lightbox'   => '1',
 	'keyboard'   => '1',
+	'mouse_drag' => '1',
 	'height'     => '400',
 );
 
@@ -29,6 +30,8 @@ $shadow = array(
 
 return array(
 	'slide'            => array( 'settings' => $slider + array( 'effect' => 'slide' ) ),
+	// Drag with the mouse off (mouse-drag.spec.js, no snapshots).
+	'slide-no-mouse-drag' => array( 'settings' => array_diff_key( $slider, array( 'mouse_drag' => 1 ) ) + array( 'effect' => 'slide' ) ),
 	'slide-loop'       => array( 'settings' => $slider + array( 'effect' => 'slide', 'loop' => '1', 'slides_per_view' => '3', 'space_between' => '12' ) ),
 	'slide-captions'   => array(
 		'settings' => $slider + array( 'effect' => 'slide' ),

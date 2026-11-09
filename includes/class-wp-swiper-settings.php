@@ -679,7 +679,7 @@ class WP_Swiper_Settings {
 				),
 				'movement'         => array(
 					'title'  => __( 'Movement', 'wp-swiper' ),
-					'fields' => array( 'speed', 'loop', 'autoplay', 'autoplay_delay', 'pause_on_hover' ),
+					'fields' => array( 'speed', 'loop', 'mouse_drag', 'autoplay', 'autoplay_delay', 'pause_on_hover' ),
 				),
 				'navigation'       => array(
 					'title'  => __( 'Arrows and keyboard', 'wp-swiper' ),

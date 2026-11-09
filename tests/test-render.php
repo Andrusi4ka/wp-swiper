@@ -397,6 +397,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertTrue( $config['loop'] );
 		$this->assertFalse( $config['navigation'] );
 		$this->assertFalse( $config['pagination'] );
+		$this->assertFalse( $config['mouseDrag'] );
 		$this->assertFalse( $config['keyboard'] );
 		$this->assertSame( 50, $config['marquee']['speed'] );
 	}
@@ -725,6 +726,7 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertFalse( $config['navigation'] );
 		$this->assertFalse( $config['pagination'] );
 		$this->assertFalse( $config['keyboard'] );
+		$this->assertFalse( $config['mouseDrag'] );
 		$this->assertFalse( $config['lightbox'] );
 		$this->assertFalse( $config['fill'] );
 		$this->assertStringNotContainsString( 'wp-swiper__link', $html );

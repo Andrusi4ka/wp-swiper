@@ -279,6 +279,26 @@ test( 'Collage: a photo dragged onto another in the preview, the two swapped, th
 	expect( errors ).toEqual( [] );
 } );
 
+test( 'Drag with the mouse: in Movement after the loop, locked for a continuous scroll', async ( { page } ) => {
+	const errors = await edit( page, 'slide' );
+	await openPage( page, 'controls' );
+	const fields = await page.locator( '#wp-swiper-page-controls [data-block="movement"] .wp-swiper-field' ).evaluateAll( ( els ) => els.map( ( el ) => el.getAttribute( 'data-field' ) ) );
+	expect( fields.indexOf( 'mouse_drag' ) ).toBe( fields.indexOf( 'loop' ) + 1 );
+	const box = page.locator( '#wp-swiper-mouse_drag' );
+	await expect( box ).toBeVisible();
+	await expect( box ).toBeChecked();
+	await expect( box ).toBeEnabled();
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'Drag with the mouse: a continuous scroll has none (locked off)', async ( { page } ) => {
+	const errors = await edit( page, 'marquee' );
+	await openPage( page, 'controls' );
+	await expect( page.locator( '#wp-swiper-mouse_drag' ) ).toBeDisabled();
+	await expect( page.locator( '#wp-swiper-mouse_drag' ) ).not.toBeChecked();
+	expect( errors ).toEqual( [] );
+} );
+
 test( 'a slide\'s image position: its window opens and closes', async ( { page } ) => {
 	const errors = await edit( page, 'slide' );
 	await page.locator( '.wp-swiper-slide__position' ).first().click();

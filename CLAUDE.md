@@ -47,7 +47,7 @@
   тимчасовій теці, SHA-512 звірено).
 - Після v3.5.0 (2026-11-09, ще не в релізі): захист робочої копії від
   оновлень (див. вище), `collage.js` розділено (`collage-layouts.js`), тест
-  перетягування фото колажу в прев'ю. Локальні гілки на роботі видалено
+  перетягування фото колажу в прев'ю, Drag with the mouse. Локальні гілки на роботі видалено
   (лишилась `main`); вони збережені в
   `Creativity.local/_backups/wp-swiper-old-branches-2026-11-09.bundle`.
 - Далі (2026-10-29): Use as background — не окрема сторінка меню, а останній
@@ -577,6 +577,19 @@
   Swiper. Усі правила Thumbnails — у `thumbs.css` (тест не пускає
   `.wp-swiper__thumbs` у `frontend.css` / `slider.css`). Тест —
   `tests/browser/shadow-more.spec.js`.
+- **Drag with the mouse** (2026-11-09, рішення користувача — варіант 1):
+  `mouse_drag` (за замовч. увімкнено — старі слайдери тягнуться, як і
+  були) у Controls → Movement одразу після Infinite loop (не внизу
+  сторінки). Вимкнено — Swiper `simulateTouch: false` і без `grabCursor`
+  (`slider.js`, лише при `config.mouseDrag === false`): мишка не тягне,
+  палець на телефоні / планшеті гортає (`allowTouchMove` не чіпаємо —
+  варіант «зовсім без свайпу» відхилено). Усі ефекти-слайдери, зокрема
+  головні фото Thumbnails (смуга мініатюр — своя). Фон і Continuous
+  scroll — вимкнено примусово (`render_slider()`, `js_config()`;
+  в адмінці `lockMouseDrag( still )`, як Keyboard). Тести:
+  `test-mouse-drag.php`, `tests/browser/mouse-drag.spec.js` (випадок
+  `slide-no-mouse-drag`, без знімків; `$slider` у `cases.php` має
+  `mouse_drag`), `admin.spec.js`.
 - Кнопка × «прибрати місце» — лише Scattered і Freeform; для інших стилів —
   коли попросить.
 - Телефон (і планшет) завжди наслідує більший екран: жодних `device_defaults`
@@ -869,7 +882,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 431 тест (2026-11-09), CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 436 тестів (2026-11-09), CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.
@@ -899,7 +912,7 @@ WP-CLI для тестів не потрібен: досить `WP_CORE_DIR` і 
 котра медіатека правильна. Видаляючи рядки за номерами (sed), звіряй
 `git diff` — так одного разу пропав селектор `.wp-swiper.wp-swiper--background`.
 Адмінка (2026-11-05, рішення користувача — раніше лише сайт):
-`admin.spec.js`, 24 «димові» тести редактора (лише desktop). Вхід —
+`admin.spec.js`, 26 «димових» тестів редактора (лише desktop). Вхід —
 `admin-login.php` (лише з 127.x, як `fixture.php`): тестовий
 адміністратор `wp-swiper-tests` без відомого пароля, створюється сам,
 одна сесія на всіх (`global-setup.js` створює її перед тестами — інакше

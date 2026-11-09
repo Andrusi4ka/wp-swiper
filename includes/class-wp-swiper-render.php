@@ -202,6 +202,7 @@ class WP_Swiper_Render {
 			$settings['navigation']     = false;
 			$settings['pagination']     = 'none';
 			$settings['keyboard']       = false;
+			$settings['mouse_drag']     = false;
 			$settings['lightbox']       = false;
 			$settings['video_autoplay'] = true;
 			$settings['video_muted']    = true;

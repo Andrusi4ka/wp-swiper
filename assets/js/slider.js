@@ -1328,6 +1328,14 @@
 			options.allowTouchMove = false;
 		}
 
+		// "Drag with the mouse" off: the mouse no longer drags the slides (nor
+		// shows the grab hand); a finger on a touch screen still swipes them.
+		// Only when said so (a config from before the setting keeps dragging).
+		if ( config.mouseDrag === false ) {
+			options.simulateTouch = false;
+			options.grabCursor = false;
+		}
+
 		if ( config.navigation ) {
 			options.navigation = {
 				prevEl: el.querySelector( '.swiper-button-prev' ),
