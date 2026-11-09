@@ -1261,16 +1261,19 @@
 				return;
 			}
 			current = name;
-			var order = config.order && config.order[ name ];
-			if ( ! order || ! order.length ) {
-				order = photos.map( function ( photo, index ) {
-					return index;
-				} );
-			}
-			order = order.map( Number );
+			var inTurn = photos.map( function ( photo, index ) {
+				return index;
+			} );
 			// Content in a window: in its window instead of a photo (-1 in the
 			// order the preview gets: pieces()), the photos in the others in turn.
 			var content = contentAt();
+			// The order set (each photo once, the others after it); with more
+			// windows than photos as it is, a photo in as many windows as it was
+			// put in (content.js wpSwiperPlaces.order()).
+			var set = config.order && config.order[ name ];
+			var order = set && set.length && window.wpSwiperPlaces
+				? window.wpSwiperPlaces.order( set, photos.length, pieces.length - ( content >= 0 ? 1 : 0 ), inTurn )
+				: inTurn;
 			var next = 0;
 			pieces.forEach( function ( piece, index ) {
 				if ( index === content ) {

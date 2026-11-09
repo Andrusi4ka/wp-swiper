@@ -590,7 +590,8 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 
 	public function test_sanitize_order() {
 		$this->assertSame( '12,7,30', WP_Swiper_Settings::sanitize_order( ' 12, 7,30 ' ) );
-		$this->assertSame( '12,7', WP_Swiper_Settings::sanitize_order( '12,x,-7,0,12,7' ) );
+		// A photo may repeat (more places than photos: what each one shows).
+		$this->assertSame( '12,7,12,7', WP_Swiper_Settings::sanitize_order( '12,x,-7,0,12,7' ) );
 		$this->assertSame( '', WP_Swiper_Settings::sanitize_order( 'abc' ) );
 		$this->assertSame( 500, count( explode( ',', WP_Swiper_Settings::sanitize_order( implode( ',', range( 1, 600 ) ) ) ) ) );
 

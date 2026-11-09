@@ -133,8 +133,10 @@ trait WP_Swiper_Art_Parts {
 
 	/**
 	 * The order of the photos per device as slide indexes: those of the order
-	 * set there (by photo ID; a photo twice in the slides: its first slide),
-	 * then the others in the slides' order; false where none is set.
+	 * set there (by photo ID, WP_Swiper_Settings::order_indexes(); with more
+	 * windows than photos a photo may be in it more than once: what each
+	 * window shows), then the others in the slides' order; false where none
+	 * is set. art.js lays it out (content.js wpSwiperPlaces.order()).
 	 *
 	 * @param array $settings Slider settings.
 	 * @param array $slides   The slides shown (images).
@@ -143,27 +145,17 @@ trait WP_Swiper_Art_Parts {
 	public static function orders( $settings, $slides ) {
 		$orders = array();
 		foreach ( WP_Swiper_Settings::responsive( $settings, 'art_order' ) as $device => $value ) {
-			$value = WP_Swiper_Settings::sanitize_order( $value );
-			if ( '' === $value ) {
+			$list = WP_Swiper_Settings::order_indexes( $value, $slides );
+			if ( ! $list ) {
 				$orders[ $device ] = false;
 				continue;
 			}
-			$used = array();
-			foreach ( explode( ',', $value ) as $id ) {
-				foreach ( $slides as $index => $slide ) {
-					if ( (int) $slide['id'] === (int) $id && ! isset( $used[ $index ] ) ) {
-						$used[ $index ] = true;
-						break;
-					}
-				}
-			}
-			$list = array_keys( $used );
 			foreach ( array_keys( $slides ) as $index ) {
-				if ( ! isset( $used[ $index ] ) ) {
+				if ( ! in_array( $index, $list, true ) ) {
 					$list[] = $index;
 				}
 			}
-			$orders[ $device ] = $used ? $list : false;
+			$orders[ $device ] = $list;
 		}
 		return $orders;
 	}

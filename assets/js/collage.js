@@ -253,27 +253,21 @@
 		/**
 		 * The photos in their order on a device: the order set there (slide
 		 * indexes, the first ones in the first places), then the photos not in
-		 * it in shuffle order; without one, the shuffle.
+		 * it in shuffle order; without one, the shuffle. A template with more
+		 * places than photos: the order set there as it is, a photo in as many
+		 * places as it was put in (content.js wpSwiperPlaces.order()).
 		 *
-		 * @param {string} name Device.
-		 * @return {number[]}
+		 * @param {string} name   Device.
+		 * @param {number} places The places that take a photo.
+		 * @return {number[]} Place i takes order[ i % order.length ].
 		 */
-		function orderFor( name ) {
+		function orderFor( name, places ) {
 			var shuffled = seededOrder( slides.length, config.seed || 1 );
 			var set = config.order && config.order[ name ];
 			if ( ! set || ! set.length ) {
 				return shuffled;
 			}
-			var seen = {};
-			var out = [];
-			set.concat( shuffled ).forEach( function ( real ) {
-				real = Number( real );
-				if ( real >= 0 && real < slides.length && ! seen[ real ] ) {
-					seen[ real ] = true;
-					out.push( real );
-				}
-			} );
-			return out;
+			return window.wpSwiperPlaces.order( set, slides.length, places, shuffled );
 		}
 
 		// A copy of slide `real` to put in a place.
@@ -719,7 +713,6 @@
 		// The places for this device's layout, the photos in shuffle order.
 		function build() {
 			current = device();
-			order = orderFor( current );
 			var layout = config.layout[ current ] || 'grid';
 			var template = COLLAGE_TEMPLATES[ layout ] ? templateTree( layout ) : null;
 			// Laid out by cuts (Random mosaic, the templates), or Scattered, Freeform: in the block's Height.
@@ -734,6 +727,7 @@
 			var withContent = !! contentNode && layout !== 'justified' && layout !== 'masonry';
 			var count = template ? mosaicLeaves( template ).length : Math.min( slides.length + ( withContent ? 1 : 0 ), Math.max( 1, Number( config.count[ current ] ) || 1 ) );
 			var content = contentPlace( count );
+			order = orderFor( current, count - ( content >= 0 ? 1 : 0 ) );
 			// The places for photos, in turn.
 			var shown = 0;
 
@@ -757,7 +751,7 @@
 					// As a photo is, for the preview, Rotation and the swap (collage.css).
 					cell.appendChild( contentNode );
 				} else {
-					var real = order[ shown++ % slides.length ];
+					var real = order[ shown++ % order.length ];
 					// A place's proportions stay those of the photo it got first.
 					cell.wpRatio = ratioOf( slides[ real ] );
 					cell.wpReal = real;

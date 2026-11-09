@@ -525,25 +525,49 @@ class WP_Swiper_Settings {
 	public static function collage_orders( $settings, $slides ) {
 		$orders = array();
 		foreach ( self::responsive( $settings, 'collage_order' ) as $device => $value ) {
-			$value = self::sanitize_order( $value );
-			if ( '' === $value ) {
-				$orders[ $device ] = false;
-				continue;
-			}
-			$used    = array();
-			$indexes = array();
-			foreach ( explode( ',', $value ) as $id ) {
-				foreach ( $slides as $index => $slide ) {
-					if ( (int) $slide['id'] === (int) $id && ! isset( $used[ $index ] ) ) {
-						$used[ $index ] = true;
-						$indexes[]      = $index;
-						break;
-					}
-				}
-			}
+			$indexes           = self::order_indexes( $value, $slides );
 			$orders[ $device ] = $indexes ? $indexes : false;
 		}
 		return $orders;
+	}
+
+	/**
+	 * An order as stored (photo IDs) as slide indexes, in its order: each ID
+	 * to a slide with it not taken yet; once all of them are (a photo in more
+	 * places than it has slides: a template, Art with more windows than
+	 * photos, where the order says what each place shows), to its first one
+	 * again. IDs no slide has are left out. content.js reals() the same.
+	 *
+	 * @param string $value  The order (sanitize_order()).
+	 * @param array  $slides The slides shown.
+	 * @return int[]
+	 */
+	public static function order_indexes( $value, $slides ) {
+		$value = self::sanitize_order( $value );
+		if ( '' === $value ) {
+			return array();
+		}
+		$used    = array();
+		$indexes = array();
+		foreach ( explode( ',', $value ) as $id ) {
+			$first = null;
+			foreach ( $slides as $index => $slide ) {
+				if ( (int) $slide['id'] !== (int) $id ) {
+					continue;
+				}
+				$first = null === $first ? $index : $first;
+				if ( ! isset( $used[ $index ] ) ) {
+					$used[ $index ] = true;
+					$indexes[]      = $index;
+					$first          = null;
+					break;
+				}
+			}
+			if ( null !== $first ) {
+				$indexes[] = $first;
+			}
+		}
+		return $indexes;
 	}
 
 	/**

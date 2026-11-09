@@ -346,11 +346,10 @@
 			// Content in a place (-1): its place now, among all of them — before
 			// the repeated photos go (below), which would move it up.
 			var content = list.indexOf( -1 );
-			// Each photo once (a template with more places than photos repeats them).
-			var seen = {};
-			list = list.filter( function ( real ) {
-				return real !== -1 && ( seen[ real ] ? false : ( seen[ real ] = true ) );
-			} );
+			// Each photo once; a template with more places than photos (they
+			// repeat): every place as it is now, so a photo dragged past the
+			// photos' number stays there (content.js wpSwiperPlaces.kept()).
+			list = window.wpSwiperPlaces.kept( list, api.ids.length );
 			end();
 			// Scattered: each place keeps the shape of its photo, so the two
 			// places swap sizes too; kept as set, the new order goes into it.
@@ -1052,17 +1051,8 @@
 			if ( ! api || ! api.restore || api.places().device !== state.device ) {
 				return;
 			}
-			var used = {};
-			var order = [];
-			( state.order || [] ).forEach( function ( id ) {
-				for ( var real = 0; real < api.ids.length; real++ ) {
-					if ( api.ids[ real ] === id && ! used[ real ] ) {
-						used[ real ] = true;
-						order.push( real );
-						return;
-					}
-				}
-			} );
+			// A photo in more places than it has slides: its first one again.
+			var order = window.wpSwiperPlaces.reals( state.order || [], api.ids );
 			api.restore( { order: order, mosaic: state.mosaic, cuts: state.cuts, count: Number( state.count ) || 0, contentPlace: Number( state.contentPlace ) || 0 } );
 			done = true;
 		} );

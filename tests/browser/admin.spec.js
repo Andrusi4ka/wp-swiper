@@ -299,6 +299,38 @@ test( 'Drag with the mouse: a continuous scroll has none (locked off)', async ( 
 	expect( errors ).toEqual( [] );
 } );
 
+test( 'Art, more windows than photos: a photo dragged onto the 12th window, saved, still there', async ( { page } ) => {
+	const errors = await edit( page, 'art-shape-many' );
+	const pieces = frame( page ).locator( '.wp-swiper-art__piece:not([hidden])' );
+	await expect( pieces ).toHaveCount( 16 );
+	const reals = () => frame( page ).locator( '.wp-swiper-art' ).evaluate( ( block ) => [].slice.call( block.querySelectorAll( '.wp-swiper-art__piece' ) ).filter( ( p ) => ! p.hidden ).map( ( p ) => p.wpReal ) );
+	const before = await reals();
+	expect( before[ 0 ] ).not.toBe( before[ 11 ] );
+
+	await pieces.nth( 0 ).scrollIntoViewIfNeeded();
+	const a = await pieces.nth( 0 ).boundingBox();
+	const b = await pieces.nth( 11 ).boundingBox();
+	await page.mouse.move( a.x + a.width / 2, a.y + a.height / 2 );
+	await page.mouse.down();
+	for ( let i = 1; i <= 10; i++ ) {
+		await page.mouse.move( a.x + a.width / 2 + ( b.x - a.x ) * i / 10, a.y + a.height / 2 + ( b.y - a.y ) * i / 10 );
+	}
+	await page.mouse.up();
+	const expected = before.slice();
+	expected[ 0 ] = before[ 11 ];
+	expected[ 11 ] = before[ 0 ];
+	await expect.poll( reals ).toEqual( expected );
+	// Every window's photo kept: 16 IDs, some of them twice.
+	const order = page.locator( '#wp-swiper-art_order' );
+	await expect.poll( async () => ( await order.inputValue() ).split( ',' ).length ).toBe( 16 );
+
+	await Promise.all( [ page.waitForNavigation(), page.click( '#publish' ) ] );
+	await page.waitForSelector( '#wp-swiper-settings' );
+	await shown( page );
+	await expect.poll( reals ).toEqual( expected );
+	expect( errors ).toEqual( [] );
+} );
+
 test( 'a slide\'s image position: its window opens and closes', async ( { page } ) => {
 	const errors = await edit( page, 'slide' );
 	await page.locator( '.wp-swiper-slide__position' ).first().click();

@@ -103,6 +103,8 @@ return array(
 	'collage-justified' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'justified', 'lightbox' => '1' ) ),
 	'collage-random'   => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'random', 'lightbox' => '1' ) ),
 	'collage-feature'  => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'feature-left', 'lightbox' => '1' ) ),
+	// More places than photos (order-repeats.spec.js, no snapshots): 5 places, 2 photos.
+	'collage-few' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'feature-center', 'height' => '480' ), 'photos' => 2 ),
 	// Content in a place: an image over text in one place instead of a photo.
 	// A template of 5 places with 2 photos (repeated): Content in a place dragged past them in the preview.
 	'collage-content-few' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'feature-center', 'collage_content' => '1', 'collage_content_place' => '1', 'collage_content_text' => '<p>Hi</p>', 'collage_content_bg' => 'rgba(30,60,90,1)', 'height' => '480' ), 'photos' => 2 ),
@@ -145,6 +147,11 @@ return array(
 	// its second window instead of a photo, its first on mobile.
 	'art-shape-content' => array(
 		'settings' => array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => file_get_contents( dirname( __DIR__ ) . '/data/ex-3.svg' ), 'art_height' => '420', 'art_content' => '1', 'art_content_window' => '2', 'art_content_window_mobile' => '1', 'art_content_image' => '{image}', 'art_content_text' => '<p><strong>Hello</strong> from a window of the shape. ' . str_repeat( 'More text than it can hold in it, so that it is cut at a word. ', 24 ) . '</p>', 'art_content_bg' => 'rgba(30,60,90,1)', 'image_gradient_on' => '1', 'lightbox' => '1' ),
+	),
+	// More windows than photos (order-repeats.spec.js, no snapshots): 16 windows, 4 photos.
+	'art-shape-many' => array(
+		'settings' => array( 'effect' => 'art', 'art_style' => 'shape', 'art_shape' => file_get_contents( dirname( __DIR__ ) . '/data/grid-16.svg' ), 'art_height' => '480' ),
+		'photos'   => 4,
 	),
 	// SVG shape of 16 windows (tests/data/grid-16.svg) and 4 photos: Content in a
 	// window dragged past them in the preview (art-content.spec.js).

@@ -481,10 +481,16 @@
 				$( '[name^="wp_swiper_settings[collage_order"], [name^="wp_swiper_settings[art_order"]' ).each( function () {
 					var ids = String( $( this ).val() || '' ).split( ',' );
 					if ( ids.indexOf( from ) !== -1 ) {
+						// An order with a photo more than once (more places than
+						// photos: what each place shows) keeps every place; else
+						// each photo once, as ever.
+						var repeats = ids.some( function ( id, i ) {
+							return ids.indexOf( id ) !== i;
+						} );
 						$( this ).val( ids.map( function ( id ) {
 							return id === from ? to : id;
 						} ).filter( function ( id, i, all ) {
-							return all.indexOf( id ) === i;
+							return repeats || all.indexOf( id ) === i;
 						} ).join( ',' ) );
 					}
 				} );

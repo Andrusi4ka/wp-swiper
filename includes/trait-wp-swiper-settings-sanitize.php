@@ -387,15 +387,16 @@ trait WP_Swiper_Settings_Sanitize {
 	}
 
 	/**
-	 * A collage order as stored: photo IDs, positive whole numbers, comma
-	 * separated, each once, at most 500.
+	 * A Collage or Art order as stored: photo IDs, positive whole numbers,
+	 * comma separated, at most 500. An ID may repeat: with more places than
+	 * photos the order says what each place shows (order_indexes()).
 	 *
 	 * @param string $value Raw input, e.g. "12, 7,30".
 	 * @return string "12,7,30"; '' for none.
 	 */
 	public static function sanitize_order( $value ) {
 		$ids = array_filter( array_map( 'absint', preg_split( '/[\s,]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY ) ) );
-		return implode( ',', array_slice( array_values( array_unique( $ids ) ), 0, 500 ) );
+		return implode( ',', array_slice( array_values( $ids ), 0, 500 ) );
 	}
 
 	/**

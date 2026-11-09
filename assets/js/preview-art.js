@@ -177,11 +177,10 @@
 			// all the windows — before the repeated photos go (below), which
 			// would move it up (with 10 photos never past the 11th window).
 			var content = list.indexOf( -1 );
-			// Each photo once (with fewer photos than pieces they repeat).
-			var seen = {};
-			list = list.filter( function ( real ) {
-				return real !== -1 && ( seen[ real ] ? false : ( seen[ real ] = true ) );
-			} );
+			// Each photo once; with more windows than photos (they repeat) every
+			// window as it is now, so a photo dragged past the photos' number
+			// stays there (content.js wpSwiperPlaces.kept()).
+			list = window.wpSwiperPlaces.kept( list, api.ids.length );
 			end();
 			if ( content !== -1 && api.setContentWindow ) {
 				api.setContentWindow( content + 1 );
@@ -358,17 +357,8 @@
 			if ( ! api || ! api.setOrder || api.device() !== state.device ) {
 				return;
 			}
-			var used = {};
-			var order = [];
-			( state.order || [] ).forEach( function ( id ) {
-				for ( var real = 0; real < api.ids.length; real++ ) {
-					if ( api.ids[ real ] === id && ! used[ real ] ) {
-						used[ real ] = true;
-						order.push( real );
-						return;
-					}
-				}
-			} );
+			// A photo in more windows than it has slides: its first one again.
+			var order = window.wpSwiperPlaces.reals( state.order || [], api.ids );
 			if ( api.setCenter && typeof state.center === 'number' && isFinite( state.center ) ) {
 				api.setCenter( state.center );
 			}
