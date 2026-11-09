@@ -33,35 +33,23 @@
   читання») і поставило `wp-swiper-main`. Код був на GitHub, тож склоновано
   заново; залишок — `C:/OSPanel/home/_backups/wp-swiper-git-leftover-2026-11-04`
   (там лише старі stash). Активною має бути `wp-swiper/wp-swiper.php` —
-  браузерні тести беруть саме активну копію.
+  браузерні тести беруть саме активну копію. На роботі тека —
+  `wp-swiper-main` (так склоновано, вона й активна).
+  Захист (2026-11-09): копія з `.git` у теці плагіна оновлень не отримує
+  (`wp_swiper_is_working_copy()`, фільтр `wp_swiper_is_working_copy`;
+  `tests/test-updates.php`). У zip релізу `.git` немає, тож сайти
+  оновлюються як і раніше. Не прибирати.
 
 ## Стан
 
-- Останній реліз **v3.5.0** (2026-11-06): менші копії фото Art і код Art
-  лише свого стилю (`art-cells.js`, `art-text.js`), Text mask — смуги
-  вимикаються, Text position (+ Bottom), Letter alignment; Content in a
-  window для Grid shapes; Custom gradient фону підпису; тінь для Flip і
-  Thumbnails; повзунки біля чисел; нові іконки Creative; виправлено
-  перетягування вмісту в прев'ю; `.pot` оновлено (WP-CLI 2.11.0, SHA-512
-  звірено).
-- Попередній — **v3.4.0** (2026-11-05): Content in a window для Ring і
-  сіток з колом / квадратом замість стилів «+ text» (старі переносяться),
-  перетягування кутів Grid shapes, Shadow color для Effect shadows,
-  плитки стилів Creative, темний екран прев'ю, ширше поле коду редакторів;
-  `admin.js` розділено на частини, тести адмінки; `.pot` оновлено (WP-CLI
-  2.11.0, phar у тимчасовій теці, SHA-512 звірено).
-- Ще раніше — **v3.3.0** (2026-11-04): Collage Rotation (за крайніми
-  точками фото), Content in a place (колаж) і Content in a window (Art SVG
-  shape) зі шорткодами, тінь у фоні для Collage / Art, Developer mode для
-  колажу й SVG shape, картка «What … can do»; `.pot` оновлено (WP-CLI
-  2.11.0, phar у тимчасовій теці, SHA-512 звірено). Попередній — v3.2.1
-  (2026-11-04): WP Swiper лише для адміністраторів. Ще раніше — v3.2.0 (2026-11-03): ефект Text mask, Gradient для
-  всіх ефектів, автооновлення прев'ю на Effect / Style, виправлення з
-  `8eb8a1b` (слеші при збереженні, слухачі плеєрів); `.pot` оновлено
-  (WP-CLI 2.11.0, phar у тимчасовій теці, SHA-512 звірено).
-- Після v3.0.0 в `art-effect` (2026-10-28): тести в браузері
-  (`tests/browser/`), схема полів в окремому `includes/settings-fields.php`,
-  слайдери в окремому `assets/js/slider.js` (див. «Як влаштований код»).
+- Останній реліз **v3.5.0** (2026-11-06). Що в якому релізі — changelog у
+  `readme.txt`. `.pot` перед релізами генерували WP-CLI 2.11.0 (phar у
+  тимчасовій теці, SHA-512 звірено).
+- Після v3.5.0 (2026-11-09, ще не в релізі): захист робочої копії від
+  оновлень (див. вище), `collage.js` розділено (`collage-layouts.js`), тест
+  перетягування фото колажу в прев'ю. Локальні гілки на роботі видалено
+  (лишилась `main`); вони збережені в
+  `Creativity.local/_backups/wp-swiper-old-branches-2026-11-09.bundle`.
 - Далі (2026-10-29): Use as background — не окрема сторінка меню, а останній
   блок Layout; у прев'ю без тексту «The settings as they are now…», з
   плашкою «Background mode» при фоні (`WP_Swiper_Preview::background_block()`);
@@ -664,8 +652,9 @@
 - Art: на великих фото «нечітко → скачок» під час анімації (поява,
   hover-zoom), найімовірніше Chrome так зменшує картинки.
 - Адмінку перевіряють лише «димові» тести `tests/browser/admin.spec.js`
-  (2026-11-05, див. «Тести»): відкривається, основні дії працюють. Тонкі
-  дії в прев'ю (перетягування фото, лінії колажу, Grid shapes) — ні. Після
+  (2026-11-05, див. «Тести»): відкривається, основні дії працюють. З дій
+  у прев'ю є лише обмін двох фото колажу перетягуванням (2026-11-09);
+  лінії колажу, Scattered / Freeform, Grid shapes, порядок Art — ні. Після
   змін у `admin*.js` чи `preview-*.js` прожени їх і попроси користувача
   перевірити руками те, чого вони не торкаються.
 
@@ -820,7 +809,14 @@
     слайди, marquee, zoom. `init()` викликає `window.wpSwiperSlider( el,
     config )`;
   - `collage.js` + `collage.css` — колаж. `init()` викликає
-    `window.wpSwiperCollage`;
+    `window.wpSwiperCollage`. Розкладки без DOM (шаблони, Random mosaic,
+    Scattered, Freeform, межі повернутих фото — `turnedBounds()`) — у
+    `collage-layouts.js` (2026-11-09, механічно, код дослівно той самий):
+    вантажиться перед `collage.js` (його залежність), віддає
+    `window.wpSwiperCollageLayouts`, `collage.js` бере звідти аліасами на
+    початку. Нова функція розкладки, потрібна `collage()`, — у
+    `collage-layouts.js` і в `wpSwiperCollageLayouts`. Окремо за стилем не
+    вантажиться: стиль — для кожного пристрою;
   - `slider.js` і `collage.js` беруть спільне з `window.wpSwiperShared`.
     Нова спільна функція = додати її туди. Обидва, якщо прийшли пізніше за
     `frontend.js`, самі ще раз викликають `wpSwiperInit()`.
@@ -873,7 +869,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 424 тести, CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 431 тест (2026-11-09), CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.
@@ -903,7 +899,7 @@ WP-CLI для тестів не потрібен: досить `WP_CORE_DIR` і 
 котра медіатека правильна. Видаляючи рядки за номерами (sed), звіряй
 `git diff` — так одного разу пропав селектор `.wp-swiper.wp-swiper--background`.
 Адмінка (2026-11-05, рішення користувача — раніше лише сайт):
-`admin.spec.js`, 13 «димових» тестів редактора (лише desktop). Вхід —
+`admin.spec.js`, 24 «димові» тести редактора (лише desktop). Вхід —
 `admin-login.php` (лише з 127.x, як `fixture.php`): тестовий
 адміністратор `wp-swiper-tests` без відомого пароля, створюється сам,
 одна сесія на всіх (`global-setup.js` створює її перед тестами — інакше

@@ -122,7 +122,9 @@ trait WP_Swiper_Render_Assets {
 		wp_register_script( 'swiper', WP_SWIPER_URL . 'assets/vendor/swiper/swiper-bundle.min.js', array(), WP_SWIPER_SWIPER_VERSION, true );
 		wp_register_script( 'wp-swiper', WP_SWIPER_URL . 'assets/js/frontend.js', array(), wp_swiper_asset_version( 'assets/js/frontend.js' ), true );
 		self::register_content();
-		wp_register_script( 'wp-swiper-collage', WP_SWIPER_URL . 'assets/js/collage.js', array( 'wp-swiper', 'wp-swiper-content' ), wp_swiper_asset_version( 'assets/js/collage.js' ), true );
+		// The collage's layouts (just the numbers) before the collage itself.
+		wp_register_script( 'wp-swiper-collage-layouts', WP_SWIPER_URL . 'assets/js/collage-layouts.js', array(), wp_swiper_asset_version( 'assets/js/collage-layouts.js' ), true );
+		wp_register_script( 'wp-swiper-collage', WP_SWIPER_URL . 'assets/js/collage.js', array( 'wp-swiper', 'wp-swiper-content', 'wp-swiper-collage-layouts' ), wp_swiper_asset_version( 'assets/js/collage.js' ), true );
 		// The sliders themselves, after Swiper and frontend.js (enqueue()): a
 		// page with only a Collage or Art does without them.
 		wp_register_script( 'wp-swiper-slider', WP_SWIPER_URL . 'assets/js/slider.js', array( 'swiper', 'wp-swiper' ), wp_swiper_asset_version( 'assets/js/slider.js' ), true );

@@ -104,14 +104,30 @@ add_action(
 );
 
 /**
+ * Whether this copy of the plugin is a git working copy (a ".git" folder in
+ * the plugin folder). An update replaces the whole folder, so it would wipe
+ * the work in progress: such a copy is never offered updates.
+ *
+ * @return bool
+ */
+function wp_swiper_is_working_copy() {
+	/**
+	 * Filters whether the plugin folder counts as a git working copy.
+	 *
+	 * @param bool $working_copy True when the folder holds ".git".
+	 */
+	return (bool) apply_filters( 'wp_swiper_is_working_copy', file_exists( WP_SWIPER_DIR . '.git' ) );
+}
+
+/**
  * Updates from GitHub: a new release (tag "vX.Y.Z" with the wp-swiper.zip
  * built by .github/workflows/release.yml) shows up under Plugins like any
- * other update.
+ * other update. Not for a git working copy (wp_swiper_is_working_copy()).
  */
 function wp_swiper_updates() {
 	$library = WP_SWIPER_DIR . 'vendor/plugin-update-checker/plugin-update-checker.php';
 	// Only where WordPress looks for updates: the admin and its cron.
-	if ( ( ! is_admin() && ! wp_doing_cron() ) || ! file_exists( $library ) ) {
+	if ( ( ! is_admin() && ! wp_doing_cron() ) || ! file_exists( $library ) || wp_swiper_is_working_copy() ) {
 		return;
 	}
 	require_once $library;

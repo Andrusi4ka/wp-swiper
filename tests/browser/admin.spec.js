@@ -250,6 +250,35 @@ test( 'Collage: Shuffle sets an order, Reset clears it', async ( { page } ) => {
 	expect( errors ).toEqual( [] );
 } );
 
+test( 'Collage: a photo dragged onto another in the preview, the two swapped, the order kept', async ( { page } ) => {
+	const errors = await edit( page, 'collage-grid' );
+	await openPage( page, 'layout' );
+	const order = page.locator( 'input[name="wp_swiper_settings[collage_order]"]' );
+	await expect( order ).toHaveValue( '' );
+	const cells = frame( page ).locator( '.wp-swiper-collage__cell' );
+	await expect( cells.nth( 1 ) ).toBeVisible();
+	const photo = ( index ) => cells.nth( index ).locator( 'img' ).first().getAttribute( 'src' );
+	const first = await photo( 0 );
+	const second = await photo( 1 );
+	expect( first ).not.toBe( second );
+
+	// The preview is scaled into its device: the boxes are where they are on
+	// the screen, once there (the mouse does not scroll the page by itself).
+	await cells.nth( 0 ).scrollIntoViewIfNeeded();
+	const from = await cells.nth( 0 ).boundingBox();
+	const to = await cells.nth( 1 ).boundingBox();
+	await page.mouse.move( from.x + from.width / 2, from.y + from.height / 2 );
+	await page.mouse.down();
+	await page.mouse.move( from.x + from.width / 2 + 20, from.y + from.height / 2 + 20, { steps: 4 } );
+	await page.mouse.move( to.x + to.width / 2, to.y + to.height / 2, { steps: 10 } );
+	await page.mouse.up();
+
+	await expect.poll( () => photo( 0 ) ).toBe( second );
+	expect( await photo( 1 ) ).toBe( first );
+	await expect( order ).not.toHaveValue( '' );
+	expect( errors ).toEqual( [] );
+} );
+
 test( 'a slide\'s image position: its window opens and closes', async ( { page } ) => {
 	const errors = await edit( page, 'slide' );
 	await page.locator( '.wp-swiper-slide__position' ).first().click();

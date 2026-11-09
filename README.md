@@ -52,6 +52,7 @@ PHPUnit tests with the WordPress test suite, run by GitHub Actions on every push
 | `assets/js/admin.js`, `assets/css/admin.css` | Edit screen behaviour and styles |
 | `assets/js/frontend.js`, `assets/css/frontend.css` | What every slider, collage and Art shares: lightbox, videos, captions, descriptions, background |
 | `assets/js/slider.js`, `assets/css/slider.css`, `assets/css/thumbs.css` | The sliders (not Collage or Art); the Thumbnails effect's strip |
+| `assets/js/collage.js`, `assets/js/collage-layouts.js`, `assets/css/collage.css` | The Collage effect; its layouts (templates, Random mosaic, Scattered, Freeform) |
 | `assets/vendor/swiper` | Swiper 11 (MIT) |
 | `vendor/plugin-update-checker` | Plugin Update Checker 5 (MIT) |
 | `tests/`, `composer.json`, `phpunit.xml.dist` | Tests (not in `wp-swiper.zip`) |
