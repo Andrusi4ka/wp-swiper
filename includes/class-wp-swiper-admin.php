@@ -170,6 +170,16 @@ class WP_Swiper_Admin {
 						// The whole collage (templates, Grid, Random mosaic).
 						'collage'    => __( 'Collage height', 'wp-swiper' ),
 					),
+					// The preview at a screen size of one's own whose width takes
+					// another device's settings (admin.js; WP_Swiper_Preview::device_at()).
+					/* translators: 1: screen width in px, 2: a device's name (Tablet, Desktop). */
+					'screenNote'  => __( 'The screen is %1$spx wide: the slider takes the %2$s settings, as it does on the site.', 'wp-swiper' ),
+					'deviceNames' => array_map(
+						function ( $device ) {
+							return $device[0];
+						},
+						self::devices()
+					),
 					// Continuous scroll's Scroll direction, named for the slider's Direction.
 					'marqueeDirections' => array(
 						'horizontal' => array(

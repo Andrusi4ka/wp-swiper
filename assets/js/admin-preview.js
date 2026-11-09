@@ -82,12 +82,97 @@
 				return canTurn() && !! turned[ shared.currentDevice ];
 			};
 
+			/*
+			 * A screen size of one's own per device (the two fields in the bar,
+			 * as WP Banner's): what is typed applies with Update, as the other
+			 * changes; empty, the device's own size (its placeholder). Kept as
+			 * typed, [ width or null, height or null ] of the device held upright,
+			 * so a tablet or phone turned shows the two swapped and turned back
+			 * as typed. Shown in a plain frame (the drawings have their own
+			 * proportions). Kept per device for the next visit (this browser
+			 * only, not with the slider).
+			 */
+			var SCREEN_KEY = 'wpSwiperScreens';
+			var screenLimits = $preview.data( 'screen-limits' ) || [ [ 240, 3840 ], [ 240, 2160 ] ];
+			var screens = {};
+			try {
+				screens = JSON.parse( window.localStorage.getItem( SCREEN_KEY ) ) || {};
+			} catch ( e ) {}
+			var draftScreens = $.extend( true, {}, screens );
+			var $screenWidth = $preview.find( '.wp-swiper-preview__size-w' );
+			var $screenHeight = $preview.find( '.wp-swiper-preview__size-h' );
+			// The device's own size, or its size of one's own (applied), upright.
+			var ownScreen = function () {
+				var own = screens[ shared.currentDevice ];
+				var usual = sizes[ shared.currentDevice ];
+				return own && ( own[ 0 ] || own[ 1 ] ) ? [ own[ 0 ] || usual[ 0 ], own[ 1 ] || usual[ 1 ] ] : null;
+			};
+			// The fields: the device's size of one's own as typed, its own size
+			// as the placeholder; turned, the two swapped.
+			var syncScreenFields = function () {
+				var own = draftScreens[ shared.currentDevice ] || [ null, null ];
+				var usual = sizes[ shared.currentDevice ];
+				var order = isTurned() ? [ 1, 0 ] : [ 0, 1 ];
+				[ $screenWidth, $screenHeight ].forEach( function ( $input, i ) {
+					var side = order[ i ];
+					$input.attr( {
+						placeholder: usual[ side ],
+						min: screenLimits[ side ][ 0 ],
+						max: screenLimits[ side ][ 1 ]
+					} ).val( own[ side ] ? own[ side ] : '' );
+				} );
+			};
+			var readScreen = function ( $input, limits ) {
+				var value = parseFloat( $input.val() );
+				return $input.val() === '' || ! isFinite( value ) ? null : Math.round( Math.min( limits[ 1 ], Math.max( limits[ 0 ], value ) ) );
+			};
+			var screenInput = function () {
+				var turn = isTurned();
+				var width = readScreen( turn ? $screenHeight : $screenWidth, screenLimits[ 0 ] );
+				var height = readScreen( turn ? $screenWidth : $screenHeight, screenLimits[ 1 ] );
+				if ( width === null && height === null ) {
+					delete draftScreens[ shared.currentDevice ];
+				} else {
+					draftScreens[ shared.currentDevice ] = [ width, height ];
+				}
+				$update.addClass( 'is-stale' );
+			};
+			$screenWidth.add( $screenHeight ).on( 'input', screenInput ).on( 'change', function () {
+				screenInput();
+				// Within the limits as they will apply.
+				syncScreenFields();
+			} ).on( 'keydown', function ( e ) {
+				// Enter: Update (not the slider's form sent).
+				if ( e.key === 'Enter' ) {
+					e.preventDefault();
+					screenInput();
+					syncScreenFields();
+					$update.trigger( 'click' );
+				}
+			} );
+			// Update: the sizes typed apply (and are kept for the next visit).
+			var applyScreens = function () {
+				screens = $.extend( true, {}, draftScreens );
+				try {
+					window.localStorage.setItem( SCREEN_KEY, JSON.stringify( screens ) );
+				} catch ( e ) {}
+				fitPreview();
+			};
+			var $screenNote = $preview.find( '.wp-swiper-preview__size-note' );
+			// Which device's settings a screen this wide takes (WP_Swiper_Preview::device_at()).
+			var deviceAt = function ( width ) {
+				return width <= 767 ? 'mobile' : ( width <= 1024 ? 'tablet' : 'desktop' );
+			};
+
 			var fitPreview = function () {
 				var turn = isTurned();
-				var size = turn ? [ sizes[ shared.currentDevice ][ 1 ], sizes[ shared.currentDevice ][ 0 ] ] : sizes[ shared.currentDevice ];
+				var own = ownScreen();
+				var base = own || sizes[ shared.currentDevice ];
+				var size = turn ? [ base[ 1 ], base[ 0 ] ] : base;
 				var device = drawings[ shared.currentDevice ];
 				var image = $drawings.filter( '[data-device="' + shared.currentDevice + '"]' )[ 0 ];
-				var inDevice = !! ( device && image );
+				// A size of one's own: a plain frame, no drawing.
+				var inDevice = ! own && !! ( device && image );
 				// px of the frame per unit of the drawing (its screen as wide as the
 				// upright frame); the whole device's size, and the screen's place in it.
 				var unit = inDevice ? sizes[ shared.currentDevice ][ 0 ] / device.screen[ 2 ] : 1;
@@ -127,9 +212,17 @@
 				$stage.css( 'height', Math.ceil( outer[ 1 ] * scale ) + 'px' );
 				// The button (Tablet, Mobile) and the note of the device turned.
 				$turn.prop( 'disabled', ! canTurn() ).attr( 'aria-pressed', turn ? 'true' : 'false' );
+				// A size of one's own has a note of its own (below).
 				$preview.find( '.wp-swiper-preview__turned' ).each( function () {
-					this.hidden = ! turn || $( this ).data( 'device' ) !== shared.currentDevice;
+					this.hidden = ! turn || !! own || $( this ).data( 'device' ) !== shared.currentDevice;
 				} );
+				// A size of one's own whose width takes another device's settings.
+				var takes = own ? deviceAt( size[ 0 ] ) : shared.currentDevice;
+				var names = i18n.deviceNames || {};
+				$screenNote.prop( 'hidden', takes === shared.currentDevice || ! i18n.screenNote );
+				if ( takes !== shared.currentDevice && i18n.screenNote ) {
+					$screenNote.find( '.wp-swiper-preview__size-text' ).text( i18n.screenNote.replace( '%1$s', size[ 0 ] ).replace( '%2$s', names[ takes ] || takes ) );
+				}
 			};
 
 			/*
@@ -156,6 +249,8 @@
 				stage.style.transition = 'none';
 				stage.style.transform = '';
 				fitPreview();
+				// The size fields swapped with it.
+				syncScreenFields();
 				if ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches ) {
 					return;
 				}
@@ -182,6 +277,8 @@
 			} );
 
 			var updatePreview = function () {
+				// The screen sizes typed apply now (the frame takes its size).
+				applyScreens();
 				prepareForm();
 				var $form = $( '<form method="post" hidden></form>' ).attr( {
 					action: $preview.data( 'url' ),
@@ -891,6 +988,9 @@
 
 			// Another device: the frame takes its size; the slider follows by itself.
 			deviceListeners.push( fitPreview );
+			// And the screen size fields show its size of one's own.
+			deviceListeners.push( syncScreenFields );
+			syncScreenFields();
 
 			$( window ).on( 'resize', fitPreview );
 			if ( 'ResizeObserver' in window ) {

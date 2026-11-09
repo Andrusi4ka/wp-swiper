@@ -701,6 +701,29 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( 'currentColor', $svg );
 	}
 
+	public function test_preview_screen_size_of_ones_own() {
+		$this->as_role( 'administrator' );
+		ob_start();
+		WP_Swiper_Preview::render_panel( get_post( $this->slider() ) );
+		$html = ob_get_clean();
+		// After Dark screen, before Developer mode: width × height, as WP Banner's.
+		$group = strpos( $html, '<span class="wp-swiper-preview__size" role="group" aria-labelledby="wp-swiper-preview-size-label">' );
+		$this->assertNotFalse( $group );
+		$this->assertGreaterThan( strpos( $html, 'wp-swiper-preview__screen"' ), $group );
+		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__dev"' ), $group );
+		$this->assertStringContainsString( '<input type="number" class="wp-swiper-preview__size-w" min="240" max="3840" step="1" aria-label="Screen width (px)">', $html );
+		$this->assertStringContainsString( '<input type="number" class="wp-swiper-preview__size-h" min="240" max="2160" step="1" aria-label="Screen height (px)">', $html );
+		// No names: never sent with the slider's settings.
+		$this->assertDoesNotMatchRegularExpression( '~wp-swiper-preview__size-[wh]"[^>]*\sname=~', $html );
+		$this->assertStringContainsString( 'data-screen-limits="' . esc_attr( wp_json_encode( WP_Swiper_Preview::SCREEN_LIMITS ) ) . '"', $html );
+		// Its note (which device's settings the width takes), hidden at first.
+		$this->assertSame( 1, substr_count( $html, '<p class="description wp-swiper-preview__hint wp-swiper-preview__size-note" hidden>' ) );
+		// Applied with Update only; kept in this browser per device.
+		$js = $this->admin_js();
+		$this->assertStringContainsString( "var SCREEN_KEY = 'wpSwiperScreens';", $js );
+		$this->assertStringContainsString( "// The screen sizes typed apply now (the frame takes its size).\n\t\t\t\tapplyScreens();", $js );
+	}
+
 	public function test_preview_screen_light_or_dark() {
 		$this->as_role( 'administrator' );
 		ob_start();

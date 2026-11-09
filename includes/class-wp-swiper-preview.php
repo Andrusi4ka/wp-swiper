@@ -29,6 +29,13 @@ class WP_Swiper_Preview {
 	);
 
 	/**
+	 * A screen size of one's own above the preview (admin.js, kept in this
+	 * browser per device, not with the slider): [ min, max ] px of the width
+	 * and of the height, as WP Banner's.
+	 */
+	const SCREEN_LIMITS = array( array( 240, 3840 ), array( 240, 2160 ) );
+
+	/**
 	 * The devices drawn around the frame (assets/images/preview/, the user's
 	 * drawings): each one's size and its screen's box and corner radius, in
 	 * the drawing's units (its viewBox). Each screen has its frame's
@@ -170,6 +177,7 @@ class WP_Swiper_Preview {
 				data-post="<?php echo (int) $post->ID; ?>"
 				data-nonce="<?php echo esc_attr( wp_create_nonce( self::ACTION . '_' . $post->ID ) ); ?>"
 				data-sizes="<?php echo esc_attr( wp_json_encode( self::SIZES ) ); ?>"
+				data-screen-limits="<?php echo esc_attr( wp_json_encode( self::SCREEN_LIMITS ) ); ?>"
 				data-devices="<?php echo esc_attr( wp_json_encode( self::device_frames() ) ); ?>">
 				<div class="wp-swiper-preview__bar">
 					<span class="wp-swiper-preview__title"><?php esc_html_e( 'Preview', 'wp-swiper' ); ?></span>
@@ -181,6 +189,14 @@ class WP_Swiper_Preview {
 					<button type="button" class="button wp-swiper-preview__screen" aria-pressed="false" title="<?php esc_attr_e( 'Dark screen', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Dark screen', 'wp-swiper' ); ?>">
 						<?php echo WP_Swiper_Admin::svg_icon( 'light-dark.svg', 'wp-swiper-preview__screen-icon', 'dashicons-visibility' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
 					</button>
+					<?php // A screen size of one's own for the device shown (admin.js), applied with Update; empty: the device's own, in its drawing. Turned: the two swap. No names: not sent with the slider. ?>
+					<span class="wp-swiper-preview__size" role="group" aria-labelledby="wp-swiper-preview-size-label">
+						<span class="wp-swiper-preview__size-label" id="wp-swiper-preview-size-label"><?php esc_html_e( 'Screen', 'wp-swiper' ); ?></span>
+						<input type="number" class="wp-swiper-preview__size-w" min="<?php echo (int) self::SCREEN_LIMITS[0][0]; ?>" max="<?php echo (int) self::SCREEN_LIMITS[0][1]; ?>" step="1" aria-label="<?php esc_attr_e( 'Screen width (px)', 'wp-swiper' ); ?>">
+						<span aria-hidden="true">×</span>
+						<input type="number" class="wp-swiper-preview__size-h" min="<?php echo (int) self::SCREEN_LIMITS[1][0]; ?>" max="<?php echo (int) self::SCREEN_LIMITS[1][1]; ?>" step="1" aria-label="<?php esc_attr_e( 'Screen height (px)', 'wp-swiper' ); ?>">
+						<span aria-hidden="true">px</span>
+					</span>
 					<?php // Developer mode: the slides', images' and empty spaces' boxes over the preview (assets/js/preview-dev.js). ?>
 					<button type="button" class="button wp-swiper-preview__dev" aria-pressed="false" title="<?php esc_attr_e( 'Show the boxes of the slides and images and the empty space around them, with their sizes', 'wp-swiper' ); ?>">
 						<span class="dashicons dashicons-editor-code" aria-hidden="true"></span>
@@ -202,6 +218,11 @@ class WP_Swiper_Preview {
 						<?php esc_html_e( 'Update', 'wp-swiper' ); ?>
 					</button>
 				</div>
+				<?php // A screen size of one's own whose width takes another device's settings (admin.js writes and shows it). ?>
+				<p class="description wp-swiper-preview__hint wp-swiper-preview__size-note" hidden>
+					<span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
+					<span class="wp-swiper-preview__size-text"></span>
+				</p>
 				<?php // A device turned sideways whose screen then takes another device's settings (admin.js shows it). ?>
 				<?php foreach ( self::turned_notes() as $device => $note ) : ?>
 					<p class="description wp-swiper-preview__hint wp-swiper-preview__turned" data-device="<?php echo esc_attr( $device ); ?>" hidden>

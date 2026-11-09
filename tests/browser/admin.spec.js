@@ -331,6 +331,62 @@ test( 'Art, more windows than photos: a photo dragged onto the 12th window, save
 	expect( errors ).toEqual( [] );
 } );
 
+test( 'Screen size of one\'s own: applied with Update, turned with the device, its note', async ( { page } ) => {
+	const errors = await edit( page, 'slide' );
+	const box = page.locator( '.wp-swiper-preview__frame' );
+	const frameSize = () => box.evaluate( ( el ) => [ el.offsetWidth, el.offsetHeight ] );
+	const width = page.locator( '.wp-swiper-preview__size-w' );
+	const height = page.locator( '.wp-swiper-preview__size-h' );
+	const note = page.locator( '.wp-swiper-preview__size-note' );
+	const drawing = page.locator( '.wp-swiper-preview__device[data-device="desktop"]' );
+	await page.click( '.wp-swiper-preview__devices [data-device="desktop"]' );
+	await expect( width ).toHaveAttribute( 'placeholder', '1280' );
+	await expect( height ).toHaveAttribute( 'placeholder', '721' );
+	await expect( width ).toHaveValue( '' );
+
+	// Typed: nothing yet, Update says it is out of date.
+	await width.fill( '900' );
+	expect( await frameSize() ).toEqual( [ 1280, 721 ] );
+	await expect( page.locator( '.wp-swiper-preview__update' ) ).toHaveClass( /is-stale/ );
+	await expect( note ).toBeHidden();
+	// Update: that size, in a plain frame; 900px takes the Tablet settings.
+	await page.click( '.wp-swiper-preview__update' );
+	await expect.poll( frameSize ).toEqual( [ 900, 721 ] );
+	await expect( drawing ).toBeHidden();
+	await expect( note ).toBeVisible();
+	await expect( note ).toContainText( '900px wide' );
+	await expect( note ).toContainText( 'Tablet' );
+	await shown( page );
+
+	// Mobile: its own size until one is typed; turned, the two swapped.
+	await page.click( '.wp-swiper-preview__devices [data-device="mobile"]' );
+	await expect.poll( frameSize ).toEqual( [ 390, 844 ] );
+	await expect( width ).toHaveValue( '' );
+	await expect( width ).toHaveAttribute( 'placeholder', '390' );
+	await height.fill( '600' );
+	await height.press( 'Enter' );
+	await expect.poll( frameSize ).toEqual( [ 390, 600 ] );
+	await expect( note ).toBeHidden();
+	await page.click( '.wp-swiper-preview__rotate' );
+	await expect.poll( frameSize ).toEqual( [ 600, 390 ] );
+	await expect( width ).toHaveValue( '600' );
+	await expect( height ).toHaveValue( '' );
+	await expect( height ).toHaveAttribute( 'placeholder', '390' );
+	await page.click( '.wp-swiper-preview__rotate' );
+	await expect( height ).toHaveValue( '600' );
+
+	// Desktop again: its size kept; emptied and updated, its own size in its drawing.
+	await page.click( '.wp-swiper-preview__devices [data-device="desktop"]' );
+	await expect.poll( frameSize ).toEqual( [ 900, 721 ] );
+	await expect( width ).toHaveValue( '900' );
+	await width.fill( '' );
+	await page.click( '.wp-swiper-preview__update' );
+	await expect.poll( frameSize ).toEqual( [ 1280, 721 ] );
+	await expect( drawing ).toBeVisible();
+	await expect( note ).toBeHidden();
+	expect( errors ).toEqual( [] );
+} );
+
 test( 'a slide\'s image position: its window opens and closes', async ( { page } ) => {
 	const errors = await edit( page, 'slide' );
 	await page.locator( '.wp-swiper-slide__position' ).first().click();

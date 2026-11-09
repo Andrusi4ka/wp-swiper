@@ -26,7 +26,9 @@ trait WP_Swiper_Admin_Fields {
 	}
 
 	/**
-	 * Desktop / tablet / mobile buttons with names (the preview's).
+	 * Desktop / tablet / mobile buttons (the preview's): icons only, so the
+	 * bar keeps Update on its row (the user's choice); the name for screen
+	 * readers, with its widths on hover (title).
 	 *
 	 * @param string $class Extra class.
 	 */
@@ -34,7 +36,7 @@ trait WP_Swiper_Admin_Fields {
 		echo '<div class="wp-swiper-segmented wp-swiper-device-switch ' . esc_attr( $class ) . '" role="group" aria-label="' . esc_attr__( 'Device', 'wp-swiper' ) . '">';
 		foreach ( self::devices() as $device => $meta ) {
 			printf(
-				'<button type="button" class="wp-swiper-segmented__btn" data-device="%1$s" title="%2$s" aria-pressed="%3$s"><span class="dashicons %4$s" aria-hidden="true"></span>%5$s</button>',
+				'<button type="button" class="wp-swiper-segmented__btn" data-device="%1$s" title="%2$s" aria-pressed="%3$s"><span class="dashicons %4$s" aria-hidden="true"></span><span class="screen-reader-text">%5$s</span></button>',
 				esc_attr( $device ),
 				esc_attr( $meta[1] ),
 				'desktop' === $device ? 'true' : 'false',
