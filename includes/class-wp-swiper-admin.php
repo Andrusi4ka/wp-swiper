@@ -150,6 +150,8 @@ class WP_Swiper_Admin {
 						'aria:opacity'    => __( 'Opacity', 'wp-swiper' ),
 						'default'         => __( 'Default', 'wp-swiper' ),
 						'defaultLabel'    => __( 'Back to the default color', 'wp-swiper' ),
+						// The eyedropper, where the browser has one (admin-colors.js).
+						'eyedropper'      => __( 'Pick a color from the screen', 'wp-swiper' ),
 					),
 					'singleSlide' => WP_Swiper_Settings::SINGLE_SLIDE_EFFECTS,
 					// Effects that can be their block's background ("Use as background").

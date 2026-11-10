@@ -40,6 +40,13 @@
 		var COLOR_PROPS = [ 'caption_color', 'description_color' ];
 		shared.COLOR_PROPS = COLOR_PROPS;
 		var COLOR_PICK = '.wp-swiper-color-pick';
+		// The eyedropper's icon: WP Banner's pipette, in the button's color
+		// (the viewBox cropped to the drawing).
+		var EYEDROPPER = '<svg viewBox="314 314 380 380" aria-hidden="true" focusable="false" fill="currentColor">' +
+			'<rect x="480.78" y="406.64" width="177.31" height="63.87" rx="31.93" ry="31.93" transform="translate(476.9 -274.19) rotate(45)"/>' +
+			'<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="20" d="M621.5,373.23c7.35-7.35,19.25-7.35,26.6,0"/>' +
+			'<path d="M653.93,354.08c13.82,13.82,13.82,36.32,0,50.15l-194.31,194.31c-8.98,8.98-22.19,12.47-34.48,9.11l-11.21-3.06-57.7,57.7c-2.72,2.72-7.13,2.72-9.84,0-3.08-3.08-3.08-8.1,0-11.17l57.04-57.04-3.06-11.21c-3.37-12.29.13-25.5,9.11-34.48l194.31-194.31c13.82-13.82,36.32-13.82,50.15,0M668.07,339.94h0c-21.66-21.66-56.77-21.66-78.43,0l-194.31,194.31c-14.6,14.6-19.35,35.31-14.26,53.9l-48.82,48.82c-10.9,10.9-10.9,28.56,0,39.46h0c10.53,10.53,27.6,10.53,38.13,0l49.48-49.48c18.59,5.08,39.3.34,53.9-14.26l194.31-194.31c21.66-21.66,21.66-56.77,0-78.43h0Z"/>' +
+			'</svg>';
 		var colorI18n = $.extend( {}, i18n.colorPicker || {} );
 		// The palette's colors and names (TinyMCE's map: "RRGGBB", name, …).
 		var colorSwatches = [];
@@ -222,6 +229,35 @@
 						colorPicked( $pick );
 						pickrShow( $pick );
 					} );
+				// The eyedropper (as WP Banner's): beside the color's value, where
+				// the browser has one (Chrome, Edge, Opera; not Firefox or Safari):
+				// a color from anywhere on the screen, e.g. a photo in the preview;
+				// the field's opacity kept; Escape: no change.
+				if ( window.EyeDropper ) {
+					var label = colorI18n.eyedropper || 'Pick a color from the screen';
+					var $result = $app.find( '.pcr-result' );
+					var $drop = $( '<button type="button" class="wp-swiper-pcr__dropper"></button>' )
+						.attr( { title: label, 'aria-label': label } )
+						.html( EYEDROPPER )
+						.on( 'click', function () {
+							new window.EyeDropper().open().then( function ( picked ) {
+								var value = String( picked && picked.sRGBHex || '' );
+								var m = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec( value );
+								var color = m ? { hex: '#' + [ m[ 1 ], m[ 2 ], m[ 3 ] ].map( function ( channel ) {
+									return ( '0' + Math.min( 255, Number( channel ) ).toString( 16 ) ).slice( -2 );
+								} ).join( '' ) } : parseColor( value );
+								if ( ! color ) {
+									return;
+								}
+								setColor( $pick, color.hex, $pick.attr( 'data-alpha' ) === '1' ? $pick.data( 'alpha' ) : 100 );
+								colorPicked( $pick );
+								pickrShow( $pick );
+							} ).catch( function () {
+								// Escape, or the page left: nothing changes.
+							} );
+						} );
+					$result.after( $drop, '<span class="wp-swiper-pcr__break"></span>' );
+				}
 				$pick.data( 'pickrReady', true );
 				instance.show();
 			} );

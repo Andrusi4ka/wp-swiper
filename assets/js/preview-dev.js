@@ -350,10 +350,33 @@
 		dimension( layer, { x: stage.offsetWidth / 2, y: 12 }, round( stage.offsetWidth ) + ' × ' + round( stage.offsetHeight ) ).classList.add( 'wp-swiper-dev__block-size' );
 	}
 
+	/*
+	 * Readable at any scale (2026-11-10, the user's request, as WP Banner's):
+	 * the editor shows this page scaled down to fit (a 1280px desktop at about
+	 * 0.4), so the labels and lines are drawn larger by as much
+	 * (--wp-swiper-dev-k on the page, preview-dev.css) and read at about 12px
+	 * whatever the scale; 1 to 4, 1 outside a frame.
+	 */
+	var scaleShown = '';
+	function rescale() {
+		var k = 1;
+		try {
+			var el = window.frameElement;
+			var width = el && el.getBoundingClientRect().width;
+			k = width && window.innerWidth ? Math.max( 1, Math.min( 4, window.innerWidth / width ) ) : 1;
+		} catch ( e ) {}
+		var value = String( Math.round( k * 100 ) / 100 );
+		if ( value !== scaleShown ) {
+			scaleShown = value;
+			document.documentElement.style.setProperty( '--wp-swiper-dev-k', value );
+		}
+	}
+
 	function frame() {
 		if ( ! on ) {
 			return;
 		}
+		rescale();
 		[].forEach.call( document.querySelectorAll( '.wp-swiper .swiper.swiper-initialized' ), draw );
 		[].forEach.call( document.querySelectorAll( '.wp-swiper .wp-swiper-collage' ), drawCollage );
 		[].forEach.call( document.querySelectorAll( '.wp-swiper-art.wp-swiper-art--shape' ), drawArt );

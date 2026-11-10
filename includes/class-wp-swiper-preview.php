@@ -198,9 +198,9 @@ class WP_Swiper_Preview {
 						<span aria-hidden="true">px</span>
 					</span>
 					<?php // Developer mode: the slides', images' and empty spaces' boxes over the preview (assets/js/preview-dev.js). ?>
-					<button type="button" class="button wp-swiper-preview__dev" aria-pressed="false" title="<?php esc_attr_e( 'Show the boxes of the slides and images and the empty space around them, with their sizes', 'wp-swiper' ); ?>">
-						<span class="dashicons dashicons-editor-code" aria-hidden="true"></span>
-						<?php esc_html_e( 'Developer mode', 'wp-swiper' ); ?>
+					<?php // An icon only (WP Banner's, the user's choice), its name on hover and for screen readers. ?>
+					<button type="button" class="button wp-swiper-preview__dev" aria-pressed="false" title="<?php esc_attr_e( 'Developer mode: the boxes of the slides and images and the empty space around them, with their sizes', 'wp-swiper' ); ?>" aria-label="<?php esc_attr_e( 'Developer mode', 'wp-swiper' ); ?>">
+						<?php echo WP_Swiper_Admin::svg_icon( 'developer-mode.svg', 'wp-swiper-preview__dev-icon', 'dashicons-editor-code' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
 					</button>
 					<?php // Every effect (admin.js): undo / redo the settings' changes and what was done in the preview. ?>
 					<span class="wp-swiper-preview__history" role="group" aria-label="<?php esc_attr_e( 'Undo and redo changes', 'wp-swiper' ); ?>">

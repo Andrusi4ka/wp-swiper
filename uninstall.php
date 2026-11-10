@@ -35,6 +35,9 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 		// The stylesheets remembered for <head> per page (WP_Swiper_Render::remember_late_styles()).
 		delete_option( 'wp_swiper_late_styles' );
+
+		// What each role may do (WP Swiper → Settings); the roles themselves were never changed.
+		delete_option( 'wp_swiper_roles' );
 	};
 
 	if ( is_multisite() ) {

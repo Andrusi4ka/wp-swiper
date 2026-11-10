@@ -102,6 +102,40 @@ test( 'a color: Pickr opens from its swatch, the value kept', async ( { page } )
 	expect( errors ).toEqual( [] );
 } );
 
+test( 'a color: the eyedropper beside its value takes a color from the screen, the opacity kept', async ( { page } ) => {
+	// Image shadow on, its color with opacity (0.5).
+	const errors = await edit( page, 'fade-shadow' );
+	await openPage( page, 'layout' );
+	const field = page.locator( '[data-field="image_shadow_color"]' );
+	await expect( field ).toBeVisible();
+	const value = field.locator( '.wp-swiper-color-pick__value' );
+	const alpha = ( await value.inputValue() ).replace( /^rgba\(\d+,\d+,\d+,([\d.]+)\)$/, '$1' );
+	// The browser's own picker waits for a click on the screen: one that
+	// gives a color at once instead (Chrome has the real one, so the button shows).
+	await page.evaluate( () => {
+		window.EyeDropper = class {
+			open() {
+				return Promise.resolve( { sRGBHex: '#12ab34' } );
+			}
+		};
+	} );
+	await field.locator( '.wp-swiper-color-pick__swatch' ).click();
+	const app = page.locator( '.pcr-app.visible' );
+	await expect( app ).toBeVisible();
+	const drop = app.locator( '.wp-swiper-pcr__dropper' );
+	await expect( drop ).toBeVisible();
+	await expect( drop ).toHaveAttribute( 'aria-label', 'Pick a color from the screen' );
+	// Beside the value, on its row.
+	const [ a, b ] = [ await app.locator( '.pcr-result' ).boundingBox(), await drop.boundingBox() ];
+	expect( Math.abs( a.y - b.y ) ).toBeLessThan( 4 );
+	expect( b.x ).toBeGreaterThan( a.x );
+	await drop.click();
+	await expect( value ).toHaveValue( 'rgba(18,171,52,' + alpha + ')' );
+	await expect( app.locator( '.pcr-result' ) ).toHaveValue( /12ab34/i );
+	await page.keyboard.press( 'Escape' );
+	expect( errors ).toEqual( [] );
+} );
+
 test( 'the gradient: its editor once on, a point added on its bar', async ( { page } ) => {
 	const errors = await edit( page, 'slide' );
 	await openPage( page, 'layout' );
@@ -384,6 +418,47 @@ test( 'Screen size of one\'s own: applied with Update, turned with the device, i
 	await expect.poll( frameSize ).toEqual( [ 1280, 721 ] );
 	await expect( drawing ).toBeVisible();
 	await expect( note ).toBeHidden();
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'Settings: under Add slider, a role given Edit sliders may then add, kept when saved', async ( { page, request } ) => {
+	// Logged in (and What's new seen) by opening a slider; that one deleted at once.
+	const errors = await edit( page, 'slide' );
+	const id = /[?&]post=(\d+)/.exec( page.url() )[ 1 ];
+	await request.get( helper + '?delete=' + id );
+	await page.goto( '/wp-admin/edit.php?post_type=wp_swiper&page=wp-swiper-settings' );
+
+	// In the menu right after "Add slider".
+	const items = await page.locator( '#menu-posts-wp_swiper .wp-submenu li a' ).allTextContents();
+	expect( items.slice( 0, 3 ).map( ( text ) => text.trim() ) ).toEqual( [ 'All sliders', 'Add new slider', 'Settings' ] );
+
+	// Administrators: always all, greyed.
+	const admin = page.locator( 'tr[data-role="administrator"] input' );
+	await expect( admin.first() ).toBeChecked();
+	await expect( admin.first() ).toBeDisabled();
+	// Add and clone, Delete, the WPBakery element: only with Edit sliders.
+	const box = ( action ) => page.locator( 'tr[data-role="editor"] input[data-action="' + action + '"]' );
+	await expect( box( 'edit' ) ).not.toBeChecked();
+	await expect( box( 'create' ) ).toBeDisabled();
+	// The WPBakery element too: no use without the sliders.
+	await expect( box( 'wpbakery' ) ).toBeDisabled();
+	await box( 'edit' ).check();
+	await expect( box( 'wpbakery' ) ).toBeEnabled();
+	await expect( box( 'create' ) ).toBeEnabled();
+	await box( 'create' ).check();
+	await Promise.all( [ page.waitForNavigation(), page.click( '#submit' ) ] );
+	await expect( page.locator( '#setting-error-settings_updated' ) ).toBeVisible();
+	await expect( box( 'edit' ) ).toBeChecked();
+	await expect( box( 'create' ) ).toBeChecked();
+	await expect( box( 'delete' ) ).not.toBeChecked();
+
+	// Back as it was: Edit off takes Add and clone off too.
+	await box( 'edit' ).uncheck();
+	await expect( box( 'create' ) ).not.toBeChecked();
+	await expect( box( 'create' ) ).toBeDisabled();
+	await Promise.all( [ page.waitForNavigation(), page.click( '#submit' ) ] );
+	await expect( box( 'edit' ) ).not.toBeChecked();
+	await expect( box( 'create' ) ).not.toBeChecked();
 	expect( errors ).toEqual( [] );
 } );
 

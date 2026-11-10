@@ -67,6 +67,13 @@
   (наша кнопка в `.pcr-interaction`); стрілку «за замовчуванням» прибрано.
   Палітра — та сама, що «Text color». Вікно вужче й квадратніше за Pickr
   (20em, палітра 11em, поле коду окремим рядком, `admin.css`).
+  **Піпетка** (2026-11-10, як у WP Banner, рішення користувача): кнопка
+  праворуч від поля коду (`wp-swiper-pcr__dropper`, іконка — піпетка WP
+  Banner інлайн у `admin-colors.js` `EYEDROPPER`), лише де браузер має
+  `window.EyeDropper` (Chrome, Edge, Opera; не Firefox / Safari): колір з
+  будь-якого місця екрана, прозорість поля лишається; Escape — без змін.
+  Тести: `test-admin.php`, `admin.spec.js` (свій `EyeDropper` замість
+  справжнього — той чекає кліку).
   Overlay opacity (%) фону прибрано: прозорість — у самому Overlay color
   (`alpha_color`, за замовч. `rgba(0,0,0,0)` = немає);
   `merge_overlay_opacity()` у `get()` переносить старе, вивід —
@@ -181,19 +188,34 @@
   розміру — у блок `size`. Тест `test_every_effect_has_its_size_in_one_place`
   (допоміжна `layout_for()` у `class-wp-swiper-testcase.php`).
 
-- **Лише адміністратори** (2026-11-04, v3.2.1): меню, слайдери (додати,
-  редагувати, копіювати, видалити), прев'ю, What's new, елемент WPBakery і
-  повідомлення на сторінках («slider not found», фон без класу, SVG shape
-  без файлу) — лише з `WP_Swiper_Settings::CAPABILITY` (`manage_options`).
-  Усі `cap` типу запису = вона (`capabilities` + `map_meta_cap` у
-  `register_post_type`). Інші ролі WP Swiper в адмінці не бачать узагалі;
-  `WP_Swiper_WPBakery::map()` для них не реєструє елемент (WPBakery лишає
-  наш обробник шорткоду, тож сторінки показують слайдери як і раніше).
-  Фільтра для іншої ролі немає — додати, лише якщо попросить. Нова
-  перевірка прав = `CAPABILITY`, не `edit_posts`. Тести:
-  `tests/test-capability.php`, заглушки WPBakery — `tests/stubs/`.
-- Сторінку **WP Swiper → Settings** (власна палітра) прибрано — не
-  повертати. Палітра «Text color» = кольори теми + чорний/білий/сірі
+- **Права за ролями** (2026-11-10, рішення користувача; до того з
+  v3.2.1 — лише адміністратори): WP Swiper → **Settings** (одразу під «Add
+  new slider», `WP_Swiper_Roles`, `includes/class-wp-swiper-roles.php`)
+  — таблиця ролі × дії з прапорцями (варіант користувача): **Edit sliders**
+  (`wp_swiper_edit_sliders`: меню, будь-який слайдер, прев'ю, What's new,
+  повідомлення на сторінках), **Add and clone** (`…_create_sliders`),
+  **Delete** (`…_delete_sliders`), **WPBakery element** (`wp_swiper_wpbakery`)
+  — ці три лише з Edit (`sanitize()` + `assets/js/roles.js`; елемент без
+  права редагувати — нелогічно, рішення користувача). Пояснення дій — лише
+  `title` назви стовпця (підписи під назвами прибрано на прохання). Хто має `WP_Swiper_Settings::CAPABILITY` (`manage_options`,
+  адміністратори) — завжди все, рядок сірий; сторінку відкривають лише вони
+  (зберігає `options.php`, опція `wp_swiper_roles`, видаляє
+  `uninstall.php`). Нічого не задано — як раніше, лише адміністратори.
+  Права видаються на льоту фільтром `user_has_cap` (`grant()`), у самі ролі
+  НЕ записуються (видалення плагіна ролей не чіпає); `rights()` кешується до
+  зміни опції (`forget()`). Типу запису всі `cap` = ці можливості
+  (edit / read_private → EDIT, create / publish → CREATE, delete_* →
+  DELETE; `wp-swiper.php`). Будь-який слайдер, хто б його не створив (без
+  «своїх»). Нова перевірка прав = одна з `WP_Swiper_Roles::EDIT` /
+  `CREATE` / `DELETE` / `WPBAKERY` або `cap` типу запису; `CAPABILITY` —
+  лише «керує сайтом / цією сторінкою». Тексти не-адміністраторів безпечні:
+  усе через `wp_kses` зі своїм списком тегів; шорткоди у вмісті виконуються
+  (автори й так можуть у записах). Тести: `tests/test-roles.php`,
+  `test-capability.php` (заглушки WPBakery — `tests/stubs/`),
+  `admin.spec.js`.
+- Сторінку WP Swiper → Settings з **власною палітрою** (до 2.9) прибрано —
+  палітру не повертати; та сама адреса (`wp-swiper-settings`) тепер — права
+  ролей. Палітра «Text color» = кольори теми + чорний/білий/сірі
   (`WP_Swiper_Palette`); `uninstall.php` досі видаляє старий
   `wp_swiper_text_colors`.
 - **Art: розмір фото** (2026-11-05, рішення користувача — було «завжди
@@ -879,7 +901,9 @@
   слайдера. Клас `wp-swiper-preview-dark` на `<html>` рамки: `admin.js`
   ставить одразу (без Update), а сторінка прев'ю сама читає той самий
   `localStorage` `wpSwiperDark` інлайн-скриптом у `<head>` — без білого
-  спалаху при оновленні. Developer mode схований (місце лишається, `visibility`,
+  спалаху при оновленні. Developer mode — лише іконка `</>` (`assets/images/developer-mode.svg`
+  з WP Banner, 2026-11-10, рішення користувача; назва в `title` /
+  `aria-label`). Він схований (місце лишається, `visibility`,
   щоб панель не переносилась інакше) для Text mask, Art (крім SVG shape) і
   слайдера без слайдів (з 2026-11-03 є й для Collage, з 2026-11-04 — для
   Art SVG shape).
@@ -914,6 +938,15 @@
     Art SVG shape (`drawArt()`, 2026-11-04): рамки вікон з номером і
     розміром, контури фігур (SVG з їхніх clip-path), робоча область Content
     in a window (рамка вікна мінус Padding) з розміром і «text cut».
+    **Читається за будь-якого масштабу** (2026-11-10, рішення користувача,
+    як у WP Banner): `preview-dev.js rescale()` ставить на `<html>` прев'ю
+    `--wp-swiper-dev-k` = ширина сторінки / ширина рамки на екрані (1–4, поза
+    рамкою 1), `preview-dev.css` множить на нього все в шарі (`--k`): підписи
+    `calc(12px * var(--k))` (≈12px на екрані; були 11px до масштабу — на
+    Desktop ≈4px), відступи, рамки, пунктири, смужки, лінії SVG, відступ
+    підпису розміру блоку. Нові px у шарі — лише `calc(… * var(--k))` (тест
+    `test_developer_mode_reads_at_any_scale`). На малих фігурах SVG shape
+    підписи можуть накладатись — прийнято.
     Другим кроком, якщо попросить, — червона підсвітка, де текст виходить
     за контур чи під інше вікно; потім Text mask (смуги й літери).
 
@@ -923,7 +956,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 441 тест (2026-11-09), CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 453 тести (2026-11-10), CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.
@@ -953,7 +986,7 @@ WP-CLI для тестів не потрібен: досить `WP_CORE_DIR` і 
 котра медіатека правильна. Видаляючи рядки за номерами (sed), звіряй
 `git diff` — так одного разу пропав селектор `.wp-swiper.wp-swiper--background`.
 Адмінка (2026-11-05, рішення користувача — раніше лише сайт):
-`admin.spec.js`, 27 «димових» тестів редактора (лише desktop). Вхід —
+`admin.spec.js`, 29 «димових» тестів редактора (лише desktop). Вхід —
 `admin-login.php` (лише з 127.x, як `fixture.php`): тестовий
 адміністратор `wp-swiper-tests` без відомого пароля, створюється сам,
 одна сесія на всіх (`global-setup.js` створює її перед тестами — інакше

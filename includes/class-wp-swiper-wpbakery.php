@@ -21,9 +21,10 @@ class WP_Swiper_WPBakery {
 	}
 
 	public static function map() {
-		// Not an element at all for those who are not administrators. Pages
+		// Not an element at all for roles not given it (WP Swiper → Settings;
+		// Administrators always). Pages
 		// still show the sliders: WPBakery keeps the shortcode's own handler.
-		if ( ! current_user_can( WP_Swiper_Settings::CAPABILITY ) ) {
+		if ( ! current_user_can( WP_Swiper_Roles::WPBAKERY ) ) {
 			return;
 		}
 		if ( function_exists( 'vc_add_shortcode_param' ) ) {
@@ -176,11 +177,11 @@ class WP_Swiper_WPBakery {
 
 	/**
 	 * The Slider list again, for wpbakery.js: the sliders as sliders() gives
-	 * them, to administrators (with the nonce edit_param() gave).
+	 * them, to the roles given the element (with the nonce edit_param() gave).
 	 */
 	public static function ajax_sliders() {
 		check_ajax_referer( self::LIST_ACTION );
-		if ( ! current_user_can( WP_Swiper_Settings::CAPABILITY ) ) {
+		if ( ! current_user_can( WP_Swiper_Roles::WPBAKERY ) ) {
 			wp_send_json_error( null, 403 );
 		}
 		wp_send_json_success( self::sliders() );

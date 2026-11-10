@@ -33,10 +33,16 @@ class Test_WP_Swiper_Palette extends WP_Swiper_TestCase {
 		$this->assertSame( 'Black', $map[ $at + 1 ] );
 	}
 
-	public function test_no_settings_page() {
+	public function test_no_settings_page_for_the_palette() {
+		// WP Swiper → Settings is the roles' page now (WP_Swiper_Roles,
+		// 2026-11-10): no palette of its own there.
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		do_action( 'admin_menu' );
-		$this->assertEmpty( menu_page_url( 'wp-swiper-settings', false ) );
+		ob_start();
+		WP_Swiper_Roles::render();
+		$html = ob_get_clean();
+		$this->assertStringContainsString( 'wp-swiper-roles__table', $html );
+		$this->assertStringNotContainsString( 'wp_swiper_text_colors', $html );
+		$this->assertStringNotContainsString( 'color', strtolower( wp_strip_all_tags( $html ) ) );
 	}
 
 	public function test_editor_gets_the_palette() {

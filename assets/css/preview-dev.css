@@ -304,6 +304,8 @@
 /* Developer mode of the preview (preview-dev.js): over the slider, clipped
    by it; it never takes clicks. */
 .wp-swiper-dev {
+	/* Its sizes times the preview's scale (preview-dev.js rescale()). */
+	--k: var(--wp-swiper-dev-k, 1);
 	position: absolute;
 	inset: 0;
 	z-index: 50;
@@ -318,14 +320,14 @@
 
 /* A slide's box. */
 .wp-swiper-dev__cell {
-	outline: 1px dashed #2271b1;
-	outline-offset: -1px;
+	outline: calc(1px * var(--k)) dashed #2271b1;
+	outline-offset: calc(-1px * var(--k));
 }
 
 /* Its image's box, with its size. */
 .wp-swiper-dev__media {
-	outline: 2px solid #00a32a;
-	outline-offset: -2px;
+	outline: calc(2px * var(--k)) solid #00a32a;
+	outline-offset: calc(-2px * var(--k));
 }
 
 /* Space between the slides, and empty space in a slide around its image. */
@@ -337,20 +339,22 @@
 }
 
 .wp-swiper-dev__gap {
-	background: repeating-linear-gradient(45deg, rgba(219, 166, 23, 0.45) 0 4px, rgba(219, 166, 23, 0.15) 4px 8px);
+	background: repeating-linear-gradient(45deg, rgba(219, 166, 23, 0.45) 0 calc(4px * var(--k)), rgba(219, 166, 23, 0.15) calc(4px * var(--k)) calc(8px * var(--k)));
 }
 
 .wp-swiper-dev__empty {
-	background: repeating-linear-gradient(-45deg, rgba(135, 64, 196, 0.45) 0 4px, rgba(135, 64, 196, 0.15) 4px 8px);
+	background: repeating-linear-gradient(-45deg, rgba(135, 64, 196, 0.45) 0 calc(4px * var(--k)), rgba(135, 64, 196, 0.15) calc(4px * var(--k)) calc(8px * var(--k)));
 }
 
+/* About 12px on the screen (as WP Banner's), whatever the scale. */
 .wp-swiper-dev__label {
-	padding: 1px 4px;
-	border-radius: 3px;
+	padding: calc(2px * var(--k)) calc(6px * var(--k));
+	border-radius: calc(4px * var(--k));
 	background: rgba(29, 35, 39, 0.85);
 	color: #fff;
-	font: 600 11px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	font: 600 calc(12px * var(--k))/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 	white-space: nowrap;
+	box-shadow: 0 calc(1px * var(--k)) calc(3px * var(--k)) rgba(0, 0, 0, 0.35);
 }
 
 /* The distance between two images (or from the slider's edge), between them. */
@@ -374,19 +378,21 @@
 }
 
 .wp-swiper-dev__grid {
-	outline: 2px dashed #d63638;
-	outline-offset: -2px;
+	outline: calc(2px * var(--k)) dashed #d63638;
+	outline-offset: calc(-2px * var(--k));
 }
 
 .wp-swiper-dev > .wp-swiper-dev__dimension.wp-swiper-dev__block-size {
+	/* 12px down (preview-dev.js) as the label grows: never cut at the top. */
+	top: calc(12px * var(--k)) !important;
 	background: #2271b1;
 }
 
 /* The image's size: in its top left corner. */
 .wp-swiper-dev__media .wp-swiper-dev__label {
 	position: absolute;
-	top: 4px;
-	left: 4px;
+	top: calc(4px * var(--k));
+	left: calc(4px * var(--k));
 	background: #00a32a;
 }
 
@@ -396,14 +402,14 @@
    and text are laid in (inside the Padding) solid blue, its size (and
    whether the text was cut) at its bottom. Over the pieces, never clicked. */
 .wp-swiper-dev__window {
-	outline: 1px dashed #2271b1;
-	outline-offset: -1px;
+	outline: calc(1px * var(--k)) dashed #2271b1;
+	outline-offset: calc(-1px * var(--k));
 }
 
 .wp-swiper-dev__window .wp-swiper-dev__label {
 	position: absolute;
-	top: 4px;
-	left: 4px;
+	top: calc(4px * var(--k));
+	left: calc(4px * var(--k));
 	background: #2271b1;
 }
 
@@ -425,19 +431,19 @@
 .wp-swiper-dev__outlines path {
 	fill: none;
 	stroke: #00a32a;
-	stroke-width: 2;
+	stroke-width: calc(2px * var(--k));
 	vector-effect: non-scaling-stroke;
 }
 
 .wp-swiper-dev__area {
-	outline: 2px solid #8a2be2;
-	outline-offset: -2px;
+	outline: calc(2px * var(--k)) solid #8a2be2;
+	outline-offset: calc(-2px * var(--k));
 	background: rgba(138, 43, 226, 0.08);
 }
 
 .wp-swiper-dev__area .wp-swiper-dev__label {
 	position: absolute;
-	bottom: 4px;
+	bottom: calc(4px * var(--k));
 	left: 50%;
 	transform: translateX(-50%);
 	background: #8a2be2;

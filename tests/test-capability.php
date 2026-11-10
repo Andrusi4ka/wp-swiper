@@ -13,9 +13,20 @@ class Test_WP_Swiper_Capability extends WP_Swiper_TestCase {
 	}
 
 	public function test_the_post_type_needs_the_capability() {
+		// The plugin's own capabilities (test-roles.php), all of them given to
+		// those who manage the site, none to the others while unset.
 		$caps = (array) get_post_type_object( WP_Swiper_Settings::POST_TYPE )->cap;
+		$ours = wp_list_pluck( WP_Swiper_Roles::actions(), 0 );
 		foreach ( array( 'edit_posts', 'edit_others_posts', 'publish_posts', 'delete_posts', 'delete_others_posts', 'create_posts', 'read_private_posts' ) as $cap ) {
-			$this->assertSame( 'manage_options', $caps[ $cap ], $cap );
+			$this->assertContains( $caps[ $cap ], $ours, $cap );
+		}
+		$this->as_role( 'administrator' );
+		foreach ( $ours as $cap ) {
+			$this->assertTrue( current_user_can( $cap ), $cap );
+		}
+		$this->as_role( 'editor' );
+		foreach ( $ours as $cap ) {
+			$this->assertFalse( current_user_can( $cap ), $cap );
 		}
 	}
 

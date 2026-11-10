@@ -227,6 +227,56 @@
 	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 0 3px rgba(66, 133, 244, 0.75);
 }
 
+/* The eyedropper beside the color's value (where the browser has one, as
+   WP Banner's), the format buttons on the next line. The value's size not
+   animated (Pickr: transition all): it would shrink in view as the
+   eyedropper is added. */
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-result {
+	transition: background 0.2s, box-shadow 0.2s;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .wp-swiper-pcr__dropper {
+	display: flex;
+	flex: 0 0 2.6em;
+	align-items: center;
+	justify-content: center;
+	height: 2.6em;
+	margin: 0.75em 0.2em 0;
+	padding: 0;
+	font-size: 0.85em;
+	border: 0;
+	border-radius: 0.15em;
+	background: #f1f3f4;
+	color: #50575e;
+	cursor: pointer;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .wp-swiper-pcr__dropper:hover {
+	background: #e2e4e7;
+	color: #2271b1;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .wp-swiper-pcr__dropper:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 0 3px rgba(66, 133, 244, 0.75);
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .wp-swiper-pcr__dropper svg {
+	display: block;
+	width: 18px;
+	height: 18px;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .wp-swiper-pcr__dropper + .wp-swiper-pcr__break {
+	flex-basis: 100%;
+	height: 0;
+}
+
+.pcr-app.wp-swiper-pcr .pcr-interaction .pcr-result:has(+ .wp-swiper-pcr__dropper) {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
 .wp-swiper-modal__size-unit {
 	color: #646970;
 }

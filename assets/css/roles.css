@@ -1,0 +1,32 @@
+/* WP Swiper → Settings (class-wp-swiper-roles.php): the roles' table. */
+.wp-swiper-roles__table {
+	max-width: 960px;
+	margin-top: 12px;
+}
+
+.wp-swiper-roles__table th,
+.wp-swiper-roles__table td {
+	vertical-align: middle;
+}
+
+.wp-swiper-roles__table thead th {
+	vertical-align: bottom;
+	font-weight: 600;
+}
+
+.wp-swiper-roles__table .wp-swiper-roles__action {
+	width: 17%;
+	text-align: center;
+}
+
+/* Administrators: always all, their boxes greyed. */
+.wp-swiper-roles__always {
+	display: block;
+	color: #646970;
+	font-size: 12px;
+	font-weight: 400;
+}
+
+.wp-swiper-roles__table input[type="checkbox"] {
+	margin: 0;
+}

@@ -103,7 +103,7 @@ class WP_Swiper_Render {
 		$post = $post_id ? get_post( $post_id ) : null;
 
 		if ( ! $post || WP_Swiper_Settings::POST_TYPE !== $post->post_type || 'publish' !== $post->post_status ) {
-			return current_user_can( WP_Swiper_Settings::CAPABILITY )
+			return current_user_can( WP_Swiper_Roles::EDIT )
 				? '<p class="wp-swiper-notice">' . esc_html__( 'WP Swiper: slider not found or not published.', 'wp-swiper' ) . '</p>'
 				: '';
 		}
@@ -140,7 +140,7 @@ class WP_Swiper_Render {
 		);
 
 		if ( ! $slides ) {
-			return current_user_can( WP_Swiper_Settings::CAPABILITY )
+			return current_user_can( WP_Swiper_Roles::EDIT )
 				? '<p class="wp-swiper-notice">' . esc_html__( 'WP Swiper: this slider has no slides yet.', 'wp-swiper' ) . '</p>'
 				: '';
 		}
@@ -225,7 +225,7 @@ class WP_Swiper_Render {
 
 		// No block with the class around it: frontend.js leaves it a slider as
 		// usual and shows this to those who can fix it.
-		if ( $background && current_user_can( WP_Swiper_Settings::CAPABILITY ) ) {
+		if ( $background && current_user_can( WP_Swiper_Roles::EDIT ) ) {
 			$html .= '<p class="wp-swiper-notice" data-wp-swiper-bg-missing hidden>' . esc_html(
 				'' === $settings['background_class']
 					? __( 'WP Swiper: this slider is set to be a background, but has no parent block class (Background).', 'wp-swiper' )

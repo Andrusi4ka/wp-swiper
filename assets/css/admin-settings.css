@@ -163,11 +163,19 @@
 #wp-swiper-settings .wp-swiper-preview__dev {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	justify-content: center;
+	min-width: 32px;
 	min-height: 32px;
 	margin-right: auto;
-	padding: 0 12px;
+	padding: 0 6px;
 	line-height: 1;
+}
+
+/* Its icon (WP Banner's "</>"), as Rotate's and Dark screen's. */
+.wp-swiper-preview__dev-icon {
+	display: block;
+	width: 20px;
+	height: 20px;
 }
 
 #wp-swiper-settings .wp-swiper-preview__dev[hidden] {

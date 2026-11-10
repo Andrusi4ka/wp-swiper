@@ -12,7 +12,7 @@ Image sliders powered by Swiper: build a slider from the media library, pick an 
 
 == Description ==
 
-WP Swiper adds a "WP Swiper" menu (for administrators only) where you build image sliders from the media library and show them anywhere with `[wp_swiper id="123"]` or the "WP Swiper" WPBakery element.
+WP Swiper adds a "WP Swiper" menu (for administrators, and the roles they allow under WP Swiper → Settings) where you build image sliders from the media library and show them anywhere with `[wp_swiper id="123"]` or the "WP Swiper" WPBakery element.
 
 * Ten effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles), Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions), Collage (the photos placed together by a template, a grid, justified rows, masonry, a random mosaic or scattered around a photo in the middle, the others swapped in) and Art (the photos in shapes of their own: a ring around a circle, with an image or text in its opening, a grid with a circle, or the shapes of an SVG file a designer drew).
 * Image shadow, with its offsets, blur, spread and a colour with opacity, where the photos stand apart.

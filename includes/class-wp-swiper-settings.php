@@ -23,9 +23,11 @@ class WP_Swiper_Settings {
 	const POST_TYPE     = 'wp_swiper';
 
 	/**
-	 * Who may see and use WP Swiper in the admin (menu, sliders, preview, the
-	 * WPBakery element): administrators only. Visitors see the sliders on the
-	 * pages as ever.
+	 * Who always may do everything with WP Swiper and alone sets what the
+	 * other roles may (WP Swiper → Settings, WP_Swiper_Roles): those who
+	 * manage the site. A check of what a role was given is one of
+	 * WP_Swiper_Roles' capabilities (EDIT, CREATE, DELETE, WPBAKERY), or the
+	 * post type's own. Visitors see the sliders on the pages as ever.
 	 */
 	const CAPABILITY = 'manage_options';
 	const META_SLIDES   = '_wp_swiper_slides';

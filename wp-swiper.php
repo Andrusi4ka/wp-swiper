@@ -54,6 +54,7 @@ require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-art.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-svg-shape.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-palette.php';
 require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-fonts.php';
+require_once WP_SWIPER_DIR . 'includes/class-wp-swiper-roles.php';
 
 /**
  * Register the slider post type.
@@ -83,11 +84,13 @@ function wp_swiper_register_post_type() {
 			'menu_icon'       => 'data:image/svg+xml;base64,' . base64_encode( file_get_contents( WP_SWIPER_DIR . 'assets/images/menu-icon.svg' ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local plugin file.
 			'supports'        => array( 'title' ),
 			'capability_type' => 'post',
-			// Administrators only: every capability of the sliders is theirs
-			// (editing one, deleting it… mapped to these by WordPress).
-			'capabilities'    => array_fill_keys(
-				array( 'edit_posts', 'edit_others_posts', 'edit_private_posts', 'edit_published_posts', 'publish_posts', 'read_private_posts', 'delete_posts', 'delete_others_posts', 'delete_private_posts', 'delete_published_posts', 'create_posts' ),
-				WP_Swiper_Settings::CAPABILITY
+			// The plugin's own capabilities (WP Swiper → Settings, per role;
+			// Administrators always): editing one, deleting it… mapped to these
+			// by WordPress. Any slider, whoever made it.
+			'capabilities'    => array_merge(
+				array_fill_keys( array( 'edit_posts', 'edit_others_posts', 'edit_private_posts', 'edit_published_posts', 'read_private_posts' ), WP_Swiper_Roles::EDIT ),
+				array_fill_keys( array( 'create_posts', 'publish_posts' ), WP_Swiper_Roles::CREATE ),
+				array_fill_keys( array( 'delete_posts', 'delete_others_posts', 'delete_private_posts', 'delete_published_posts' ), WP_Swiper_Roles::DELETE )
 			),
 			'map_meta_cap'    => true,
 			'rewrite'         => false,
@@ -144,3 +147,4 @@ WP_Swiper_WPBakery::init();
 WP_Swiper_Preview::init();
 WP_Swiper_Whats_New::init();
 WP_Swiper_Art::init();
+WP_Swiper_Roles::init();

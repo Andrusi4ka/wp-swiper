@@ -531,6 +531,12 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$button = strpos( $html, '<button type="button" class="button wp-swiper-preview__dev" aria-pressed="false"' );
 		$this->assertNotFalse( $button );
 		$this->assertGreaterThan( $title, $button );
+		// An icon only (WP Banner's "</>", inline, in its button's color), named for screen readers and on hover.
+		$this->assertStringContainsString( 'aria-label="Developer mode">', $html );
+		$this->assertSame( 1, preg_match( '#<svg class="wp-swiper-preview__dev-icon" aria-hidden="true" focusable="false"[^>]*viewBox="0 0 1000 1000">#', $html ) );
+		$svg = file_get_contents( WP_SWIPER_DIR . 'assets/images/developer-mode.svg' );
+		$this->assertDoesNotMatchRegularExpression( '~<script|<foreignObject|<style|class=|\son\w+=|href=~i', $svg );
+		$this->assertStringContainsString( 'currentColor', $svg );
 		// Before the device switch and Update.
 		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__update' ), $button );
 		$this->assertLessThan( strpos( $html, 'wp-swiper-preview__devices' ), $button );
@@ -1108,6 +1114,22 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertStringContainsString( '"colorPicker":{', $data );
 		$this->assertStringContainsString( '"btn:cancel":"Cancel"', $data );
 		$this->assertStringContainsString( '"default":"Default"', $data );
+		// The eyedropper's name (WP Banner's, where the browser has one).
+		$this->assertStringContainsString( '"eyedropper":"Pick a color from the screen"', $data );
+	}
+
+	public function test_the_color_picker_has_an_eyedropper_where_the_browser_has_one() {
+		$js = $this->admin_js();
+		// Only with the browser's EyeDropper (Chrome, Edge, Opera), beside the value.
+		$this->assertStringContainsString( 'if ( window.EyeDropper ) {', $js );
+		$this->assertStringContainsString( 'new window.EyeDropper().open().then(', $js );
+		$this->assertStringContainsString( "\$result.after( \$drop, '<span class=\"wp-swiper-pcr__break\"></span>' );", $js );
+		// The field's opacity kept.
+		$this->assertStringContainsString( "setColor( \$pick, color.hex, \$pick.attr( 'data-alpha' ) === '1' ? \$pick.data( 'alpha' ) : 100 );", $js );
+		// WP Banner's pipette, in the button's color.
+		$this->assertStringContainsString( '<svg viewBox="314 314 380 380" aria-hidden="true" focusable="false" fill="currentColor">', $js );
+		$css = file_get_contents( WP_SWIPER_DIR . 'assets/css/admin-color.css' );
+		$this->assertStringContainsString( '.pcr-app.wp-swiper-pcr .pcr-interaction .wp-swiper-pcr__dropper {', $css );
 	}
 
 	public function test_admin_styles_load_in_their_order() {
@@ -1295,6 +1317,22 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		$this->assertFileExists( WP_SWIPER_DIR . 'assets/images/clone-icon.svg' );
 		$this->assertSame( 3, substr_count( $html, '<svg class="wp-swiper-slide__clone-icon" aria-hidden="true" focusable="false"' ) );
 		$this->assertStringNotContainsString( 'stroke="#000"', $html );
+	}
+
+	public function test_developer_mode_reads_at_any_scale() {
+		// The preview's scale (1 to 4) on its page, as WP Banner's.
+		$js = file_get_contents( WP_SWIPER_DIR . 'assets/js/preview-dev.js' );
+		$this->assertStringContainsString( 'Math.max( 1, Math.min( 4, window.innerWidth / width ) )', $js );
+		$this->assertStringContainsString( "document.documentElement.style.setProperty( '--wp-swiper-dev-k', value );", $js );
+		// Every size of the layer times it: about 12px labels on the screen.
+		$css  = file_get_contents( WP_SWIPER_DIR . 'assets/css/preview-dev.css' );
+		$from = strpos( $css, '/* Developer mode of the preview' );
+		$this->assertNotFalse( $from );
+		$dev = substr( $css, $from );
+		$this->assertStringContainsString( '--k: var(--wp-swiper-dev-k, 1);', $dev );
+		$this->assertStringContainsString( 'font: 600 calc(12px * var(--k))/1.35', $dev );
+		// No fixed px left there but 0 and those times --k.
+		$this->assertSame( 0, preg_match_all( '#(?<![\d.(*])(?<!calc\()-?[1-9]\d*px(?! \* var\(--k\))#', preg_replace( '#/\*.*?\*/#s', '', $dev ) ) );
 	}
 
 	public function test_preview_files_are_registered() {
