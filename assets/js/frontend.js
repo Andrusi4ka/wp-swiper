@@ -434,7 +434,9 @@
 			var current = device();
 			// The proportions and the corners follow the device too.
 			root.style.setProperty( '--wp-swiper-lightbox-thumb-ratio', settings.ratio[ current ] );
-			root.style.setProperty( '--wp-swiper-lightbox-thumb-radius', ( radius ? Number( radius[ current ] ) || 0 : 0 ) + 'px' );
+			// A number (px), or the four corners as CSS (the thumbnails' box, render-config.php).
+			var corners = radius ? radius[ current ] : 0;
+			root.style.setProperty( '--wp-swiper-lightbox-thumb-radius', typeof corners === 'string' ? corners : ( Number( corners ) || 0 ) + 'px' );
 			var perView = Number( settings.perView[ current ] ) || 1;
 			var gap = Number( settings.gap[ current ] ) || 0;
 			var height = Math.min( LIGHTBOX_THUMB_HEIGHT, window.innerHeight * LIGHTBOX_THUMB_SHARE );

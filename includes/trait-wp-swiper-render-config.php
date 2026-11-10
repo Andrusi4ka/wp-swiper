@@ -190,18 +190,30 @@ trait WP_Swiper_Render_Config {
 	/**
 	 * A lightbox radius per device: its own where set, else (empty, after
 	 * the inheritance from the larger screens) the slider's on that device.
+	 * A box of four as the fallback (the thumbnails' corners): one number when
+	 * they are the same, else the four as CSS ("6px 0px 6px 0px").
 	 *
 	 * @param array  $settings Slider settings.
 	 * @param string $key      The lightbox's field.
 	 * @param string $fallback The slider's field (Layout).
-	 * @return array [ 'desktop' => int, 'tablet' => int, 'mobile' => int ]
+	 * @return array [ 'desktop' => int|string, 'tablet' => …, 'mobile' => … ]
 	 */
 	public static function lightbox_radius( $settings, $key, $fallback ) {
-		$own    = WP_Swiper_Settings::responsive( $settings, $key );
-		$slider = WP_Swiper_Settings::responsive( $settings, $fallback );
+		$own   = WP_Swiper_Settings::responsive( $settings, $key );
+		$boxes = WP_Swiper_Settings::boxes();
+		// The fallback's corners (a box: the thumbnails' radius, each corner its own).
+		$slider = isset( $boxes[ $fallback ] ) ? WP_Swiper_Settings::box_values( $settings, $fallback ) : WP_Swiper_Settings::responsive( $settings, $fallback );
 
 		foreach ( $own as $device => $radius ) {
-			$own[ $device ] = (int) ( '' === $radius ? $slider[ $device ] : $radius );
+			if ( '' !== $radius ) {
+				$own[ $device ] = (int) $radius;
+			} elseif ( is_array( $slider[ $device ] ) ) {
+				// One number when the corners are the same (as before); else the
+				// four as CSS (frontend.js takes either).
+				$own[ $device ] = count( array_unique( $slider[ $device ] ) ) === 1 ? (int) $slider[ $device ][0] : WP_Swiper_Settings::box_css( $slider[ $device ] );
+			} else {
+				$own[ $device ] = (int) $slider[ $device ];
+			}
 		}
 		return $own;
 	}

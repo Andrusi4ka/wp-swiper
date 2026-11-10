@@ -676,3 +676,9 @@
 .wp-swiper-box__range {
 	margin-bottom: 6px;
 }
+
+/* Image border: its Line as wide as the row lets it, its color at the right. */
+#wp-swiper-settings .wp-swiper-field-group[data-group="image_border"] select {
+	width: 100%;
+	max-width: none;
+}

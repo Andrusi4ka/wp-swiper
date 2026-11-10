@@ -105,9 +105,55 @@ class Test_WP_Swiper_Box extends WP_Swiper_TestCase {
 		// The link: its state sent always; WP Banner's icon, in its color.
 		$this->assertStringContainsString( '<input type="hidden" class="wp-swiper-box__linked" id="wp-swiper-border_radius_linked" name="wp_swiper_settings[border_radius_linked]" value="0">', $html );
 		$this->assertStringContainsString( '<input type="hidden" class="wp-swiper-box__linked" id="wp-swiper-image_border_linked" name="wp_swiper_settings[image_border_linked]" value="1">', $html );
-		$this->assertSame( 2, preg_match_all( '#<button type="button" class="wp-swiper-box__link" aria-pressed="(true|false)"#', $html ) );
+		// The slides' radius, Image border, the thumbnails' radius.
+		$this->assertSame( 3, preg_match_all( '#<button type="button" class="wp-swiper-box__link" aria-pressed="(true|false)"#', $html ) );
 		$svg = file_get_contents( WP_SWIPER_DIR . 'assets/images/border-link.svg' );
 		$this->assertStringContainsString( 'currentColor', $svg );
 		$this->assertDoesNotMatchRegularExpression( '~<script|<foreignObject|<style|class=|\son\w+=|href=~i', $svg );
+	}
+
+	public function test_the_border_line() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertSame( 'solid', $fields['image_border_style']['default'] );
+		$this->assertSame( array( 'solid', 'dashed', 'dotted', 'double' ), array_keys( $fields['image_border_style']['choices'] ) );
+		// Left of the color, in its row; shown after the width.
+		$this->assertSame( 'image_border', $fields['image_border_style']['group'] );
+		$look = WP_Swiper_Settings::blocks()['layout']['look']['fields'];
+		$this->assertSame( array_search( 'image_border_color', $look, true ) - 1, array_search( 'image_border_style', $look, true ) );
+		$this->assertSame( 'solid', WP_Swiper_Settings::sanitize( array( 'image_border_style' => 'wavy' ) )['image_border_style'] );
+		// Solid: no variable (the CSS falls back to it); the others theirs.
+		$this->assertStringNotContainsString( '--wp-swiper-border-style', $this->root_style( $this->render( array( 'image_border' => true ) ) ) );
+		$this->assertStringContainsString( '--wp-swiper-border-style:dotted', $this->root_style( $this->render( array( 'image_border' => true, 'image_border_style' => 'dotted' ) ) ) );
+		$this->assertStringNotContainsString( '--wp-swiper-border-style', $this->root_style( $this->render( array( 'image_border' => false, 'image_border_style' => 'dotted' ) ) ) );
+		foreach ( array( 'frontend.css', 'collage.css' ) as $file ) {
+			$this->assertStringContainsString( 'border-style: var(--wp-swiper-border-style, solid);', file_get_contents( WP_SWIPER_DIR . 'assets/css/' . $file ), $file );
+		}
+	}
+
+	public function test_the_thumbnails_corners_and_the_lightbox_ones() {
+		$fields = WP_Swiper_Settings::fields();
+		$this->assertSame( array( 'thumbs_radius', 'thumbs_radius_tr', 'thumbs_radius_br', 'thumbs_radius_bl' ), $fields['thumbs_radius']['box'] );
+		$this->assertSame( 'thumbs_radius_linked', $fields['thumbs_radius']['box_link'] );
+		// No slider (as the slides').
+		$this->assertArrayNotHasKey( 'range', $fields['thumbs_radius'] );
+		$thumbs = array( 'effect' => 'thumbs', 'lightbox' => true, 'lightbox_thumbs' => true, 'thumbs_rounded' => true );
+
+		// Linked: one number, as before (the lightbox's too).
+		$html = $this->render( $thumbs + array( 'thumbs_radius' => 10, 'thumbs_radius_tr' => 0 ) );
+		$this->assertStringContainsString( '--wp-swiper-thumb-radius:10px', $this->root_style( $html ) );
+		$this->assertSame( array( 'desktop' => 10, 'tablet' => 10, 'mobile' => 10 ), $this->config( $html )['lightbox']['thumbRadius'] );
+
+		// Apart: four, per device; the lightbox's thumbnails take them too.
+		$html = $this->render( $thumbs + array( 'thumbs_radius_linked' => false, 'thumbs_radius' => 10, 'thumbs_radius_tr' => 0, 'thumbs_radius_br' => 10, 'thumbs_radius_bl' => 0, 'thumbs_radius_bl_mobile' => 4 ) );
+		$this->assertStringContainsString( '--wp-swiper-thumb-radius:10px 0px 10px 0px', $this->root_style( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-thumb-radius-mobile:10px 0px 10px 4px', $this->root_style( $html ) );
+		$this->assertSame( array( 'desktop' => '10px 0px 10px 0px', 'tablet' => '10px 0px 10px 0px', 'mobile' => '10px 0px 10px 4px' ), $this->config( $html )['lightbox']['thumbRadius'] );
+		// The lightbox's own radius over them.
+		$html = $this->render( $thumbs + array( 'thumbs_radius_linked' => false, 'thumbs_radius_tr' => 0, 'lightbox_thumbs_radius' => 3 ) );
+		$this->assertSame( 3, $this->config( $html )['lightbox']['thumbRadius']['desktop'] );
+
+		// Rounded corners off: none, any corner.
+		$html = $this->render( array( 'thumbs_rounded' => false ) + $thumbs + array( 'thumbs_radius_linked' => false, 'thumbs_radius_br' => 20 ) );
+		$this->assertStringContainsString( '--wp-swiper-thumb-radius:0px', $this->root_style( $html ) );
 	}
 }

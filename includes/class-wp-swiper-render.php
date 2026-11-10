@@ -376,8 +376,9 @@ class WP_Swiper_Render {
 			foreach ( WP_Swiper_Settings::thumbs_ratio( $settings ) as $device => $ratio ) {
 				$style[] = '--wp-swiper-thumb-ratio' . self::SUFFIX[ $device ] . ':' . implode( ' / ', $ratio );
 			}
-			foreach ( WP_Swiper_Settings::responsive( $settings, 'thumbs_radius' ) as $device => $radius ) {
-				$style[] = '--wp-swiper-thumb-radius' . self::SUFFIX[ $device ] . ':' . (int) $radius . 'px';
+			// Each corner its own (a box, as the slides' radius; linked: one number).
+			foreach ( WP_Swiper_Settings::box_values( $settings, 'thumbs_radius' ) as $device => $radius ) {
+				$style[] = '--wp-swiper-thumb-radius' . self::SUFFIX[ $device ] . ':' . WP_Swiper_Settings::box_css( $radius );
 			}
 			$style[] = '--wp-swiper-thumb-border-width:' . (int) $settings['thumbs_border_width'] . 'px';
 			$style[] = '--wp-swiper-thumb-border-color:' . $settings['thumbs_border_color'];
@@ -517,6 +518,10 @@ class WP_Swiper_Render {
 				$style[] = '--wp-swiper-border-width' . self::SUFFIX[ $device ] . ':' . WP_Swiper_Settings::box_css( $widths );
 			}
 			$style[] = '--wp-swiper-border-color:' . $settings['image_border_color'];
+			// Its line: solid needs no variable (the CSS falls back to it).
+			if ( in_array( $settings['image_border_style'], array( 'dashed', 'dotted', 'double' ), true ) ) {
+				$style[] = '--wp-swiper-border-style:' . $settings['image_border_style'];
+			}
 		}
 		// Gradient over each photo.
 		$gradient = WP_Swiper_Settings::gradient( $settings );

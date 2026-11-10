@@ -433,6 +433,9 @@ return array(
 		'default' => false,
 	),
 	// Also that of the thumbnails in the lightbox, unless it has its own.
+	// Each corner its own (2026-11-10, the user's choice, as the slides'
+	// Radius): a box (admin-box.js), linked by default; this is the top
+	// left's, and every corner's while linked. No slider (as the slides').
 	'thumbs_radius'         => array(
 		'section'    => 'layout',
 		'panel'      => 'thumbs',
@@ -444,7 +447,56 @@ return array(
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
-		'range'      => array( 0, 50 ),
+		'box'        => array( 'thumbs_radius', 'thumbs_radius_tr', 'thumbs_radius_br', 'thumbs_radius_bl' ),
+		'box_link'   => 'thumbs_radius_linked',
+	),
+	'thumbs_radius_tr'      => array(
+		'section'    => 'layout',
+		'panel'      => 'thumbs',
+		'effects'    => array( 'thumbs' ),
+		'inline_in'  => 'thumbs_radius',
+		'label'      => __( 'Top right radius (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 6,
+		'min'        => 0,
+		'max'        => 200,
+		'step'       => 1,
+	),
+	'thumbs_radius_br'      => array(
+		'section'    => 'layout',
+		'panel'      => 'thumbs',
+		'effects'    => array( 'thumbs' ),
+		'inline_in'  => 'thumbs_radius',
+		'label'      => __( 'Bottom right radius (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 6,
+		'min'        => 0,
+		'max'        => 200,
+		'step'       => 1,
+	),
+	'thumbs_radius_bl'      => array(
+		'section'    => 'layout',
+		'panel'      => 'thumbs',
+		'effects'    => array( 'thumbs' ),
+		'inline_in'  => 'thumbs_radius',
+		'label'      => __( 'Bottom left radius (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 6,
+		'min'        => 0,
+		'max'        => 200,
+		'step'       => 1,
+	),
+	'thumbs_radius_linked'  => array(
+		'section'   => 'layout',
+		'panel'     => 'thumbs',
+		'effects'   => array( 'thumbs' ),
+		'inline_in' => 'thumbs_radius',
+		'label'     => __( 'Corners set together', 'wp-swiper' ),
+		'type'      => 'checkbox',
+		'default'   => true,
 	),
 	// The frame, as Image border: its width and two colors once it is on;
 	// off, none (apply_rounded()). On by default, as the thumbnails always

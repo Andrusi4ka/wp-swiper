@@ -160,7 +160,7 @@
 	z-index: 3;
 	/* Apart: the shorthand takes one width, a side each needs border-width (WP_Swiper_Settings::box_css()). */
 	border-width: var(--wp-swiper-border-width, 0px);
-	border-style: solid;
+	border-style: var(--wp-swiper-border-style, solid);
 	border-color: var(--wp-swiper-border-color, #fff);
 	border-radius: inherit;
 	pointer-events: none;
@@ -225,7 +225,7 @@
 	z-index: 3;
 	/* Apart: the shorthand takes one width, a side each needs border-width (WP_Swiper_Settings::box_css()). */
 	border-width: var(--wp-swiper-border-width, 0px);
-	border-style: solid;
+	border-style: var(--wp-swiper-border-style, solid);
 	border-color: var(--wp-swiper-border-color, #fff);
 	border-radius: inherit;
 	pointer-events: none;

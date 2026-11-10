@@ -202,6 +202,21 @@ return array(
 		'type'      => 'checkbox',
 		'default'   => true,
 	),
+	// Its line (2026-11-10, as WP Banner's, the user's choice): one for every
+	// screen, left of the color and as wide as the row lets it.
+	'image_border_style'    => array(
+		'section' => 'layout',
+		'group'   => 'image_border',
+		'label'   => __( 'Line', 'wp-swiper' ),
+		'type'    => 'select',
+		'default' => 'solid',
+		'choices' => array(
+			'solid'  => __( 'Solid', 'wp-swiper' ),
+			'dashed' => __( 'Dashed', 'wp-swiper' ),
+			'dotted' => __( 'Dotted', 'wp-swiper' ),
+			'double' => __( 'Double', 'wp-swiper' ),
+		),
+	),
 	'image_border_color'    => array(
 		'section' => 'layout',
 		'group'   => 'image_border',

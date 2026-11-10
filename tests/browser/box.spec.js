@@ -15,6 +15,7 @@ const drawn = ( page ) => page.evaluate( () => {
 	return {
 		radius: [ style.borderTopLeftRadius, style.borderTopRightRadius, style.borderBottomRightRadius, style.borderBottomLeftRadius ],
 		border: [ after.borderTopWidth, after.borderRightWidth, after.borderBottomWidth, after.borderLeftWidth ],
+		line: after.borderBottomStyle,
 	};
 } );
 
@@ -27,6 +28,25 @@ test( 'slide-box: each corner and each side its own, per device', async ( { page
 	// Mobile: its own top right (10), the others the desktop's.
 	expect( at.radius ).toEqual( [ '20px', isMobile ? '10px' : '0px', '20px', '0px' ] );
 	expect( at.border ).toEqual( [ '0px', '0px', '6px', '0px' ] );
+	// Its line (Image border > Line).
+	expect( at.line ).toBe( 'dashed' );
+	expect( errors ).toEqual( [] );
+} );
+
+test( 'thumbs-box: each thumbnail corner its own, in the lightbox too', async ( { page } ) => {
+	const errors = [];
+	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
+	await page.goto( fixture + '?case=thumbs-box' );
+	await page.waitForFunction( () => document.querySelector( '.wp-swiper .swiper' ) && document.querySelector( '.wp-swiper .swiper' ).swiper );
+	const corners = ( selector ) => page.evaluate( ( sel ) => {
+		const style = getComputedStyle( document.querySelector( sel ) );
+		return [ style.borderTopLeftRadius, style.borderTopRightRadius, style.borderBottomRightRadius, style.borderBottomLeftRadius ];
+	}, selector );
+	expect( await corners( '.wp-swiper__thumbs .swiper-slide' ) ).toEqual( [ '12px', '0px', '12px', '0px' ] );
+	// The lightbox has no radius of its own for its thumbnails: these.
+	await page.locator( '.wp-swiper > .swiper:not(.wp-swiper__thumbs) .swiper-slide-active' ).first().click();
+	await expect( page.locator( '.wp-swiper-lightbox__thumbs .swiper-slide' ).first() ).toBeVisible();
+	expect( await corners( '.wp-swiper-lightbox__thumbs .swiper-slide' ) ).toEqual( [ '12px', '0px', '12px', '0px' ] );
 	expect( errors ).toEqual( [] );
 } );
 

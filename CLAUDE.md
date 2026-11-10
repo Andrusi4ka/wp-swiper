@@ -587,7 +587,17 @@
   `border-color` окремо — скорочений `border:` з чотирма товщинами
   недійсний (так і було, тест упав). `apply_rounded()` нулить усі кути. Art
   (своя рамка вздовж форми, свій радіус), Text mask, лайтбокс, мініатюри —
-  не чіпали. Тести: `tests/test-box.php`, `tests/browser/box.spec.js`
+  не чіпали. **Radius мініатюр Thumbnails** — той самий блок (2026-11-10, рішення
+  користувача; `thumbs_radius` + `_tr`, `_br`, `_bl`, `thumbs_radius_linked`,
+  без повзунка): `--wp-swiper-thumb-radius` одне чи чотири значення;
+  мініатюри лайтбокса без свого радіуса беруть ці кути
+  (`lightbox_radius()`: число, коли кути однакові, інакше CSS-рядок;
+  `frontend.js lightboxThumbs()` приймає обидва). Блок — кути, якщо в ключі
+  є «radius» (`render_box_field()`). **Line** рамки (2026-11-10, рішення користувача — як у WP
+  Banner): `image_border_style` (Solid / Dashed / Dotted / Double, одна на
+  всі екрани) у групі `image_border` ліворуч від Color, на всю ширину ряду
+  (перше поле групи розтягується; `select` 100% — `admin-controls.css`);
+  `--wp-swiper-border-style` (Solid — без змінної). Тести: `tests/test-box.php`, `tests/browser/box.spec.js`
   (`slide-box` у `cases.php`, без знімків), `admin.spec.js` (пристрої й успадкування).
 - **Повзунки радіусів** (2026-11-06, рішення користувача): поля
   радіусів (Art, смуги Text mask, мініатюри, лайтбокс, мініатюри
@@ -989,7 +999,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 459 тестів (2026-11-10), CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 461 тест (2026-11-10), CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.

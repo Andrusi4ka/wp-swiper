@@ -648,7 +648,8 @@ trait WP_Swiper_Admin_Fields {
 	 */
 	private static function render_box_field( $key, $field, $values, $fields ) {
 		$devices = self::devices();
-		$corners = 'border_radius' === $key;
+		// Radii at the corners (border_radius, thumbs_radius); widths at the sides.
+		$corners = false !== strpos( $key, 'radius' );
 		$places  = $corners ? array( 'tl', 'tr', 'br', 'bl' ) : array( 'top', 'right', 'bottom', 'left' );
 		$link    = $field['box_link'];
 		$linked  = ! empty( $values[ $link ] );

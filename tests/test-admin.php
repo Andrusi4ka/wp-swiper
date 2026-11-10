@@ -915,7 +915,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 
 	public function test_radii_have_a_slider_left_of_their_number() {
 		// The radii and the Gaps (the Size block's: a slider's, the Collage's, Art's, Text mask's).
-		$keys = array( 'art_radius', 'text_mask_radius', 'thumbs_radius', 'lightbox_radius', 'lightbox_thumbs_radius', 'pagination_bullet_radius', 'space_between', 'collage_gap', 'art_gap', 'text_mask_gap', 'description_offset', 'thumbs_spacing' );
+		$keys = array( 'art_radius', 'text_mask_radius', 'lightbox_radius', 'lightbox_thumbs_radius', 'pagination_bullet_radius', 'space_between', 'collage_gap', 'art_gap', 'text_mask_gap', 'description_offset', 'thumbs_spacing' );
 		$fields = WP_Swiper_Settings::fields();
 		foreach ( $keys as $key ) {
 			// Within what the number allows.

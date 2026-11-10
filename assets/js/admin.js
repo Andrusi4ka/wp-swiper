@@ -672,9 +672,10 @@
 			field( 'border_radius' ).toggle( $( '#wp-swiper-border_rounded' ).is( ':checked' ) );
 			// Gradient: its colors once it is on.
 			field( 'image_gradient' ).toggle( $( '#wp-swiper-image_gradient_on' ).is( ':checked' ) );
-			// Image border: its width and color once it is on.
+			// Image border: its width, line and color once it is on.
 			var border = $( '#wp-swiper-image_border' ).is( ':checked' );
 			field( 'image_border_width' ).toggle( border );
+			field( 'image_border_style' ).toggle( border );
 			field( 'image_border_color' ).toggle( border );
 			// Thumbnails (their effect only): the same, their radius and their frame once on.
 			field( 'thumbs_radius' ).toggle( effect === 'thumbs' && $( '#wp-swiper-thumbs_rounded' ).is( ':checked' ) );

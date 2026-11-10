@@ -214,9 +214,12 @@ class WP_Swiper_Settings {
 			$settings['art_radius_mobile'] = '';
 		}
 		if ( empty( $settings['thumbs_rounded'] ) ) {
-			$settings['thumbs_radius']        = 0;
-			$settings['thumbs_radius_tablet'] = '';
-			$settings['thumbs_radius_mobile'] = '';
+			// Every corner (the box: thumbs_radius and its _tr, _br, _bl).
+			foreach ( array( 'thumbs_radius', 'thumbs_radius_tr', 'thumbs_radius_br', 'thumbs_radius_bl' ) as $corner ) {
+				$settings[ $corner ]             = 0;
+				$settings[ $corner . '_tablet' ] = '';
+				$settings[ $corner . '_mobile' ] = '';
+			}
 		}
 		if ( isset( $settings['thumbs_border'] ) && ! $settings['thumbs_border'] ) {
 			$settings['thumbs_border_width'] = 0;
@@ -790,7 +793,7 @@ class WP_Swiper_Settings {
 				// strips'): the shadow under them on both.
 				'look'        => array(
 					'title'  => __( 'Look', 'wp-swiper' ),
-					'fields' => array( 'border_rounded', 'border_radius', 'art_rounded', 'art_radius', 'text_mask_rounded', 'text_mask_radius', 'text_mask_corners', 'image_border', 'image_border_width', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_gradient_on', 'image_gradient', 'image_hover_zoom', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
+					'fields' => array( 'border_rounded', 'border_radius', 'art_rounded', 'art_radius', 'text_mask_rounded', 'text_mask_radius', 'text_mask_corners', 'image_border', 'image_border_width', 'image_border_style', 'image_border_color', 'art_border', 'art_border_width', 'art_border_color', 'image_gradient_on', 'image_gradient', 'image_hover_zoom', 'image_shadow', 'image_shadow_x', 'image_shadow_y', 'image_shadow_blur', 'image_shadow_spread', 'image_shadow_color' ),
 				),
 				'zoom'        => array(
 					'title'  => __( 'Zoom', 'wp-swiper' ),
