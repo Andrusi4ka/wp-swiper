@@ -1,55 +1,12 @@
 // The slider's edit screen (admin.js and its parts): smoke tests of what
 // one does there, so a change to the admin scripts that breaks the screen
-// shows. admin-login.php logs in as the tests' own administrator, saves a
-// slider with a case's settings (cases.php) and opens it; each test's
-// slider is deleted after it (only its own: the others may still be open). Desktop only (the editor is not for a phone).
+// shows. The preview column's: admin-preview.spec.js; setup and helpers:
+// admin-kit.js.
 const { test, expect } = require( '@playwright/test' );
 const path = require( 'path' );
-const helper = '/wp-content/plugins/' + path.basename( path.resolve( __dirname, '../..' ) ) + '/tests/browser/admin-login.php';
+const { helper, setup, edit, frame, openPage } = require( './admin-kit' );
 
-test.skip( ( { isMobile } ) => isMobile, 'the editor is for a desktop' );
-
-// The admin with the theme's and other plugins' scripts and the preview, a few
-// tests at once on a local server: more time than the site's pages need.
-test.describe.configure( { timeout: 90000 } );
-
-test.afterEach( async ( { page, request } ) => {
-	const id = /[?&]post=(\d+)/.exec( page.url() );
-	if ( id ) {
-		await request.get( helper + '?delete=' + id[ 1 ] );
-	}
-} );
-
-// The edit screen of a new slider with this case's settings; errors kept.
-async function edit( page, name ) {
-	const errors = [];
-	page.on( 'pageerror', ( error ) => errors.push( error.message ) );
-	page.on( 'console', ( message ) => {
-		// A theme's or another plugin's failed request is not ours.
-		if ( message.type() === 'error' && ! /Failed to load resource/.test( message.text() ) ) {
-			errors.push( message.text() );
-		}
-	} );
-	await page.setViewportSize( { width: 1440, height: 900 } );
-	await page.goto( helper + '?case=' + name );
-	await page.waitForSelector( '#wp-swiper-settings', { timeout: 60000 } );
-	await shown( page );
-	return errors;
-}
-
-// The preview's frame, once it shows a slider (or Art, a collage).
-function frame( page ) {
-	return page.frameLocator( '.wp-swiper-preview__frame' );
-}
-
-async function shown( page ) {
-	await expect( frame( page ).locator( '.wp-swiper, .wp-swiper-art' ).first() ).toBeAttached( { timeout: 15000 } );
-}
-
-async function openPage( page, name ) {
-	await page.click( '.wp-swiper-menu__item[data-page="' + name + '"]' );
-	await expect( page.locator( '#wp-swiper-page-' + name ) ).toBeVisible();
-}
+setup( test );
 
 test( 'opens: the slides, the menu and the preview, no errors', async ( { page } ) => {
 	const errors = await edit( page, 'slide' );
@@ -59,8 +16,8 @@ test( 'opens: the slides, the menu and the preview, no errors', async ( { page }
 		files: [].map.call( document.querySelectorAll( 'script[src*="/' + dir + '/assets/js/admin"]' ), ( s ) => s.src.replace( /.*\/assets\/js\/|\?.*/g, '' ) ).sort(),
 		parts: Object.keys( window.wpSwiperEditor.parts ).sort(),
 	} ), path.basename( path.resolve( __dirname, '../..' ) ) );
-	expect( loaded.files ).toEqual( [ 'admin-colors.js', 'admin-pages.js', 'admin-preview.js', 'admin-slide-info.js', 'admin-slides.js', 'admin.js' ] );
-	expect( loaded.parts ).toEqual( [ 'colors', 'fields', 'focus', 'head', 'pages', 'preview', 'slideFonts', 'slideInfo', 'slides', 'tail' ] );
+	expect( loaded.files ).toEqual( [ 'admin-colors.js', 'admin-frame.js', 'admin-pages.js', 'admin-preview.js', 'admin-slide-info.js', 'admin-slides.js', 'admin.js' ] );
+	expect( loaded.parts ).toEqual( [ 'colors', 'fields', 'focus', 'frame', 'head', 'pages', 'preview', 'slideFonts', 'slideInfo', 'slides', 'tail' ] );
 	// One settings page in view at a time.
 	await openPage( page, 'layout' );
 	await expect( page.locator( '#wp-swiper-page-controls' ) ).toBeHidden();
@@ -167,37 +124,6 @@ test( 'undo and redo a setting', async ( { page } ) => {
 	expect( errors ).toEqual( [] );
 } );
 
-test( 'the preview: devices, turned, dark screen, Developer mode', async ( { page } ) => {
-	const errors = await edit( page, 'slide' );
-	const box = page.locator( '.wp-swiper-preview__frame' );
-	const rotate = page.locator( '.wp-swiper-preview__rotate' );
-	await expect( rotate ).toBeDisabled();
-	await page.click( '.wp-swiper-preview__devices [data-device="mobile"]' );
-	await expect.poll( async () => ( await box.evaluate( ( el ) => el.offsetWidth ) ) ).toBe( 390 );
-	await expect( rotate ).toBeEnabled();
-	await rotate.click();
-	await expect.poll( async () => ( await box.evaluate( ( el ) => el.offsetWidth ) ) ).toBe( 844 );
-	await rotate.click();
-	await page.click( '.wp-swiper-preview__devices [data-device="desktop"]' );
-	await expect.poll( async () => ( await box.evaluate( ( el ) => el.offsetWidth ) ) ).toBe( 1280 );
-
-	// Dark screen: at once, in the frame's page.
-	const screen = page.locator( '.wp-swiper-preview__screen' );
-	await screen.click();
-	await expect( screen ).toHaveAttribute( 'aria-pressed', 'true' );
-	await expect( frame( page ).locator( 'html.wp-swiper-preview-dark' ) ).toBeAttached();
-	await screen.click();
-	await expect( frame( page ).locator( 'html.wp-swiper-preview-dark' ) ).toHaveCount( 0 );
-
-	// Developer mode: its boxes over the slides.
-	const dev = page.locator( '.wp-swiper-preview__dev' );
-	await dev.click();
-	await expect( dev ).toHaveAttribute( 'aria-pressed', 'true' );
-	await expect( frame( page ).locator( '[class*="wp-swiper-dev"]' ).first() ).toBeAttached();
-	await dev.click();
-	expect( errors ).toEqual( [] );
-} );
-
 test( 'Slide info: a caption written, kept in the slide, its tab marked', async ( { page } ) => {
 	const errors = await edit( page, 'slide' );
 	await page.locator( '.wp-swiper-slide__edit' ).first().click();
@@ -233,12 +159,6 @@ test( 'a slide removed, the settings saved and read back', async ( { page } ) =>
 	expect( errors ).toEqual( [] );
 } );
 
-test( 'Art Grid shapes: its tools in the preview', async ( { page } ) => {
-	const errors = await edit( page, 'art-grid-shapes' );
-	await expect( frame( page ).locator( '.wp-swiper-art-tools__mode' ).first() ).toBeVisible( { timeout: 15000 } );
-	expect( errors ).toEqual( [] );
-} );
-
 test( 'Text mask: the font list opens and filters', async ( { page } ) => {
 	const errors = await edit( page, 'art-text-mask-name' );
 	await openPage( page, 'layout' );
@@ -260,18 +180,6 @@ test( 'Text mask: the font list opens and filters', async ( { page } ) => {
 	expect( errors ).toEqual( [] );
 } );
 
-test( 'a field\'s device: the whole editor and the preview take it', async ( { page } ) => {
-	const errors = await edit( page, 'slide' );
-	await openPage( page, 'layout' );
-	await page.click( '[data-field="height"] .wp-swiper-devices__btn[data-device="tablet"]' );
-	await expect.poll( async () => page.locator( '.wp-swiper-preview__frame' ).evaluate( ( el ) => el.offsetWidth ) ).toBe( 820 );
-	// Another field shows the tablet's value too.
-	await expect( page.locator( '[data-field="space_between"] .wp-swiper-devices__btn[data-device="tablet"]' ) ).toHaveClass( /is-active/ );
-	await page.click( '.wp-swiper-preview__devices [data-device="desktop"]' );
-	await expect( page.locator( '[data-field="height"] .wp-swiper-devices__btn[data-device="desktop"]' ) ).toHaveClass( /is-active/ );
-	expect( errors ).toEqual( [] );
-} );
-
 test( 'Collage: Shuffle sets an order, Reset clears it', async ( { page } ) => {
 	const errors = await edit( page, 'collage-grid' );
 	await openPage( page, 'layout' );
@@ -281,35 +189,6 @@ test( 'Collage: Shuffle sets an order, Reset clears it', async ( { page } ) => {
 	await expect( order ).not.toHaveValue( '' );
 	await page.click( '[data-field="collage_order"] .wp-swiper-order-reset' );
 	await expect( order ).toHaveValue( '' );
-	expect( errors ).toEqual( [] );
-} );
-
-test( 'Collage: a photo dragged onto another in the preview, the two swapped, the order kept', async ( { page } ) => {
-	const errors = await edit( page, 'collage-grid' );
-	await openPage( page, 'layout' );
-	const order = page.locator( 'input[name="wp_swiper_settings[collage_order]"]' );
-	await expect( order ).toHaveValue( '' );
-	const cells = frame( page ).locator( '.wp-swiper-collage__cell' );
-	await expect( cells.nth( 1 ) ).toBeVisible();
-	const photo = ( index ) => cells.nth( index ).locator( 'img' ).first().getAttribute( 'src' );
-	const first = await photo( 0 );
-	const second = await photo( 1 );
-	expect( first ).not.toBe( second );
-
-	// The preview is scaled into its device: the boxes are where they are on
-	// the screen, once there (the mouse does not scroll the page by itself).
-	await cells.nth( 0 ).scrollIntoViewIfNeeded();
-	const from = await cells.nth( 0 ).boundingBox();
-	const to = await cells.nth( 1 ).boundingBox();
-	await page.mouse.move( from.x + from.width / 2, from.y + from.height / 2 );
-	await page.mouse.down();
-	await page.mouse.move( from.x + from.width / 2 + 20, from.y + from.height / 2 + 20, { steps: 4 } );
-	await page.mouse.move( to.x + to.width / 2, to.y + to.height / 2, { steps: 10 } );
-	await page.mouse.up();
-
-	await expect.poll( () => photo( 0 ) ).toBe( second );
-	expect( await photo( 1 ) ).toBe( first );
-	await expect( order ).not.toHaveValue( '' );
 	expect( errors ).toEqual( [] );
 } );
 
@@ -330,94 +209,6 @@ test( 'Drag with the mouse: a continuous scroll has none (locked off)', async ( 
 	await openPage( page, 'controls' );
 	await expect( page.locator( '#wp-swiper-mouse_drag' ) ).toBeDisabled();
 	await expect( page.locator( '#wp-swiper-mouse_drag' ) ).not.toBeChecked();
-	expect( errors ).toEqual( [] );
-} );
-
-test( 'Art, more windows than photos: a photo dragged onto the 12th window, saved, still there', async ( { page } ) => {
-	const errors = await edit( page, 'art-shape-many' );
-	const pieces = frame( page ).locator( '.wp-swiper-art__piece:not([hidden])' );
-	await expect( pieces ).toHaveCount( 16 );
-	const reals = () => frame( page ).locator( '.wp-swiper-art' ).evaluate( ( block ) => [].slice.call( block.querySelectorAll( '.wp-swiper-art__piece' ) ).filter( ( p ) => ! p.hidden ).map( ( p ) => p.wpReal ) );
-	const before = await reals();
-	expect( before[ 0 ] ).not.toBe( before[ 11 ] );
-
-	await pieces.nth( 0 ).scrollIntoViewIfNeeded();
-	const a = await pieces.nth( 0 ).boundingBox();
-	const b = await pieces.nth( 11 ).boundingBox();
-	await page.mouse.move( a.x + a.width / 2, a.y + a.height / 2 );
-	await page.mouse.down();
-	for ( let i = 1; i <= 10; i++ ) {
-		await page.mouse.move( a.x + a.width / 2 + ( b.x - a.x ) * i / 10, a.y + a.height / 2 + ( b.y - a.y ) * i / 10 );
-	}
-	await page.mouse.up();
-	const expected = before.slice();
-	expected[ 0 ] = before[ 11 ];
-	expected[ 11 ] = before[ 0 ];
-	await expect.poll( reals ).toEqual( expected );
-	// Every window's photo kept: 16 IDs, some of them twice.
-	const order = page.locator( '#wp-swiper-art_order' );
-	await expect.poll( async () => ( await order.inputValue() ).split( ',' ).length ).toBe( 16 );
-
-	await Promise.all( [ page.waitForNavigation(), page.click( '#publish' ) ] );
-	await page.waitForSelector( '#wp-swiper-settings' );
-	await shown( page );
-	await expect.poll( reals ).toEqual( expected );
-	expect( errors ).toEqual( [] );
-} );
-
-test( 'Screen size of one\'s own: applied with Update, turned with the device, its note', async ( { page } ) => {
-	const errors = await edit( page, 'slide' );
-	const box = page.locator( '.wp-swiper-preview__frame' );
-	const frameSize = () => box.evaluate( ( el ) => [ el.offsetWidth, el.offsetHeight ] );
-	const width = page.locator( '.wp-swiper-preview__size-w' );
-	const height = page.locator( '.wp-swiper-preview__size-h' );
-	const note = page.locator( '.wp-swiper-preview__size-note' );
-	const drawing = page.locator( '.wp-swiper-preview__device[data-device="desktop"]' );
-	await page.click( '.wp-swiper-preview__devices [data-device="desktop"]' );
-	await expect( width ).toHaveAttribute( 'placeholder', '1280' );
-	await expect( height ).toHaveAttribute( 'placeholder', '721' );
-	await expect( width ).toHaveValue( '' );
-
-	// Typed: nothing yet, Update says it is out of date.
-	await width.fill( '900' );
-	expect( await frameSize() ).toEqual( [ 1280, 721 ] );
-	await expect( page.locator( '.wp-swiper-preview__update' ) ).toHaveClass( /is-stale/ );
-	await expect( note ).toBeHidden();
-	// Update: that size, in a plain frame; 900px takes the Tablet settings.
-	await page.click( '.wp-swiper-preview__update' );
-	await expect.poll( frameSize ).toEqual( [ 900, 721 ] );
-	await expect( drawing ).toBeHidden();
-	await expect( note ).toBeVisible();
-	await expect( note ).toContainText( '900px wide' );
-	await expect( note ).toContainText( 'Tablet' );
-	await shown( page );
-
-	// Mobile: its own size until one is typed; turned, the two swapped.
-	await page.click( '.wp-swiper-preview__devices [data-device="mobile"]' );
-	await expect.poll( frameSize ).toEqual( [ 390, 844 ] );
-	await expect( width ).toHaveValue( '' );
-	await expect( width ).toHaveAttribute( 'placeholder', '390' );
-	await height.fill( '600' );
-	await height.press( 'Enter' );
-	await expect.poll( frameSize ).toEqual( [ 390, 600 ] );
-	await expect( note ).toBeHidden();
-	await page.click( '.wp-swiper-preview__rotate' );
-	await expect.poll( frameSize ).toEqual( [ 600, 390 ] );
-	await expect( width ).toHaveValue( '600' );
-	await expect( height ).toHaveValue( '' );
-	await expect( height ).toHaveAttribute( 'placeholder', '390' );
-	await page.click( '.wp-swiper-preview__rotate' );
-	await expect( height ).toHaveValue( '600' );
-
-	// Desktop again: its size kept; emptied and updated, its own size in its drawing.
-	await page.click( '.wp-swiper-preview__devices [data-device="desktop"]' );
-	await expect.poll( frameSize ).toEqual( [ 900, 721 ] );
-	await expect( width ).toHaveValue( '900' );
-	await width.fill( '' );
-	await page.click( '.wp-swiper-preview__update' );
-	await expect.poll( frameSize ).toEqual( [ 1280, 721 ] );
-	await expect( drawing ).toBeVisible();
-	await expect( note ).toBeHidden();
 	expect( errors ).toEqual( [] );
 } );
 

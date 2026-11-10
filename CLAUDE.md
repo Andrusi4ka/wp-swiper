@@ -797,8 +797,12 @@
   `admin-slide-info.js` (вікно Slide info, шрифти, точка фокуса),
   `admin-colors.js` (Pickr, градієнт), `admin-pages.js` (меню сторінок,
   картка ефекту, редактори тексту, значення для пристроїв, `setDevice()`),
-  `admin-preview.js` (прев'ю, Undo / Redo, повідомлення від
-  `preview-*.js`). Кожна частина — `window.wpSwiperEditor.parts.<назва> =
+  `admin-frame.js` (рамка прев'ю: пристрій і розмір, поворот, свій розмір
+  екрана, Update, Developer mode, темний екран — 2026-11-10 винесено з
+  `admin-preview.js` дослівно, частина `frame` перед `preview`, віддає
+  `previewFrame`, `$update`, `$stage`, `fitPreview`, `syncScreenFields`,
+  `updatePreview`, `applyDev` через `shared`), `admin-preview.js` (Order
+  колажу, Undo / Redo, повідомлення від `preview-*.js`). Кожна частина — `window.wpSwiperEditor.parts.<назва> =
   function ( shared )`; `admin.js` запускає їх на ready у тому порядку, що
   був в одній функції (`[ 'head', 'slides', …, 'tail' ]`). Спільне — через
   `shared`: узяте з частини раніше — аліас на початку (`var x = shared.x`),
@@ -986,7 +990,11 @@ WP-CLI для тестів не потрібен: досить `WP_CORE_DIR` і 
 котра медіатека правильна. Видаляючи рядки за номерами (sed), звіряй
 `git diff` — так одного разу пропав селектор `.wp-swiper.wp-swiper--background`.
 Адмінка (2026-11-05, рішення користувача — раніше лише сайт):
-`admin.spec.js`, 29 «димових» тестів редактора (лише desktop). Вхід —
+`admin.spec.js` і `admin-preview.spec.js` (колонка прев'ю; розділено
+2026-11-10), разом 29 «димових» тестів редактора (лише desktop); спільні
+налаштування й помічники (`setup( test )`, `edit()`, `frame()`, `shown()`,
+`openPage()`) — `admin-kit.js` (не `*.spec.js`, сам не запускається).
+PHPUnit-тести прев'ю — `tests/test-admin-preview.php` (з `test-admin.php`). Вхід —
 `admin-login.php` (лише з 127.x, як `fixture.php`): тестовий
 адміністратор `wp-swiper-tests` без відомого пароля, створюється сам,
 одна сесія на всіх (`global-setup.js` створює її перед тестами — інакше

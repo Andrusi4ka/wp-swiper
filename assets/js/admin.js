@@ -1168,7 +1168,7 @@
 			SHADOW_EFFECTS: SHADOW_EFFECTS,
 			SHADOW_BACKGROUND_EFFECTS: SHADOW_BACKGROUND_EFFECTS
 		};
-		[ 'head', 'slides', 'slideFonts', 'colors', 'slideInfo', 'focus', 'fields', 'pages', 'preview', 'tail' ].forEach( function ( name ) {
+		[ 'head', 'slides', 'slideFonts', 'colors', 'slideInfo', 'focus', 'fields', 'pages', 'frame', 'preview', 'tail' ].forEach( function ( name ) {
 			parts[ name ]( shared );
 		} );
 	} );
