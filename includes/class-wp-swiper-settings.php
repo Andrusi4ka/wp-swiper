@@ -12,6 +12,7 @@ require_once __DIR__ . '/trait-wp-swiper-settings-migrations.php';
 require_once __DIR__ . '/trait-wp-swiper-settings-sanitize.php';
 require_once __DIR__ . '/trait-wp-swiper-settings-text.php';
 require_once __DIR__ . '/trait-wp-swiper-settings-media.php';
+require_once __DIR__ . '/trait-wp-swiper-settings-box.php';
 
 class WP_Swiper_Settings {
 
@@ -19,6 +20,7 @@ class WP_Swiper_Settings {
 	use WP_Swiper_Settings_Sanitize;
 	use WP_Swiper_Settings_Text;
 	use WP_Swiper_Settings_Media;
+	use WP_Swiper_Settings_Box;
 
 	const POST_TYPE     = 'wp_swiper';
 
@@ -198,9 +200,12 @@ class WP_Swiper_Settings {
 	 */
 	public static function apply_rounded( $settings ) {
 		if ( empty( $settings['border_rounded'] ) ) {
-			$settings['border_radius']        = 0;
-			$settings['border_radius_tablet'] = '';
-			$settings['border_radius_mobile'] = '';
+			// Every corner (the box: border_radius and its _tr, _br, _bl).
+			foreach ( array( 'border_radius', 'border_radius_tr', 'border_radius_br', 'border_radius_bl' ) as $corner ) {
+				$settings[ $corner ]             = 0;
+				$settings[ $corner . '_tablet' ] = '';
+				$settings[ $corner . '_mobile' ] = '';
+			}
 		}
 		// Art's photos (and so the lightbox's that take theirs).
 		if ( isset( $settings['art_rounded'] ) && ! $settings['art_rounded'] ) {

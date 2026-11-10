@@ -45,6 +45,7 @@ class WP_Swiper_Admin {
 		'wp-swiper-admin-slide-info' => 'admin-slide-info.js',
 		'wp-swiper-admin-colors'     => 'admin-colors.js',
 		'wp-swiper-admin-pages'      => 'admin-pages.js',
+		'wp-swiper-admin-box'        => 'admin-box.js',
 		'wp-swiper-admin-frame'      => 'admin-frame.js',
 		'wp-swiper-admin-preview'    => 'admin-preview.js',
 	);

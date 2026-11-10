@@ -429,6 +429,10 @@
 					// A lockable box (unlocked for the swap) takes this as the
 					// choice it remembers; triggerHandler: not syncFields yet.
 					$( this ).triggerHandler( 'input' );
+				} else if ( typeof values[ key ] === 'boolean' ) {
+					// A switch kept in a hidden input (a box's link, admin-box.js): "1" / "0",
+					// as the screen sends it ("false" would be on when saved).
+					$( this ).val( values[ key ] ? '1' : '0' );
 				} else {
 					$( this ).val( null === values[ key ] ? '' : String( values[ key ] ) );
 					// A settings editor already started shows it too.
@@ -1050,7 +1054,9 @@
 
 		// A slider's number: the one shown (a field per device has one each).
 		function rangeNumber( range ) {
-			return $( range ).siblings( 'input[type="number"]' ).filter( function () {
+			// A box of four (admin-box.js): its first one shown (the others follow it while linked).
+			var $box = $( range ).closest( '.wp-swiper-field--box' ).find( '.wp-swiper-box' );
+			return ( $box.length ? $box.find( 'input[type="number"]' ) : $( range ).siblings( 'input[type="number"]' ) ).filter( function () {
 				return ! this.hidden;
 			} ).first();
 		}
@@ -1168,7 +1174,7 @@
 			SHADOW_EFFECTS: SHADOW_EFFECTS,
 			SHADOW_BACKGROUND_EFFECTS: SHADOW_BACKGROUND_EFFECTS
 		};
-		[ 'head', 'slides', 'slideFonts', 'colors', 'slideInfo', 'focus', 'fields', 'pages', 'frame', 'preview', 'tail' ].forEach( function ( name ) {
+		[ 'head', 'slides', 'slideFonts', 'colors', 'slideInfo', 'focus', 'fields', 'pages', 'box', 'frame', 'preview', 'tail' ].forEach( function ( name ) {
 			parts[ name ]( shared );
 		} );
 	} );

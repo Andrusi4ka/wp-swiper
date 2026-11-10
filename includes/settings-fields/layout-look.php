@@ -80,6 +80,11 @@ return array(
 		'type'    => 'checkbox',
 		'default' => false,
 	),
+	// Each corner its own (2026-11-10, as WP Banner's, the user's choice): a
+	// box with the four corners' radii (admin-box.js), set together while
+	// linked (as before: one number). This is the top left's, and every
+	// corner's while linked; the others are drawn in it (inline_in). No slider
+	// (it held the number to 100; the user's choice, 2026-11-10).
 	'border_radius'         => array(
 		'section'    => 'layout',
 		'label'      => __( 'Radius (px)', 'wp-swiper' ),
@@ -89,7 +94,50 @@ return array(
 		'min'        => 0,
 		'max'        => 200,
 		'step'       => 1,
-		'range'      => array( 0, 100 ),
+		'box'        => array( 'border_radius', 'border_radius_tr', 'border_radius_br', 'border_radius_bl' ),
+		'box_link'   => 'border_radius_linked',
+	),
+	'border_radius_tr'      => array(
+		'section'    => 'layout',
+		'inline_in'  => 'border_radius',
+		'label'      => __( 'Top right radius (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 12,
+		'min'        => 0,
+		'max'        => 200,
+		'step'       => 1,
+	),
+	'border_radius_br'      => array(
+		'section'    => 'layout',
+		'inline_in'  => 'border_radius',
+		'label'      => __( 'Bottom right radius (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 12,
+		'min'        => 0,
+		'max'        => 200,
+		'step'       => 1,
+	),
+	'border_radius_bl'      => array(
+		'section'    => 'layout',
+		'inline_in'  => 'border_radius',
+		'label'      => __( 'Bottom left radius (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 12,
+		'min'        => 0,
+		'max'        => 200,
+		'step'       => 1,
+	),
+	// The corners set together (one number, as before the box; a slider saved
+	// before has none: linked).
+	'border_radius_linked'  => array(
+		'section'   => 'layout',
+		'inline_in' => 'border_radius',
+		'label'     => __( 'Corners set together', 'wp-swiper' ),
+		'type'      => 'checkbox',
+		'default'   => true,
 	),
 	// A frame drawn over the image (follows its corners; with "Contain"
 	// the image, not the empty band). Width and color once it is on.
@@ -99,9 +147,11 @@ return array(
 		'type'    => 'checkbox',
 		'default' => false,
 	),
+	// Each side its own (2026-11-10, as WP Banner's): a box with the four
+	// sides' widths, set together while linked. This is the top's, and
+	// every side's while linked; the others are drawn in it (inline_in).
 	'image_border_width'    => array(
 		'section'    => 'layout',
-		'group'      => 'image_border',
 		'label'      => __( 'Width (px)', 'wp-swiper' ),
 		'type'       => 'number',
 		'responsive' => true,
@@ -109,6 +159,48 @@ return array(
 		'min'        => 0,
 		'max'        => 50,
 		'step'       => 1,
+		'box'        => array( 'image_border_width', 'image_border_right', 'image_border_bottom', 'image_border_left' ),
+		'box_link'   => 'image_border_linked',
+	),
+	'image_border_right'    => array(
+		'section'    => 'layout',
+		'inline_in'  => 'image_border_width',
+		'label'      => __( 'Right border width (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 2,
+		'min'        => 0,
+		'max'        => 50,
+		'step'       => 1,
+	),
+	'image_border_bottom'   => array(
+		'section'    => 'layout',
+		'inline_in'  => 'image_border_width',
+		'label'      => __( 'Bottom border width (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 2,
+		'min'        => 0,
+		'max'        => 50,
+		'step'       => 1,
+	),
+	'image_border_left'     => array(
+		'section'    => 'layout',
+		'inline_in'  => 'image_border_width',
+		'label'      => __( 'Left border width (px)', 'wp-swiper' ),
+		'type'       => 'number',
+		'responsive' => true,
+		'default'    => 2,
+		'min'        => 0,
+		'max'        => 50,
+		'step'       => 1,
+	),
+	'image_border_linked'   => array(
+		'section'   => 'layout',
+		'inline_in' => 'image_border_width',
+		'label'     => __( 'Sides set together', 'wp-swiper' ),
+		'type'      => 'checkbox',
+		'default'   => true,
 	),
 	'image_border_color'    => array(
 		'section' => 'layout',

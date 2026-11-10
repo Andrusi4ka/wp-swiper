@@ -499,18 +499,22 @@ class WP_Swiper_Render {
 		$style = array_merge( $style, WP_Swiper_Settings::font_weight_vars( WP_Swiper_Settings::legacy_font_weights( $settings, 'caption' ), 'wp-swiper-caption-weight' ) );
 		// Desktop 0 needs no variable (the CSS falls back to 0); tablet/mobile
 		// are set whenever given (0 included), empty inherits.
-		if ( $settings['border_radius'] ) {
-			$style[] = '--wp-swiper-radius:' . (int) $settings['border_radius'] . 'px';
+		// Each corner its own (WP_Swiper_Settings::box_values(); linked: one
+		// number, as before): "12px", or four, "12px 0px 12px 0px".
+		$radius = WP_Swiper_Settings::box_values( $settings, 'border_radius' );
+		if ( array_sum( $radius['desktop'] ) ) {
+			$style[] = '--wp-swiper-radius:' . WP_Swiper_Settings::box_css( $radius['desktop'] );
 		}
 		foreach ( array( 'tablet', 'mobile' ) as $device ) {
-			if ( '' !== $settings[ 'border_radius_' . $device ] ) {
-				$style[] = '--wp-swiper-radius-' . $device . ':' . (int) $settings[ 'border_radius_' . $device ] . 'px';
+			if ( WP_Swiper_Settings::box_own( $settings, 'border_radius', $device ) ) {
+				$style[] = '--wp-swiper-radius-' . $device . ':' . WP_Swiper_Settings::box_css( $radius[ $device ] );
 			}
 		}
-		// Image border: width per device (0 = none there), one color.
+		// Image border: width per device (0 = none there), each side its own
+		// (linked: one number, as before), one color.
 		if ( $settings['image_border'] ) {
-			foreach ( WP_Swiper_Settings::responsive( $settings, 'image_border_width' ) as $device => $width ) {
-				$style[] = '--wp-swiper-border-width' . self::SUFFIX[ $device ] . ':' . (int) $width . 'px';
+			foreach ( WP_Swiper_Settings::box_values( $settings, 'image_border_width' ) as $device => $widths ) {
+				$style[] = '--wp-swiper-border-width' . self::SUFFIX[ $device ] . ':' . WP_Swiper_Settings::box_css( $widths );
 			}
 			$style[] = '--wp-swiper-border-color:' . $settings['image_border_color'];
 		}

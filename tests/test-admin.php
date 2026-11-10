@@ -915,7 +915,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 
 	public function test_radii_have_a_slider_left_of_their_number() {
 		// The radii and the Gaps (the Size block's: a slider's, the Collage's, Art's, Text mask's).
-		$keys = array( 'border_radius', 'art_radius', 'text_mask_radius', 'thumbs_radius', 'lightbox_radius', 'lightbox_thumbs_radius', 'pagination_bullet_radius', 'space_between', 'collage_gap', 'art_gap', 'text_mask_gap', 'description_offset', 'thumbs_spacing' );
+		$keys = array( 'art_radius', 'text_mask_radius', 'thumbs_radius', 'lightbox_radius', 'lightbox_thumbs_radius', 'pagination_bullet_radius', 'space_between', 'collage_gap', 'art_gap', 'text_mask_gap', 'description_offset', 'thumbs_spacing' );
 		$fields = WP_Swiper_Settings::fields();
 		foreach ( $keys as $key ) {
 			// Within what the number allows.
@@ -926,12 +926,12 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 		ob_start();
 		WP_Swiper_Admin::render_settings_box( get_post( $this->slider( $this->slides( 1 ), array( 'border_radius' => 14, 'border_radius_tablet' => 8 ) ) ) );
 		$html = ob_get_clean();
-		// Per device: one slider (no name: the numbers are the values sent) before the three numbers.
-		$this->assertSame( 1, preg_match( '#data-field="border_radius".*?<div class="wp-swiper-field__row wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"\s+value="14"\s+min="0"\s+max="100"[^>]*>\s*<input type="number"\s+id="wp-swiper-border_radius"#s', $html ) );
-		$this->assertSame( 1, preg_match( '#data-field="border_radius".*?wp-swiper-field__row--range">(.*?)</div>#s', $html, $row ) );
-		$this->assertSame( 1, substr_count( $row[1], 'type="range"' ) );
-		$this->assertSame( 3, substr_count( $row[1], 'type="number"' ) );
-		$this->assertStringNotContainsString( 'name="', substr( $row[1], 0, strpos( $row[1], 'type="number"' ) ) );
+		// The slides' radius, a box of four corners (test-box.php): no slider (it
+		// held the number to 100; the user's choice, 2026-11-10).
+		$this->assertArrayNotHasKey( 'range', $fields['border_radius'] );
+		$this->assertSame( 1, preg_match( '#data-field="border_radius"(.*?)<div class="wp-swiper-box">#s', $html, $head ) );
+		$this->assertStringNotContainsString( 'type="range"', $head[1] );
+		// Per device: the others as any field per device.
 		$this->assertSame( 1, preg_match( '#data-field="space_between".*?wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"#s', $html ) );
 		$this->assertSame( 1, preg_match( '#data-field="description_offset".*?wp-swiper-field__row--range">\s*<input type="range" class="wp-swiper-range"#s', $html ) );
 		// Thumbnails: Gap to the slider (per device), Inactive thumbnail opacity (one for every screen, by fives).
@@ -979,7 +979,7 @@ class Test_WP_Swiper_Admin extends WP_Swiper_TestCase {
 			$this->assertContains( basename( $path ), WP_Swiper_Admin::SCRIPTS );
 		}
 		// admin.js runs every part, in its order.
-		$this->assertMatchesRegularExpression( "#\[ 'head', 'slides', 'slideFonts', 'colors', 'slideInfo', 'focus', 'fields', 'pages', 'frame', 'preview', 'tail' \]\.forEach\( function \( name \) \{\s*parts\[ name \]\( shared \);#", $this->admin_js() );
+		$this->assertMatchesRegularExpression( "#\[ 'head', 'slides', 'slideFonts', 'colors', 'slideInfo', 'focus', 'fields', 'pages', 'box', 'frame', 'preview', 'tail' \]\.forEach\( function \( name \) \{\s*parts\[ name \]\( shared \);#", $this->admin_js() );
 	}
 
 	public function test_art_opening_text_has_an_editor() {

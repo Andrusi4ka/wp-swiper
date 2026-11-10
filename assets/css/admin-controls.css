@@ -500,3 +500,179 @@
 	color: #646970;
 	font-size: 12px;
 }
+
+/* A box of four values (WP_Swiper_Admin::render_box_field(), admin-box.js;
+   as WP Banner's): Image border's sides beside a frame drawn as they are,
+   Rounded corners' radii at its corners; the link in its middle (set
+   together); the slider over it only while linked. */
+.wp-swiper-box {
+	position: relative;
+	height: 136px;
+	margin: 4px 0 2px;
+}
+
+.wp-swiper-box__frame {
+	position: absolute;
+	top: 44px;
+	right: 84px;
+	bottom: 44px;
+	left: 84px;
+	box-sizing: border-box;
+	border-radius: 2px;
+	background: #fff;
+}
+
+.wp-swiper-field--corners .wp-swiper-box__frame {
+	top: 40px;
+	right: 96px;
+	bottom: 40px;
+	left: 96px;
+	border: 1px solid #8c8f94;
+}
+
+.wp-swiper-box__part {
+	position: absolute;
+	display: flex;
+	align-items: stretch;
+	box-sizing: border-box;
+	width: 76px;
+	height: 32px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	background: #fff;
+	overflow: hidden;
+}
+
+.wp-swiper-field--corners .wp-swiper-box__part {
+	width: 88px;
+	height: 36px;
+}
+
+.wp-swiper-box__part:focus-within {
+	border-color: var(--wp-swiper-accent, #2271b1);
+	box-shadow: 0 0 0 1px var(--wp-swiper-accent, #2271b1);
+}
+
+#wp-swiper-settings .wp-swiper-box__part input[type="number"] {
+	flex: 1 1 auto;
+	width: 0;
+	min-width: 0;
+	min-height: 0;
+	margin: 0;
+	padding: 0 4px;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	text-align: center;
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+#wp-swiper-settings .wp-swiper-box__part input[type="number"]::-webkit-inner-spin-button,
+#wp-swiper-settings .wp-swiper-box__part input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.wp-swiper-box__unit {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 6px;
+	border-left: 1px solid #dcdcde;
+	background: #f6f7f7;
+	color: #646970;
+	font-size: 12px;
+}
+
+.wp-swiper-box__part--top,
+.wp-swiper-box__part--bottom {
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.wp-swiper-box__part--top {
+	top: 0;
+}
+
+.wp-swiper-box__part--bottom {
+	bottom: 0;
+}
+
+.wp-swiper-box__part--left,
+.wp-swiper-box__part--right {
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.wp-swiper-box__part--left {
+	left: 0;
+}
+
+.wp-swiper-box__part--right {
+	right: 0;
+}
+
+.wp-swiper-box__part--tl {
+	top: 0;
+	left: 0;
+}
+
+.wp-swiper-box__part--tr {
+	top: 0;
+	right: 0;
+}
+
+.wp-swiper-box__part--br {
+	right: 0;
+	bottom: 0;
+}
+
+.wp-swiper-box__part--bl {
+	bottom: 0;
+	left: 0;
+}
+
+#wp-swiper-settings .wp-swiper-box__link {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	border: 1px solid #dcdcde;
+	border-radius: 50%;
+	background: #fff;
+	color: #646970;
+	transform: translate(-50%, -50%);
+	cursor: pointer;
+}
+
+.wp-swiper-box__link-icon {
+	display: block;
+	width: 16px;
+	height: 16px;
+}
+
+#wp-swiper-settings .wp-swiper-box__link:hover {
+	border-color: var(--wp-swiper-accent, #2271b1);
+	color: var(--wp-swiper-accent, #2271b1);
+}
+
+#wp-swiper-settings .wp-swiper-box__link[aria-pressed="true"] {
+	border-color: var(--wp-swiper-accent, #2271b1);
+	background: #f0f6fc;
+	color: var(--wp-swiper-accent, #2271b1);
+}
+
+.wp-swiper-field--box:not(.is-linked) .wp-swiper-box__range {
+	display: none;
+}
+
+.wp-swiper-box__range {
+	margin-bottom: 6px;
+}

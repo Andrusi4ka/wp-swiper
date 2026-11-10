@@ -113,6 +113,8 @@ trait WP_Swiper_Admin_Fields {
 			}
 			if ( ! empty( $field['responsive'] ) && isset( $field['devices'] ) && 'inline' === $field['devices'] ) {
 				self::render_inline_devices_field( $key, $field, $values );
+			} elseif ( ! empty( $field['box'] ) ) {
+				self::render_box_field( $key, $field, $values, $fields );
 			} elseif ( ! empty( $field['responsive'] ) ) {
 				self::render_responsive_field( $key, $field, $values, $fields );
 			} else {
@@ -629,5 +631,96 @@ trait WP_Swiper_Admin_Fields {
 
 		</div>
 		<?php
+	}
+
+	/**
+	 * A box of four values (a field's `box`, 2026-11-10, as WP Banner's):
+	 * Image border's sides, Rounded corners' radii. A frame drawn as they are
+	 * (admin-box.js), each side's or corner's number by it, per device as any
+	 * field per device (tablet and mobile empty: the larger screen's), the
+	 * link in the middle (set together: one number, as before). A slider
+	 * (`range`) over it while they are linked.
+	 *
+	 * @param string $key    The box's first key (the top / top left).
+	 * @param array  $field  Its definition.
+	 * @param array  $values Saved settings.
+	 * @param array  $fields All field definitions.
+	 */
+	private static function render_box_field( $key, $field, $values, $fields ) {
+		$devices = self::devices();
+		$corners = 'border_radius' === $key;
+		$places  = $corners ? array( 'tl', 'tr', 'br', 'bl' ) : array( 'top', 'right', 'bottom', 'left' );
+		$link    = $field['box_link'];
+		$linked  = ! empty( $values[ $link ] );
+		$titles  = $corners
+			? array( __( 'The corners are set together: click to set each on its own', 'wp-swiper' ), __( 'Each corner on its own: click to set them together', 'wp-swiper' ) )
+			: array( __( 'The sides are set together: click to set each on its own', 'wp-swiper' ), __( 'Each side on its own: click to set them together', 'wp-swiper' ) );
+		$title   = $linked ? $titles[0] : $titles[1];
+		?>
+		<div class="wp-swiper-field wp-swiper-field--responsive wp-swiper-field--box wp-swiper-field--<?php echo $corners ? 'corners' : 'sides'; ?><?php echo $linked ? ' is-linked' : ''; ?>" data-field="<?php echo esc_attr( $key ); ?>" data-titles="<?php echo esc_attr( wp_json_encode( $titles ) ); ?>"<?php self::effects_attr( $field ); ?>>
+			<div class="wp-swiper-field__head">
+				<label for="wp-swiper-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $field['label'] ); ?></label>
+				<?php self::field_tips( $field ); ?>
+				<span class="wp-swiper-devices" role="group" aria-label="<?php esc_attr_e( 'Device', 'wp-swiper' ); ?>">
+					<?php foreach ( $devices as $device => $meta ) : ?>
+						<button type="button" class="wp-swiper-devices__btn<?php echo 'desktop' === $device ? ' is-active' : ''; ?>"
+							data-device="<?php echo esc_attr( $device ); ?>"
+							aria-pressed="<?php echo 'desktop' === $device ? 'true' : 'false'; ?>"
+							title="<?php echo esc_attr( $meta[1] ); ?>">
+							<span class="dashicons <?php echo esc_attr( $meta[2] ); ?>"></span>
+						</button>
+					<?php endforeach; ?>
+				</span>
+			</div>
+			<?php if ( ! empty( $field['range'] ) ) : ?>
+				<?php // While linked: one slider for all of them (admin.js syncRange(): the first one shown). ?>
+				<div class="wp-swiper-field__row wp-swiper-field__row--range wp-swiper-box__range">
+					<input type="range" class="wp-swiper-range"
+						value="<?php echo esc_attr( $values[ $key ] ); ?>"
+						min="<?php echo esc_attr( $field['range'][0] ); ?>"
+						max="<?php echo esc_attr( $field['range'][1] ); ?>"
+						step="<?php echo esc_attr( $field['step'] ); ?>"
+						aria-label="<?php echo esc_attr( $field['label'] ); ?>">
+				</div>
+			<?php endif; ?>
+			<div class="wp-swiper-box">
+				<span class="wp-swiper-box__frame" aria-hidden="true"></span>
+				<?php foreach ( $field['box'] as $i => $part_key ) : ?>
+					<?php $part = $fields[ $part_key ]; ?>
+					<span class="wp-swiper-box__part wp-swiper-box__part--<?php echo esc_attr( $places[ $i ] ); ?>">
+						<?php foreach ( WP_Swiper_Settings::device_keys( $part_key, $part ) as $device => $storage_key ) : ?>
+							<input type="number"
+								id="wp-swiper-<?php echo esc_attr( $storage_key ); ?>"
+								class="wp-swiper-devices__input"
+								data-device="<?php echo esc_attr( $device ); ?>"
+								data-part="<?php echo (int) $i; ?>"
+								name="wp_swiper_settings[<?php echo esc_attr( $storage_key ); ?>]"
+								value="<?php echo esc_attr( $values[ $storage_key ] ); ?>"
+								min="<?php echo esc_attr( $part['min'] ); ?>"
+								max="<?php echo esc_attr( $part['max'] ); ?>"
+								step="<?php echo esc_attr( $part['step'] ); ?>"
+								aria-label="<?php echo esc_attr( ( 0 === $i ? self::box_first_label( $corners ) : $part['label'] ) . ' — ' . $devices[ $device ][0] ); ?>"
+								<?php echo 'desktop' === $device ? '' : 'hidden'; ?>>
+						<?php endforeach; ?>
+						<span class="wp-swiper-box__unit" aria-hidden="true">px</span>
+					</span>
+				<?php endforeach; ?>
+				<button type="button" class="wp-swiper-box__link" aria-pressed="<?php echo $linked ? 'true' : 'false'; ?>" title="<?php echo esc_attr( $title ); ?>" aria-label="<?php echo esc_attr( $title ); ?>">
+					<?php echo self::svg_icon( 'border-link.svg', 'wp-swiper-box__link-icon', 'dashicons-admin-links' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own SVG file. ?>
+				</button>
+				<input type="hidden" class="wp-swiper-box__linked" id="wp-swiper-<?php echo esc_attr( $link ); ?>" name="wp_swiper_settings[<?php echo esc_attr( $link ); ?>]" value="<?php echo $linked ? '1' : '0'; ?>">
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * The first value's own name (its field's label says the whole box's).
+	 *
+	 * @param bool $corners Radii (else border sides).
+	 * @return string
+	 */
+	private static function box_first_label( $corners ) {
+		return $corners ? __( 'Top left radius (px)', 'wp-swiper' ) : __( 'Top border width (px)', 'wp-swiper' );
 	}
 }

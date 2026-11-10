@@ -48,6 +48,8 @@ return array(
 	'auto-width'       => array( 'settings' => $slider + array( 'effect' => 'slide', 'auto_width' => '1', 'space_between' => '12' ) ),
 	'marquee'          => array( 'settings' => $slider + array( 'effect' => 'slide', 'marquee' => '1', 'slides_per_view' => '3' ) ),
 	'fade'             => array( 'settings' => $slider + array( 'effect' => 'fade' ) ),
+	// Each corner and side its own (box.spec.js, no snapshots).
+	'slide-box'        => array( 'settings' => $slider + array( 'effect' => 'fade', 'border_rounded' => '1', 'border_radius_linked' => '0', 'border_radius' => '20', 'border_radius_tr' => '0', 'border_radius_br' => '20', 'border_radius_bl' => '0', 'border_radius_tr_mobile' => '10', 'image_border' => '1', 'image_border_linked' => '0', 'image_border_width' => '0', 'image_border_right' => '0', 'image_border_bottom' => '6', 'image_border_left' => '0' ) ),
 	'fade-shadow'      => array( 'settings' => $slider + $shadow + array( 'effect' => 'fade', 'border_rounded' => '1', 'border_radius' => '16' ) ),
 	'fade-shadow-contain' => array( 'settings' => $slider + $shadow + array( 'effect' => 'fade', 'image_fit' => 'contain' ) ),
 	'cube'             => array( 'settings' => $slider + array( 'effect' => 'cube' ) ),

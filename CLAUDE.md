@@ -560,8 +560,37 @@
   gradient`: смуга підпису слайдера / колажу (і повернутого колажу), уся
   площа шматка Art. Тести: `test-render`, `gradient.spec.js`
   (`*-caption-gradient`), `admin.spec.js`.
-- **Повзунки радіусів** (2026-11-06, рішення користувача): усі 7 полів
-  радіусів (слайди, Art, смуги Text mask, мініатюри, лайтбокс, мініатюри
+- **Кути й сторони окремо** (2026-11-10, рішення користувача — як у WP
+  Banner): Radius (px) слайдерів / колажу і Width (px) Image border — блок
+  з рамкою (`render_box_field()`, `assets/js/admin-box.js`, частина `box`
+  між `pages` і `frame`; стилі — кінець `admin-controls.css`, іконка
+  `assets/images/border-link.svg` з WP Banner): числа біля кутів / сторін,
+  посередині ланцюжок. Зв'язано (за замовч., і всі старі слайдери) — одне
+  число, як раніше: введене чи повзунок іде в усі чотири цього пристрою;
+  зв'язати знову — перше (верх / верхній лівий) на всі сторони всіх
+  пристроїв. Повзунка в радіуса слайдів немає (прибрано на прохання
+  користувача: обмежував до 100, число — до 200). Схема
+  малює значення пристрою, що показано. Поля: `box` (4 ключі: перший —
+  старий `border_radius` / `image_border_width`, далі за годинниковою) і
+  `box_link` у схемі; решта — свої поля з `inline_in` (`border_radius_tr`,
+  `_br`, `_bl`, `border_radius_linked`; `image_border_right`, `_bottom`,
+  `_left`, `image_border_linked`), кожне для кожного пристрою. Зв'язок —
+  прихований input «1» / «0»; не надісланий узагалі (стара форма,
+  `cases.php`) — як за замовч., зв'язано (`sanitize_fields()`). Значення Layout
+  ефекту (JSON, `true` / `false`) `writeLayout()` пише в приховане поле як
+  «1» / «0» — рядок «false» при збереженні став би «увімкнено» (знайдено й
+  виправлено до коміту, тест «another effect and back»). Вивід —
+  `WP_Swiper_Settings::box_values()` / `box_css()` / `box_own()` (трейт
+  `trait-wp-swiper-settings-box.php`): у ті самі змінні `--wp-swiper-radius`
+  і `--wp-swiper-border-width`, одне значення або чотири («20px 0px 20px
+  0px»). Тому рамку в CSS задано `border-width` / `border-style` /
+  `border-color` окремо — скорочений `border:` з чотирма товщинами
+  недійсний (так і було, тест упав). `apply_rounded()` нулить усі кути. Art
+  (своя рамка вздовж форми, свій радіус), Text mask, лайтбокс, мініатюри —
+  не чіпали. Тести: `tests/test-box.php`, `tests/browser/box.spec.js`
+  (`slide-box` у `cases.php`, без знімків), `admin.spec.js` (пристрої й успадкування).
+- **Повзунки радіусів** (2026-11-06, рішення користувача): поля
+  радіусів (Art, смуги Text mask, мініатюри, лайтбокс, мініатюри
   лайтбокса, пагінація) — повзунок ліворуч, число праворуч, як Speed /
   Delay (ключ схеми `range` => [ min, max ] повзунка; число може більше —
   `max`). Тепер і для полів «на кожен пристрій»: один повзунок перед
@@ -797,7 +826,7 @@
   `admin-slide-info.js` (вікно Slide info, шрифти, точка фокуса),
   `admin-colors.js` (Pickr, градієнт), `admin-pages.js` (меню сторінок,
   картка ефекту, редактори тексту, значення для пристроїв, `setDevice()`),
-  `admin-frame.js` (рамка прев'ю: пристрій і розмір, поворот, свій розмір
+  `admin-box.js` (блоки кутів і сторін, частина `box`), `admin-frame.js` (рамка прев'ю: пристрій і розмір, поворот, свій розмір
   екрана, Update, Developer mode, темний екран — 2026-11-10 винесено з
   `admin-preview.js` дослівно, частина `frame` перед `preview`, віддає
   `previewFrame`, `$update`, `$stage`, `fitPreview`, `syncScreenFields`,
@@ -960,7 +989,7 @@
 
 **PHPUnit** — див. `tests/README.md`. Треба PHP 7.4+, Composer, WP-CLI і
 окрема база MySQL `wp_swiper_tests`, лише для тестів (тести стирають її
-таблиці). 453 тести (2026-11-10), CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
+таблиці). 459 тестів (2026-11-10), CI (`tests.yml`) ганяє їх на PHP 7.4 / 8.3 при push у
 `main` та на PR.
 
 Вдома (OSPanel): PHP у PATH немає, MySQL на `localhost` не слухає.

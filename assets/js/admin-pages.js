@@ -234,6 +234,10 @@
 			} );
 			// Its slider at the value now inherited (admin.js).
 			shared.syncRange( $field );
+			// A box of four: its frame drawn as they are (admin-box.js).
+			if ( shared.syncBox ) {
+				shared.syncBox( $field );
+			}
 		}
 
 		$( '.wp-swiper-field--responsive' ).each( function () {

@@ -89,6 +89,12 @@ trait WP_Swiper_Settings_Sanitize {
 
 			switch ( $field['type'] ) {
 				case 'checkbox':
+					// A box's link (its hidden input always sent, "1" or "0"):
+					// not sent at all (a form from before it), as by default.
+					if ( null === $value && ! empty( $field['inline_in'] ) && self::is_box_link( $key ) ) {
+						$clean[ $key ] = (bool) $field['default'];
+						break;
+					}
 					$clean[ $key ] = ! empty( $value );
 					break;
 

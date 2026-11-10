@@ -16,8 +16,8 @@ test( 'opens: the slides, the menu and the preview, no errors', async ( { page }
 		files: [].map.call( document.querySelectorAll( 'script[src*="/' + dir + '/assets/js/admin"]' ), ( s ) => s.src.replace( /.*\/assets\/js\/|\?.*/g, '' ) ).sort(),
 		parts: Object.keys( window.wpSwiperEditor.parts ).sort(),
 	} ), path.basename( path.resolve( __dirname, '../..' ) ) );
-	expect( loaded.files ).toEqual( [ 'admin-colors.js', 'admin-frame.js', 'admin-pages.js', 'admin-preview.js', 'admin-slide-info.js', 'admin-slides.js', 'admin.js' ] );
-	expect( loaded.parts ).toEqual( [ 'colors', 'fields', 'focus', 'frame', 'head', 'pages', 'preview', 'slideFonts', 'slideInfo', 'slides', 'tail' ] );
+	expect( loaded.files ).toEqual( [ 'admin-box.js', 'admin-colors.js', 'admin-frame.js', 'admin-pages.js', 'admin-preview.js', 'admin-slide-info.js', 'admin-slides.js', 'admin.js' ] );
+	expect( loaded.parts ).toEqual( [ 'box', 'colors', 'fields', 'focus', 'frame', 'head', 'pages', 'preview', 'slideFonts', 'slideInfo', 'slides', 'tail' ] );
 	// One settings page in view at a time.
 	await openPage( page, 'layout' );
 	await expect( page.locator( '#wp-swiper-page-controls' ) ).toBeHidden();
@@ -342,39 +342,28 @@ test( 'Text mask: Letter alignment, for a row or a column, with strips or withou
 	expect( errors ).toEqual( [] );
 } );
 
-test( 'Radius: a slider left of the number, per device, inheriting', async ( { page } ) => {
+test( 'Radius: its corners per device, inheriting (no slider)', async ( { page } ) => {
 	const errors = await edit( page, 'slide' );
 	await openPage( page, 'layout' );
 	const field = page.locator( '[data-field="border_radius"]' );
-	const range = field.locator( '.wp-swiper-range' );
 	const desktop = page.locator( '#wp-swiper-border_radius' );
 	const tablet = page.locator( '#wp-swiper-border_radius_tablet' );
-	// The radius under Rounded corners, once it is on.
+	// The radius under Rounded corners, once it is on; no slider (the user's choice: it held it to 100).
 	await page.locator( '#wp-swiper-border_rounded' ).check( { force: true } );
 	await expect( field ).toBeVisible();
-	// The slider left of the number.
-	const rangeBox = await range.boundingBox();
-	const numberBox = await desktop.boundingBox();
-	expect( rangeBox.x + rangeBox.width ).toBeLessThanOrEqual( numberBox.x );
-	// The slider moves the number; a number typed moves the slider.
-	await range.fill( '30' );
-	await expect( desktop ).toHaveValue( '30' );
-	await desktop.fill( '42' );
-	await expect( range ).toHaveValue( '42' );
-	// Tablet without its own: the slider at the value it inherits; moved, a value of its own.
+	await expect( field.locator( '.wp-swiper-range' ) ).toHaveCount( 0 );
+	// Over 100 now (up to 200); linked: every corner.
+	await desktop.fill( '150' );
+	await expect( page.locator( '#wp-swiper-border_radius_br' ) ).toHaveValue( '150' );
+	// Tablet without its own: empty, the desktop's shown; typed, its own (all four corners).
 	await field.locator( '.wp-swiper-devices__btn[data-device="tablet"]' ).click();
 	await expect( tablet ).toBeVisible();
 	await expect( tablet ).toHaveValue( '' );
-	await expect( range ).toHaveValue( '42' );
-	await range.fill( '10' );
-	await expect( tablet ).toHaveValue( '10' );
-	await expect( desktop ).toHaveValue( '42' );
-	// Back on desktop: its own value.
-	await field.locator( '.wp-swiper-devices__btn[data-device="desktop"]' ).click();
-	await expect( range ).toHaveValue( '42' );
-	if ( process.env.WP_SWIPER_SHOTS ) {
-		await field.screenshot( { path: process.env.WP_SWIPER_SHOTS + '/radius-slider.png' } );
-	}
+	await expect( tablet ).toHaveAttribute( 'placeholder', '150' );
+	await tablet.fill( '10' );
+	await expect( page.locator( '#wp-swiper-border_radius_bl_tablet' ) ).toHaveValue( '10' );
+	await expect( desktop ).toHaveValue( '150' );
+	await expect( field.locator( '.wp-swiper-devices__btn[data-device="tablet"]' ) ).toHaveClass( /has-value/ );
 	expect( errors ).toEqual( [] );
 } );
 

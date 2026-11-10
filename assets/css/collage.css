@@ -158,7 +158,10 @@
 	position: absolute;
 	inset: 0;
 	z-index: 3;
-	border: var(--wp-swiper-border-width, 0px) solid var(--wp-swiper-border-color, #fff);
+	/* Apart: the shorthand takes one width, a side each needs border-width (WP_Swiper_Settings::box_css()). */
+	border-width: var(--wp-swiper-border-width, 0px);
+	border-style: solid;
+	border-color: var(--wp-swiper-border-color, #fff);
 	border-radius: inherit;
 	pointer-events: none;
 }
@@ -220,7 +223,10 @@
 	position: absolute;
 	inset: 0;
 	z-index: 3;
-	border: var(--wp-swiper-border-width, 0px) solid var(--wp-swiper-border-color, #fff);
+	/* Apart: the shorthand takes one width, a side each needs border-width (WP_Swiper_Settings::box_css()). */
+	border-width: var(--wp-swiper-border-width, 0px);
+	border-style: solid;
+	border-color: var(--wp-swiper-border-color, #fff);
 	border-radius: inherit;
 	pointer-events: none;
 }
