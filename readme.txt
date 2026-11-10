@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.5.0
+Stable tag: 3.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,16 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.6.0 =
+* WP Swiper → Settings: what each role may do with the sliders — Edit sliders, and with it Add and clone, Delete and the WPBakery element. Administrators may always do all of it; until set, WP Swiper is theirs only, as before.
+* Each corner's radius and each side of the image border its own: the slides' Radius, the thumbnails' Radius (the lightbox's thumbnails follow) and Image border's Width are boxes with a link — linked, one number as before. Per device.
+* Image border: its Line — Solid, Dashed, Dotted or Double.
+* Controls: Drag with the mouse — off, the mouse no longer drags the slides; a finger still swipes them on phones and tablets.
+* Collage and Art with more places than photos: a photo dragged in the preview onto any place stays there (it could not go past as many places as there were photos).
+* Preview: a screen size of your own for each device (applied with Update), the device buttons as icons; Developer mode as an icon, its labels readable at any scale.
+* Color picker: an eyedropper beside the value (Chrome, Edge, Opera) — a color from anywhere on the screen.
+* The radii of the slides and the thumbnails have no slider any more: it held them to 100 and 50.
 
 = 3.5.0 =
 * Art loads faster: each window takes the smallest copy of its photo that is as large as it is drawn (on a phone several times less to load), and a page loads only the code of its own Style.
