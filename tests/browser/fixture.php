@@ -1,9 +1,9 @@
 <?php
 /**
  * A page with one slider for the browser tests (tests/browser/*.spec.js):
- * ?case=<name> picks its settings from cases.php, its slides are the first
- * images of the media library (and its first video where a case asks for
- * it). Nothing is saved: it renders the slider the way the preview does
+ * ?case=<name> picks its settings from cases.php, its slides are the tests'
+ * own photos (and video where a case asks for it), media.php: the same on
+ * every machine. Nothing is saved: it renders the slider the way the preview does
  * and enqueues and prints the files the way a page would.
  *
  * Opened over HTTP from this machine only, on the local site
@@ -18,6 +18,9 @@ if ( 'cli' !== PHP_SAPI && 0 !== strpos( $wp_swiper_remote, '127.' ) && '::1' !=
 }
 
 require dirname( __DIR__, 5 ) . '/wp-load.php';
+require_once __DIR__ . '/media.php';
+// ?media=1: the tests' photos and video added to the library (global-setup.js).
+wp_swiper_test_media_request();
 
 $wp_swiper_cases = require __DIR__ . '/cases.php';
 $wp_swiper_name  = isset( $_GET['case'] ) ? sanitize_key( wp_unslash( $_GET['case'] ) ) : '';
@@ -35,33 +38,9 @@ $wp_swiper_case = $wp_swiper_cases[ $wp_swiper_name ] + array(
 	'block'    => false,
 );
 
-// The slides: the first images by ID (the same each time), a caption on
-// each where the case asks for one, the first video first where it does.
-$wp_swiper_ids = get_posts(
-	array(
-		'post_type'      => 'attachment',
-		'post_mime_type' => 'image',
-		'post_status'    => 'inherit',
-		'orderby'        => 'ID',
-		'order'          => 'ASC',
-		'numberposts'    => $wp_swiper_case['photos'],
-		'fields'         => 'ids',
-	)
-);
-if ( $wp_swiper_case['video'] ) {
-	$wp_swiper_video = get_posts(
-		array(
-			'post_type'      => 'attachment',
-			'post_mime_type' => 'video',
-			'post_status'    => 'inherit',
-			'orderby'        => 'ID',
-			'order'          => 'ASC',
-			'numberposts'    => 1,
-			'fields'         => 'ids',
-		)
-	);
-	$wp_swiper_ids   = array_merge( $wp_swiper_video, $wp_swiper_ids );
-}
+// The slides: the tests' own photos (media.php), a caption on each where
+// the case asks for one, the video first where it does.
+$wp_swiper_ids = wp_swiper_test_media( $wp_swiper_case['photos'], $wp_swiper_case['video'] );
 $wp_swiper_slides = array();
 foreach ( $wp_swiper_ids as $wp_swiper_index => $wp_swiper_id ) {
 	// All the keys a saved slide has (WP_Swiper_Admin::posted_slides()).

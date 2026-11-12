@@ -7,7 +7,7 @@
  * ?case=<name>: logs in as the tests' own administrator (made the first
  * time, user "wp-swiper-tests", no password: this page is its only way
  * in), saves a new slider with the case's settings (cases.php) and the
- * first images of the media library, and opens its edit screen.
+ * tests' own photos (media.php), and opens its edit screen.
  * ?delete=<id>: deletes that slider, if the tests made it (that user's);
  * ?cleanup=1: all of them (left by a test that stopped half way).
  * ?login=1: the session only (global-setup.js).
@@ -20,6 +20,7 @@ if ( 'cli' !== PHP_SAPI && 0 !== strpos( $wp_swiper_remote, '127.' ) && '::1' !=
 }
 
 require dirname( __DIR__, 5 ) . '/wp-load.php';
+require_once __DIR__ . '/media.php';
 
 const WP_SWIPER_TESTS_USER = 'wp-swiper-tests';
 
@@ -92,19 +93,9 @@ if ( isset( $_GET['login'] ) ) {
 // What's new seen already (its window would be over the editor).
 update_user_meta( $wp_swiper_user->ID, WP_Swiper_Whats_New::META_SEEN, WP_SWIPER_VERSION );
 
-// The slides: the first images by ID, as fixture.php's.
+// The slides: the tests' own photos (media.php), as fixture.php's.
 $wp_swiper_slides = array();
-$wp_swiper_ids    = get_posts(
-	array(
-		'post_type'      => 'attachment',
-		'post_mime_type' => 'image',
-		'post_status'    => 'inherit',
-		'orderby'        => 'ID',
-		'order'          => 'ASC',
-		'numberposts'    => $wp_swiper_case['photos'],
-		'fields'         => 'ids',
-	)
-);
+$wp_swiper_ids    = wp_swiper_test_media( $wp_swiper_case['photos'] );
 foreach ( $wp_swiper_ids as $wp_swiper_index => $wp_swiper_id ) {
 	$wp_swiper_slides[] = array(
 		'id'                 => $wp_swiper_id,
