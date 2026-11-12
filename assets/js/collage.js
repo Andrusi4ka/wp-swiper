@@ -50,6 +50,10 @@
 	var freeFit = layouts.freeFit;
 	var parseFree = layouts.parseFree;
 	var serializeFree = layouts.serializeFree;
+	var freeLayers = layouts.freeLayers;
+	// Laid out as Freeform is: Freeform, and Overlap (its photos over one
+	// another, each place on a layer of its own: collage-layouts.js).
+	var FREE_STYLES = [ 'freeform', 'overlap' ];
 
 	/**
 	 * @param {Element} el     The .wp-swiper-collage block.
@@ -210,9 +214,12 @@
 		// a place for every place shown; else worked out for the block (from
 		// the shuffle, the photos in their places and their number: Shuffle
 		// gives a new one, Reset the first one back).
+		// Overlap: the same, its own ("overlap:", each place with its layer).
 		function freeCut() {
+			var layered = config.layout[ current ] === 'overlap';
+			var prefix = ( layered ? 'overlap' : 'freeform' ) + ':';
 			var stored = config.cuts && config.cuts[ current ];
-			var set = stored && stored.indexOf( 'freeform:' ) === 0 ? parseFree( stored.slice( 9 ) ) : null;
+			var set = stored && stored.indexOf( prefix ) === 0 ? parseFree( stored.slice( prefix.length ), layered ) : null;
 			var width = grid.clientWidth || 1;
 			var height = grid.clientHeight || 1;
 			freeAspect = width / height;
@@ -226,7 +233,7 @@
 			}, ( ( config.seed || 1 ) * 7919 + cells.length * 131 + 17 ) >>> 0 );
 			free = freeLayout( cells.map( function ( cell ) {
 				return cell.wpRatio;
-			} ), freeAspect, ( Number( config.gap[ current ] ) || 0 ) / height, seededRandom( seed ) );
+			} ), freeAspect, ( Number( config.gap[ current ] ) || 0 ) / height, seededRandom( seed ), layered );
 		}
 
 		// Freeform: its layout as shown now, the block its frame (as stored).
@@ -241,7 +248,11 @@
 			return {
 				aspect: ( grid.clientWidth || 1 ) / v.scale / high,
 				places: free.places.map( function ( r ) {
-					return { x: ( r.x - left ) / high, y: ( r.y - top ) / high, w: r.w / high, h: r.h / high };
+					var framed = { x: ( r.x - left ) / high, y: ( r.y - top ) / high, w: r.w / high, h: r.h / high };
+					if ( typeof r.z === 'number' ) {
+						framed.z = r.z;
+					}
+					return framed;
 				} )
 			};
 		}
@@ -312,9 +323,9 @@
 		 * the page. Measured unturned each time (the Height, its proportions,
 		 * a column's height).
 		 */
-		var TURNED = [ 'grid', 'random', 'scatter', 'freeform' ];
+		var TURNED = [ 'grid', 'random', 'scatter', 'freeform', 'overlap' ];
 		// Laid out in the block itself, as large as fits it: turned where they are.
-		var TURNED_IN_PLACE = [ 'scatter', 'freeform' ];
+		var TURNED_IN_PLACE = [ 'scatter', 'freeform', 'overlap' ];
 		function angleNow() {
 			var layout = config.layout[ current ] || 'grid';
 			if ( TURNED.indexOf( layout ) === -1 && ! COLLAGE_TEMPLATES[ layout ] ) {
@@ -587,9 +598,10 @@
 					scatterView = { scale: scale, x: originX, y: originY, rects: rects };
 					trim( !! held );
 				}
-			} else if ( layout === 'freeform' ) {
+			} else if ( FREE_STYLES.indexOf( layout ) !== -1 ) {
 				// The block keeps its Height; the frame as large as fits it, in its
 				// middle (held where it is while a photo is moved in the preview).
+				// Overlap: each place on its layer, the higher over the lower.
 				mosaicLines = [];
 				if ( free ) {
 					var view = freeHeld || freeFit( free, width, grid.clientHeight, grid.wpAngle );
@@ -597,6 +609,7 @@
 						var r = free.places[ c ];
 						if ( r ) {
 							set( cell, view.x + r.x * view.scale, view.y + r.y * view.scale, r.w * view.scale, r.h * view.scale );
+							cell.style.zIndex = typeof r.z === 'number' ? String( r.z + 1 ) : '';
 						}
 					} );
 					freeView = view;
@@ -715,8 +728,8 @@
 			current = device();
 			var layout = config.layout[ current ] || 'grid';
 			var template = COLLAGE_TEMPLATES[ layout ] ? templateTree( layout ) : null;
-			// Laid out by cuts (Random mosaic, the templates), or Scattered, Freeform: in the block's Height.
-			var cuts = layout === 'random' || layout === 'scatter' || layout === 'freeform' || !! template;
+			// Laid out by cuts (Random mosaic, the templates), or Scattered, Freeform, Overlap: in the block's Height.
+			var cuts = layout === 'random' || layout === 'scatter' || FREE_STYLES.indexOf( layout ) !== -1 || !! template;
 			// Places positioned by the script.
 			var positioned = cuts || layout === 'justified' || layout === 'masonry';
 			var gap = Number( config.gap[ current ] ) || 0;
@@ -775,7 +788,7 @@
 				cut();
 			} else if ( layout === 'scatter' ) {
 				scatterCut();
-			} else if ( layout === 'freeform' ) {
+			} else if ( FREE_STYLES.indexOf( layout ) !== -1 ) {
 				freeCut();
 			}
 
@@ -1185,11 +1198,21 @@
 			 * moved or resized: begin() holds the collage at its scale and spot,
 			 * setRect() puts a place at grid px, cancel() puts all back as they
 			 * were, store() keeps it as it is for this device (the frame the
-			 * block, as shown) and returns it as stored.
+			 * block, as shown) and returns it as stored. Overlap the same
+			 * (layered()), its places with their layers (z): one moved or
+			 * resized goes on top (toTop()), its button sends it to the back
+			 * (toBottom()); no gap.
 			 */
 			free: {
 				active: function () {
-					return !! free && config.layout[ current ] === 'freeform';
+					return !! free && FREE_STYLES.indexOf( config.layout[ current ] ) !== -1;
+				},
+				layered: function () {
+					return !! free && config.layout[ current ] === 'overlap';
+				},
+				// What its layout is stored after ("freeform", "overlap").
+				style: function () {
+					return config.layout[ current ] === 'overlap' ? 'overlap' : 'freeform';
 				},
 				places: function () {
 					if ( ! free || ! freeView ) {
@@ -1197,19 +1220,47 @@
 					}
 					var v = freeView;
 					return free.places.map( function ( r, index ) {
-						return { index: index, left: v.x + r.x * v.scale, top: v.y + r.y * v.scale, width: r.w * v.scale, height: r.h * v.scale };
+						var place = { index: index, left: v.x + r.x * v.scale, top: v.y + r.y * v.scale, width: r.w * v.scale, height: r.h * v.scale };
+						if ( typeof r.z === 'number' ) {
+							place.z = r.z;
+						}
+						return place;
 					} );
 				},
 				gap: function () {
 					var height = grid.clientHeight || 1;
+					if ( this.layered() ) {
+						return 0;
+					}
 					return freeView ? ( Number( config.gap[ current ] ) || 0 ) * Math.min( 1, freeView.scale / height ) : 0;
 				},
 				begin: function () {
 					if ( free && freeView ) {
 						freeHeld = { scale: freeView.scale, x: freeView.x, y: freeView.y, before: free.places.map( function ( r ) {
-							return { x: r.x, y: r.y, w: r.w, h: r.h };
+							var copy = { x: r.x, y: r.y, w: r.w, h: r.h };
+							if ( typeof r.z === 'number' ) {
+								copy.z = r.z;
+							}
+							return copy;
 						} ) };
 					}
+				},
+				// Overlap: place `index` on top of the others, laid out at once.
+				toTop: function ( index ) {
+					if ( this.layered() && freeLayers( free.places, index, 'top' ) ) {
+						place();
+					}
+				},
+				/*
+				 * Overlap: place `index` under all the others, kept for this
+				 * device; returns the layout as stored ('' : none, or it was
+				 * there already).
+				 */
+				toBottom: function ( index ) {
+					if ( ! this.layered() || ! freeLayers( free.places, index, 'bottom' ) ) {
+						return '';
+					}
+					return this.store();
 				},
 				setRect: function ( index, rect ) {
 					var v = freeHeld || freeView;
@@ -1238,7 +1289,7 @@
 					free = framed;
 					var text = serializeFree( free );
 					config.cuts = config.cuts || {};
-					config.cuts[ current ] = 'freeform:' + text;
+					config.cuts[ current ] = this.style() + ':' + text;
 					freeSet = true;
 					freeHeld = null;
 					place();
@@ -1262,13 +1313,17 @@
 						return null;
 					}
 					framed.places.splice( index, 1 );
+					// Overlap: the layers left numbered from 0 again.
+					if ( this.layered() ) {
+						freeLayers( framed.places, -1 );
+					}
 					var list = cells.map( function ( cell ) {
 						return cell.wpReal;
 					} ).concat( queue );
 					list.push( list.splice( index, 1 )[ 0 ] );
 					var text = serializeFree( framed );
 					config.cuts = config.cuts || {};
-					config.cuts[ current ] = 'freeform:' + text;
+					config.cuts[ current ] = this.style() + ':' + text;
 					takeOrder( list );
 					config.count[ current ] = cells.length - 1;
 					build();

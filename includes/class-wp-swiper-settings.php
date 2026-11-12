@@ -75,6 +75,14 @@ class WP_Swiper_Settings {
 	const COLLAGE_FREEFORM = 'freeform';
 
 	/**
+	 * The collage's Overlap Style: Freeform's photos over one another, each
+	 * place on a layer of its own (collage.js freeLayout(), then by hand in
+	 * the preview); kept in collage_cuts too, "overlap:" and its places with
+	 * their layers (sanitize_freeform()).
+	 */
+	const COLLAGE_OVERLAP = 'overlap';
+
+	/**
 	 * Effects whose photos can have a shadow (Image shadow): those where they
 	 * stand apart, Fade and Thumbnails, one photo framed by it, and Flip, its
 	 * card turning with it (see shadow() for the rest of the conditions).

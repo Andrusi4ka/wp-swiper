@@ -593,9 +593,10 @@
 					setCuts( data.device, 'scatter:' + data.layout );
 					setByHand( data.device, true );
 				} else if ( data.wpSwiper === 'collage-free' && typeof data.layout === 'string' && /^[0-9.,;-]{1,4000}$/.test( data.layout ) ) {
-					// Freeform's layout, a photo moved or resized there; checked again
-					// when saved (WP_Swiper_Settings::sanitize_freeform()).
-					setCuts( data.device, 'freeform:' + data.layout );
+					// Freeform's layout (or Overlap's, its places with their layers), a
+					// photo moved, resized or sent back there; checked again when
+					// saved (WP_Swiper_Settings::sanitize_freeform()).
+					setCuts( data.device, ( data.style === 'overlap' ? 'overlap:' : 'freeform:' ) + data.layout );
 					setByHand( data.device, true );
 				}
 			} );

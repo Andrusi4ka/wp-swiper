@@ -13,7 +13,7 @@ const CASES = [
 	'expand-shadow', 'slide-loop-shadow', 'marquee-shadow',
 	'fade', 'fade-shadow', 'fade-shadow-contain', 'cube', 'coverflow', 'flip', 'cards', 'creative', 'creative-carousel',
 	'thumbs', 'video', 'background',
-	'collage-scatter', 'collage-freeform', 'collage-grid', 'collage-masonry',
+	'collage-scatter', 'collage-freeform', 'collage-overlap', 'collage-grid', 'collage-masonry',
 	'collage-justified', 'collage-random', 'collage-feature',
 	'collage-content', 'collage-content-scatter', 'collage-content-feature', 'collage-content-shortcode',
 	'art-ring', 'art-ring-content', 'art-grid-circle', 'art-grid-circle-content', 'art-grid-square', 'art-grid-square-content',

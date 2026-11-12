@@ -67,9 +67,9 @@ return array(
 			__( 'Ken Burns zoom, zoom on hover, gradient', 'wp-swiper' ),
 		),
 		'collage'   => array(
-			__( 'Templates, Grid, Justified rows, Masonry, Random mosaic, Scattered, Freeform', 'wp-swiper' ),
+			__( 'Templates, Grid, Justified rows, Masonry, Random mosaic, Scattered, Freeform, Overlap', 'wp-swiper' ),
 			__( 'The other photos swap in, one place at a time', 'wp-swiper' ),
-			__( 'In the preview: drag photos to swap them, drag lines and edges to resize, move them freely (Freeform)', 'wp-swiper' ),
+			__( 'In the preview: drag photos to swap them, lines and edges to resize; move them freely (Freeform, Overlap)', 'wp-swiper' ),
 			__( 'Rotation: the whole collage turned, its photos upright, per device', 'wp-swiper' ),
 			__( 'Content in a place: an image, text or a shortcode (a form, a theme\'s HTML block) instead of a photo', 'wp-swiper' ),
 			__( 'Image shadow, zoom on hover, gradient; can be a background', 'wp-swiper' ),

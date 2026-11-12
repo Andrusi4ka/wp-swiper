@@ -411,7 +411,8 @@ trait WP_Swiper_Settings_Sanitize {
 	 * (sanitize_mosaic()), "feature-left:V0.7[0,H0.5[1,2]]". collage.js uses
 	 * them while they have the template's places. Or Scattered's, "scatter:"
 	 * and its places (sanitize_scatter()); or Freeform's, "freeform:" and its
-	 * places (sanitize_freeform()).
+	 * places (sanitize_freeform()); or Overlap's, "overlap:" and its places
+	 * with their layers.
 	 *
 	 * @param string $value Raw input.
 	 * @return string As above; '' when it is not one.
@@ -424,6 +425,8 @@ trait WP_Swiper_Settings_Sanitize {
 			$cuts = self::sanitize_scatter( $match[2] );
 		} elseif ( self::COLLAGE_FREEFORM === $match[1] ) {
 			$cuts = self::sanitize_freeform( $match[2] );
+		} elseif ( self::COLLAGE_OVERLAP === $match[1] ) {
+			$cuts = self::sanitize_freeform( $match[2], true );
 		} elseif ( in_array( $match[1], self::COLLAGE_TEMPLATES, true ) ) {
 			$cuts = self::sanitize_mosaic( $match[2] );
 		} else {
@@ -505,12 +508,15 @@ trait WP_Swiper_Settings_Sanitize {
 	 * the frame's width / height (0.05–20), then each place's x,y,w,h in the
 	 * frame's units (its height is 1): "1.8;0.1,0.05,0.5,0.4;0.65,0,0.3,0.45".
 	 * x and y -20–20 (a place may run past the frame), w and h 0.005–20; at
-	 * least one place, at most 100.
+	 * least one place, at most 100. Overlap's (`$layers`): each place's
+	 * x,y,w,h,z, z its layer (a whole number 0–99, 0 the lowest; 4 numbers:
+	 * as it comes in place order, collage.js parseFree()).
 	 *
-	 * @param string $value Raw input.
+	 * @param string $value  Raw input.
+	 * @param bool   $layers Overlap's: with layers.
 	 * @return string As above, numbers to four decimals; '' when it is not one.
 	 */
-	public static function sanitize_freeform( $value ) {
+	public static function sanitize_freeform( $value, $layers = false ) {
 		$value = preg_replace( '/\s+/', '', (string) $value );
 		if ( '' === $value || strlen( $value ) > 4000 ) {
 			return '';
@@ -535,6 +541,14 @@ trait WP_Swiper_Settings_Sanitize {
 		$out = array( $aspect );
 		foreach ( $parts as $part ) {
 			$numbers = explode( ',', $part );
+			$layer   = '';
+			if ( $layers && 5 === count( $numbers ) ) {
+				$layer = array_pop( $numbers );
+				if ( ! preg_match( '/^\d{1,2}$/', $layer ) ) {
+					return '';
+				}
+				$layer = ',' . (int) $layer;
+			}
 			if ( 4 !== count( $numbers ) ) {
 				return '';
 			}
@@ -545,7 +559,7 @@ trait WP_Swiper_Settings_Sanitize {
 			if ( null === $x || null === $y || null === $w || null === $h ) {
 				return '';
 			}
-			$out[] = $x . ',' . $y . ',' . $w . ',' . $h;
+			$out[] = $x . ',' . $y . ',' . $w . ',' . $h . $layer;
 		}
 		return implode( ';', $out );
 	}

@@ -248,15 +248,32 @@
 		window.parent.postMessage( { wpSwiper: 'collage-count', device: device, count: done.count }, window.location.origin );
 		if ( button.wpFree ) {
 			store( api, device, done.order, '' );
-			postFree( device, done.layout );
+			postFree( device, done.layout, api.free.style() );
 		} else {
 			store( api, device, done.order, done.layout );
 		}
 	}, true );
 
+	/*
+	 * Overlap: a photo's button that sends it under all the others
+	 * (collage.js collage() free.toBottom()), kept for this device; the
+	 * editor stores the layout (admin.js; Undo brings it back).
+	 */
+	document.addEventListener( 'click', function ( e ) {
+		var button = e.target.closest && e.target.closest( '.wp-swiper-collage__back' );
+		if ( ! button ) {
+			return;
+		}
+		e.preventDefault();
+		e.stopPropagation();
+		var api = button.wpApi;
+		var device = api.places().device;
+		postFree( device, api.free.toBottom( button.wpIndex ), api.free.style() );
+	}, true );
+
 	document.addEventListener( 'pointerdown', function ( e ) {
-		// The button that takes a place out is no photo to drag.
-		if ( e.target.closest && e.target.closest( '.wp-swiper-collage__remove' ) ) {
+		// The buttons that take a place out or send a photo back are no photo to drag.
+		if ( e.target.closest && e.target.closest( '.wp-swiper-collage__remove, .wp-swiper-collage__back' ) ) {
 			return;
 		}
 		var cell = e.button === 0 && e.target.closest( '.wp-swiper-collage__cell' );
@@ -403,6 +420,8 @@
 	// Scattered's button that takes a place out: its size (preview-dev.css) and words.
 	var REMOVE_SIZE = 24;
 	var REMOVE_LABEL = ( window.wpSwiperPreviewI18n && window.wpSwiperPreviewI18n.removePlace ) || 'Remove this place from the collage';
+	// Overlap's button that sends a photo under the others (left of the ×).
+	var BACK_LABEL = ( window.wpSwiperPreviewI18n && window.wpSwiperPreviewI18n.sendBack ) || 'Send this photo to the back';
 	var MIN_SHARE = 0.08;
 	var MIN_PART = 40; // px.
 	var resize = null;
@@ -444,31 +463,56 @@
 			grid.appendChild( handle );
 		} );
 
-		[].forEach.call( grid.querySelectorAll( ':scope > .wp-swiper-collage__remove, :scope > .wp-swiper-collage__grip' ), function ( node ) {
+		[].forEach.call( grid.querySelectorAll( ':scope > .wp-swiper-collage__remove, :scope > .wp-swiper-collage__back, :scope > .wp-swiper-collage__grip' ), function ( node ) {
 			node.parentNode.removeChild( node );
 		} );
 
 		// Freeform: each photo's corners and edges resize it (free below), and a
 		// button by its top right corner (left of that corner's handle) takes
-		// its place out.
+		// its place out. Overlap: the same, and left of the × a button that
+		// sends the photo under the others (not the lowest one's); all of them
+		// on its layer (collage.js place()), so a photo over it covers them too.
 		if ( api.free && api.free.active() ) {
-			api.free.places().forEach( function ( place ) {
-				if ( ! api.free.removable( place.index ) || place.width < REMOVE_SIZE + CORNER + 12 ) {
+			var layered = api.free.layered();
+			var places = api.free.places();
+			var layerOf = function ( node, place ) {
+				if ( layered && typeof place.z === 'number' ) {
+					node.style.zIndex = String( place.z + 1 );
+				}
+			};
+			places.forEach( function ( place ) {
+				var removable = api.free.removable( place.index ) && place.width >= REMOVE_SIZE + CORNER + 12;
+				if ( removable ) {
+					var button = document.createElement( 'button' );
+					button.type = 'button';
+					button.className = 'wp-swiper-collage__remove';
+					button.title = REMOVE_LABEL;
+					button.setAttribute( 'aria-label', REMOVE_LABEL );
+					button.style.left = ( place.left + place.width - REMOVE_SIZE - CORNER - 6 ) + 'px';
+					button.style.top = ( place.top + 6 ) + 'px';
+					button.wpIndex = place.index;
+					button.wpApi = api;
+					button.wpFree = true;
+					layerOf( button, place );
+					grid.appendChild( button );
+				}
+				// The lowest photo is at the back already.
+				if ( ! layered || ! place.z || place.width < 2 * REMOVE_SIZE + CORNER + 16 ) {
 					return;
 				}
-				var button = document.createElement( 'button' );
-				button.type = 'button';
-				button.className = 'wp-swiper-collage__remove';
-				button.title = REMOVE_LABEL;
-				button.setAttribute( 'aria-label', REMOVE_LABEL );
-				button.style.left = ( place.left + place.width - REMOVE_SIZE - CORNER - 6 ) + 'px';
-				button.style.top = ( place.top + 6 ) + 'px';
-				button.wpIndex = place.index;
-				button.wpApi = api;
-				button.wpFree = true;
-				grid.appendChild( button );
+				var back = document.createElement( 'button' );
+				back.type = 'button';
+				back.className = 'wp-swiper-collage__back';
+				back.title = BACK_LABEL;
+				back.setAttribute( 'aria-label', BACK_LABEL );
+				back.style.left = ( place.left + place.width - ( removable ? 2 * REMOVE_SIZE + 4 : REMOVE_SIZE ) - CORNER - 6 ) + 'px';
+				back.style.top = ( place.top + 6 ) + 'px';
+				back.wpIndex = place.index;
+				back.wpApi = api;
+				layerOf( back, place );
+				grid.appendChild( back );
 			} );
-			api.free.places().forEach( function ( place ) {
+			places.forEach( function ( place ) {
 				GRIPS.forEach( function ( grip ) {
 					var corner = grip.sides.length === 2;
 					var node = document.createElement( 'div' );
@@ -489,9 +533,17 @@
 					node.wpIndex = place.index;
 					node.wpSides = grip.sides;
 					node.wpName = grip.name;
+					layerOf( node, place );
 					grid.appendChild( node );
 				} );
 			} );
+			// Overlap: the buttons on the same layer as the handles, so after
+			// them, over them (Freeform's × is over them by its z-index).
+			if ( layered ) {
+				[].forEach.call( grid.querySelectorAll( ':scope > .wp-swiper-collage__remove, :scope > .wp-swiper-collage__back' ), function ( button ) {
+					grid.appendChild( button );
+				} );
+			}
 		}
 
 		// Scattered: each photo's two outer edges (scatter below), and a button
@@ -687,6 +739,9 @@
 	 * stays at its scale (collage.js collage() free.begin()); on the release
 	 * it is kept for the device in view and the editor stores it (admin.js:
 	 * a message with the layout); Escape puts it back.
+	 * Overlap: the same, but nothing is in the way (the photo goes over the
+	 * others, on top of them while moved or resized; their edges still
+	 * snapped to) and no swap: let go over another photo, it stays there.
 	 */
 	var SNAP = 8; // px.
 	var free = null;
@@ -909,14 +964,17 @@
 			return;
 		}
 		var gap = api.free.gap();
+		var layered = api.free.layered();
 		var others = places.filter( function ( p ) {
 			return p.index !== index;
 		} );
 		// Each other place kept as far away as now, at most a Gap; one it runs
 		// into already (a layout made for another Gap or block) does not count.
+		// Overlap: none is in the way (the photo goes over them), their edges
+		// still snapped to.
 		others.forEach( function ( o ) {
 			var apart = Math.max( o.left - start.left - start.width, start.left - o.left - o.width, o.top - start.top - start.height, start.top - o.top - o.height );
-			o.skip = apart < -0.5;
+			o.skip = layered || apart < -0.5;
 			o.keep = Math.max( 0, Math.min( gap, apart ) );
 		} );
 		free = {
@@ -928,6 +986,7 @@
 			rect: start,
 			others: others,
 			gap: gap,
+			layered: layered,
 			sides: grip ? grip.wpSides : null,
 			name: grip ? grip.wpName : '',
 			bounds: { left: 0, top: 0, right: grid.clientWidth, bottom: grid.clientHeight },
@@ -952,6 +1011,8 @@
 			}
 			free.moved = true;
 			free.api.free.begin();
+			// Overlap: the photo moved or resized over all the others (Escape: back).
+			free.api.free.toTop( free.index );
 			free.cell.classList.add( 'is-moved' );
 			document.documentElement.classList.add( free.sides ? 'wp-swiper-collage-resizing' : 'wp-swiper-collage-dragging', 'wp-swiper-collage-free-' + ( free.sides ? 'resizing' : 'moving' ), 'wp-swiper-collage-grip-' + ( free.name || 'none' ) );
 		}
@@ -964,9 +1025,10 @@
 			free.api.free.setRect( free.index, free.rect );
 			return;
 		}
-		// Over another photo: the swap shown (freeMark()); else moved.
+		// Over another photo: the swap shown (freeMark()); else moved. Overlap:
+		// always moved (a photo is put over another one there, not swapped).
 		var point = gridPoint( free.grid, e.clientX, e.clientY );
-		var over = freeTarget( point.x, point.y );
+		var over = free.layered ? null : freeTarget( point.x, point.y );
 		freeMark( over );
 		freeGhostAt( e.clientX, e.clientY );
 		if ( null === over ) {
@@ -1001,10 +1063,10 @@
 			// Kept as it is: a new order alone would work out another layout.
 			var kept = api.free.store();
 			store( api, done.device, list, '' );
-			postFree( done.device, kept );
+			postFree( done.device, kept, api.free.style() );
 			return;
 		}
-		postFree( done.device, api.free.store() );
+		postFree( done.device, api.free.store(), api.free.style() );
 	} );
 
 	function cancelFree() {
@@ -1031,9 +1093,10 @@
 		}
 	} );
 
-	function postFree( device, text ) {
+	// `style`: what the layout is stored after, "freeform" or "overlap".
+	function postFree( device, text, style ) {
 		if ( text && window.parent && window.parent !== window ) {
-			window.parent.postMessage( { wpSwiper: 'collage-free', device: device, layout: text }, window.location.origin );
+			window.parent.postMessage( { wpSwiper: 'collage-free', device: device, layout: text, style: style }, window.location.origin );
 		}
 	}
 

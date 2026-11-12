@@ -204,7 +204,12 @@
 
 		// The space to each place's nearest neighbour to the right and below
 		// (sharing some of its height, or width), where nothing is between.
+		// Not Overlap's: its photos lie over one another, no Gap between them.
+		var layered = grid.classList.contains( 'wp-swiper-collage__grid--overlap' );
 		var between = function ( a, b, across ) {
+			if ( layered ) {
+				return null;
+			}
 			var from = across ? Math.max( a.top, b.top ) : Math.max( a.left, b.left );
 			var to = across ? Math.min( a.bottom, b.bottom ) : Math.min( a.right, b.right );
 			var space = across ? b.left - a.right : b.top - a.bottom;

@@ -1,0 +1,12 @@
+{
+	"scripts": [
+		"wp-swiper",
+		"wp-swiper-content",
+		"wp-swiper-collage-layouts",
+		"wp-swiper-collage"
+	],
+	"styles": [
+		"wp-swiper",
+		"wp-swiper-collage"
+	]
+}

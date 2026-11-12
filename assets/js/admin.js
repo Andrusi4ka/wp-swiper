@@ -814,8 +814,14 @@
 			$( '.wp-swiper-preview__hint[data-effect="scatter"]' ).prop( 'hidden', ! collageUses( [ 'scatter' ] ) );
 			// Freeform: photos moved and resized by hand.
 			$( '.wp-swiper-preview__hint[data-effect="freeform"]' ).prop( 'hidden', ! collageUses( [ 'freeform' ] ) );
+			// Overlap: the same, over one another, on layers; no Gap (the photos lie over one another).
+			$( '.wp-swiper-preview__hint[data-effect="overlap"]' ).prop( 'hidden', ! collageUses( [ 'overlap' ] ) );
+			if ( collageUses( [ 'overlap' ] ) ) {
+				field( 'collage_gap' ).hide();
+			}
 			// The preview says its photos swap by dragging.
-			$( '.wp-swiper-preview__hint[data-effect="collage"]' ).prop( 'hidden', ! collage );
+			// Not Overlap's: a photo dropped on another one lies over it there.
+			$( '.wp-swiper-preview__hint[data-effect="collage"]' ).prop( 'hidden', ! collage || collageUses( [ 'overlap' ] ) );
 			// The collage's Height: not for the styles as tall as their photos make them.
 			field( 'height' ).toggle( ! collage || ! collageUses( [ 'justified', 'masonry' ] ) );
 			// Image proportions (Slide effect, data-effects): a horizontal row of slides
@@ -832,14 +838,14 @@
 			field( 'slide_distribution' ).toggle( ratioOn.length > 0 );
 			// Its places always crop their photos (Cover): no Image fit.
 			field( 'image_fit' ).toggle( ! collage );
-			field( 'collage_count' ).toggle( collageUses( [ 'grid', 'justified', 'masonry', 'random', 'scatter', 'freeform' ] ) );
+			field( 'collage_count' ).toggle( collageUses( [ 'grid', 'justified', 'masonry', 'random', 'scatter', 'freeform', 'overlap' ] ) );
 			field( 'collage_columns' ).toggle( collageUses( [ 'grid', 'masonry' ] ) );
 			field( 'collage_row_height' ).toggle( collageUses( [ 'justified' ] ) );
 			field( 'collage_row_exact' ).toggle( collageUses( [ 'justified' ] ) );
 			// Rotation: the Styles laid out in the Height (collage.js orient());
 			// Fill or Fit once this device's angle (its own or inherited) is not
 			// 0, not for Scattered and Freeform (always as large as fits).
-			var turnable = collageUses( [ 'grid', 'random', 'scatter', 'freeform' ].concat( TEMPLATES ) );
+			var turnable = collageUses( [ 'grid', 'random', 'scatter', 'freeform', 'overlap' ].concat( TEMPLATES ) );
 			var turnFits = collageUses( [ 'grid', 'random' ].concat( TEMPLATES ) );
 			var collageAngle = '';
 			field( 'collage_rotate' ).find( '.wp-swiper-devices__input' ).each( function () {
@@ -850,7 +856,7 @@
 			field( 'collage_rotate_fit' ).toggle( turnFits && Number( collageAngle ) !== 0 );
 			// Content in a place: not Justified rows or Masonry, not a background
 			// (render.php collage_content()); its settings while it is on.
-			var contentable = collageUses( [ 'grid', 'random', 'scatter', 'freeform' ].concat( TEMPLATES ) ) && ! $( '#wp-swiper-background' ).is( ':checked' );
+			var contentable = collageUses( [ 'grid', 'random', 'scatter', 'freeform', 'overlap' ].concat( TEMPLATES ) ) && ! $( '#wp-swiper-background' ).is( ':checked' );
 			var contentOn = contentable && $( '#wp-swiper-collage_content' ).is( ':checked' );
 			$( '.wp-swiper-block[data-block="collage_content"]' ).toggle( contentable );
 			field( 'collage_content' ).toggle( contentable );

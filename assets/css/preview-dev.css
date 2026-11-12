@@ -69,8 +69,10 @@
 
 /* Scattered (preview-collage.js): a round button in a photo's corner that
    takes its place out of the collage, shown while the pointer is over the
-   collage (clearer over its own photo); not while dragging or resizing. */
-.wp-swiper-collage__remove {
+   collage (clearer over its own photo); not while dragging or resizing.
+   Overlap: beside it, an arrow that sends the photo under the others. */
+.wp-swiper-collage__remove,
+.wp-swiper-collage__back {
 	position: absolute;
 	z-index: 7;
 	display: flex;
@@ -113,7 +115,8 @@
 	transform: rotate(-45deg);
 }
 
-.wp-swiper-collage__grid:hover > .wp-swiper-collage__remove {
+.wp-swiper-collage__grid:hover > .wp-swiper-collage__remove,
+.wp-swiper-collage__grid:hover > .wp-swiper-collage__back {
 	opacity: 0.75;
 }
 
@@ -124,8 +127,40 @@
 }
 
 .wp-swiper-collage-dragging .wp-swiper-collage__remove,
-.wp-swiper-collage-resizing .wp-swiper-collage__remove {
+.wp-swiper-collage-resizing .wp-swiper-collage__remove,
+.wp-swiper-collage-dragging .wp-swiper-collage__back,
+.wp-swiper-collage-resizing .wp-swiper-collage__back {
 	visibility: hidden;
+}
+
+/* Overlap's arrow down: a stem and its head. */
+.wp-swiper-collage__back::before {
+	content: "";
+	position: absolute;
+	top: 6px;
+	left: 11px;
+	width: 2px;
+	height: 11px;
+	border-radius: 1px;
+	background: currentColor;
+}
+
+.wp-swiper-collage__back::after {
+	content: "";
+	position: absolute;
+	top: 10px;
+	left: 8px;
+	width: 6px;
+	height: 6px;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(45deg);
+}
+
+.wp-swiper-collage__grid > .wp-swiper-collage__back:hover,
+.wp-swiper-collage__grid > .wp-swiper-collage__back:focus-visible {
+	background: #2271b1;
+	opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {

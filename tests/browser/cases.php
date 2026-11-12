@@ -101,6 +101,13 @@ return array(
 	'collage-rotate-free-auto' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'freeform', 'collage_count' => '7', 'collage_rotate' => '20', 'height_unit' => 'auto', 'lightbox' => '1' ) ),
 	'collage-scatter'  => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'scatter', 'collage_count' => '6', 'lightbox' => '1' ) ),
 	'collage-freeform' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'freeform', 'collage_count' => '7', 'lightbox' => '1' ) ),
+	// Overlap: Freeform's photos over one another, each on its layer; with a shadow (it shows which lies on top).
+	'collage-overlap'  => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '7', 'lightbox' => '1', 'image_shadow' => '1', 'image_shadow_y' => '8', 'image_shadow_blur' => '16', 'image_shadow_color' => 'rgba(0,0,0,0.45)' ) ),
+	// Overlap set by hand: two photos, the first one's right part over the second (its layer higher); and the other way round.
+	'collage-overlap-set' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '2', 'lightbox' => '1', 'collage_cuts' => 'overlap:1.6;0.1,0.1,0.8,0.8,1;0.6,0.1,0.8,0.8,0' ), 'photos' => 2 ),
+	'collage-overlap-set-under' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '2', 'lightbox' => '1', 'collage_cuts' => 'overlap:1.6;0.1,0.1,0.8,0.8,0;0.6,0.1,0.8,0.8,1' ), 'photos' => 2 ),
+	// Overlap turned (Rotation): where it is, as large as fits.
+	'collage-overlap-rotate' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '6', 'collage_rotate' => '-15', 'lightbox' => '1' ) ),
 	'collage-grid'     => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'lightbox' => '1' ) ),
 	'collage-masonry'  => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'masonry', 'lightbox' => '1' ) ),
 	'collage-justified' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'justified', 'lightbox' => '1' ) ),

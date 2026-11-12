@@ -85,6 +85,57 @@ test( 'Collage: a photo dragged onto another in the preview, the two swapped, th
 	expect( errors ).toEqual( [] );
 } );
 
+test( 'Collage Overlap: the photo moved goes on top, its arrow sends it back, saved as it is', async ( { page } ) => {
+	// Two photos, the first over the second (cases.php collage-overlap-set).
+	const errors = await edit( page, 'collage-overlap-set' );
+	await openPage( page, 'layout' );
+	// No Gap (they lie over one another); its own hints over the preview.
+	await expect( page.locator( '.wp-swiper-field[data-field="collage_gap"]' ) ).toBeHidden();
+	await expect( page.locator( '.wp-swiper-preview__hint[data-effect="overlap"]' ).first() ).toBeVisible();
+	await expect( page.locator( '.wp-swiper-preview__hint[data-effect="freeform"]' ).first() ).toBeHidden();
+	// Nor "drop a photo on another to swap them": here it lies over it.
+	await expect( page.locator( '.wp-swiper-preview__hint[data-effect="collage"]' ) ).toBeHidden();
+
+	const cells = frame( page ).locator( '.wp-swiper-collage__cell' );
+	await expect( cells ).toHaveCount( 2 );
+	const layers = () => cells.evaluateAll( ( list ) => list.map( ( cell ) => Number( cell.style.zIndex ) ) );
+	const photos = () => cells.evaluateAll( ( list ) => list.map( ( cell ) => cell.querySelector( 'img' ).getAttribute( 'src' ) ) );
+	const cuts = page.locator( 'input[name="wp_swiper_settings[collage_cuts]"]' );
+	expect( await layers() ).toEqual( [ 2, 1 ] );
+	const before = await photos();
+
+	// The lower photo, by its own part (right of the first), moved a little
+	// left, over the first: on top now, nothing swapped.
+	await cells.nth( 1 ).scrollIntoViewIfNeeded();
+	const box = await cells.nth( 1 ).boundingBox();
+	const x = box.x + box.width * 0.8;
+	const y = box.y + box.height / 2;
+	await page.mouse.move( x, y );
+	await page.mouse.down();
+	await page.mouse.move( x - 10, y, { steps: 3 } );
+	await page.mouse.move( x - 40, y, { steps: 6 } );
+	await page.mouse.up();
+	await expect.poll( layers ).toEqual( [ 1, 2 ] );
+	expect( await photos() ).toEqual( before );
+	await expect.poll( () => cuts.inputValue() ).toMatch( /^overlap:[\d.]+;[-\d.,]+,0;[-\d.,]+,1$/ );
+
+	// Its arrow: under the other one again (the lower one has none).
+	const back = frame( page ).locator( '.wp-swiper-collage__back' );
+	await expect( back ).toHaveCount( 1 );
+	await back.click();
+	await expect.poll( layers ).toEqual( [ 2, 1 ] );
+	await expect.poll( () => cuts.inputValue() ).toMatch( /^overlap:[\d.]+;[-\d.,]+,1;[-\d.,]+,0$/ );
+
+	// Saved: as it was left.
+	const kept = await cuts.inputValue();
+	await Promise.all( [ page.waitForNavigation(), page.click( '#publish' ) ] );
+	await page.waitForSelector( '#wp-swiper-settings' );
+	await shown( page );
+	await expect( page.locator( 'input[name="wp_swiper_settings[collage_cuts]"]' ) ).toHaveValue( kept );
+	await expect.poll( layers ).toEqual( [ 2, 1 ] );
+	expect( errors ).toEqual( [] );
+} );
+
 test( 'Art, more windows than photos: a photo dragged onto the 12th window, saved, still there', async ( { page } ) => {
 	const errors = await edit( page, 'art-shape-many' );
 	const pieces = frame( page ).locator( '.wp-swiper-art__piece:not([hidden])' );

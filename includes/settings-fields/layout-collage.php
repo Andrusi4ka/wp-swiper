@@ -56,8 +56,9 @@ return array(
 			'random'         => __( 'Random mosaic', 'wp-swiper' ),
 			'scatter'        => __( 'Scattered', 'wp-swiper' ),
 			'freeform'       => __( 'Freeform', 'wp-swiper' ),
+			'overlap'        => __( 'Overlap', 'wp-swiper' ),
 		),
-		'help'            => __( 'Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Scattered: a photo in the middle and the others around it in uneven arms, each shaped after its photo, the gap between neighbours always the same; as large as the Height and the width allow, the corners left empty. Freeform: the photos at random places and sizes, a Gap apart, each then moved and resized by hand in the preview; all of it scales with the Height. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them; as a background, as tall as the block (the places stretched or shrunk to it).', 'wp-swiper' ),
+		'help'            => __( 'Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Scattered: a photo in the middle and the others around it in uneven arms, each shaped after its photo, the gap between neighbours always the same; as large as the Height and the width allow, the corners left empty. Freeform: the photos at random places and sizes, a Gap apart, each then moved and resized by hand in the preview; all of it scales with the Height. Overlap: as Freeform, but the photos lie over one another, each on a layer of its own; placed by hand in the preview, the photo moved goes on top. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them; as a background, as tall as the block (the places stretched or shrunk to it).', 'wp-swiper' ),
 	),
 	// The order of the photos without one set (collage_order): the shuffle
 	// of this number (the same number, the same arrangement). Kept inside
@@ -82,7 +83,7 @@ return array(
 		'type'       => 'order',
 		'responsive' => true,
 		'default'    => '',
-		'help'       => __( 'Drag a photo onto another place in the preview to swap the two; with Random mosaic and the templates, drag a line between photos to resize them; with Scattered, drag a photo\'s outer edge to resize it, or drop it on a dashed frame to move it to the end of an arm; with Freeform, drag a photo anywhere (it keeps a Gap from the others) or its corner or edge to resize it, and drop it on another photo to swap the two. Shuffle mixes the photos at random (Freeform: a new layout too). All only for the device chosen (a tablet or phone without its own takes the larger screen\'s); Reset goes back to that, order and sizes.', 'wp-swiper' ),
+		'help'       => __( 'Drag a photo onto another place in the preview to swap the two; with Random mosaic and the templates, drag a line between photos to resize them; with Scattered, drag a photo\'s outer edge to resize it, or drop it on a dashed frame to move it to the end of an arm; with Freeform, drag a photo anywhere (it keeps a Gap from the others) or its corner or edge to resize it, and drop it on another photo to swap the two; with Overlap, drag a photo over the others (it goes on top) or its corner or edge to resize it, and send it to the back with its button. Shuffle mixes the photos at random (Freeform, Overlap: a new layout too). All only for the device chosen (a tablet or phone without its own takes the larger screen\'s); Reset goes back to that, order and sizes.', 'wp-swiper' ),
 	),
 	// Random mosaic: its cuts as set by dragging the lines between the
 	// photos in the preview, per device (see sanitize_mosaic()); '' on
@@ -189,8 +190,8 @@ return array(
 	// The whole collage turned (collage.js orient()), its photos upright, per
 	// device: Grid, Random mosaic and the templates (laid out in the Height:
 	// in a larger (Fill) or smaller (Fit) box that, turned, covers or fits the
-	// block, so the Gap and the places keep their sizes), Scattered and
-	// Freeform (turned where they are, as large as fits the block turned);
+	// block, so the Gap and the places keep their sizes), Scattered,
+	// Freeform and Overlap (turned where they are, as large as fits the block turned);
 	// not Justified rows or Masonry (their height is their photos').
 	'collage_rotate'        => array(
 		'section'    => 'layout',
@@ -203,7 +204,7 @@ return array(
 		'max'        => 45,
 		'step'       => 1,
 		'range'      => array( -45, 45 ),
-		'help'       => __( 'Grid, Random mosaic, the templates, Scattered and Freeform: the whole collage turned, its photos upright (Scattered and Freeform as large as fits the block turned). 0: not turned. Tablet and mobile can have their own.', 'wp-swiper' ),
+		'help'       => __( 'Grid, Random mosaic, the templates, Scattered, Freeform and Overlap: the whole collage turned, its photos upright (Scattered, Freeform and Overlap as large as fits the block turned). 0: not turned. Tablet and mobile can have their own.', 'wp-swiper' ),
 	),
 	'collage_rotate_fit'    => array(
 		'section'    => 'layout',

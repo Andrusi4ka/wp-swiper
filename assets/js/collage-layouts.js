@@ -654,6 +654,69 @@
 	var FREE_SPOTS = 60;
 	// Freeform: the share of the block its photos cover, about.
 	var FREE_COVER = 0.58;
+	/*
+	 * Overlap: Freeform's photos over one another, each place also on a layer
+	 * of its own ({ x, y, w, h, z }: the higher z, the nearer the top). Its
+	 * first layout is freeLayout() with each photo put about OVERLAP_SHARE of
+	 * the smaller one's side over the one beside it (no photo more than
+	 * OVERLAP_MOST of both its sides under another one), the larger photos
+	 * lower; then set by hand in the preview, as Freeform is, the photo moved
+	 * or resized on top (and sent to the back with its button).
+	 */
+	var OVERLAP_SHARE = 0.2;
+	var OVERLAP_MOST = 0.3;
+	var OVERLAP_COVER = 0.7;
+
+	// Overlap: whether `a` lies over `b` more than it may (first layout only).
+	function overlapClash( a, b ) {
+		var across = Math.min( a.x + a.w, b.x + b.w ) - Math.max( a.x, b.x );
+		var down = Math.min( a.y + a.h, b.y + b.h ) - Math.max( a.y, b.y );
+		var e = 1e-6;
+		return across > OVERLAP_MOST * Math.min( a.w, b.w ) + e && down > OVERLAP_MOST * Math.min( a.h, b.h ) + e;
+	}
+
+	// Overlap: whether `a` and `b` lie over one another at all.
+	function overlapping( a, b ) {
+		return Math.min( a.x + a.w, b.x + b.w ) - Math.max( a.x, b.x ) > 1e-6 && Math.min( a.y + a.h, b.y + b.h ) - Math.max( a.y, b.y ) > 1e-6;
+	}
+
+	/**
+	 * Overlap: the places' layers numbered 0 … n-1 again, in the order they
+	 * are in (one without a layer: under those that have one, in place
+	 * order); with `index` given, that place on top (`to` 'top') or at the
+	 * bottom ('bottom') first.
+	 *
+	 * @param {Object[]} places The layout's places (changed).
+	 * @param {number}   index  A place, or -1.
+	 * @param {string}   to     'top' or 'bottom'.
+	 * @return {boolean} A layer changed.
+	 */
+	function freeLayers( places, index, to ) {
+		var before = places.map( function ( r ) {
+			return r.z;
+		} ).join( ',' );
+		var turn = places.map( function ( r, i ) {
+			return i;
+		} ).sort( function ( a, b ) {
+			var za = typeof places[ a ].z === 'number' ? places[ a ].z : -1;
+			var zb = typeof places[ b ].z === 'number' ? places[ b ].z : -1;
+			return za - zb || a - b;
+		} );
+		if ( index >= 0 && index < places.length ) {
+			turn.splice( turn.indexOf( index ), 1 );
+			if ( to === 'bottom' ) {
+				turn.unshift( index );
+			} else {
+				turn.push( index );
+			}
+		}
+		turn.forEach( function ( i, layer ) {
+			places[ i ].z = layer;
+		} );
+		return places.map( function ( r ) {
+			return r.z;
+		} ).join( ',' ) !== before;
+	}
 
 	// Whether two places are less than `gap` apart (they overlap or touch).
 	function freeClash( a, b, gap ) {
@@ -671,13 +734,21 @@
 	 * such layouts (all from the shuffle, so the same each time) the one
 	 * spreading over the block most evenly is kept, centred in it.
 	 *
-	 * @param {number[]} ratios Width / height of each place's photo, in order.
-	 * @param {number}   aspect The block's width / height.
-	 * @param {number}   gap    In shares of the block's height.
-	 * @param {Function} random Seeded random numbers.
+	 * Overlap (`layered`): each next one over the place beside it instead
+	 * of a gap from it (see OVERLAP_SHARE), the places on layers, the larger
+	 * ones lower.
+	 *
+	 * @param {number[]} ratios  Width / height of each place's photo, in order.
+	 * @param {number}   aspect  The block's width / height.
+	 * @param {number}   gap     In shares of the block's height.
+	 * @param {Function} random  Seeded random numbers.
+	 * @param {boolean}  layered Overlap's layout.
 	 * @return {Object} { aspect, places }.
 	 */
-	function freeLayout( ratios, aspect, gap, random ) {
+	function freeLayout( ratios, aspect, gap, random, layered ) {
+		if ( layered ) {
+			gap = 0;
+		}
 		var count = ratios.length;
 		var best = null;
 		var bestScore = -Infinity;
@@ -702,18 +773,24 @@
 				var start = across ? o.y : o.x;
 				var overlap = Math.min( size, other ) * 0.25;
 				var along = random() < 0.3 ? ( random() < 0.5 ? start : start + other - size ) : start - size + overlap + random() * ( size + other - 2 * overlap );
+				// Overlap: that far over the one beside it (its side across the
+				// way), give or take; Freeform: a gap from it.
+				var step = gap;
+				if ( layered ) {
+					step = -OVERLAP_SHARE * Math.min( across ? w : h, across ? o.w : o.h ) * ( 0.6 + random() * 0.8 );
+				}
 				var r = { w: w, h: h };
 				if ( side === 0 ) {
-					r.x = o.x + o.w + gap;
+					r.x = o.x + o.w + step;
 					r.y = along;
 				} else if ( side === 2 ) {
-					r.x = o.x - gap - w;
+					r.x = o.x - step - w;
 					r.y = along;
 				} else if ( side === 1 ) {
-					r.y = o.y + o.h + gap;
+					r.y = o.y + o.h + step;
 					r.x = along;
 				} else {
-					r.y = o.y - gap - h;
+					r.y = o.y - step - h;
 					r.x = along;
 				}
 				if ( r.x < 0 || r.y < 0 || r.x + w > aspect || r.y + h > 1 ) {
@@ -721,6 +798,15 @@
 				}
 				var touching = 0;
 				var clear = placed.every( function ( p ) {
+					if ( layered ) {
+						if ( overlapClash( r, p ) ) {
+							return false;
+						}
+						if ( overlapping( r, p ) ) {
+							touching++;
+						}
+						return true;
+					}
 					if ( freeClash( r, p, gap ) ) {
 						return false;
 					}
@@ -750,7 +836,7 @@
 			var total = weights.reduce( function ( sum, value ) {
 				return sum + value;
 			}, 0 );
-			var cover = FREE_COVER * ( 0.92 + random() * 0.16 );
+			var cover = ( layered ? OVERLAP_COVER : FREE_COVER ) * ( 0.92 + random() * 0.16 );
 			// The larger first.
 			var turn = weights.map( function ( value, index ) {
 				return index;
@@ -771,6 +857,10 @@
 				for ( var shrink = 0; shrink < 10; shrink++ ) {
 					var r = spot( placed, w, h );
 					if ( r ) {
+						// Overlap: each over those put before it (the larger, lower).
+						if ( layered ) {
+							r.z = placed.length;
+						}
 						places[ index ] = r;
 						placed.push( r );
 						return true;
@@ -801,14 +891,22 @@
 			var each = ( aspect - gap * ( count - 1 ) ) / count;
 			return { aspect: aspect, places: ratios.map( function ( ratio, i ) {
 				var h = Math.min( 1, each / ( ratio || 1 ) );
-				return { x: i * ( each + gap ), y: ( 1 - h ) / 2, w: each, h: h };
+				var row = { x: i * ( each + gap ), y: ( 1 - h ) / 2, w: each, h: h };
+				if ( layered ) {
+					row.z = i;
+				}
+				return row;
 			} ) };
 		}
 		// Centred in the block.
 		var shiftX = ( aspect - best.box.width ) / 2 - best.box.left;
 		var shiftY = ( 1 - best.box.height ) / 2 - best.box.top;
 		return { aspect: aspect, places: best.places.map( function ( r ) {
-			return { x: r.x + shiftX, y: r.y + shiftY, w: r.w, h: r.h };
+			var moved = { x: r.x + shiftX, y: r.y + shiftY, w: r.w, h: r.h };
+			if ( layered ) {
+				moved.z = r.z;
+			}
+			return moved;
 		} ) };
 	}
 
@@ -845,12 +943,14 @@
 	/**
 	 * A Freeform layout as stored (WP_Swiper_Settings::sanitize_freeform()):
 	 * the frame's aspect, then each place's x,y,w,h: "1.8;0.1,0.05,0.5,0.4;…",
-	 * and back.
+	 * and back. Overlap's (`layered`): x,y,w,h,z, z its layer (0 the lowest);
+	 * one stored without layers takes them in place order.
 	 *
-	 * @param {string} text The layout.
+	 * @param {string}  text    The layout.
+	 * @param {boolean} layered Overlap's.
 	 * @return {Object|null} The layout; null when it is not one.
 	 */
-	function parseFree( text ) {
+	function parseFree( text, layered ) {
 		var parts = String( text || '' ).split( ';' );
 		var aspect = Number( parts.shift() );
 		if ( ! ( aspect > 0 ) || ! parts.length ) {
@@ -859,20 +959,33 @@
 		var places = [];
 		for ( var i = 0; i < parts.length; i++ ) {
 			var n = parts[ i ].split( ',' ).map( Number );
-			if ( n.length !== 4 || n.some( isNaN ) || ! ( n[ 2 ] > 0 ) || ! ( n[ 3 ] > 0 ) ) {
+			var fits = n.length === 4 || ( layered && n.length === 5 );
+			if ( ! fits || n.some( isNaN ) || ! ( n[ 2 ] > 0 ) || ! ( n[ 3 ] > 0 ) ) {
 				return null;
 			}
-			places.push( { x: n[ 0 ], y: n[ 1 ], w: n[ 2 ], h: n[ 3 ] } );
+			var place = { x: n[ 0 ], y: n[ 1 ], w: n[ 2 ], h: n[ 3 ] };
+			if ( layered ) {
+				place.z = n.length === 5 ? n[ 4 ] : i;
+			}
+			places.push( place );
+		}
+		if ( layered ) {
+			freeLayers( places, -1 );
 		}
 		return { aspect: aspect, places: places };
 	}
 
+	// Overlap's places (with a layer each) with theirs: x,y,w,h,z.
 	function serializeFree( layout ) {
 		var number = function ( value ) {
 			return Math.round( value * 10000 ) / 10000;
 		};
 		return [ number( layout.aspect ) ].concat( layout.places.map( function ( r ) {
-			return [ number( r.x ), number( r.y ), number( r.w ), number( r.h ) ].join( ',' );
+			var numbers = [ number( r.x ), number( r.y ), number( r.w ), number( r.h ) ];
+			if ( typeof r.z === 'number' ) {
+				numbers.push( r.z );
+			}
+			return numbers.join( ',' );
 		} ) ).join( ';' );
 	}
 
@@ -901,6 +1014,7 @@
 		freeLayout: freeLayout,
 		freeFit: freeFit,
 		parseFree: parseFree,
-		serializeFree: serializeFree
+		serializeFree: serializeFree,
+		freeLayers: freeLayers
 	};
 } )();
