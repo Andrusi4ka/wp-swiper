@@ -914,16 +914,19 @@
 	 * Where a Freeform layout goes in a block: the frame (and any place out of
 	 * it) as large as fits, in the middle. Turned (Rotation): the photos'
 	 * turned corners as large as fit, in the middle (the frame, turned, is
-	 * not what shows).
+	 * not what shows). `photos` (Height "Auto"): the photos as large as fit,
+	 * in the middle, without the frame's empty margins (set in the preview,
+	 * whose block is seldom shaped as the column it fills on the page).
 	 *
-	 * @param {Object} layout See freeLayout().
-	 * @param {number} width  The block's, px.
-	 * @param {number} height The block's, px.
-	 * @param {number} angle  Rotation, degrees.
+	 * @param {Object}  layout See freeLayout().
+	 * @param {number}  width  The block's, px.
+	 * @param {number}  height The block's, px.
+	 * @param {number}  angle  Rotation, degrees.
+	 * @param {boolean} photos The photos fitted, not the frame.
 	 * @return {Object} { scale: px per unit, x, y: where the frame's 0, 0 is }.
 	 */
-	function freeFit( layout, width, height, angle ) {
-		if ( angle ) {
+	function freeFit( layout, width, height, angle, photos ) {
+		if ( angle || photos ) {
 			var bounds = turnedBounds( layout.places, angle );
 			var size = Math.max( 0.0001, Math.min( width / ( bounds.width || 1 ), height / ( bounds.height || 1 ) ) );
 			var origin = turnedOrigin( layout.places.map( function ( r ) {

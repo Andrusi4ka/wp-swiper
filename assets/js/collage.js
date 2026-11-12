@@ -604,7 +604,10 @@
 				// Overlap: each place on its layer, the higher over the lower.
 				mosaicLines = [];
 				if ( free ) {
-					var view = freeHeld || freeFit( free, width, grid.clientHeight, grid.wpAngle );
+					// Height "Auto" (not a background): the photos as large as fit
+					// the block, not the frame they were set in (its empty margins).
+					var photosFit = fills( config ) && ! el.parentNode.classList.contains( 'wp-swiper--background' );
+					var view = freeHeld || freeFit( free, width, grid.clientHeight, grid.wpAngle, photosFit );
 					cells.forEach( function ( cell, c ) {
 						var r = free.places[ c ];
 						if ( r ) {

@@ -106,6 +106,10 @@ return array(
 	// Overlap set by hand: two photos, the first one's right part over the second (its layer higher); and the other way round.
 	'collage-overlap-set' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '2', 'lightbox' => '1', 'collage_cuts' => 'overlap:1.6;0.1,0.1,0.8,0.8,1;0.6,0.1,0.8,0.8,0' ), 'photos' => 2 ),
 	'collage-overlap-set-under' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '2', 'lightbox' => '1', 'collage_cuts' => 'overlap:1.6;0.1,0.1,0.8,0.8,0;0.6,0.1,0.8,0.8,1' ), 'photos' => 2 ),
+	// Overlap set by hand in the middle of a wide frame (empty margins round the photos): Height "Auto"
+	// fits the photos to the block, a Height in px the frame (its margins kept).
+	'collage-overlap-auto' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '2', 'height_unit' => 'auto', 'collage_cuts' => 'overlap:1.8;0.4,0.3,0.6,0.4,1;0.7,0.05,0.7,0.85,0' ), 'photos' => 2 ),
+	'collage-overlap-px' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '2', 'height' => '500', 'height_unit' => 'px', 'collage_cuts' => 'overlap:1.8;0.4,0.3,0.6,0.4,1;0.7,0.05,0.7,0.85,0' ), 'photos' => 2 ),
 	// Overlap turned (Rotation): where it is, as large as fits.
 	'collage-overlap-rotate' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '6', 'collage_rotate' => '-15', 'lightbox' => '1' ) ),
 	'collage-grid'     => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'lightbox' => '1' ) ),

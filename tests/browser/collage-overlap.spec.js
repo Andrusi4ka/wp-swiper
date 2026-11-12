@@ -97,6 +97,33 @@ test.describe( 'Collage: Overlap', () => {
 		} );
 	}
 
+	test( 'Height Auto: the photos as large as fit the block, not the frame they were set in', async ( { page } ) => {
+		// The photos' box in the block (grid px) and the block's size.
+		const fit = async ( name ) => {
+			await open( page, name );
+			return page.evaluate( () => {
+				const grid = document.querySelector( '.wp-swiper-collage__grid' );
+				const cells = [].slice.call( grid.querySelectorAll( '.wp-swiper-collage__cell' ) );
+				const left = Math.min( ...cells.map( ( c ) => c.offsetLeft ) );
+				const top = Math.min( ...cells.map( ( c ) => c.offsetTop ) );
+				const right = Math.max( ...cells.map( ( c ) => c.offsetLeft + c.offsetWidth ) );
+				const bottom = Math.max( ...cells.map( ( c ) => c.offsetTop + c.offsetHeight ) );
+				return { left, top, right, bottom, width: grid.clientWidth, height: grid.clientHeight };
+			} );
+		};
+		// Auto: touching two opposite sides of the block, in its middle.
+		const auto = await fit( 'collage-overlap-auto' );
+		const across = Math.abs( auto.left ) < 2 && Math.abs( auto.right - auto.width ) < 2;
+		const down = Math.abs( auto.top ) < 2 && Math.abs( auto.bottom - auto.height ) < 2;
+		expect( across || down ).toBe( true );
+		expect( Math.abs( auto.left - ( auto.width - auto.right ) ) ).toBeLessThan( 2 );
+		expect( Math.abs( auto.top - ( auto.height - auto.bottom ) ) ).toBeLessThan( 2 );
+		// px: the frame as set, its empty margins round the photos.
+		const px = await fit( 'collage-overlap-px' );
+		expect( px.left ).toBeGreaterThan( 20 );
+		expect( px.width - px.right ).toBeGreaterThan( 20 );
+	} );
+
 	test( 'turned, it stays in the block, its layers kept', async ( { page } ) => {
 		const errors = await open( page, 'collage-overlap-rotate' );
 		const state = await page.evaluate( () => {

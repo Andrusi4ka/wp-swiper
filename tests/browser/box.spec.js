@@ -78,7 +78,8 @@ test.describe( 'the edit screen', () => {
 
 		// The preview takes it with Update.
 		await page.click( '.wp-swiper-preview__update' );
-		await expect.poll( () => frame( page ).locator( '.wp-swiper' ).first().evaluate( ( el ) => el.style.getPropertyValue( '--wp-swiper-radius' ) ) ).toBe( '24px 0px 24px 24px' );
+		// The frame reloads meanwhile: a read while it does is tried again.
+		await expect.poll( () => frame( page ).locator( '.wp-swiper' ).first().evaluate( ( el ) => el.style.getPropertyValue( '--wp-swiper-radius' ) ).catch( () => null ) ).toBe( '24px 0px 24px 24px' );
 
 		// Saved and read back as set.
 		await Promise.all( [ page.waitForNavigation(), page.click( '#publish' ) ] );

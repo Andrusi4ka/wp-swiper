@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.7.0
+Stable tag: 3.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,9 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.7.1 =
+* Collage, Freeform and Overlap with Height Auto: the photos fill the block as far as they fit, not the frame they were set in the preview (its empty margins). In a narrow, tall column they no longer sit in a thin band in its middle.
 
 = 3.7.0 =
 * Collage: a new Style, Overlap — the photos lie over one another, each on a layer of its own. Place them by hand in the preview: drag a photo anywhere, over the others too (the one you move goes on top), resize it by its corners and edges, send it under the others with its arrow. With Rotation, Content in a place, Image shadow and the lightbox (a click opens the photo on top). Per device.
