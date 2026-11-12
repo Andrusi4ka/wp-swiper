@@ -2,6 +2,7 @@
 * text=auto eol=lf
 *.png binary
 *.jpg binary
+*.mp4 binary
 *.svg text
 
 # Not part of the installable plugin (left out of wp-swiper.zip by git archive).
@@ -16,3 +17,5 @@
 /composer.lock  export-ignore
 /phpunit.xml.dist export-ignore
 /CLAUDE.md      export-ignore
+/docs          export-ignore
+/docs/**       export-ignore
