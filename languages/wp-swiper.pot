@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Swiper 3.6.0\n"
+"Project-Id-Version: WP Swiper 3.7.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-swiper-main\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-10T12:32:37+01:00\n"
+"POT-Creation-Date: 2026-11-12T09:21:29+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: wp-swiper\n"
@@ -52,7 +52,7 @@ msgid "The shape the photos make. The slides fill it in their order (they repeat
 msgstr ""
 
 #: includes/art-fields.php:38
-#: includes/settings-fields/layout-collage.php:81
+#: includes/settings-fields/layout-collage.php:82
 msgid "Order"
 msgstr ""
 
@@ -73,13 +73,13 @@ msgid "Off: the slider is as large as its shapes. On: the whole drawing, with th
 msgstr ""
 
 #: includes/art-fields.php:76
-#: includes/class-wp-swiper-preview.php:111
+#: includes/class-wp-swiper-preview.php:112
 msgid "Shapes"
 msgstr ""
 
 #: includes/art-fields.php:89
 #: includes/art-fields.php:191
-#: includes/settings-fields/layout-collage.php:146
+#: includes/settings-fields/layout-collage.php:147
 msgid "Columns"
 msgstr ""
 
@@ -134,7 +134,7 @@ msgstr ""
 #: includes/art-fields.php:406
 #: includes/art-fields.php:700
 #: includes/art-fields.php:715
-#: includes/settings-fields/layout-collage.php:305
+#: includes/settings-fields/layout-collage.php:306
 #: includes/settings-fields/layout-effects.php:332
 #: includes/settings-fields/layout-look.php:446
 #: includes/settings-fields/layout-look.php:467
@@ -202,7 +202,7 @@ msgstr ""
 
 #: includes/art-fields.php:248
 #: includes/art-fields.php:802
-#: includes/settings-fields/layout-collage.php:180
+#: includes/settings-fields/layout-collage.php:181
 #: includes/settings-fields/layout-look.php:66
 msgid "Gap (px)"
 msgstr ""
@@ -265,13 +265,13 @@ msgid "Which window has it: 1 is the one in the middle (Grid shapes: the first s
 msgstr ""
 
 #: includes/art-fields.php:344
-#: includes/settings-fields/layout-collage.php:249
+#: includes/settings-fields/layout-collage.php:250
 msgid "Image"
 msgstr ""
 
 #: includes/art-fields.php:352
 #: includes/art-fields.php:435
-#: includes/settings-fields/layout-collage.php:256
+#: includes/settings-fields/layout-collage.php:257
 msgid "Image size (%)"
 msgstr ""
 
@@ -280,9 +280,9 @@ msgid "Of the width inside the window's box; the image keeps its proportions. Wi
 msgstr ""
 
 #: includes/art-fields.php:366
-#: includes/class-wp-swiper-settings.php:842
-#: includes/class-wp-swiper-settings.php:852
-#: includes/settings-fields/layout-collage.php:268
+#: includes/class-wp-swiper-settings.php:850
+#: includes/class-wp-swiper-settings.php:860
+#: includes/settings-fields/layout-collage.php:269
 msgid "Text"
 msgstr ""
 
@@ -293,7 +293,7 @@ msgstr ""
 #: includes/art-fields.php:375
 #: includes/art-fields.php:457
 #: includes/settings-fields/content.php:23
-#: includes/settings-fields/layout-collage.php:276
+#: includes/settings-fields/layout-collage.php:277
 msgid "Font size (px)"
 msgstr ""
 
@@ -302,7 +302,7 @@ msgid "Text that does not fit in the window's box is cut at a word, with \"…\"
 msgstr ""
 
 #: includes/art-fields.php:388
-#: includes/settings-fields/layout-collage.php:288
+#: includes/settings-fields/layout-collage.php:289
 msgid "Padding (px)"
 msgstr ""
 
@@ -311,14 +311,14 @@ msgid "Between the window's box and the image and text."
 msgstr ""
 
 #: includes/art-fields.php:401
-#: includes/settings-fields/layout-collage.php:300
+#: includes/settings-fields/layout-collage.php:301
 msgid "Vertical alignment"
 msgstr ""
 
 #: includes/art-fields.php:405
 #: includes/art-fields.php:679
 #: includes/art-fields.php:699
-#: includes/settings-fields/layout-collage.php:304
+#: includes/settings-fields/layout-collage.php:305
 #: includes/settings-fields/layout-look.php:448
 #: includes/settings-fields/layout-look.php:466
 #: includes/settings-fields/layout-look.php:525
@@ -328,7 +328,7 @@ msgstr ""
 
 #: includes/art-fields.php:407
 #: includes/art-fields.php:680
-#: includes/settings-fields/layout-collage.php:306
+#: includes/settings-fields/layout-collage.php:307
 #: includes/settings-fields/layout-look.php:453
 #: includes/settings-fields/layout-look.php:468
 #: includes/settings-fields/layout-look.php:530
@@ -337,10 +337,10 @@ msgid "Bottom"
 msgstr ""
 
 #: includes/art-fields.php:414
-#: includes/class-wp-swiper-settings.php:806
-#: includes/class-wp-swiper-settings.php:846
+#: includes/class-wp-swiper-settings.php:814
+#: includes/class-wp-swiper-settings.php:854
 #: includes/settings-fields/content.php:57
-#: includes/settings-fields/layout-collage.php:312
+#: includes/settings-fields/layout-collage.php:313
 msgid "Background"
 msgstr ""
 
@@ -441,7 +441,7 @@ msgid "Art: the photos around it show none."
 msgstr ""
 
 #: includes/art-fields.php:537
-#: includes/settings-fields/layout-collage.php:322
+#: includes/settings-fields/layout-collage.php:323
 msgid "Swap in the other photos"
 msgstr ""
 
@@ -522,18 +522,18 @@ msgid "The order the windows show a new photo in, one after another over the Fad
 msgstr ""
 
 #: includes/art-fields.php:604
-#: includes/settings-fields/layout-collage.php:331
+#: includes/settings-fields/layout-collage.php:332
 msgid "A new photo every (ms)"
 msgstr ""
 
 #: includes/art-fields.php:616
-#: includes/settings-fields/layout-collage.php:343
+#: includes/settings-fields/layout-collage.php:344
 msgid "Fade (ms)"
 msgstr ""
 
 #: includes/art-fields.php:628
 #: includes/settings-fields/general.php:110
-#: includes/settings-fields/layout-collage.php:355
+#: includes/settings-fields/layout-collage.php:356
 msgid "Pause on hover"
 msgstr ""
 
@@ -546,7 +546,7 @@ msgid "Each letter is a window onto the photo, with a strip under it. Spaces lea
 msgstr ""
 
 #: includes/art-fields.php:653
-#: includes/class-wp-swiper-preview.php:112
+#: includes/class-wp-swiper-preview.php:113
 msgid "Photos"
 msgstr ""
 
@@ -730,7 +730,7 @@ msgid "At most half the strip's width: a larger one rounds its end in a half cir
 msgstr ""
 
 #: includes/art-fields.php:917
-#: includes/class-wp-swiper-preview.php:113
+#: includes/class-wp-swiper-preview.php:114
 msgid "Corners"
 msgstr ""
 
@@ -747,7 +747,7 @@ msgid "At both ends: by the letter too (where the strip is wider than the letter
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:67
-#: includes/class-wp-swiper-settings.php:783
+#: includes/class-wp-swiper-settings.php:791
 #: includes/trait-wp-swiper-admin-list.php:161
 msgid "Slides"
 msgstr ""
@@ -779,7 +779,7 @@ msgid "Use as poster"
 msgstr ""
 
 #: includes/class-wp-swiper-admin.php:107
-#: includes/class-wp-swiper-settings.php:693
+#: includes/class-wp-swiper-settings.php:701
 #: includes/trait-wp-swiper-admin-slides.php:210
 msgid "Video"
 msgstr ""
@@ -1054,7 +1054,7 @@ msgid "Letters"
 msgstr ""
 
 #: includes/class-wp-swiper-art.php:299
-#: includes/class-wp-swiper-settings.php:711
+#: includes/class-wp-swiper-settings.php:719
 msgid "Photo swapping"
 msgstr ""
 
@@ -1117,146 +1117,159 @@ msgstr ""
 msgid "Remove this place from the collage (the slide stays)"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:114
-msgid "Corner"
+#: includes/class-wp-swiper-preview.php:111
+msgid "Send this photo to the back"
 msgstr ""
 
 #: includes/class-wp-swiper-preview.php:115
-msgid "As the shape"
+msgid "Corner"
 msgstr ""
 
 #: includes/class-wp-swiper-preview.php:116
-msgid "Radius"
+msgid "As the shape"
 msgstr ""
 
 #: includes/class-wp-swiper-preview.php:117
-msgid "As Radius"
+msgid "Radius"
 msgstr ""
 
 #: includes/class-wp-swiper-preview.php:118
-msgid "Split into cells"
+msgid "As Radius"
 msgstr ""
 
 #: includes/class-wp-swiper-preview.php:119
+msgid "Split into cells"
+msgstr ""
+
+#: includes/class-wp-swiper-preview.php:120
 msgid "Empty"
 msgstr ""
 
 #. translators: 1: screen width in px, 2: a device's name (Tablet, Desktop).
-#: includes/class-wp-swiper-preview.php:139
+#: includes/class-wp-swiper-preview.php:140
 msgid "Turned sideways the screen is %1$dpx wide: the slider takes the %2$s settings, as it does on the site."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:183
+#: includes/class-wp-swiper-preview.php:184
 msgid "Preview"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:185
+#: includes/class-wp-swiper-preview.php:186
 msgid "Turn the tablet or phone sideways"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:189
+#: includes/class-wp-swiper-preview.php:190
 msgid "Dark screen"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:194
+#: includes/class-wp-swiper-preview.php:195
 msgid "Screen"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:195
+#: includes/class-wp-swiper-preview.php:196
 msgid "Screen width (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:197
+#: includes/class-wp-swiper-preview.php:198
 msgid "Screen height (px)"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:202
+#: includes/class-wp-swiper-preview.php:203
 msgid "Developer mode: the boxes of the slides and images and the empty space around them, with their sizes"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:202
+#: includes/class-wp-swiper-preview.php:203
 msgid "Developer mode"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:206
+#: includes/class-wp-swiper-preview.php:207
 msgid "Undo and redo changes"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:207
+#: includes/class-wp-swiper-preview.php:208
 msgid "Undo (Ctrl+Z)"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:207
+#: includes/class-wp-swiper-preview.php:208
 msgid "Undo"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:210
+#: includes/class-wp-swiper-preview.php:211
 msgid "Redo (Ctrl+Shift+Z)"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:210
+#: includes/class-wp-swiper-preview.php:211
 msgid "Redo"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:218
+#: includes/class-wp-swiper-preview.php:219
 msgid "Update"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:236
-#: includes/class-wp-swiper-preview.php:246
+#: includes/class-wp-swiper-preview.php:237
+#: includes/class-wp-swiper-preview.php:247
 msgid "Drag a photo onto another to swap them."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:241
+#: includes/class-wp-swiper-preview.php:242
 msgid "Drag the content onto a photo to move it there."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:251
+#: includes/class-wp-swiper-preview.php:252
 msgid "Drag the edge of the middle circle or square to resize it."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:256
+#: includes/class-wp-swiper-preview.php:257
 msgid "Shapes: drag across cells to join them, click a shape for its corners: drag a dot to round them all, or click a dot (red) and drag it for that corner alone. Photos: drag a photo onto another to swap them."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:261
+#: includes/class-wp-swiper-preview.php:262
 msgid "Drag a line between photos to resize them."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:266
+#: includes/class-wp-swiper-preview.php:267
 msgid "Drag the outer edge of a photo to resize it."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:271
+#: includes/class-wp-swiper-preview.php:272
 msgid "Drop a photo on a dashed frame to move it to the end of that arm."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:276
-#: includes/class-wp-swiper-preview.php:291
+#: includes/class-wp-swiper-preview.php:277
+#: includes/class-wp-swiper-preview.php:292
 msgid "Click × on a photo to take its place out of the collage on this device; the slide stays."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:281
+#: includes/class-wp-swiper-preview.php:282
 msgid "Drag a photo anywhere: it stops a Gap away from the others and snaps to their edges. Drop it on another photo to swap the two."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:286
+#: includes/class-wp-swiper-preview.php:287
+#: includes/class-wp-swiper-preview.php:302
 msgid "Drag a corner or an edge of a photo to resize it."
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:294
+#: includes/class-wp-swiper-preview.php:297
+msgid "Drag a photo anywhere, over the others too: the photo moved goes on top. It snaps to their edges."
+msgstr ""
+
+#: includes/class-wp-swiper-preview.php:307
+msgid "Click the arrow on a photo to send it under the others, × to take its place out of the collage on this device; the slide stays."
+msgstr ""
+
+#: includes/class-wp-swiper-preview.php:310
 msgid "Slider preview"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:323
+#: includes/class-wp-swiper-preview.php:339
 msgid "Background mode"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:339
+#: includes/class-wp-swiper-preview.php:355
 msgid "No images yet"
 msgstr ""
 
-#: includes/class-wp-swiper-preview.php:356
+#: includes/class-wp-swiper-preview.php:372
 msgid "The preview is not available any more: reload the page."
 msgstr ""
 
@@ -1346,113 +1359,113 @@ msgstr ""
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:684
-#: includes/class-wp-swiper-settings.php:827
+#: includes/class-wp-swiper-settings.php:692
+#: includes/class-wp-swiper-settings.php:835
 msgid "Lightbox"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:685
+#: includes/class-wp-swiper-settings.php:693
 msgid "Controls"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:686
+#: includes/class-wp-swiper-settings.php:694
 msgid "Layout"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:688
-#: includes/class-wp-swiper-settings.php:832
+#: includes/class-wp-swiper-settings.php:696
+#: includes/class-wp-swiper-settings.php:840
 #: includes/settings-fields/general.php:28
 msgid "Thumbnails"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:689
+#: includes/class-wp-swiper-settings.php:697
 #: includes/trait-wp-swiper-admin-slides.php:82
 #: includes/trait-wp-swiper-admin-slides.php:96
 #: includes/trait-wp-swiper-admin-slides.php:278
 msgid "Caption"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:691
+#: includes/class-wp-swiper-settings.php:699
 #: includes/trait-wp-swiper-admin-slides.php:83
 #: includes/trait-wp-swiper-admin-slides.php:106
 #: includes/trait-wp-swiper-admin-slides.php:279
 msgid "Description"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:695
+#: includes/class-wp-swiper-settings.php:703
 #: includes/settings-fields/layout-effects.php:47
 #: includes/settings-fields/layout-effects.php:407
 #: includes/trait-wp-swiper-admin-controls.php:245
 msgid "Custom"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:715
+#: includes/class-wp-swiper-settings.php:723
 msgid "Movement"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:719
+#: includes/class-wp-swiper-settings.php:727
 msgid "Arrows and keyboard"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:723
+#: includes/class-wp-swiper-settings.php:731
 #: includes/settings-fields/general.php:267
 msgid "Pagination"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:727
+#: includes/class-wp-swiper-settings.php:735
 msgid "Pagination style"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:746
+#: includes/class-wp-swiper-settings.php:754
 #: includes/settings-fields/general.php:16
 #: includes/trait-wp-swiper-admin-list.php:162
 msgid "Effect"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:772
+#: includes/class-wp-swiper-settings.php:780
 msgid "Arrangement"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:779
-#: includes/class-wp-swiper-settings.php:816
+#: includes/class-wp-swiper-settings.php:787
+#: includes/class-wp-swiper-settings.php:824
 msgid "Size"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:788
-#: includes/settings-fields/layout-collage.php:229
+#: includes/class-wp-swiper-settings.php:796
+#: includes/settings-fields/layout-collage.php:230
 msgid "Content in a place"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:795
-#: includes/class-wp-swiper-settings.php:820
+#: includes/class-wp-swiper-settings.php:803
+#: includes/class-wp-swiper-settings.php:828
 msgid "Look"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:799
+#: includes/class-wp-swiper-settings.php:807
 msgid "Zoom"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:812
+#: includes/class-wp-swiper-settings.php:820
 msgid "Placement"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:836
+#: includes/class-wp-swiper-settings.php:844
 msgid "Descriptions"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:856
+#: includes/class-wp-swiper-settings.php:864
 msgid "Placement and transition"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:863
+#: includes/class-wp-swiper-settings.php:871
 msgid "Playback"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:867
+#: includes/class-wp-swiper-settings.php:875
 msgid "Player"
 msgstr ""
 
-#: includes/class-wp-swiper-settings.php:873
+#: includes/class-wp-swiper-settings.php:881
 msgid "HTML attributes"
 msgstr ""
 
@@ -1655,7 +1668,7 @@ msgid "Ken Burns zoom, zoom on hover, gradient"
 msgstr ""
 
 #: includes/effect-notes.php:70
-msgid "Templates, Grid, Justified rows, Masonry, Random mosaic, Scattered, Freeform"
+msgid "Templates, Grid, Justified rows, Masonry, Random mosaic, Scattered, Freeform, Overlap"
 msgstr ""
 
 #: includes/effect-notes.php:71
@@ -1663,7 +1676,7 @@ msgid "The other photos swap in, one place at a time"
 msgstr ""
 
 #: includes/effect-notes.php:72
-msgid "In the preview: drag photos to swap them, drag lines and edges to resize, move them freely (Freeform)"
+msgid "In the preview: drag photos to swap them, lines and edges to resize; move them freely (Freeform, Overlap)"
 msgstr ""
 
 #: includes/effect-notes.php:73
@@ -2284,113 +2297,117 @@ msgstr ""
 msgid "Freeform"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:60
-msgid "Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Scattered: a photo in the middle and the others around it in uneven arms, each shaped after its photo, the gap between neighbours always the same; as large as the Height and the width allow, the corners left empty. Freeform: the photos at random places and sizes, a Gap apart, each then moved and resized by hand in the preview; all of it scales with the Height. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them; as a background, as tall as the block (the places stretched or shrunk to it)."
+#: includes/settings-fields/layout-collage.php:59
+msgid "Overlap"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:69
+#: includes/settings-fields/layout-collage.php:61
+msgid "Templates, Grid and Random mosaic fill the Height; Random mosaic cuts it into places of different sizes, at random (Shuffle), shaped after their photos. Scattered: a photo in the middle and the others around it in uneven arms, each shaped after its photo, the gap between neighbours always the same; as large as the Height and the width allow, the corners left empty. Freeform: the photos at random places and sizes, a Gap apart, each then moved and resized by hand in the preview; all of it scales with the Height. Overlap: as Freeform, but the photos lie over one another, each on a layer of its own; placed by hand in the preview, the photo moved goes on top. Justified rows keep each photo’s proportions in rows across the width; Masonry in columns. Both are as tall as their photos make them; as a background, as tall as the block (the places stretched or shrunk to it)."
+msgstr ""
+
+#: includes/settings-fields/layout-collage.php:70
 #: includes/trait-wp-swiper-admin-fields.php:330
 #: includes/trait-wp-swiper-admin-fields.php:576
 msgid "Shuffle"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:85
-msgid "Drag a photo onto another place in the preview to swap the two; with Random mosaic and the templates, drag a line between photos to resize them; with Scattered, drag a photo's outer edge to resize it, or drop it on a dashed frame to move it to the end of an arm; with Freeform, drag a photo anywhere (it keeps a Gap from the others) or its corner or edge to resize it, and drop it on another photo to swap the two. Shuffle mixes the photos at random (Freeform: a new layout too). All only for the device chosen (a tablet or phone without its own takes the larger screen's); Reset goes back to that, order and sizes."
+#: includes/settings-fields/layout-collage.php:86
+msgid "Drag a photo onto another place in the preview to swap the two; with Random mosaic and the templates, drag a line between photos to resize them; with Scattered, drag a photo's outer edge to resize it, or drop it on a dashed frame to move it to the end of an arm; with Freeform, drag a photo anywhere (it keeps a Gap from the others) or its corner or edge to resize it, and drop it on another photo to swap the two; with Overlap, drag a photo over the others (it goes on top) or its corner or edge to resize it, and send it to the back with its button. Shuffle mixes the photos at random (Freeform, Overlap: a new layout too). All only for the device chosen (a tablet or phone without its own takes the larger screen's); Reset goes back to that, order and sizes."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:94
+#: includes/settings-fields/layout-collage.php:95
 msgid "Mosaic sizes"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:109
+#: includes/settings-fields/layout-collage.php:110
 msgid "Template sizes"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:122
+#: includes/settings-fields/layout-collage.php:123
 msgid "Arranged by hand"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:134
+#: includes/settings-fields/layout-collage.php:135
 msgid "Photos on screen"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:141
+#: includes/settings-fields/layout-collage.php:142
 msgid "Grid, Justified rows, Masonry, Random mosaic, Scattered and Freeform; a template has its own number of places."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:153
+#: includes/settings-fields/layout-collage.php:154
 msgid "Grid and Masonry."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:158
+#: includes/settings-fields/layout-collage.php:159
 msgid "Row height (px)"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:165
+#: includes/settings-fields/layout-collage.php:166
 msgid "Justified rows: the height of a row (with Exact row height off, about it)."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:172
+#: includes/settings-fields/layout-collage.php:173
 msgid "Exact row height"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:175
+#: includes/settings-fields/layout-collage.php:176
 msgid "Every row exactly the Row height, each photo at its own proportions, nothing cropped; a row ends where the next photo would not fit, so the right ends are uneven. Off: each row is fitted to the width exactly, its height a little more or less."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:198
+#: includes/settings-fields/layout-collage.php:199
 msgid "Rotation (°)"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:206
-msgid "Grid, Random mosaic, the templates, Scattered and Freeform: the whole collage turned, its photos upright (Scattered and Freeform as large as fits the block turned). 0: not turned. Tablet and mobile can have their own."
+#: includes/settings-fields/layout-collage.php:207
+msgid "Grid, Random mosaic, the templates, Scattered, Freeform and Overlap: the whole collage turned, its photos upright (Scattered, Freeform and Overlap as large as fits the block turned). 0: not turned. Tablet and mobile can have their own."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:211
+#: includes/settings-fields/layout-collage.php:212
 msgid "Turned collage"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:216
+#: includes/settings-fields/layout-collage.php:217
 msgid "Fill the block (its edges cut off)"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:217
+#: includes/settings-fields/layout-collage.php:218
 msgid "All of it (the corners empty)"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:232
+#: includes/settings-fields/layout-collage.php:233
 msgid "An image and/or text in one place of the collage instead of a photo; it stays there while the photos swap. Not for Justified rows and Masonry."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:237
+#: includes/settings-fields/layout-collage.php:238
 msgid "Place"
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:244
+#: includes/settings-fields/layout-collage.php:245
 msgid "Which place has it, counted as the places are laid out (1: the first). Or drag it onto a photo in the preview."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:263
+#: includes/settings-fields/layout-collage.php:264
 msgid "Of the width inside the place; the image keeps its proportions. With text under it: at most half the height."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:271
+#: includes/settings-fields/layout-collage.php:272
 msgid "Shortcodes work here too: a form, a theme\\x27s HTML block with buttons… With one, nothing is cut: the place scrolls where it is too tall."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:283
+#: includes/settings-fields/layout-collage.php:284
 msgid "Text that does not fit in the place is cut at a word, with \"…\"."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:295
+#: includes/settings-fields/layout-collage.php:296
 msgid "Between the place's edge and the image and text."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:315
+#: includes/settings-fields/layout-collage.php:316
 msgid "The place's color under the image and text; at Opacity 0 (as by default) there is none."
 msgstr ""
 
-#: includes/settings-fields/layout-collage.php:325
+#: includes/settings-fields/layout-collage.php:326
 msgid "With more photos than places: every so often a place, at random, fades to a photo not shown yet. The arrangement does not change."
 msgstr ""
 

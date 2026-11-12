@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.6.0
+Stable tag: 3.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,7 +14,7 @@ Image sliders powered by Swiper: build a slider from the media library, pick an 
 
 WP Swiper adds a "WP Swiper" menu (for administrators, and the roles they allow under WP Swiper → Settings) where you build image sliders from the media library and show them anywhere with `[wp_swiper id="123"]` or the "WP Swiper" WPBakery element.
 
-* Ten effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles), Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions), Collage (the photos placed together by a template, a grid, justified rows, masonry, a random mosaic or scattered around a photo in the middle, the others swapped in) and Art (the photos in shapes of their own: a ring around a circle, with an image or text in its opening, a grid with a circle, or the shapes of an SVG file a designer drew).
+* Ten effects: Slide, Fade, Cube, Coverflow, Flip, Cards, Creative (Push, Zoom, Slide apart, Flip, Rotate, Door and Carousel styles), Thumbnails (one slide picked from a strip of thumbnails below, above, left or right of it, set per device, with arrows and its own proportions), Collage (the photos placed together by a template, a grid, justified rows, masonry, a random mosaic, scattered around a photo in the middle, placed freely or over one another, the others swapped in) and Art (the photos in shapes of their own: a ring around a circle, with an image or text in its opening, a grid with a circle, or the shapes of an SVG file a designer drew).
 * Image shadow, with its offsets, blur, spread and a colour with opacity, where the photos stand apart.
 * A slider can be the background of the row or column it is in, with an overlay; the main image can zoom slowly in or out (Ken Burns).
 * Each effect keeps its own Layout settings, so switching effects never loses what you set.
@@ -59,6 +59,9 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.7.0 =
+* Collage: a new Style, Overlap — the photos lie over one another, each on a layer of its own. Place them by hand in the preview: drag a photo anywhere, over the others too (the one you move goes on top), resize it by its corners and edges, send it under the others with its arrow. With Rotation, Content in a place, Image shadow and the lightbox (a click opens the photo on top). Per device.
 
 = 3.6.0 =
 * WP Swiper → Settings: what each role may do with the sliders — Edit sliders, and with it Add and clone, Delete and the WPBakery element. Administrators may always do all of it; until set, WP Swiper is theirs only, as before.
