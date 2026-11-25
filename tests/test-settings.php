@@ -834,6 +834,21 @@ class Test_WP_Swiper_Settings extends WP_Swiper_TestCase {
 		$this->assertSame( $image, $own['image'] );
 	}
 
+	public function test_separator_rotation_is_an_own_images_within_0_to_360() {
+		$this->assertSame( 0, WP_Swiper_Settings::sanitize( array() )['marquee_separator_spin'] );
+		$this->assertSame( 45, WP_Swiper_Settings::sanitize( array( 'marquee_separator_spin' => '45' ) )['marquee_separator_spin'] );
+
+		$image = $this->image( 64, 64 );
+		$own   = array( 'marquee' => true, 'marquee_separator' => 'image', 'marquee_separator_image' => $image );
+		$this->assertSame( 0, WP_Swiper_Settings::separator( $this->settings( $own ) )['spin'] );
+		$this->assertSame( 90, WP_Swiper_Settings::separator( $this->settings( array( 'marquee_separator_spin' => 90 ) + $own ) )['spin'] );
+		// A dot does not turn (a circle would not show it).
+		$dot = array( 'marquee' => true, 'marquee_separator' => 'dot', 'marquee_separator_spin' => 90 );
+		$this->assertSame( 0, WP_Swiper_Settings::separator( $this->settings( $dot ) )['spin'] );
+		// Beyond its range: at most one turn a second.
+		$this->assertLessThanOrEqual( 360, WP_Swiper_Settings::separator( $this->settings( array( 'marquee_separator_spin' => 5000 ) + $own ) )['spin'] );
+	}
+
 	public function test_gaps_are_at_least_the_separator() {
 		$values = array( 'space_between' => 30, 'space_between_tablet' => 8, 'space_between_mobile' => '' );
 		$this->assertSame( array( 'desktop' => 30, 'tablet' => 8, 'mobile' => 8 ), WP_Swiper_Settings::gaps( $this->settings( $values ) ) );

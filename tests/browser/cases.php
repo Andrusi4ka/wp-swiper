@@ -32,6 +32,9 @@ return array(
 	'slide'            => array( 'settings' => $slider + array( 'effect' => 'slide' ) ),
 	// Drag with the mouse off (mouse-drag.spec.js, no snapshots).
 	'slide-no-mouse-drag' => array( 'settings' => array_diff_key( $slider, array( 'mouse_drag' => 1 ) ) + array( 'effect' => 'slide' ) ),
+	// Continuous scroll with an own image as the separator that turns (separator-spin.spec.js, no snapshots).
+	'marquee-spin'     => array( 'settings' => $slider + array( 'effect' => 'slide', 'marquee' => '1', 'slides_per_view' => '3', 'space_between' => '40', 'marquee_separator' => 'image', 'marquee_separator_image' => '{image}', 'marquee_separator_size' => '24', 'marquee_separator_spin' => '45' ) ),
+	'marquee-spin-reverse' => array( 'settings' => $slider + array( 'effect' => 'slide', 'marquee' => '1', 'marquee_direction' => 'reverse', 'slides_per_view' => '3', 'space_between' => '40', 'marquee_separator' => 'image', 'marquee_separator_image' => '{image}', 'marquee_separator_size' => '24', 'marquee_separator_spin' => '90' ) ),
 	'slide-loop'       => array( 'settings' => $slider + array( 'effect' => 'slide', 'loop' => '1', 'slides_per_view' => '3', 'space_between' => '12' ) ),
 	'slide-captions'   => array(
 		'settings' => $slider + array( 'effect' => 'slide' ),

@@ -38,8 +38,13 @@
 
 ## Стан
 
-- Останній реліз **v3.7.1** (2026-11-12): Freeform / Overlap з Height Auto
-  вписують фото в блок. Попередній — v3.7.0 (того ж дня): Collage **Overlap**.
+- Останній реліз **v3.7.2** (2026-11-25): Separator rotation — своя картинка
+  роздільника Continuous scroll крутиться (°/с). Попередній — v3.7.1
+  (2026-11-12): Freeform / Overlap з Height Auto вписують фото в блок.
+- Тести `admin.spec.js` «Slide info: caption» і «Art: Image size» падають і на
+  чистій 3.7.1: Chrome пише в консоль «Permissions policy violation: unload is
+  not allowed» (сторінка редактора WordPress), а тести ловлять усі помилки
+  консолі. Не через WP Swiper; виправити фільтр у тестах — на прохання.
 - Старі гілки збережено в `Creativity.local/_backups/wp-swiper-old-branches-2026-11-09.bundle`.
 
 ## Наступний реліз (на прохання)

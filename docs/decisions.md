@@ -676,6 +676,21 @@
   autoUpdate()` (одразу, без затримки — рішення користувача; той самий стиль, що
   вже показано, — ні, `markShown()`), лише на подію `change` — Undo ставить
   значення без неї, тож відкат прев'ю не перезавантажує.
+- Separator rotation (2026-11-25, рішення користувача: біжучий рядок як під
+  банером bagaren.no, де зірочки між словами крутяться): поле
+  `marquee_separator_spin` під Separator size, повзунок 0–360 °/с, 0 — стоїть
+  (за замовчуванням, старі слайдери не міняються). Лише Own image (точка —
+  коло, обертання не видно): `separator()['spin']` для Dot завжди 0, в
+  адмінці поле лише для Own image. Один кут на всі пристрої. Обертається
+  безперервно власною CSS-анімацією (`slider.css`
+  `wp-swiper-separator-spin`, тривалість оберту `--wp-swiper-separator-spin`
+  = 360 / °/с, `%.3F` — без коми локалі), а не від руху слайдів; напрямок —
+  за рядком: Right to left — за годинниковою, Left to right —
+  `--wp-swiper-separator-spin-direction: reverse`. Крутиться лише картинка,
+  не її місце. Reduce motion — стоїть. Окремого перемикача напрямку й
+  обертання точки — не треба. Тести: `test-settings.php`, `test-render.php`,
+  `tests/browser/separator-spin.spec.js` (випадки `marquee-spin`,
+  `marquee-spin-reverse`, без знімків).
 
 ## Безпека (огляд 2026-10-30)
 

@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Swiper 3.7.1\n"
+"Project-Id-Version: WP Swiper 3.7.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-swiper-main\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2837,7 +2837,15 @@ msgstr ""
 msgid "The dot's diameter; an image fits in a square of this size. The space between the slides is at least as wide."
 msgstr ""
 
-#: includes/settings-fields/layout-look.php:399
+#: includes/settings-fields/layout-look.php:400
+msgid "Separator rotation (°/s)"
+msgstr ""
+
+#: includes/settings-fields/layout-look.php:407
+msgid "0 = still. 45 = one turn in 8 seconds. It turns the way the strip runs."
+msgstr ""
+
+#: includes/settings-fields/layout-look.php:412
 msgid "Dot color"
 msgstr ""
 

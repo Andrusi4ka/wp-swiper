@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.7.1
+Stable tag: 3.7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,9 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.7.2 =
+* Continuous scroll: "Separator rotation (°/s)" under Separator size — an own image as the separator turns all the time while the strip runs, the way it runs (0 = still, as before; 45 = one turn in 8 seconds). Still with "reduce motion".
 
 = 3.7.1 =
 * Collage, Freeform and Overlap with Height Auto: the photos fill the block as far as they fit, not the frame they were set in the preview (its empty margins). In a narrow, tall column they no longer sit in a thin band in its middle.

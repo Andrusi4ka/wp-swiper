@@ -616,11 +616,12 @@
 					}
 				} );
 			}
-			// Its separator: the image to pick, the size and the dot's color once chosen.
+			// Its separator: the image to pick, the size, an image's rotation and the dot's color once chosen.
 			var separator = marquee ? $( '#wp-swiper-marquee_separator' ).val() : 'none';
 			field( 'marquee_separator' ).toggle( marquee );
 			field( 'marquee_separator_image' ).toggle( separator === 'image' );
 			field( 'marquee_separator_size' ).toggle( separator !== 'none' );
+			field( 'marquee_separator_spin' ).toggle( separator === 'image' );
 			field( 'marquee_separator_color' ).toggle( separator === 'dot' );
 
 			// Zoom the main image (data-effects above: the effects that have one).

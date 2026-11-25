@@ -53,6 +53,25 @@
 	object-fit: contain;
 }
 
+/* Separator rotation (an own image): it turns all the time while the strip
+   runs, one turn in --wp-swiper-separator-spin; the other way round when the
+   strip runs left to right (render.php). The image turns, not its place. */
+.wp-swiper--separator-spin .wp-swiper__separator-image {
+	animation: wp-swiper-separator-spin var(--wp-swiper-separator-spin, 8s) linear infinite var(--wp-swiper-separator-spin-direction, normal);
+}
+
+@keyframes wp-swiper-separator-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wp-swiper--separator-spin .wp-swiper__separator-image {
+		animation: none;
+	}
+}
+
 @media (max-width: 1024px) {
 	.wp-swiper__separator {
 		width: var(--wp-swiper-separator-size-tablet, var(--wp-swiper-separator-size, 10px));

@@ -1620,6 +1620,32 @@ class Test_WP_Swiper_Render extends WP_Swiper_TestCase {
 		$this->assertStringNotContainsString( '--wp-swiper-separator-color', $this->root_style( $html ) );
 	}
 
+	public function test_marquee_separator_rotation() {
+		$image = $this->image( 64, 64 );
+		$own   = array( 'marquee' => true, 'marquee_separator' => 'image', 'marquee_separator_image' => $image );
+
+		// Still by default: no class, no variables.
+		$html = $this->render( $own, $this->slides( 2 ) );
+		$this->assertNotContains( 'wp-swiper--separator-spin', $this->root_classes( $html ) );
+		$this->assertStringNotContainsString( '--wp-swiper-separator-spin', $this->root_style( $html ) );
+
+		// 45°/s: a turn in 8 seconds, the way the strip runs (right to left: normal).
+		$html  = $this->render( array( 'marquee_separator_spin' => 45 ) + $own, $this->slides( 2 ) );
+		$style = $this->root_style( $html );
+		$this->assertContains( 'wp-swiper--separator-spin', $this->root_classes( $html ) );
+		$this->assertStringContainsString( '--wp-swiper-separator-spin:8s', $style );
+		$this->assertStringNotContainsString( '--wp-swiper-separator-spin-direction', $style );
+
+		// Left to right: the other way round; 7°/s: 51.429s, a point, never a comma.
+		$style = $this->root_style( $this->render( array( 'marquee_separator_spin' => 7, 'marquee_direction' => 'reverse' ) + $own, $this->slides( 2 ) ) );
+		$this->assertStringContainsString( '--wp-swiper-separator-spin:51.429s', $style );
+		$this->assertStringContainsString( '--wp-swiper-separator-spin-direction:reverse', $style );
+
+		// A dot never turns.
+		$html = $this->render( array( 'marquee' => true, 'marquee_separator' => 'dot', 'marquee_separator_spin' => 45 ), $this->slides( 2 ) );
+		$this->assertNotContains( 'wp-swiper--separator-spin', $this->root_classes( $html ) );
+	}
+
 	public function test_no_separator_without_marquee_or_image() {
 		$cases = array(
 			'no marquee'       => array( 'marquee_separator' => 'dot' ),

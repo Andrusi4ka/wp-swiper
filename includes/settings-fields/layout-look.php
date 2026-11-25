@@ -393,6 +393,19 @@ return array(
 		'step'       => 1,
 		'help'       => __( 'The dot\'s diameter; an image fits in a square of this size. The space between the slides is at least as wide.', 'wp-swiper' ),
 	),
+	// An own image turns all the time while the strip runs (a dot would not show it).
+	'marquee_separator_spin' => array(
+		'section' => 'layout',
+		'effects' => array( 'slide' ),
+		'label'   => __( 'Separator rotation (°/s)', 'wp-swiper' ),
+		'type'    => 'number',
+		'default' => 0,
+		'min'     => 0,
+		'max'     => 360,
+		'step'    => 1,
+		'range'   => array( 0, 360 ),
+		'help'    => __( '0 = still. 45 = one turn in 8 seconds. It turns the way the strip runs.', 'wp-swiper' ),
+	),
 	'marquee_separator_color' => array(
 		'section' => 'layout',
 		'effects' => array( 'slide' ),

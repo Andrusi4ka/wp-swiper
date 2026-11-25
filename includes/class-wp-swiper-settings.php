@@ -615,7 +615,8 @@ class WP_Swiper_Settings {
 	 * false without one (or with "Own image" and no image chosen).
 	 *
 	 * @param array $settings Slider settings.
-	 * @return array|false [ 'type' => 'dot'|'image', 'image' => int, 'size' => [ device => int ] ]
+	 * @return array|false [ 'type' => 'dot'|'image', 'image' => int, 'size' => [ device => int ], 'spin' => int ]
+	 *                     ('spin': an own image's turn in degrees per second; 0 still, always 0 for a dot).
 	 */
 	public static function separator( $settings ) {
 		if ( ! self::is_marquee( $settings ) || empty( $settings['marquee_separator'] ) || 'none' === $settings['marquee_separator'] ) {
@@ -629,6 +630,7 @@ class WP_Swiper_Settings {
 			'type'  => $settings['marquee_separator'],
 			'image' => 'image' === $settings['marquee_separator'] ? $image : 0,
 			'size'  => array_map( 'intval', self::responsive( $settings, 'marquee_separator_size' ) ),
+			'spin'  => 'image' === $settings['marquee_separator'] ? max( 0, min( 360, (int) ( $settings['marquee_separator_spin'] ?? 0 ) ) ) : 0,
 		);
 	}
 
@@ -789,7 +791,7 @@ class WP_Swiper_Settings {
 				),
 				'slides'      => array(
 					'title'  => __( 'Slides', 'wp-swiper' ),
-					'fields' => array( 'slides_per_view', 'slides_per_group', 'auto_width', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_direction', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_color' ),
+					'fields' => array( 'slides_per_view', 'slides_per_group', 'auto_width', 'centered_slides', 'expand_active', 'active_width', 'marquee', 'marquee_speed', 'marquee_direction', 'marquee_separator', 'marquee_separator_image', 'marquee_separator_size', 'marquee_separator_spin', 'marquee_separator_color' ),
 				),
 				// Collage: a place with an image and text instead of a photo.
 				'collage_content' => array(

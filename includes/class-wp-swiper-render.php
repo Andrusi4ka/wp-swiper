@@ -243,6 +243,7 @@ class WP_Swiper_Render {
 		$expand     = WP_Swiper_Settings::is_expand( $settings );
 		$shadow     = WP_Swiper_Settings::shadow( $settings );
 		$videos     = in_array( true, wp_list_pluck( $slides, 'video' ), true );
+		$separator  = WP_Swiper_Settings::separator( $settings );
 		// Per device: a Height in % of the parent block (the whole chain must stretch).
 		$percent = array_map(
 			function ( $height ) {
@@ -267,7 +268,8 @@ class WP_Swiper_Render {
 			WP_Swiper_Settings::is_auto_height_everywhere( $settings ) ? 'wp-swiper--fill' : '',
 			WP_Swiper_Settings::is_auto_width( $settings ) ? 'wp-swiper--auto-width' : '',
 			WP_Swiper_Settings::is_marquee( $settings ) ? 'wp-swiper--marquee' : '',
-			WP_Swiper_Settings::separator( $settings ) ? 'wp-swiper--separator' : '',
+			$separator ? 'wp-swiper--separator' : '',
+			$separator && $separator['spin'] > 0 ? 'wp-swiper--separator-spin' : '',
 			WP_Swiper_Settings::is_carousel( $settings ) ? 'wp-swiper--carousel' : '',
 			$settings['lightbox'] ? 'wp-swiper--lightbox' : '',
 			// Video slides the visitor starts: the YouTube / Vimeo play button shows.
@@ -424,8 +426,7 @@ class WP_Swiper_Render {
 		}
 
 		// Continuous scroll separator: its size and the gap it stands in the
-		// middle of, per device; the dot's color.
-		$separator = WP_Swiper_Settings::separator( $settings );
+		// middle of, per device; the dot's color ($separator: at the top).
 		if ( $separator ) {
 			$gaps = WP_Swiper_Settings::gaps( $settings );
 			foreach ( $separator['size'] as $device => $size ) {
@@ -434,6 +435,14 @@ class WP_Swiper_Render {
 			}
 			if ( 'dot' === $separator['type'] ) {
 				$style[] = '--wp-swiper-separator-color:' . $settings['marquee_separator_color'];
+			}
+			// An own image that turns: one turn's time (360° / °/s; %F, so no locale's comma),
+			// the other way round when the strip runs left to right (or down).
+			if ( $separator['spin'] > 0 ) {
+				$style[] = '--wp-swiper-separator-spin:' . rtrim( rtrim( sprintf( '%.3F', 360 / $separator['spin'] ), '0' ), '.' ) . 's';
+				if ( 'reverse' === $settings['marquee_direction'] ) {
+					$style[] = '--wp-swiper-separator-spin-direction:reverse';
+				}
 			}
 		}
 
