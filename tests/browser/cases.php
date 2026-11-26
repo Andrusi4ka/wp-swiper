@@ -113,6 +113,8 @@ return array(
 	// fits the photos to the block, a Height in px the frame (its margins kept).
 	'collage-overlap-auto' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '2', 'height_unit' => 'auto', 'collage_cuts' => 'overlap:1.8;0.4,0.3,0.6,0.4,1;0.7,0.05,0.7,0.85,0' ), 'photos' => 2 ),
 	'collage-overlap-px' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '2', 'height' => '500', 'height_unit' => 'px', 'collage_cuts' => 'overlap:1.8;0.4,0.3,0.6,0.4,1;0.7,0.05,0.7,0.85,0' ), 'photos' => 2 ),
+	// Overlap with a thick white border and large uneven corners, apart (collage-border.spec.js): no photo past the border.
+	'collage-border' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '2', 'collage_cuts' => 'overlap:2.2;0.05,0.1,0.9,0.8,0;1.15,0.1,0.9,0.8,1', 'border_rounded' => '1', 'border_radius_linked' => '0', 'border_radius' => '12', 'border_radius_tr' => '100', 'border_radius_br' => '12', 'border_radius_bl' => '100', 'image_border' => '1', 'image_border_width' => '10', 'image_border_color' => '#ffffff' ), 'photos' => 2 ),
 	// Overlap turned (Rotation): where it is, as large as fits.
 	'collage-overlap-rotate' => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'overlap', 'collage_count' => '6', 'collage_rotate' => '-15', 'lightbox' => '1' ) ),
 	'collage-grid'     => array( 'settings' => array( 'effect' => 'collage', 'collage_layout' => 'grid', 'lightbox' => '1' ) ),

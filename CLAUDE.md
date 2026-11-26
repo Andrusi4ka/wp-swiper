@@ -45,6 +45,9 @@
   чистій 3.7.1: Chrome пише в консоль «Permissions policy violation: unload is
   not allowed» (сторінка редактора WordPress), а тести ловлять усі помилки
   консолі. Не через WP Swiper; виправити фільтр у тестах — на прохання.
+- У `main` після v3.7.2 (ще не в релізі): Image border у колажі — власний
+  `border` місця, без лінії фото за рамкою на кутах. У слайдерах (Slide…)
+  та сама лінія — відкладено, `docs/decisions.md` «Відкладено і відхилено».
 - Старі гілки збережено в `Creativity.local/_backups/wp-swiper-old-branches-2026-11-09.bundle`.
 
 ## Наступний реліз (на прохання)

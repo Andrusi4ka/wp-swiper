@@ -57,8 +57,8 @@ test( 'collage-content: the image and text in the place set for the device', asy
 	expect( found.background ).toBe( 'rgba(0, 0, 0, 0)' );
 	expect( found.photos.every( ( real ) => real >= 0 ) ).toBe( true );
 	expect( new Set( found.photos ).size ).toBe( 5 );
-	// The image border on it too.
-	expect( await page.evaluate( () => getComputedStyle( document.querySelector( '.wp-swiper-collage__cell--content' ), '::after' ).borderTopWidth ) ).not.toBe( '0px' );
+	// The image border on it too (the place's own border, collage.css).
+	expect( await page.evaluate( () => getComputedStyle( document.querySelector( '.wp-swiper-collage__cell--content' ) ).borderTopWidth ) ).not.toBe( '0px' );
 	// A click on it opens no lightbox.
 	await page.locator( '.wp-swiper-collage__cell--content' ).click();
 	await page.waitForTimeout( 400 );

@@ -40,8 +40,8 @@ function state( page ) {
 					// Upright: its box on the page as large as it is (not turned).
 					drawn: [ r.width, r.height ].map( Math.round ),
 					size: [ item.offsetWidth, item.offsetHeight ],
-					// Covering its place: the place's corners (turned) inside the photo.
-					covered: [ [ 0, 0 ], [ cell.offsetWidth, 0 ], [ 0, cell.offsetHeight ], [ cell.offsetWidth, cell.offsetHeight ] ].every( ( p ) => {
+					// Covering its place: the place's corners inside its border (turned) inside the photo.
+					covered: [ [ cell.clientLeft, cell.clientTop ], [ cell.clientLeft + cell.clientWidth, cell.clientTop ], [ cell.clientLeft, cell.clientTop + cell.clientHeight ], [ cell.clientLeft + cell.clientWidth, cell.clientTop + cell.clientHeight ] ].every( ( p ) => {
 						const m = new DOMMatrix( getComputedStyle( grid ).transform );
 						// The corner on the page: the grid's turn about its middle.
 						const gx = cell.offsetLeft + p[ 0 ] - grid.offsetWidth / 2;
@@ -51,7 +51,7 @@ function state( page ) {
 						const y = g.top + g.height / 2 + m.b * gx + m.d * gy;
 						return x >= r.left - 1 && x <= r.right + 1 && y >= r.top - 1 && y <= r.bottom + 1;
 					} ),
-					frame: getComputedStyle( cell, '::after' ).borderTopWidth,
+					frame: getComputedStyle( cell ).borderTopWidth,
 					caption: ( () => {
 						const caption = item.querySelector( '.wp-swiper__caption' );
 						if ( ! caption ) {

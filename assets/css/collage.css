@@ -147,35 +147,49 @@
 	transform: translate(-50%, -50%) rotate(calc(-1 * var(--wp-swiper-collage-turn, 0deg)));
 }
 
-/* Image border: on the place (turned with it), not on the photo, which is
-   larger than its place now. */
-.wp-swiper--border .wp-swiper-collage--turned .wp-swiper__media::after {
-	content: none;
-}
-
-.wp-swiper--border .wp-swiper-collage--turned .wp-swiper-collage__cell::after {
-	content: "";
-	position: absolute;
-	inset: 0;
-	z-index: 3;
+/* Image border: the place's own border, not a frame over the photo
+   (frontend.css). A frame shares the place's edge with the photo, the
+   browser smooths that edge for each apart, and the photo shows through
+   outside the frame there (a thin line, plainest on large corners). The
+   place cuts the photo at the border's inner edge instead, the photo
+   inside it unrounded (with the place's outer corners it would leave a
+   gap). The same turned (the photo larger than its place) and on Content in
+   a place. "Contain" unturned keeps the frame on the image itself, whose box
+   is not the place. */
+.wp-swiper--border:not(.wp-swiper--fit-contain) .wp-swiper-collage__cell,
+.wp-swiper--border .wp-swiper-collage--turned .wp-swiper-collage__cell,
+.wp-swiper--border .wp-swiper-collage__cell--content {
+	box-sizing: border-box;
 	/* Apart: the shorthand takes one width, a side each needs border-width (WP_Swiper_Settings::box_css()). */
 	border-width: var(--wp-swiper-border-width, 0px);
 	border-style: var(--wp-swiper-border-style, solid);
 	border-color: var(--wp-swiper-border-color, #fff);
-	border-radius: inherit;
-	pointer-events: none;
 }
 
 @media (max-width: 1024px) {
-	.wp-swiper--border .wp-swiper-collage--turned .wp-swiper-collage__cell::after {
+	.wp-swiper--border:not(.wp-swiper--fit-contain) .wp-swiper-collage__cell,
+	.wp-swiper--border .wp-swiper-collage--turned .wp-swiper-collage__cell,
+	.wp-swiper--border .wp-swiper-collage__cell--content {
 		border-width: var(--wp-swiper-border-width-tablet, var(--wp-swiper-border-width, 0px));
 	}
 }
 
 @media (max-width: 767px) {
-	.wp-swiper--border .wp-swiper-collage--turned .wp-swiper-collage__cell::after {
+	.wp-swiper--border:not(.wp-swiper--fit-contain) .wp-swiper-collage__cell,
+	.wp-swiper--border .wp-swiper-collage--turned .wp-swiper-collage__cell,
+	.wp-swiper--border .wp-swiper-collage__cell--content {
 		border-width: var(--wp-swiper-border-width-mobile, var(--wp-swiper-border-width-tablet, var(--wp-swiper-border-width, 0px)));
 	}
+}
+
+.wp-swiper--border:not(.wp-swiper--fit-contain) .wp-swiper-collage__cell .wp-swiper__media::after,
+.wp-swiper--border .wp-swiper-collage--turned .wp-swiper__media::after {
+	content: none;
+}
+
+.wp-swiper--border:not(.wp-swiper--fit-contain) .wp-swiper-collage__cell > .wp-swiper-collage__item,
+.wp-swiper--border:not(.wp-swiper--fit-contain) .wp-swiper-collage__cell .wp-swiper__media {
+	border-radius: 0;
 }
 
 /* A caption: upright in the middle of its place, no wider than fits in it
@@ -215,32 +229,6 @@
 	flex: none;
 	width: var(--wp-swiper-collage-iw, 100%);
 	height: var(--wp-swiper-collage-ih, 100%);
-}
-
-/* Image border: on the content's place too, as on a photo's. */
-.wp-swiper--border .wp-swiper-collage__cell--content::after {
-	content: "";
-	position: absolute;
-	inset: 0;
-	z-index: 3;
-	/* Apart: the shorthand takes one width, a side each needs border-width (WP_Swiper_Settings::box_css()). */
-	border-width: var(--wp-swiper-border-width, 0px);
-	border-style: var(--wp-swiper-border-style, solid);
-	border-color: var(--wp-swiper-border-color, #fff);
-	border-radius: inherit;
-	pointer-events: none;
-}
-
-@media (max-width: 1024px) {
-	.wp-swiper--border .wp-swiper-collage__cell--content::after {
-		border-width: var(--wp-swiper-border-width-tablet, var(--wp-swiper-border-width, 0px));
-	}
-}
-
-@media (max-width: 767px) {
-	.wp-swiper--border .wp-swiper-collage__cell--content::after {
-		border-width: var(--wp-swiper-border-width-mobile, var(--wp-swiper-border-width-tablet, var(--wp-swiper-border-width, 0px)));
-	}
 }
 
 /* Background (frontend.css): the block's height, not the Height (collages
