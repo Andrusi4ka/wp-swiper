@@ -4,7 +4,7 @@ Tags: slider, carousel, swiper, gallery, wpbakery
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.7.2
+Stable tag: 3.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,9 @@ It does not apply with the current settings (for example "Next slide when the vi
 Yes: a video from the media library, or a YouTube or Vimeo link (paste it under the slides). Its poster image is chosen on the Video page of the settings. Browsers only start a video by themselves without sound, so keep "Muted" on with "Play automatically".
 
 == Changelog ==
+
+= 3.7.3 =
+* Collage, Image border: the photo no longer shows as a thin line outside the border on rounded corners (plainest with large ones). The border is now the place's own and the photo is cut at its inner edge; the same with Rotation and on Content in a place.
 
 = 3.7.2 =
 * Continuous scroll: "Separator rotation (°/s)" under Separator size — an own image as the separator turns all the time while the strip runs, the way it runs (0 = still, as before; 45 = one turn in 8 seconds). Still with "reduce motion".
